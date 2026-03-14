@@ -240,16 +240,21 @@ document.getElementById('searchResults').addEventListener('click', e => {
 // ===== FAVORITES =====
 window.showFavorites = function () {
   showView('favoritesView');
-  const d = db.getFavoritos();
-  let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
-  if (!d.length) h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
-  else d.forEach(r => {
-    h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-            <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-            <div class="search-result-text">${r.texto}</div>
-        </div>`;
-  });
-  document.getElementById('favoritesContainer').innerHTML = h;
+  const container = document.getElementById('favoritesContainer');
+  container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+
+  setTimeout(() => {
+    const d = db.getFavoritos();
+    let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
+    if (!d.length) h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
+    else d.forEach(r => {
+      h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+              <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+              <div class="search-result-text">${r.texto}</div>
+          </div>`;
+    });
+    container.innerHTML = h;
+  }, 30);
 };
 
 document.getElementById('favoritesContainer').addEventListener('click', e => {
@@ -266,21 +271,25 @@ window.showGallery = function () {
   showView('galleryView');
   const g = document.getElementById('galleryGrid');
   if (g.dataset.loaded) return;
-  const imgs = db.getImgVersiculos();
-  g.innerHTML = imgs.map(img => `
-        <div class="gallery-card">
-            <img src="${img.address}" alt="${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}" loading="lazy"
-                 onerror="this.parentElement.style.background='var(--burgundy-700)';this.style.display='none'">
-            <div class="gallery-card-overlay">
-                <div class="gallery-card-text">${img.texto}</div>
-                <div class="gallery-card-ref">${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}</div>
-            </div>
-            <div class="gallery-card-actions">
-                <button class="gallery-action-btn gallery-wa" data-txt="${img.texto.replace(/"/g, '&quot;')}" data-livro="${img.nome_livro}" data-cap="${img.id_capitulo}" data-ver="${img.id_versiculo}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-            </div>
-        </div>
-    `).join('');
-  g.dataset.loaded = '1';
+  g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:100px"><div class="loading-spinner"></div></div>';
+
+  setTimeout(() => {
+    const imgs = db.getImgVersiculos();
+    g.innerHTML = imgs.map(img => `
+          <div class="gallery-card">
+              <img src="${img.address}" alt="${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}" loading="lazy"
+                   onerror="this.parentElement.style.background='var(--burgundy-700)';this.style.display='none'">
+              <div class="gallery-card-overlay">
+                  <div class="gallery-card-text">${img.texto}</div>
+                  <div class="gallery-card-ref">${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}</div>
+              </div>
+              <div class="gallery-card-actions">
+                  <button class="gallery-action-btn gallery-wa" data-txt="${img.texto.replace(/"/g, '&quot;')}" data-livro="${img.nome_livro}" data-cap="${img.id_capitulo}" data-ver="${img.id_versiculo}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+              </div>
+          </div>
+      `).join('');
+    g.dataset.loaded = '1';
+  }, 30);
 };
 
 document.getElementById('galleryGrid').addEventListener('click', e => {
@@ -298,32 +307,36 @@ window.showPlan = function () {
   const c = document.getElementById('planContainer');
   if (c.dataset.loaded) { updatePlanProgress(); return; }
 
-  const plan = db.getPlanoLeitura();
-  const now = new Date();
-  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-
-  let h = '';
-  plan.forEach(d => {
-    const isToday = d.dia === dayOfYear;
-    const done = readingPlanDays[d.dia] || false;
-    const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-    h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
-            <div class="plan-day-num">${d.dia}</div>
-            <div class="plan-day-content">
-                <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
-                <div class="plan-day-desc">${leituras}</div>
-            </div>
-            <div class="plan-day-check"><i class="fas fa-check"></i></div>
-        </div>`;
-  });
-  c.innerHTML = h;
-  c.dataset.loaded = '1';
-  updatePlanProgress();
+  c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
-    const todayEl = document.querySelector('.plan-day.today');
-    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 300);
+    const plan = db.getPlanoLeitura();
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+
+    let h = '';
+    plan.forEach(d => {
+      const isToday = d.dia === dayOfYear;
+      const done = readingPlanDays[d.dia] || false;
+      const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+      h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+              <div class="plan-day-num">${d.dia}</div>
+              <div class="plan-day-content">
+                  <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
+                  <div class="plan-day-desc">${leituras}</div>
+              </div>
+              <div class="plan-day-check"><i class="fas fa-check"></i></div>
+          </div>`;
+    });
+    c.innerHTML = h;
+    c.dataset.loaded = '1';
+    updatePlanProgress();
+
+    setTimeout(() => {
+      const todayEl = document.querySelector('.plan-day.today');
+      if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }, 30);
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {
