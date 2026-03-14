@@ -24,6 +24,27 @@
     --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
     --transition: all .3s cubic-bezier(.4, 0, .2, 1);
     --header-bg: rgba(13, 10, 14, 0.85);
+    --verse-size: 19px;
+    --verse-line: 1.7;
+    --title-size: 22px;
+}
+
+[data-font="small"] {
+    --verse-size: 16px;
+    --verse-line: 1.5;
+    --title-size: 19px;
+}
+
+[data-font="large"] {
+    --verse-size: 23px;
+    --verse-line: 1.8;
+    --title-size: 25px;
+}
+
+[data-font="xlarge"] {
+    --verse-size: 28px;
+    --verse-line: 1.9;
+    --title-size: 28px;
 }
 
 [data-theme="light"] {
@@ -83,8 +104,8 @@ body::before {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
-    padding: max(24px, env(safe-area-inset-top)) 20px 0;
-    height: calc(60px + max(24px, env(safe-area-inset-top)));
+    padding: 35px 20px 5px;
+    height: 95px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -222,7 +243,7 @@ body::before {
 .main-content {
     position: relative;
     z-index: 1;
-    padding-top: calc(60px + max(24px, env(safe-area-inset-top)));
+    padding-top: 105px;
     min-height: 100vh
 }
 
@@ -514,7 +535,7 @@ body::before {
 
 .chapter-title {
     font-family: 'Cinzel', serif;
-    font-size: 22px;
+    font-size: var(--title-size);
     font-weight: 700;
     color: var(--gold-300)
 }
@@ -594,8 +615,8 @@ body::before {
 
 .verse-text {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 19px;
-    line-height: 1.7;
+    font-size: var(--verse-size);
+    line-height: var(--verse-line);
     color: var(--text-primary);
     flex: 1
 }
@@ -1252,8 +1273,8 @@ body::before {
 
 @media(max-width:480px) {
     .header {
-        padding: max(24px, env(safe-area-inset-top)) 12px 0;
-        height: calc(52px + max(24px, env(safe-area-inset-top)))
+        padding: 35px 12px 5px;
+        height: 90px
     }
 
     .search-container {
