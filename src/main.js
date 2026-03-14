@@ -11,6 +11,8 @@ let planData = null;
 let readingPlanDays = JSON.parse(localStorage.getItem('biblia_plan_days') || '{}');
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
+let isRenderingFavs = false;
+let isRenderingPlan = false;
 
 // ===== INIT =====
 async function init() {
@@ -360,54 +362,55 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 
 // ===== READING PLAN =====
 window.showPlan = function () {
-  showView('planView');
-  const c = document.getElementById('planContainer');
-  if (c.dataset.loaded) { updatePlanProgress(); return; }
+  if (isRenderingPlan) return;
+  try {
+    showView('planView');
+    const c = document.getElementById('planContainer');
+    if (c.dataset.loaded) { updatePlanProgress(); return; }
 
-  c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+    isRenderingPlan = true;
+    c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
-    const plan = db.getPlanoLeitura();
-    const now = new Date();
-    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    setTimeout(() => {
+      try {
+        const plan = db.getPlanoLeitura();
+        const now = new Date();
+        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-    c.innerHTML = '';
-    let index = 0;
-    const chunkSize = 30;
-
-    function renderPlanChunk() {
-      const end = Math.min(index + chunkSize, plan.length);
-      let html = '';
-      for (let i = index; i < end; i++) {
-        const d = plan[i];
-        const isToday = d.dia === dayOfYear;
-        const done = readingPlanDays[d.dia] || false;
-        const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-        html += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
-                <div class="plan-day-num">${d.dia}</div>
-                <div class="plan-day-content">
-                    <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
-                    <div class="plan-day-desc">${leituras}</div>
-                </div>
-                <div class="plan-day-check"><i class="fas fa-check"></i></div>
-            </div>`;
-      }
-      c.insertAdjacentHTML('beforeend', html);
-      index = end;
-      
-      if (index < plan.length) {
-        setTimeout(renderPlanChunk, 0);
-      } else {
+        let html = '';
+        plan.forEach(d => {
+          if (!d) return;
+          const isToday = d.dia === dayOfYear;
+          const done = readingPlanDays[d.dia] || false;
+          const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+          html += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+                  <div class="plan-day-num">${d.dia}</div>
+                  <div class="plan-day-content">
+                      <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
+                      <div class="plan-day-desc">${leituras}</div>
+                  </div>
+                  <div class="plan-day-check"><i class="fas fa-check"></i></div>
+              </div>`;
+        });
+        
+        c.innerHTML = html;
         c.dataset.loaded = '1';
         updatePlanProgress();
+        
         setTimeout(() => {
           const todayEl = document.querySelector('.plan-day.today');
           if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
+      } catch (err) {
+        console.error("Erro ao carregar plano:", err);
+      } finally {
+        isRenderingPlan = false;
       }
-    }
-    renderPlanChunk();
-  }, 100);
+    }, 50);
+  } catch (globalErr) {
+    console.error("Erro global showPlan:", globalErr);
+    isRenderingPlan = false;
+  }
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {
