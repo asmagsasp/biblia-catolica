@@ -1,0 +1,19 @@
+{
+    "appId": "com.biblia.catolica",
+    "appName": "Bíblia Sagrada Católica",
+    "webDir": "dist",
+    "server": {
+        "androidScheme": "https"
+    },
+    "plugins": {
+        "SplashScreen": {
+            "launchShowDuration": 2000,
+            "backgroundColor": "#0D0A0E",
+            "showSpinner": false
+        },
+        "StatusBar": {
+            "style": "DARK",
+            "backgroundColor": "#1A0A0E"
+        }
+    }
+}

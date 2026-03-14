@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Bíblia Sagrada Católica</title>
+  <meta name="description"
+    content="Bíblia Sagrada Católica completa - Leia, busque e medite na Palavra de Deus com todos os 73 livros canônicos.">
+  <meta name="theme-color" content="#1A0A0E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon-512.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div class="splash" id="splash">
+    <div class="splash-cross">&#10013;</div>
+    <div class="splash-title">BÍBLIA SAGRADA</div>
+    <div class="splash-sub">EDIÇÃO CATÓLICA</div>
+    <div style="margin-top:24px">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand" onclick="goHome()">
+      <span class="cross">&#10013;</span>
+      <h1>Bíblia Sagrada<span>Edição Católica</span></h1>
+    </div>
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar na Palavra de Deus...">
+    </div>
+    <div class="header-actions">
+      <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
+          class="fas fa-images"></i></button>
+      <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
+          class="fas fa-calendar-alt"></i></button>
+      <button class="header-btn desktop-only" onclick="showFavorites()" title="Favoritos"><i
+          class="fas fa-heart"></i></button>
+      <button class="header-btn" onclick="toggleTheme()" title="Tema" id="themeBtn"><i class="fas fa-moon"></i></button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- HOME -->
+    <div id="homeView">
+      <section class="hero">
+        <div class="hero-label">Versículo do Dia</div>
+        <p class="hero-text" id="heroText">Carregando...</p>
+        <p class="hero-ref" id="heroRef"></p>
+        <p class="hero-oracao" id="heroOracao"></p>
+        <div class="hero-share">
+          <button class="hero-share-btn" onclick="shareHeroWhatsApp()">
+            <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
+          </button>
+        </div>
+      </section>
+      <div class="stats-bar" id="statsBar"></div>
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="filterTestamento(0,this)">Todos</button>
+        <button class="nav-tab" onclick="filterTestamento(1,this)">Antigo Testamento</button>
+        <button class="nav-tab" onclick="filterTestamento(2,this)">Novo Testamento</button>
+      </div>
+      <div id="booksContainer"></div>
+    </div>
+
+    <!-- CHAPTER -->
+    <div id="chapterView" class="hidden">
+      <div class="chapter-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" id="chapterTitle"></h2>
+              <p class="chapter-subtitle" id="chapterSubtitle"></p>
+            </div>
+          </div>
+        </div>
+        <div class="chapters-selector" id="chaptersSelector"></div>
+        <div id="versesContainer">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+        <div class="chapter-nav">
+          <button class="chapter-nav-btn" id="prevChapter" onclick="navigateChapter(-1)"><i
+              class="fas fa-chevron-left"></i> Anterior</button>
+          <button class="chapter-nav-btn" id="nextChapter" onclick="navigateChapter(1)">Próximo <i
+              class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="searchView" class="hidden">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div id="favoritesView" class="hidden">
+      <div class="search-results" id="favoritesContainer"></div>
+    </div>
+
+    <!-- GALLERY -->
+    <div id="galleryView" class="hidden">
+      <div class="gallery-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Galeria de Versículos</h2>
+              <p class="chapter-subtitle">Imagens para meditar e compartilhar</p>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-grid" id="galleryGrid">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- READING PLAN -->
+    <div id="planView" class="hidden">
+      <div class="plan-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Plano de Leitura</h2>
+              <p class="chapter-subtitle">Leia a Bíblia inteira em 365 dias</p>
+            </div>
+          </div>
+        </div>
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill" id="planProgress" style="width:0%"></div>
+        </div>
+        <div class="plan-progress-text" id="planProgressText">Carregando...</div>
+        <div id="planContainer">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV (MOBILE) -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bottom-nav-btn active" id="bnHome" onclick="goHome()"><i
+          class="fas fa-book-bible"></i>Início</button>
+      <button class="bottom-nav-btn" id="bnGallery" onclick="showGallery()"><i
+          class="fas fa-images"></i>Galeria</button>
+      <button class="bottom-nav-btn" id="bnPlan" onclick="showPlan()"><i class="fas fa-calendar-alt"></i>Plano</button>
+      <button class="bottom-nav-btn" id="bnFav" onclick="showFavorites()"><i class="fas fa-heart"></i>Favoritos</button>
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
