@@ -1018,7 +1018,19 @@ body::before {
     align-items: center;
     gap: 4px;
     transition: var(--transition);
-    padding: 8px 12px
+    padding: 8px 12px;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    flex: 1;
+}
+
+.bottom-nav-btn * {
+    pointer-events: none;
+}
+
+.bottom-nav-btn:active {
+    transform: scale(0.9);
+    background: rgba(212, 168, 83, 0.05);
 }
 
 .bottom-nav-btn i {
