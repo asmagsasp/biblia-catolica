@@ -258,42 +258,58 @@ document.getElementById('searchResults').addEventListener('click', e => {
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
-  showView('favoritesView');
-  const container = document.getElementById('favoritesContainer');
-  if (container.dataset.loaded) return;
+  try {
+    showView('favoritesView');
+    const container = document.getElementById('favoritesContainer');
+    if (container.dataset.loaded === '1') return;
 
-  container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+    container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
-    const d = db.getFavoritos();
-    let hHeader = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
-    
-    if (!d.length) {
-      container.innerHTML = hHeader + `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
-      return;
-    }
+    setTimeout(() => {
+      try {
+        const d = db.getFavoritos();
+        let hHeader = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
 
-    container.innerHTML = hHeader;
-    let index = 0;
-    const chunkSize = 20;
+        if (!d || !d.length) {
+          container.innerHTML = hHeader + `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
+          container.dataset.loaded = '1';
+          return;
+        }
 
-    function renderFavChunk() {
-      const end = Math.min(index + chunkSize, d.length);
-      let html = '';
-      for (let i = index; i < end; i++) {
-        const r = d[i];
-        html += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-                  <div class="search-result-text">${r.texto}</div>
-              </div>`;
+        container.innerHTML = hHeader;
+        let index = 0;
+        const chunkSize = 20;
+
+        function renderFavChunk() {
+          try {
+            const end = Math.min(index + chunkSize, d.length);
+            let html = '';
+            for (let i = index; i < end; i++) {
+              const r = d[i];
+              if (!r) continue; // Skip if item is null/undefined
+              html += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+                        <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                        <div class="search-result-text">${r.texto}</div>
+                    </div>`;
+            }
+            container.insertAdjacentHTML('beforeend', html);
+            index = end;
+            if (index < d.length) setTimeout(renderFavChunk, 0);
+            else container.dataset.loaded = '1';
+          } catch (chunkErr) {
+            console.error("Erro no chunk de favoritos:", chunkErr);
+            container.dataset.loaded = '1';
+          }
+        }
+        renderFavChunk();
+      } catch (innerErr) {
+        console.error("Erro ao carregar dados de favoritos:", innerErr);
+        container.innerHTML = '<p style="padding:50px; text-align:center">Ops! Houve um erro ao carregar seus favoritos. <br> Tente novamente.</p>';
       }
-      container.insertAdjacentHTML('beforeend', html);
-      index = end;
-      if (index < d.length) setTimeout(renderFavChunk, 0);
-      else container.dataset.loaded = '1';
-    }
-    renderFavChunk();
-  }, 100);
+    }, 100);
+  } catch (globalErr) {
+    console.error("Erro global showFavorites:", globalErr);
+  }
 };
 
 

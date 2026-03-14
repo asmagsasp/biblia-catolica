@@ -75,27 +75,47 @@ export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 
 export function getFavoritos() {
     const result = [];
-    const livrosMap = new Map();
-    bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
+    try {
+        if (!bibliaData || !bibliaData.livros || !bibliaData.versiculos) return [];
 
-    for (const key of Object.keys(favoritos)) {
-        const [livroId, cap, ver] = key.split('_').map(Number);
-        const livroInfo = livrosMap.get(livroId);
-        if (!livroInfo) continue;
-        
-        const keyVs = `${livroId}_${cap}`;
-        const vs = bibliaData.versiculos[keyVs] || [];
-        const v = vs.find(x => x.v === ver);
-        
-        if (v) {
-            result.push({
-                id_livro: livroId,
-                nome_livro: livroInfo.nome_livro,
-                id_capitulo: cap,
-                id_versiculo: ver,
-                texto: v.t
-            });
+        const livrosMap = new Map();
+        bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
+
+        let orphaned = false;
+        for (const key of Object.keys(favoritos)) {
+            try {
+                const parts = key.split('_').map(Number);
+                if (parts.length !== 3) { orphaned = true; delete favoritos[key]; continue; }
+                
+                const [livroId, cap, ver] = parts;
+                const livroInfo = livrosMap.get(livroId);
+                if (!livroInfo) { orphaned = true; delete favoritos[key]; continue; }
+                
+                const keyVs = `${livroId}_${cap}`;
+                const vs = bibliaData.versiculos[keyVs] || [];
+                const v = vs.find(x => x.v === ver);
+                
+                if (v) {
+                    result.push({
+                        id_livro: livroId,
+                        nome_livro: livroInfo.nome_livro,
+                        id_capitulo: cap,
+                        id_versiculo: ver,
+                        texto: v.t
+                    });
+                } else {
+                    orphaned = true;
+                    delete favoritos[key];
+                }
+            } catch (e) {
+                console.error("[BibliaDB] Erro ao processar favorito individual:", key, e);
+            }
         }
+        if (orphaned) {
+            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+        }
+    } catch (globalError) {
+        console.error("[BibliaDB] Erro fatal em getFavoritos:", globalError);
     }
     return result.sort((a, b) => a.id_livro - b.id_livro || a.id_capitulo - b.id_capitulo || a.id_versiculo - b.id_versiculo);
 }
