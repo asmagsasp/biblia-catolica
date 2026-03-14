@@ -42,12 +42,12 @@ jobs:
       - name: 6️⃣ Copiar pro Android (Capacitor)
         run: npx cap sync android
 
-      - name: 7️⃣ Gerar o App Bundle (.AAB) de Produção ⚔️
+      - name: 7️⃣ Gerar o APK com Gradle 🏗️
         working-directory: ./android
-        run: ./gradlew bundleRelease
+        run: ./gradlew assembleDebug
 
-      - name: 8️⃣ Salvar o App Bundle Final para Play Store 🎁
+      - name: 8️⃣ Salvar o APK gerado 📲
         uses: actions/upload-artifact@v4
         with:
-          name: Biblia_Catolica_Bundle_AAB
-          path: android/app/build/outputs/bundle/release/*.aab
+          name: Biblia_Catolica_App
+          path: android/app/build/outputs/apk/debug/app-debug.apk
