@@ -34,7 +34,10 @@ jobs:
         run: npm run build
 
       - name: Configurar Permissão do Gradle
-        run: chmod +x android/gradlew
+        run: |
+          sudo apt-get update && sudo apt-get install -y dos2unix
+          dos2unix android/gradlew
+          chmod +x android/gradlew
 
       - name: 6️⃣ Copiar pro Android (Capacitor)
         run: npx cap sync android
