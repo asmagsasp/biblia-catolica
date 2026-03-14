@@ -16,13 +16,11 @@ let currentFontIdx = 0;
 // ===== DEBUGGER =====
 window.onerror = function(msg, url, lineNo, columnNo, error) {
   console.error(`[AppError] ${msg} at line ${lineNo}`, error);
-  isNavigating = false; // Emergency reset even if not used
   return false;
 };
 
 window.onunhandledrejection = function(event) {
   showToast(`Erro Assíncrono: ${event.reason}`);
-  isNavigating = false;
 };
 
 // ===== INIT =====
@@ -360,12 +358,10 @@ document.getElementById('favoritesContainer').addEventListener('click', e => {
 
 // ===== GALLERY =====
 window.showGallery = function () {
-  if (isNavigating) return;
   showView('galleryView');
   const g = document.getElementById('galleryGrid');
   if (g.dataset.loaded) return;
-
-  isNavigating = true;
+  
   g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
@@ -390,8 +386,8 @@ window.showGallery = function () {
       });
       g.innerHTML = h;
       g.dataset.loaded = '1';
-    } finally {
-      isNavigating = false;
+    } catch (e) {
+      console.error("Gallery Error:", e);
     }
   }, 30);
 };
@@ -482,7 +478,6 @@ function showView(id) {
 }
 
 window.goHome = function () {
-  isNavigating = false; // Reset de pânico se necessário
   showView('homeView');
   document.getElementById('searchInput').value = '';
   window.scrollTo(0, 0);
