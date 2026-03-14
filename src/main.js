@@ -241,16 +241,23 @@ document.getElementById('versesContainer').addEventListener('click', e => {
   if (favBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const result = db.toggleFavorito(
-      parseInt(favBtn.dataset.livro),
-      parseInt(favBtn.dataset.cap),
-      parseInt(favBtn.dataset.ver)
-    );
-    favBtn.classList.toggle('favorited', result === 1);
-    showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
-    const favContainer = document.getElementById('favoritesContainer');
-    if (favContainer) delete favContainer.dataset.loaded;
-    updateFavCountOnly();
+    try {
+      const result = db.toggleFavorito(
+        parseInt(favBtn.dataset.livro),
+        parseInt(favBtn.dataset.cap),
+        parseInt(favBtn.dataset.ver)
+      );
+      favBtn.classList.toggle('favorited', result === 1);
+      showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
+      
+      const favContainer = document.getElementById('favoritesContainer');
+      if (favContainer) delete favContainer.dataset.loaded;
+      updateFavCountOnly();
+    } catch (err) {
+      console.error("Erro no Favorito:", err);
+    } finally {
+      isNavigating = false;
+    }
     return;
   }
   const waBtn = e.target.closest('.wa-btn');
@@ -312,6 +319,7 @@ document.getElementById('searchResults').addEventListener('click', e => {
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
+  isNavigating = false; // Reset de pânico
   showView('favoritesView');
   const container = document.getElementById('favoritesContainer');
   if (container.dataset.loaded === '1') return;
@@ -401,6 +409,7 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 
 // ===== READING PLAN =====
 window.showPlan = function () {
+  isNavigating = false; // Reset de pânico
   showView('planView');
   const c = document.getElementById('planContainer');
   if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
