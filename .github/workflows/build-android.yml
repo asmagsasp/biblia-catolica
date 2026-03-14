@@ -40,7 +40,7 @@ jobs:
           chmod +x android/gradlew
 
       - name: 6️⃣ Copiar pro Android (Capacitor)
-        run: npx cap sync android --verbose
+        run: npx cap sync android
 
       - name: 7️⃣ Gerar o APK com Gradle
         working-directory: ./android
