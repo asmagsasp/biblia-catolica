@@ -25,15 +25,21 @@ async function init() {
   document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
 
   // Load data
-  await db.initDB();
+  try {
+    await db.initDB();
+  } catch (e) {
+    console.error("Erro na inicialização do DB:", e);
+  }
 
   // Remove splash
   const splash = document.getElementById('splash');
-  splash.classList.add('fade-out');
-  setTimeout(() => splash.remove(), 600);
+  if (splash) {
+    splash.classList.add('fade-out');
+    setTimeout(() => splash.remove(), 600);
+  }
 
   // Load UI
-  allBooks = db.getLivros();
+  allBooks = db.getLivros() || [];
   renderBooks(allBooks);
   loadVersiculoDoDia();
   loadStats();

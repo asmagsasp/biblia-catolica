@@ -1,4 +1,5 @@
-let isDBReady = false;
+export let isDBReady = false;
+let bibliaData = null;
 let planCache = null;
 let livrosMap = new Map();
 let totalVersiculosPrecalc = 0;
@@ -8,32 +9,25 @@ let saveTimeout = null;
 
 function loadFavoritos() {
     try {
-        favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
+        const saved = localStorage.getItem('biblia_favoritos');
+        favoritos = saved ? JSON.parse(saved) : {};
     } catch (e) {
+        console.error("[BibliaDB] Erro ao ler favoritos:", e);
         favoritos = {};
     }
-}
-loadFavoritos();
-
-function saveFavoritos() {
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-        try {
-            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-            console.log("[BibliaDB] Favoritos salvos com sucesso.");
-        } catch (e) {
-            console.error("[BibliaDB] Erro ao salvar favoritos:", e);
-        }
-    }, 500); // 500ms de buffer para não fritar o processador do Android
 }
 
 export async function initDB() {
     if (bibliaData) return;
     try {
+        console.log("[BibliaDB] Iniciando fetch...");
         const res = await fetch('/data/biblia.json');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
         
-        // Indexar livros para busca instantânea O(1)
+        loadFavoritos();
+        
+        // Indexar livros
         bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
         
         totalVersiculosPrecalc = 0;
@@ -43,15 +37,12 @@ export async function initDB() {
         
         favoritosCount = Object.keys(favoritos).length;
         isDBReady = true;
-
-        console.log(`[BibliaDB] Sistema Pronto: ${totalVersiculosPrecalc} versículos indexados.`);
-        
-        setTimeout(() => {
-            getPlanoLeitura();
-            limparFavoritosOrfaos();
-        }, 3000);
+        console.log("[BibliaDB] Banco de dados pronto e carregado.");
     } catch (e) {
-        console.error("[BibliaDB] Erro Crítico no Banco de Dados:", e);
+        console.error("[BibliaDB] ERRO CRÍTICO NO INIT:", e);
+        // Fallback básico para não travar o app na splash
+        bibliaData = { livros: [], versiculos: {}, img_versiculos: [] };
+        isDBReady = true;
     }
 }
 
