@@ -10,10 +10,12 @@ let totalChapters = 0;
 let heroData = null;
 let planData = null;
 let readingPlanDays = {};
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
-let synth = window.speechSynthesis;
-let currentUtterance = null;
+let isSpeaking = false;
+let stopRequested = false;
 
 // ===== INIT =====
 async function init() {
@@ -66,8 +68,10 @@ function setTheme(theme) {
   stopSpeech();
 }
 
-window.stopSpeech = function() {
-  if (synth) synth.cancel();
+window.stopSpeech = async function() {
+  stopRequested = true;
+  isSpeaking = false;
+  try { await TextToSpeech.stop(); } catch(e) {}
   document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
 };
 
@@ -292,52 +296,70 @@ document.getElementById('versesContainer').addEventListener('click', e => {
   }
 });
 
-window.speakText = function(text, vNum = null) {
-  stopSpeech();
+window.speakText = async function(text, vNum = null) {
+  await stopSpeech();
   if (!text) return;
   
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'pt-BR';
-  utterance.rate = 0.9;
+  isSpeaking = true;
+  stopRequested = false;
   
   if (vNum) {
     const el = document.getElementById(`v-${vNum}`);
-    utterance.onstart = () => el?.classList.add('reading');
-    utterance.onend = () => el?.classList.remove('reading');
+    if (el) el.classList.add('reading');
   }
   
-  synth.speak(utterance);
+  try {
+    await TextToSpeech.speak({
+      text: text,
+      lang: 'pt-BR',
+      rate: 0.9,
+      pitch: 1.0,
+      volume: 1.0,
+      category: 'ambient'
+    });
+  } catch (e) {
+    console.error('TTS error:', e);
+  } finally {
+    if (vNum) {
+      const el = document.getElementById(`v-${vNum}`);
+      if (el) el.classList.remove('reading');
+    }
+    isSpeaking = false;
+  }
 };
 
-window.readFullChapter = function() {
-  stopSpeech();
+window.readFullChapter = async function() {
+  await stopSpeech();
   const verses = document.querySelectorAll('.verse');
-  let currentIdx = 0;
+  stopRequested = false;
 
-  function speakNext() {
-    if (currentIdx >= verses.length) return;
-    const v = verses[currentIdx];
+  for (let i = 0; i < verses.length; i++) {
+    if (stopRequested) break;
+    
+    const v = verses[i];
     const text = v.querySelector('.verse-text').textContent;
-    const vNum = v.dataset.v;
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
-    utterance.rate = 0.95;
+    v.classList.add('reading');
+    v.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    utterance.onstart = () => {
-        v.classList.add('reading');
-        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
-    utterance.onend = () => {
-        v.classList.remove('reading');
-        currentIdx++;
-        speakNext();
-    };
-    utterance.onerror = () => stopSpeech();
+    try {
+      await TextToSpeech.speak({
+        text: text,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
+    } catch (e) {
+      break;
+    }
     
-    synth.speak(utterance);
+    v.classList.remove('reading');
   }
-  speakNext();
+  
+  document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
+  isSpeaking = false;
 };
 
 // ===== SEARCH =====
