@@ -17,6 +17,17 @@ function loadFavoritos() {
     }
 }
 
+function saveFavoritos() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        try {
+            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+        } catch (e) {
+            console.error("[BibliaDB] Erro ao salvar favoritos:", e);
+        }
+    }, 500);
+}
+
 export async function initDB() {
     if (bibliaData) return;
     try {
@@ -37,7 +48,10 @@ export async function initDB() {
         
         favoritosCount = Object.keys(favoritos).length;
         isDBReady = true;
-        console.log("[BibliaDB] Banco de dados pronto e carregado.");
+        console.log("[BibliaDB] Banco de dados pronto.");
+        
+        // Aquecer cache em background (não trava o boot)
+        setTimeout(() => getPlanoLeitura(), 1000);
     } catch (e) {
         console.error("[BibliaDB] ERRO CRÍTICO NO INIT:", e);
         // Fallback básico para não travar o app na splash

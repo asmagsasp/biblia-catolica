@@ -284,21 +284,35 @@ function doSearch() {
   if (t.length < 3) { showToast('Digite ao menos 3 caracteres'); return; }
   isNavigating = true;
   showView('searchView');
-  try {
-    const resultados = db.buscar(t);
-    let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} para "${t}"</p></div></div></div>`;
-    if (!resultados.length) h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
-    else resultados.forEach(r => {
-      const hl = r.texto.replace(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
-      h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-              <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-              <div class="search-result-text">${hl}</div>
-          </div>`;
-    });
-    document.getElementById('searchResults').innerHTML = h;
-  } finally {
-    isNavigating = false;
-  }
+  setTimeout(() => {
+    try {
+      const resultados = db.buscar(t);
+      const header = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} para "${t}"</p></div></div></div>`;
+      
+      const container = document.getElementById('searchResults');
+      if (!resultados.length) {
+        container.innerHTML = header + '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
+        isNavigating = false;
+        return;
+      }
+
+      container.innerHTML = header;
+      const items = resultados.map(r => {
+        const hl = r.texto.replace(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
+        return `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+                <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                <div class="search-result-text">${hl}</div>
+            </div>`;
+      });
+      
+      renderInChunks(container, items, 15, () => {
+        isNavigating = false;
+      });
+    } catch (e) {
+      console.error("Search error:", e);
+      isNavigating = false;
+    }
+  }, 50);
 }
 
 document.getElementById('searchResults').addEventListener('click', e => {
@@ -323,27 +337,30 @@ window.showFavorites = function () {
   setTimeout(() => {
     try {
       const d = db.getFavoritos();
-      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
+      const header = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
       
       if (!d.length) {
-        h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p></div>`;
-      } else {
-        d.forEach(r => {
-          if (!r) return;
-          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+        container.innerHTML = header + `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p></div>`;
+        container.dataset.loaded = '1';
+        isNavigating = false;
+        return;
+      }
+
+      container.innerHTML = header;
+      const items = d.map(r => `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
                   <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
                   <div class="search-result-text">${r.texto}</div>
-              </div>`;
-        });
-      }
-      container.innerHTML = h;
-      container.dataset.loaded = '1';
+              </div>`);
+              
+      renderInChunks(container, items, 20, () => {
+        container.dataset.loaded = '1';
+        isNavigating = false;
+      });
     } catch (e) {
       console.error("Favoritos Error:", e);
-    } finally {
       isNavigating = false;
     }
-  }, 30);
+  }, 50);
 };
 
 
@@ -420,13 +437,11 @@ window.showPlan = function () {
       const now = new Date();
       const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-      let h = '';
-      plan.forEach(d => {
-        if (!d) return;
+      const items = plan.map(d => {
         const isToday = d.dia === dayOfYear;
         const done = readingPlanDays[d.dia] || false;
         const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+        return `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
                 <div class="plan-day-num">${d.dia}</div>
                 <div class="plan-day-content">
                     <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Hoje' : `Dia ${d.dia}`}</div>
@@ -435,19 +450,42 @@ window.showPlan = function () {
                 <div class="plan-day-check"><i class="fas fa-check"></i></div>
             </div>`;
       });
-      c.innerHTML = h;
-      c.dataset.loaded = '1';
-      updatePlanProgress();
 
-      const todayEl = document.querySelector('.plan-day.today');
-      if (todayEl) todayEl.scrollIntoView({ block: 'center' });
+      c.innerHTML = '';
+      renderInChunks(c, items, 30, () => {
+        c.dataset.loaded = '1';
+        updatePlanProgress();
+        isNavigating = false;
+        const todayEl = document.querySelector('.plan-day.today');
+        if (todayEl) todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); // Smooth scroll seguro em lista pequena ya renderizada
+      });
     } catch (e) {
       console.error("Plan Error:", e);
-    } finally {
       isNavigating = false;
     }
-  }, 30);
+  }, 50);
 };
+
+// Auxiliar para renderização segmentada (evita travar o browser)
+function renderInChunks(container, items, chunkSize, onComplete) {
+  let index = 0;
+  function nextChunk() {
+    const fragment = document.createDocumentFragment();
+    const limit = Math.min(index + chunkSize, items.length);
+    for (; index < limit; index++) {
+      const div = document.createElement('div');
+      div.innerHTML = items[index];
+      fragment.appendChild(div.firstChild);
+    }
+    container.appendChild(fragment);
+    if (index < items.length) {
+      requestAnimationFrame(nextChunk);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }
+  nextChunk();
+}
 
 document.getElementById('planContainer').addEventListener('click', e => {
   const day = e.target.closest('.plan-day');
