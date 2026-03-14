@@ -1,14 +1,18 @@
-/**
- * BibliaDB - Camada de dados offline da Bíblia Sagrada Católica
- * Carrega o JSON e fornece todas as operações localmente.
- */
-
-let bibliaData = null;
+let isDBReady = false;
 let planCache = null;
 let livrosMap = new Map();
 let totalVersiculosPrecalc = 0;
 let favoritosCount = 0;
-let favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
+let favoritos = {};
+
+function loadFavoritos() {
+    try {
+        favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
+    } catch (e) {
+        favoritos = {};
+    }
+}
+loadFavoritos();
 
 export async function initDB() {
     if (bibliaData) return;
@@ -16,7 +20,7 @@ export async function initDB() {
         const res = await fetch('/data/biblia.json');
         bibliaData = await res.json();
         
-        // Pre-cálculos pesados uma única vez no boot
+        // Indexar livros para busca instantânea O(1)
         bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
         
         totalVersiculosPrecalc = 0;
@@ -25,15 +29,20 @@ export async function initDB() {
         }
         
         favoritosCount = Object.keys(favoritos).length;
+        isDBReady = true;
 
-        console.log(`[BibliaDB] Carregado: ${bibliaData.livros.length} livros e ${totalVersiculosPrecalc} versículos`);
+        console.log(`[BibliaDB] Sistema Pronto: ${totalVersiculosPrecalc} versículos indexados.`);
         
-        // Pós-processamento pesado em background bem depois do boot
-        setTimeout(() => getPlanoLeitura(), 2000);
+        setTimeout(() => {
+            getPlanoLeitura();
+            limparFavoritosOrfaos();
+        }, 3000);
     } catch (e) {
-        console.error("[BibliaDB] Erro ao carregar JSON:", e);
+        console.error("[BibliaDB] Erro Crítico no Banco de Dados:", e);
     }
 }
+
+export function isReady() { return isDBReady; }
 
 export function getLivros() {
     return bibliaData.livros;
@@ -98,46 +107,57 @@ export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 
 export function getFavoritos() {
     const result = [];
-    try {
-        if (!bibliaData || !bibliaData.livros || !bibliaData.versiculos) return [];
-
-        let orphaned = false;
-        for (const key of Object.keys(favoritos)) {
-            try {
-                const parts = key.split('_').map(Number);
-                if (parts.length !== 3) { orphaned = true; delete favoritos[key]; continue; }
-                
-                const [livroId, cap, ver] = parts;
-                const livroInfo = livrosMap.get(livroId);
-                if (!livroInfo) { orphaned = true; delete favoritos[key]; continue; }
-                
-                const keyVs = `${livroId}_${cap}`;
-                const vs = bibliaData.versiculos[keyVs] || [];
-                const v = vs.find(x => x.v === ver);
-                
-                if (v) {
-                    result.push({
-                        id_livro: livroId,
-                        nome_livro: livroInfo.nome_livro,
-                        id_capitulo: cap,
-                        id_versiculo: ver,
-                        texto: v.t
-                    });
-                } else {
-                    orphaned = true;
-                    delete favoritos[key];
-                }
-            } catch (e) {
-                console.error("[BibliaDB] Erro ao processar favorito individual:", key, e);
+    if (!isDBReady) return [];
+    
+    const keys = Object.keys(favoritos);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        try {
+            const parts = key.split('_');
+            if (parts.length !== 3) continue;
+            
+            const livroId = parseInt(parts[0]);
+            const cap = parseInt(parts[1]);
+            const ver = parseInt(parts[2]);
+            
+            const livroInfo = livrosMap.get(livroId);
+            if (!livroInfo) continue;
+            
+            const keyVs = `${livroId}_${cap}`;
+            const vs = bibliaData.versiculos[keyVs] || [];
+            // Otimização: find direto
+            const v = vs.find(x => x.v === ver);
+            
+            if (v) {
+                result.push({
+                    id_livro: livroId,
+                    nome_livro: livroInfo.nome_livro,
+                    id_capitulo: cap,
+                    id_versiculo: ver,
+                    texto: v.t
+                });
             }
-        }
-        if (orphaned) {
-            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-        }
-    } catch (globalError) {
-        console.error("[BibliaDB] Erro fatal em getFavoritos:", globalError);
+        } catch (e) { }
     }
     return result.sort((a, b) => a.id_livro - b.id_livro || a.id_capitulo - b.id_capitulo || a.id_versiculo - b.id_versiculo);
+}
+
+function limparFavoritosOrfaos() {
+    if (!isDBReady) return;
+    let changed = false;
+    for (const key of Object.keys(favoritos)) {
+        const parts = key.split('_').map(Number);
+        const [lid, cap, ver] = parts;
+        const vs = bibliaData.versiculos[`${lid}_${cap}`] || [];
+        if (!vs.find(x => x.v === ver)) {
+            delete favoritos[key];
+            changed = true;
+        }
+    }
+    if (changed) {
+        favoritosCount = Object.keys(favoritos).length;
+        localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+    }
 }
 
 export function getImgVersiculos() {

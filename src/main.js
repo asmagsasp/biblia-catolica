@@ -148,19 +148,25 @@ window.shareHeroWhatsApp = function () {
 
 // ===== OPEN BOOK =====
 function openBook(id, nome, total) {
-  if (isNavigating) return;
-  if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
-  currentBook = { id, nome, total };
-  totalChapters = total;
-  currentChapter = 1;
-  isNavigating = true;
-  showView('chapterView');
-  document.getElementById('chapterTitle').textContent = nome;
-  document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
-  renderChapterSelector();
-  loadVerses();
-  window.scrollTo(0, 0);
-  isNavigating = false;
+  if (isNavigating || !db.isReady()) return;
+  try {
+    isNavigating = true;
+    if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
+    currentBook = { id, nome, total };
+    totalChapters = total;
+    currentChapter = 1;
+    showView('chapterView');
+    document.getElementById('chapterTitle').textContent = nome;
+    document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
+    renderChapterSelector();
+    loadVerses();
+    window.scrollTo(0, 0);
+  } catch (e) {
+    console.error("OpenBook error:", e);
+    goHome();
+  } finally {
+    isNavigating = false;
+  }
 }
 
 function renderChapterSelector() {
@@ -213,21 +219,27 @@ window.navigateChapter = function (d) {
 document.getElementById('versesContainer').addEventListener('click', e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
-    if (isNavigating) return;
-    e.stopPropagation();
-    const result = db.toggleFavorito(
-      parseInt(favBtn.dataset.livro),
-      parseInt(favBtn.dataset.cap),
-      parseInt(favBtn.dataset.ver)
-    );
-    favBtn.classList.toggle('favorited', result === 1);
-    showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
-    
-    // Invalidar cache sem reconstruir tudo
-    const favContainer = document.getElementById('favoritesContainer');
-    if (favContainer) delete favContainer.dataset.loaded;
+    if (isNavigating || !db.isReady()) return;
+    try {
+      isNavigating = true;
+      e.stopPropagation();
+      const result = db.toggleFavorito(
+        parseInt(favBtn.dataset.livro),
+        parseInt(favBtn.dataset.cap),
+        parseInt(favBtn.dataset.ver)
+      );
+      favBtn.classList.toggle('favorited', result === 1);
+      showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
+      
+      const favContainer = document.getElementById('favoritesContainer');
+      if (favContainer) delete favContainer.dataset.loaded;
 
-    updateFavCountOnly();
+      updateFavCountOnly();
+    } catch(err) {
+      console.error("Fav toggle error:", err);
+    } finally {
+      isNavigating = false;
+    }
     return;
   }
   const waBtn = e.target.closest('.wa-btn');
@@ -281,7 +293,7 @@ document.getElementById('searchResults').addEventListener('click', e => {
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
-  if (isNavigating) return;
+  if (isNavigating || !db.isReady()) return;
   showView('favoritesView');
   const container = document.getElementById('favoritesContainer');
   if (container.dataset.loaded === '1') return;
@@ -289,33 +301,30 @@ window.showFavorites = function () {
   isNavigating = true;
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  // Usar double rAF para garantir que o browser mostre o loading antes de travar no JS pesado
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      try {
-        const d = db.getFavoritos();
-        let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
-        
-        if (!d.length) {
-          h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p></div>`;
-        } else {
-          d.forEach(r => {
-            if (!r) return;
-            h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                    <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-                    <div class="search-result-text">${r.texto}</div>
-                </div>`;
-          });
-        }
-        container.innerHTML = h;
-        container.dataset.loaded = '1';
-      } catch (e) {
-        console.error("Favoritos Error:", e);
-      } finally {
-        isNavigating = false;
+  setTimeout(() => {
+    try {
+      const d = db.getFavoritos();
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
+      
+      if (!d.length) {
+        h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p></div>`;
+      } else {
+        d.forEach(r => {
+          if (!r) return;
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                  <div class="search-result-text">${r.texto}</div>
+              </div>`;
+        });
       }
-    });
-  });
+      container.innerHTML = h;
+      container.dataset.loaded = '1';
+    } catch (e) {
+      console.error("Favoritos Error:", e);
+    } finally {
+      isNavigating = false;
+    }
+  }, 30);
 };
 
 
@@ -378,7 +387,7 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 
 // ===== READING PLAN =====
 window.showPlan = function () {
-  if (isNavigating) return;
+  if (isNavigating || !db.isReady()) return;
   showView('planView');
   const c = document.getElementById('planContainer');
   if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
@@ -386,41 +395,39 @@ window.showPlan = function () {
   isNavigating = true;
   c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      try {
-        const plan = db.getPlanoLeitura();
-        const now = new Date();
-        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  setTimeout(() => {
+    try {
+      const plan = db.getPlanoLeitura();
+      const now = new Date();
+      const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-        let h = '';
-        plan.forEach(d => {
-          if (!d) return;
-          const isToday = d.dia === dayOfYear;
-          const done = readingPlanDays[d.dia] || false;
-          const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-          h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
-                  <div class="plan-day-num">${d.dia}</div>
-                  <div class="plan-day-content">
-                      <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Hoje' : `Dia ${d.dia}`}</div>
-                      <div class="plan-day-desc">${leituras}</div>
-                  </div>
-                  <div class="plan-day-check"><i class="fas fa-check"></i></div>
-              </div>`;
-        });
-        c.innerHTML = h;
-        c.dataset.loaded = '1';
-        updatePlanProgress();
+      let h = '';
+      plan.forEach(d => {
+        if (!d) return;
+        const isToday = d.dia === dayOfYear;
+        const done = readingPlanDays[d.dia] || false;
+        const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+                <div class="plan-day-num">${d.dia}</div>
+                <div class="plan-day-content">
+                    <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Hoje' : `Dia ${d.dia}`}</div>
+                    <div class="plan-day-desc">${leituras}</div>
+                </div>
+                <div class="plan-day-check"><i class="fas fa-check"></i></div>
+            </div>`;
+      });
+      c.innerHTML = h;
+      c.dataset.loaded = '1';
+      updatePlanProgress();
 
-        const todayEl = document.querySelector('.plan-day.today');
-        if (todayEl) todayEl.scrollIntoView({ block: 'center' });
-      } catch (e) {
-        console.error("Plan Error:", e);
-      } finally {
-        isNavigating = false;
-      }
-    });
-  });
+      const todayEl = document.querySelector('.plan-day.today');
+      if (todayEl) todayEl.scrollIntoView({ block: 'center' });
+    } catch (e) {
+      console.error("Plan Error:", e);
+    } finally {
+      isNavigating = false;
+    }
+  }, 30);
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {
