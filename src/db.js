@@ -10,14 +10,27 @@ let favoritos = {};
 let saveTimeout = null;
 
 async function loadFavoritos() {
-    try {
-        const { value } = await Preferences.get({ key: 'biblia_favoritos' });
-        favoritos = value ? JSON.parse(value) : {};
-        favoritosCount = Object.keys(favoritos).length;
-    } catch (e) {
-        favoritos = {};
-        favoritosCount = 0;
-    }
+    return new Promise(async (resolve) => {
+        const timeout = setTimeout(() => {
+            console.warn("[BibliaDB] Timeout no carregamento nativo. Usando vazio.");
+            favoritos = {};
+            favoritosCount = 0;
+            resolve();
+        }, 1500);
+
+        try {
+            const { value } = await Preferences.get({ key: 'biblia_favoritos' });
+            favoritos = value ? JSON.parse(value) : {};
+            favoritosCount = Object.keys(favoritos).length;
+        } catch (e) {
+            console.error("[BibliaDB] Erro no carregamento:", e);
+            favoritos = {};
+            favoritosCount = 0;
+        } finally {
+            clearTimeout(timeout);
+            resolve();
+        }
+    });
 }
 
 function saveFavoritos() {

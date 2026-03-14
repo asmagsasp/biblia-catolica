@@ -247,11 +247,14 @@ document.getElementById('versesContainer').addEventListener('click', e => {
         parseInt(favBtn.dataset.ver)
       );
       favBtn.classList.toggle('favorited', result === 1);
-      showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
       
-      const favContainer = document.getElementById('favoritesContainer');
-      if (favContainer) delete favContainer.dataset.loaded;
-      updateFavCountOnly();
+      // Feedback mínimo e assíncrono para não travar a UI
+      requestAnimationFrame(() => {
+        showToast(result ? '❤ Favoritado' : 'Removido');
+        const favContainer = document.getElementById('favoritesContainer');
+        if (favContainer) delete favContainer.dataset.loaded;
+        updateFavCountOnly();
+      });
     } catch (err) {
       console.error("Erro no Favorito:", err);
     }
