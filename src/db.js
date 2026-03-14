@@ -27,8 +27,8 @@ function saveFavoritos() {
 export async function initDB() {
     if (bibliaData) return;
     try {
-        console.log("[BibliaDB] Iniciando fetch...");
-        const res = await fetch('/data/biblia.json');
+        console.log("[BibliaDB] Carregando dados...");
+        const res = await fetch('data/biblia.json'); // Caminho relativo para funcionar no APK
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
         
