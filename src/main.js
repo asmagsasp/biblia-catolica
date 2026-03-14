@@ -13,16 +13,6 @@ let readingPlanDays = {};
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 
-// ===== DEBUGGER =====
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-  console.error(`[AppError] ${msg} at line ${lineNo}`, error);
-  return false;
-};
-
-window.onunhandledrejection = function(event) {
-  showToast(`Erro Assíncrono: ${event.reason}`);
-};
-
 // ===== INIT =====
 async function init() {
   // Restore theme & font

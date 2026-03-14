@@ -12,7 +12,6 @@ let saveTimeout = null;
 async function loadFavoritos() {
     return new Promise(async (resolve) => {
         const timeout = setTimeout(() => {
-            console.warn("[BibliaDB] Timeout no carregamento nativo. Usando vazio.");
             favoritos = {};
             favoritosCount = 0;
             resolve();
@@ -41,7 +40,6 @@ function saveFavoritos() {
                 key: 'biblia_favoritos',
                 value: JSON.stringify(favoritos)
             });
-            console.log("[NativeStorage] Favoritos sincronizados com sucesso.");
         } catch (e) {
             console.error("[NativeStorage] Erro ao sincronizar:", e);
         }
@@ -51,7 +49,6 @@ function saveFavoritos() {
 export async function initDB() {
     if (bibliaData) return;
     try {
-        console.log("[BibliaDB] Carregando dados...");
         const res = await fetch('data/biblia.json'); // Caminho relativo para funcionar no APK
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
@@ -68,7 +65,6 @@ export async function initDB() {
         
         favoritosCount = Object.keys(favoritos).length;
         isDBReady = true;
-        console.log("[BibliaDB] Banco de dados pronto.");
         
         // Aquecer cache em background (não trava o boot)
         setTimeout(() => getPlanoLeitura(), 1000);

@@ -42,12 +42,12 @@ jobs:
       - name: 6️⃣ Copiar pro Android (Capacitor)
         run: npx cap sync android
 
-      - name: 7️⃣ Gerar o APK com Gradle
+      - name: 7️⃣ Gerar o APK de Release 🏗️
         working-directory: ./android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
 
-      - name: 8️⃣ Salvar o APK gerado 📲
+      - name: 8️⃣ Salvar o APK Final (Release) 📲
         uses: actions/upload-artifact@v4
         with:
-          name: Biblia_Catolica_App
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Biblia_Catolica_Release
+          path: android/app/build/outputs/apk/release/*.apk
