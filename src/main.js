@@ -69,12 +69,24 @@ window.toggleFontSize = function () {
 // ===== STATS =====
 function loadStats() {
   const s = db.getStats();
-  document.getElementById('statsBar').innerHTML = `
+  const container = document.getElementById('statsBar');
+  if (!container) return;
+  
+  // Atualização atômica para não travar a UI
+  container.innerHTML = `
         <div class="stat-item"><span class="stat-number">${s.total_livros}</span><span class="stat-label">Livros</span></div>
         <div class="stat-item"><span class="stat-number">${(s.total_versiculos / 1000).toFixed(1)}k</span><span class="stat-label">Versículos</span></div>
         <div class="stat-item"><span class="stat-number">${s.total_imagens}</span><span class="stat-label">Imagens</span></div>
-        <div class="stat-item"><span class="stat-number">${s.total_favoritos}</span><span class="stat-label">Favoritos</span></div>
+        <div class="stat-item"><span class="stat-number" id="statsFavCount">${s.total_favoritos}</span><span class="stat-label">Favoritos</span></div>
     `;
+}
+
+function updateFavCountOnly() {
+  const el = document.getElementById('statsFavCount');
+  if (el) {
+    const s = db.getStats();
+    el.textContent = s.total_favoritos;
+  }
 }
 
 // ===== BOOKS =====
@@ -136,16 +148,19 @@ window.shareHeroWhatsApp = function () {
 
 // ===== OPEN BOOK =====
 function openBook(id, nome, total) {
+  if (isNavigating) return;
   if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
   currentBook = { id, nome, total };
   totalChapters = total;
   currentChapter = 1;
+  isNavigating = true;
   showView('chapterView');
   document.getElementById('chapterTitle').textContent = nome;
   document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
   renderChapterSelector();
   loadVerses();
   window.scrollTo(0, 0);
+  isNavigating = false;
 }
 
 function renderChapterSelector() {
@@ -198,6 +213,7 @@ window.navigateChapter = function (d) {
 document.getElementById('versesContainer').addEventListener('click', e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
+    if (isNavigating) return;
     e.stopPropagation();
     const result = db.toggleFavorito(
       parseInt(favBtn.dataset.livro),
@@ -205,13 +221,13 @@ document.getElementById('versesContainer').addEventListener('click', e => {
       parseInt(favBtn.dataset.ver)
     );
     favBtn.classList.toggle('favorited', result === 1);
-    showToast(result ? '\u2764\uFE0F Adicionado aos favoritos' : 'Removido dos favoritos');
+    showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
     
-    // Invalidar cache da tela de favoritos para forçar atualização no próximo clique
+    // Invalidar cache sem reconstruir tudo
     const favContainer = document.getElementById('favoritesContainer');
     if (favContainer) delete favContainer.dataset.loaded;
 
-    loadStats();
+    updateFavCountOnly();
     return;
   }
   const waBtn = e.target.closest('.wa-btn');

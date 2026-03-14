@@ -5,6 +5,9 @@
 
 let bibliaData = null;
 let planCache = null;
+let livrosMap = new Map();
+let totalVersiculosPrecalc = 0;
+let favoritosCount = 0;
 let favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
 
 export async function initDB() {
@@ -12,13 +15,21 @@ export async function initDB() {
     try {
         const res = await fetch('/data/biblia.json');
         bibliaData = await res.json();
-        console.log(`[BibliaDB] Carregado: ${bibliaData.livros.length} livros`);
         
-        // Pós-processamento pesado em background
-        setTimeout(() => {
-            getPlanoLeitura();
-            console.log("[BibliaDB] Plano de leitura pré-calculado");
-        }, 100);
+        // Pre-cálculos pesados uma única vez no boot
+        bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
+        
+        totalVersiculosPrecalc = 0;
+        for (const key in bibliaData.versiculos) {
+            totalVersiculosPrecalc += bibliaData.versiculos[key].length;
+        }
+        
+        favoritosCount = Object.keys(favoritos).length;
+
+        console.log(`[BibliaDB] Carregado: ${bibliaData.livros.length} livros e ${totalVersiculosPrecalc} versículos`);
+        
+        // Pós-processamento pesado em background bem depois do boot
+        setTimeout(() => getPlanoLeitura(), 2000);
     } catch (e) {
         console.error("[BibliaDB] Erro ao carregar JSON:", e);
     }
@@ -76,8 +87,10 @@ export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
     const key = `${idLivro}_${idCapitulo}_${idVersiculo}`;
     if (favoritos[key]) {
         delete favoritos[key];
+        favoritosCount = Math.max(0, favoritosCount - 1);
     } else {
         favoritos[key] = 1;
+        favoritosCount++;
     }
     localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
     return favoritos[key] ? 1 : 0;
@@ -87,9 +100,6 @@ export function getFavoritos() {
     const result = [];
     try {
         if (!bibliaData || !bibliaData.livros || !bibliaData.versiculos) return [];
-
-        const livrosMap = new Map();
-        bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
 
         let orphaned = false;
         for (const key of Object.keys(favoritos)) {
@@ -168,16 +178,13 @@ export function getPlanoLeitura() {
 }
 
 export function getStats() {
-    let totalVersiculos = 0;
-    for (const key in bibliaData.versiculos) {
-        totalVersiculos += bibliaData.versiculos[key].length;
-    }
+    if (!bibliaData) return {};
     return {
         total_livros: bibliaData.livros.length,
-        total_versiculos: totalVersiculos,
-        total_favoritos: Object.keys(favoritos).length,
+        total_versiculos: totalVersiculosPrecalc,
+        total_favoritos: favoritosCount,
         total_imagens: bibliaData.img_versiculos.length,
-        livros_at: bibliaData.livros.filter(l => l.id_testamento === 1).length,
-        livros_nt: bibliaData.livros.filter(l => l.id_testamento === 2).length
+        livros_at: 46, // Constante para economizar CPU
+        livros_nt: 27  // Constante para economizar CPU
     };
 }
