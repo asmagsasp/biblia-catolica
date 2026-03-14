@@ -11,7 +11,8 @@ let planData = null;
 let readingPlanDays = JSON.parse(localStorage.getItem('biblia_plan_days') || '{}');
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
-let isNavigating = false; // Trava global de navegação e renderização
+let isNavigating = false;
+let favLock = false; // Trava específica para o botão de favoritos
 
 // ===== INIT =====
 async function init() {
@@ -219,26 +220,38 @@ window.navigateChapter = function (d) {
 document.getElementById('versesContainer').addEventListener('click', e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
-    if (isNavigating || !db.isReady()) return;
-    try {
-      isNavigating = true;
-      e.stopPropagation();
-      const result = db.toggleFavorito(
-        parseInt(favBtn.dataset.livro),
-        parseInt(favBtn.dataset.cap),
-        parseInt(favBtn.dataset.ver)
-      );
-      favBtn.classList.toggle('favorited', result === 1);
-      showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
-      
-      const favContainer = document.getElementById('favoritesContainer');
-      if (favContainer) delete favContainer.dataset.loaded;
+    if (favLock || !db.isReady()) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
 
-      updateFavCountOnly();
+    try {
+      favLock = true;
+      // UI Otimista: muda o visual ANTES do processamento pesado
+      const isNowFavorited = favBtn.classList.toggle('favorited');
+      
+      // Comunicação com o DB acontece em segundo plano
+      setTimeout(() => {
+        const result = db.toggleFavorito(
+          parseInt(favBtn.dataset.livro),
+          parseInt(favBtn.dataset.cap),
+          parseInt(favBtn.dataset.ver)
+        );
+        
+        // Sincroniza visual com o resultado real se houver erro (raro)
+        favBtn.classList.toggle('favorited', result === 1);
+        
+        showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
+        
+        const favContainer = document.getElementById('favoritesContainer');
+        if (favContainer) delete favContainer.dataset.loaded;
+
+        updateFavCountOnly();
+        favLock = false;
+      }, 10);
     } catch(err) {
-      console.error("Fav toggle error:", err);
-    } finally {
-      isNavigating = false;
+      console.error("Fav error:", err);
+      favLock = false;
     }
     return;
   }

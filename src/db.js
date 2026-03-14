@@ -4,6 +4,7 @@ let livrosMap = new Map();
 let totalVersiculosPrecalc = 0;
 let favoritosCount = 0;
 let favoritos = {};
+let saveTimeout = null;
 
 function loadFavoritos() {
     try {
@@ -13,6 +14,18 @@ function loadFavoritos() {
     }
 }
 loadFavoritos();
+
+function saveFavoritos() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        try {
+            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+            console.log("[BibliaDB] Favoritos salvos com sucesso.");
+        } catch (e) {
+            console.error("[BibliaDB] Erro ao salvar favoritos:", e);
+        }
+    }, 500); // 500ms de buffer para não fritar o processador do Android
+}
 
 export async function initDB() {
     if (bibliaData) return;
@@ -94,15 +107,18 @@ export function getVersiculoDoDia() {
 
 export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
     const key = `${idLivro}_${idCapitulo}_${idVersiculo}`;
+    const result = !favoritos[key];
+    
     if (favoritos[key]) {
         delete favoritos[key];
         favoritosCount = Math.max(0, favoritosCount - 1);
     } else {
-        favoritos[key] = 1;
+        favoritos[key] = true;
         favoritosCount++;
     }
-    localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-    return favoritos[key] ? 1 : 0;
+    
+    saveFavoritos();
+    return result ? 1 : 0;
 }
 
 export function getFavoritos() {
