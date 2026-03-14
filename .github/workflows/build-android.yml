@@ -33,6 +33,9 @@ jobs:
       - name: 5️⃣ Construir Projeto Web
         run: npm run build
 
+      - name: Configurar Permissão do Gradle
+        run: chmod +x android/gradlew
+
       - name: 6️⃣ Copiar pro Android (Capacitor)
         run: npx cap sync android
 
