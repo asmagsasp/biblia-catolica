@@ -40,18 +40,7 @@ jobs:
           chmod +x android/gradlew
 
       - name: 6️⃣ Copiar pro Android (Capacitor)
-        run: npx cap sync android --verbose > logs.txt 2>&1
-
-      - name: Salvar logs em caso de erro
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs-erro
-          path: logs.txt
-
-      - name: Exibir log no console
-        if: failure()
-        run: cat logs.txt
+        run: npx cap sync android --verbose
 
       - name: 7️⃣ Gerar o APK com Gradle
         working-directory: ./android
