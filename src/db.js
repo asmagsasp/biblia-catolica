@@ -17,11 +17,14 @@ function loadFavoritos() {
 }
 
 function saveFavoritos() {
-    try {
-        localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-    } catch (e) {
-        console.error("[BibliaDB] Erro ao salvar:", e);
-    }
+    // Salvamento assíncrono para nunca travar a UI no Android
+    setTimeout(() => {
+        try {
+            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+        } catch (e) {
+            console.error("[BibliaDB] Falha no salvamento:", e);
+        }
+    }, 10);
 }
 
 export async function initDB() {

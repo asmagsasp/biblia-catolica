@@ -13,6 +13,20 @@ const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isNavigating = false;
 
+// ===== DEBUGGER =====
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+  const err = `Erro: ${msg} (Linha: ${lineNo})`;
+  console.error(err, error);
+  showToast(err);
+  isNavigating = false;
+  return false;
+};
+
+window.onunhandledrejection = function(event) {
+  showToast(`Erro Assíncrono: ${event.reason}`);
+  isNavigating = false;
+};
+
 // ===== INIT =====
 async function init() {
   // Restore theme & font
