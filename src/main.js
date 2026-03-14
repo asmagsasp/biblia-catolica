@@ -205,6 +205,11 @@ document.getElementById('versesContainer').addEventListener('click', e => {
     );
     favBtn.classList.toggle('favorited', result === 1);
     showToast(result ? '\u2764\uFE0F Adicionado aos favoritos' : 'Removido dos favoritos');
+    
+    // Invalidar cache da tela de favoritos para forçar atualização no próximo clique
+    const favContainer = document.getElementById('favoritesContainer');
+    if (favContainer) delete favContainer.dataset.loaded;
+
     loadStats();
     return;
   }
@@ -274,14 +279,7 @@ window.showFavorites = function () {
   }, 10);
 };
 
-// Limpar cache de favoritos quando favoritar algo
-const originalToggleFavorito = db.toggleFavorito;
-db.toggleFavorito = function(...args) {
-  const res = originalToggleFavorito(...args);
-  const container = document.getElementById('favoritesContainer');
-  if (container) delete container.dataset.loaded;
-  return res;
-};
+
 
 document.getElementById('favoritesContainer').addEventListener('click', e => {
   const item = e.target.closest('.search-result-item');
