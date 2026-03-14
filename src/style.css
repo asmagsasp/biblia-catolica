@@ -1252,8 +1252,8 @@ body::before {
 
 @media(max-width:480px) {
     .header {
-        padding: 0 12px;
-        height: 52px
+        padding: max(24px, env(safe-area-inset-top)) 12px 0;
+        height: calc(52px + max(24px, env(safe-area-inset-top)))
     }
 
     .search-container {
