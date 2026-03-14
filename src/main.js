@@ -11,8 +11,7 @@ let planData = null;
 let readingPlanDays = JSON.parse(localStorage.getItem('biblia_plan_days') || '{}');
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
-let isRenderingFavs = false;
-let isRenderingPlan = false;
+let navLock = false; // Trava global de navegação e renderização
 
 // ===== INIT =====
 async function init() {
@@ -146,7 +145,7 @@ function openBook(id, nome, total) {
   document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
   renderChapterSelector();
   loadVerses();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo(0, 0);
 }
 
 function renderChapterSelector() {
@@ -165,7 +164,7 @@ function selectChapter(n) {
   currentChapter = n;
   renderChapterSelector();
   loadVerses();
-  document.getElementById('versesContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.scrollTo(0, 0);
 }
 
 function loadVerses() {
@@ -361,56 +360,49 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 });
 
 // ===== READING PLAN =====
+// ===== READING PLAN =====
 window.showPlan = function () {
-  if (isRenderingPlan) return;
-  try {
-    showView('planView');
-    const c = document.getElementById('planContainer');
-    if (c.dataset.loaded) { updatePlanProgress(); return; }
+  if (navLock) return;
+  showView('planView');
+  const c = document.getElementById('planContainer');
+  if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
 
-    isRenderingPlan = true;
-    c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+  navLock = true;
+  c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-    setTimeout(() => {
-      try {
-        const plan = db.getPlanoLeitura();
-        const now = new Date();
-        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  setTimeout(() => {
+    try {
+      const plan = db.getPlanoLeitura();
+      const now = new Date();
+      const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-        let html = '';
-        plan.forEach(d => {
-          if (!d) return;
-          const isToday = d.dia === dayOfYear;
-          const done = readingPlanDays[d.dia] || false;
-          const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-          html += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
-                  <div class="plan-day-num">${d.dia}</div>
-                  <div class="plan-day-content">
-                      <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
-                      <div class="plan-day-desc">${leituras}</div>
-                  </div>
-                  <div class="plan-day-check"><i class="fas fa-check"></i></div>
-              </div>`;
-        });
-        
-        c.innerHTML = html;
-        c.dataset.loaded = '1';
-        updatePlanProgress();
-        
-        setTimeout(() => {
-          const todayEl = document.querySelector('.plan-day.today');
-          if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-      } catch (err) {
-        console.error("Erro ao carregar plano:", err);
-      } finally {
-        isRenderingPlan = false;
-      }
-    }, 50);
-  } catch (globalErr) {
-    console.error("Erro global showPlan:", globalErr);
-    isRenderingPlan = false;
-  }
+      let h = '';
+      plan.forEach(d => {
+        if (!d) return;
+        const isToday = d.dia === dayOfYear;
+        const done = readingPlanDays[d.dia] || false;
+        const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+                <div class="plan-day-num">${d.dia}</div>
+                <div class="plan-day-content">
+                    <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
+                    <div class="plan-day-desc">${leituras}</div>
+                </div>
+                <div class="plan-day-check"><i class="fas fa-check"></i></div>
+            </div>`;
+      });
+      c.innerHTML = h;
+      c.dataset.loaded = '1';
+      updatePlanProgress();
+
+      const todayEl = document.querySelector('.plan-day.today');
+      if (todayEl) todayEl.scrollIntoView({ block: 'center' });
+    } catch (e) {
+      console.error("Erro Plano:", e);
+    } finally {
+      navLock = false;
+    }
+  }, 50);
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {
@@ -445,9 +437,10 @@ function showView(id) {
 }
 
 window.goHome = function () {
+  navLock = false; // Reset de pânico se necessário
   showView('homeView');
   document.getElementById('searchInput').value = '';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo(0, 0);
 };
 
 // ===== TOAST =====
