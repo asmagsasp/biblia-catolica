@@ -246,6 +246,42 @@ body::before {
     min-height: 100vh
 }
 
+.chapter-view-content {
+    padding: 20px 20px 100px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.chapter-actions-top {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.btn-read-all {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--burgundy-700);
+    color: var(--gold-200);
+    border: 1px solid var(--gold-500);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-read-all:active {
+    transform: scale(0.95);
+}
+
+.btn-read-all i {
+    font-size: 16px;
+    color: var(--gold-500);
+}
 /* Hero */
 .hero {
     padding: 50px 20px 40px;
@@ -582,18 +618,25 @@ body::before {
 
 /* Verses */
 .verse {
-    padding: 12px 8px;
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    border-bottom: 1px solid rgba(212, 168, 83, .05);
+    gap: 15px;
+    padding: 15px;
+    border-radius: 12px;
     transition: var(--transition);
-    border-radius: 8px;
-    cursor: pointer
+    position: relative;
+    border: 1px solid transparent;
 }
 
-.verse:hover {
-    background: rgba(212, 168, 83, .03)
+.verse.reading {
+    background: rgba(188, 153, 90, 0.15);
+    border-color: var(--gold-500);
+    box-shadow: 0 0 15px rgba(188, 153, 90, 0.2);
+    transform: scale(1.01);
+}
+
+.verse.reading .verse-number {
+    color: var(--gold-500);
+    font-weight: 700;
 }
 
 .verse-number {

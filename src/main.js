@@ -12,6 +12,8 @@ let planData = null;
 let readingPlanDays = {};
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
+let synth = window.speechSynthesis;
+let currentUtterance = null;
 
 // ===== INIT =====
 async function init() {
@@ -61,7 +63,13 @@ function setTheme(theme) {
   const icon = document.querySelector('#themeBtn i');
   if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
   localStorage.setItem('biblia_theme', theme);
+  stopSpeech();
 }
+
+window.stopSpeech = function() {
+  if (synth) synth.cancel();
+  document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
+};
 
 window.toggleTheme = function () {
   const cur = document.documentElement.getAttribute('data-theme');
@@ -172,6 +180,7 @@ function openBook(id, nome, total) {
     renderChapterSelector();
     loadVerses();
     window.scrollTo(0, 0);
+    stopSpeech();
   } catch (e) {
     console.error("OpenBook error:", e);
     goHome();
@@ -195,17 +204,25 @@ function selectChapter(n) {
   renderChapterSelector();
   loadVerses();
   window.scrollTo(0, 0);
+  stopSpeech();
 }
 
 function loadVerses() {
   const c = document.getElementById('versesContainer');
   const verses = db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
-    c.innerHTML = verses.map(v => `
-            <div class="verse" data-v="${v.id_versiculo}">
+    c.innerHTML = `
+      <div class="chapter-actions-top">
+        <button class="btn-read-all" onclick="readFullChapter()">
+          <i class="fas fa-volume-up"></i> Ouvir Capítulo
+        </button>
+      </div>
+    ` + verses.map(v => `
+            <div class="verse" data-v="${v.id_versiculo}" id="v-${v.id_versiculo}">
                 <span class="verse-number">${v.id_versiculo}</span>
                 <span class="verse-text">${v.texto}</span>
                 <div class="verse-actions">
+                    <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Ouvir"><i class="fas fa-volume-up"></i></button>
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
@@ -264,7 +281,64 @@ document.getElementById('versesContainer').addEventListener('click', e => {
     showToast('\uD83D\uDCCB Versículo copiado!');
     return;
   }
+  const speakBtn = e.target.closest('.speak-btn');
+  if (speakBtn) {
+    e.stopPropagation();
+    const verseDiv = speakBtn.closest('.verse');
+    const text = speakBtn.dataset.txt;
+    const vNum = verseDiv.dataset.v;
+    speakText(text, vNum);
+    return;
+  }
 });
+
+window.speakText = function(text, vNum = null) {
+  stopSpeech();
+  if (!text) return;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 0.9;
+  
+  if (vNum) {
+    const el = document.getElementById(`v-${vNum}`);
+    utterance.onstart = () => el?.classList.add('reading');
+    utterance.onend = () => el?.classList.remove('reading');
+  }
+  
+  synth.speak(utterance);
+};
+
+window.readFullChapter = function() {
+  stopSpeech();
+  const verses = document.querySelectorAll('.verse');
+  let currentIdx = 0;
+
+  function speakNext() {
+    if (currentIdx >= verses.length) return;
+    const v = verses[currentIdx];
+    const text = v.querySelector('.verse-text').textContent;
+    const vNum = v.dataset.v;
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.95;
+    
+    utterance.onstart = () => {
+        v.classList.add('reading');
+        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    utterance.onend = () => {
+        v.classList.remove('reading');
+        currentIdx++;
+        speakNext();
+    };
+    utterance.onerror = () => stopSpeech();
+    
+    synth.speak(utterance);
+  }
+  speakNext();
+};
 
 // ===== SEARCH =====
 function doSearch() {
@@ -460,6 +534,7 @@ function updatePlanProgress() {
 
 // ===== VIEW MANAGEMENT =====
 function showView(id) {
+  stopSpeech();
   ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView'].forEach(v => {
     const el = document.getElementById(v);
     if(el) el.classList.toggle('hidden', v !== id);
