@@ -9,9 +9,19 @@ let favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
 
 export async function initDB() {
     if (bibliaData) return;
-    const res = await fetch('/data/biblia.json');
-    bibliaData = await res.json();
-    console.log(`[BibliaDB] Carregado: ${bibliaData.livros.length} livros`);
+    try {
+        const res = await fetch('/data/biblia.json');
+        bibliaData = await res.json();
+        console.log(`[BibliaDB] Carregado: ${bibliaData.livros.length} livros`);
+        
+        // Pós-processamento pesado em background
+        setTimeout(() => {
+            getPlanoLeitura();
+            console.log("[BibliaDB] Plano de leitura pré-calculado");
+        }, 100);
+    } catch (e) {
+        console.error("[BibliaDB] Erro ao carregar JSON:", e);
+    }
 }
 
 export function getLivros() {
@@ -126,9 +136,12 @@ export function getImgVersiculos() {
 
 export function getPlanoLeitura() {
     if (planCache) return planCache;
+    if (!bibliaData) return [];
     
     const allChapters = [];
-    for (const livro of bibliaData.livros) {
+    const livros = bibliaData.livros;
+    for (let i = 0; i < livros.length; i++) {
+        const livro = livros[i];
         for (let cap = 1; cap <= livro.total_capitulos; cap++) {
             allChapters.push({
                 id_livro: livro.id_livro,
@@ -137,16 +150,18 @@ export function getPlanoLeitura() {
             });
         }
     }
+    
     const total = allChapters.length;
     const perDay = Math.floor(total / 365);
-    const plano = [];
+    const plano = new Array(365);
+    
     for (let dia = 0; dia < 365; dia++) {
         const start = dia * perDay;
         const end = (dia === 364) ? total : (start + perDay);
-        plano.push({
+        plano[dia] = {
             dia: dia + 1,
             leituras: allChapters.slice(start, end)
-        });
+        };
     }
     planCache = plano;
     return plano;
