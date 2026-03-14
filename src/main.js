@@ -12,14 +12,11 @@ let planData = null;
 let readingPlanDays = {};
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
-let isNavigating = false;
 
 // ===== DEBUGGER =====
 window.onerror = function(msg, url, lineNo, columnNo, error) {
-  const err = `Erro: ${msg} (Linha: ${lineNo})`;
-  console.error(err, error);
-  showToast(err);
-  isNavigating = false;
+  console.error(`[AppError] ${msg} at line ${lineNo}`, error);
+  isNavigating = false; // Emergency reset even if not used
   return false;
 };
 
@@ -175,9 +172,8 @@ window.shareHeroWhatsApp = function () {
 
 // ===== OPEN BOOK =====
 function openBook(id, nome, total) {
-  if (isNavigating || !db.isReady()) return;
+  if (!db.isReady()) return;
   try {
-    isNavigating = true;
     if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
     currentBook = { id, nome, total };
     totalChapters = total;
@@ -191,8 +187,6 @@ function openBook(id, nome, total) {
   } catch (e) {
     console.error("OpenBook error:", e);
     goHome();
-  } finally {
-    isNavigating = false;
   }
 }
 
@@ -262,8 +256,6 @@ document.getElementById('versesContainer').addEventListener('click', e => {
       updateFavCountOnly();
     } catch (err) {
       console.error("Erro no Favorito:", err);
-    } finally {
-      isNavigating = false;
     }
     return;
   }
@@ -326,14 +318,13 @@ document.getElementById('searchResults').addEventListener('click', e => {
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
-  isNavigating = false; // Reset de pânico
   showView('favoritesView');
   const container = document.getElementById('favoritesContainer');
   if (container.dataset.loaded === '1') return;
 
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     try {
       const d = db.getFavoritos();
       let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículos</p></div></div></div>`;
@@ -353,7 +344,7 @@ window.showFavorites = function () {
     } catch (e) {
       console.error("Favoritos Error:", e);
     }
-  }, 10);
+  });
 };
 
 
@@ -416,14 +407,13 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 
 // ===== READING PLAN =====
 window.showPlan = function () {
-  isNavigating = false; // Reset de pânico
   showView('planView');
   const c = document.getElementById('planContainer');
   if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
 
   c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     try {
       const plan = db.getPlanoLeitura();
       const now = new Date();
@@ -452,7 +442,7 @@ window.showPlan = function () {
     } catch (e) {
       console.error("Plan Error:", e);
     }
-  }, 10);
+  });
 };
 
 document.getElementById('planContainer').addEventListener('click', async e => {

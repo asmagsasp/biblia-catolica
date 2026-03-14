@@ -1015,12 +1015,14 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 5px;
     transition: var(--transition);
     padding: 8px 12px;
     -webkit-tap-highlight-color: transparent;
     position: relative;
     flex: 1;
+    font-family: 'Inter', sans-serif;
 }
 
 .bottom-nav-btn * {
