@@ -266,17 +266,34 @@ window.showFavorites = function () {
 
   setTimeout(() => {
     const d = db.getFavoritos();
-    let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
-    if (!d.length) h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
-    else d.forEach(r => {
-      h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-              <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-              <div class="search-result-text">${r.texto}</div>
-          </div>`;
-    });
-    container.innerHTML = h;
-    container.dataset.loaded = '1';
-  }, 10);
+    let hHeader = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
+    
+    if (!d.length) {
+      container.innerHTML = hHeader + `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p><p style="margin-top:6px;font-size:11px">Clique no \u2764\uFE0F para salvar versículos aqui.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = hHeader;
+    let index = 0;
+    const chunkSize = 20;
+
+    function renderFavChunk() {
+      const end = Math.min(index + chunkSize, d.length);
+      let html = '';
+      for (let i = index; i < end; i++) {
+        const r = d[i];
+        html += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                  <div class="search-result-text">${r.texto}</div>
+              </div>`;
+      }
+      container.insertAdjacentHTML('beforeend', html);
+      index = end;
+      if (index < d.length) setTimeout(renderFavChunk, 0);
+      else container.dataset.loaded = '1';
+    }
+    renderFavChunk();
+  }, 100);
 };
 
 
@@ -338,29 +355,43 @@ window.showPlan = function () {
     const now = new Date();
     const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-    let h = '';
-    plan.forEach(d => {
-      const isToday = d.dia === dayOfYear;
-      const done = readingPlanDays[d.dia] || false;
-      const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-      h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
-              <div class="plan-day-num">${d.dia}</div>
-              <div class="plan-day-content">
-                  <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
-                  <div class="plan-day-desc">${leituras}</div>
-              </div>
-              <div class="plan-day-check"><i class="fas fa-check"></i></div>
-          </div>`;
-    });
-    c.innerHTML = h;
-    c.dataset.loaded = '1';
-    updatePlanProgress();
+    c.innerHTML = '';
+    let index = 0;
+    const chunkSize = 30;
 
-    setTimeout(() => {
-      const todayEl = document.querySelector('.plan-day.today');
-      if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  }, 10);
+    function renderPlanChunk() {
+      const end = Math.min(index + chunkSize, plan.length);
+      let html = '';
+      for (let i = index; i < end; i++) {
+        const d = plan[i];
+        const isToday = d.dia === dayOfYear;
+        const done = readingPlanDays[d.dia] || false;
+        const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+        html += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+                <div class="plan-day-num">${d.dia}</div>
+                <div class="plan-day-content">
+                    <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Leitura de Hoje' : `Dia ${d.dia}`}</div>
+                    <div class="plan-day-desc">${leituras}</div>
+                </div>
+                <div class="plan-day-check"><i class="fas fa-check"></i></div>
+            </div>`;
+      }
+      c.insertAdjacentHTML('beforeend', html);
+      index = end;
+      
+      if (index < plan.length) {
+        setTimeout(renderPlanChunk, 0);
+      } else {
+        c.dataset.loaded = '1';
+        updatePlanProgress();
+        setTimeout(() => {
+          const todayEl = document.querySelector('.plan-day.today');
+          if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+    }
+    renderPlanChunk();
+  }, 100);
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {

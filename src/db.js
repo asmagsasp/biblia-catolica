@@ -4,6 +4,7 @@
  */
 
 let bibliaData = null;
+let planCache = null;
 let favoritos = JSON.parse(localStorage.getItem('biblia_favoritos') || '{}');
 
 export async function initDB() {
@@ -74,14 +75,21 @@ export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 
 export function getFavoritos() {
     const result = [];
+    const livrosMap = new Map();
+    bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
+
     for (const key of Object.keys(favoritos)) {
-        const [livro, cap, ver] = key.split('_').map(Number);
-        const livroInfo = bibliaData.livros.find(l => l.id_livro === livro);
-        const vs = bibliaData.versiculos[`${livro}_${cap}`] || [];
+        const [livroId, cap, ver] = key.split('_').map(Number);
+        const livroInfo = livrosMap.get(livroId);
+        if (!livroInfo) continue;
+        
+        const keyVs = `${livroId}_${cap}`;
+        const vs = bibliaData.versiculos[keyVs] || [];
         const v = vs.find(x => x.v === ver);
-        if (livroInfo && v) {
+        
+        if (v) {
             result.push({
-                id_livro: livro,
+                id_livro: livroId,
                 nome_livro: livroInfo.nome_livro,
                 id_capitulo: cap,
                 id_versiculo: ver,
@@ -97,6 +105,8 @@ export function getImgVersiculos() {
 }
 
 export function getPlanoLeitura() {
+    if (planCache) return planCache;
+    
     const allChapters = [];
     for (const livro of bibliaData.livros) {
         for (let cap = 1; cap <= livro.total_capitulos; cap++) {
@@ -108,22 +118,17 @@ export function getPlanoLeitura() {
         }
     }
     const total = allChapters.length;
-    const perDay = Math.max(1, Math.floor(total / 365));
+    const perDay = Math.floor(total / 365);
     const plano = [];
     for (let dia = 0; dia < 365; dia++) {
         const start = dia * perDay;
-        const end = Math.min(start + perDay, total);
-        if (start >= total) break;
+        const end = (dia === 364) ? total : (start + perDay);
         plano.push({
             dia: dia + 1,
             leituras: allChapters.slice(start, end)
         });
     }
-    // Restantes ao ultimo dia
-    const restIdx = 365 * perDay;
-    if (restIdx < total && plano.length) {
-        plano[plano.length - 1].leituras.push(...allChapters.slice(restIdx));
-    }
+    planCache = plano;
     return plano;
 }
 
