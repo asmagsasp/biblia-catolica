@@ -1,3 +1,5 @@
+import { Preferences } from '@capacitor/preferences';
+
 export let isDBReady = false;
 let bibliaData = null;
 let planCache = null;
@@ -7,24 +9,30 @@ let favoritosCount = 0;
 let favoritos = {};
 let saveTimeout = null;
 
-function loadFavoritos() {
+async function loadFavoritos() {
     try {
-        const saved = localStorage.getItem('biblia_favoritos');
-        favoritos = saved ? JSON.parse(saved) : {};
+        const { value } = await Preferences.get({ key: 'biblia_favoritos' });
+        favoritos = value ? JSON.parse(value) : {};
+        favoritosCount = Object.keys(favoritos).length;
     } catch (e) {
         favoritos = {};
+        favoritosCount = 0;
     }
 }
 
 function saveFavoritos() {
-    // Salvamento assíncrono para nunca travar a UI no Android
-    setTimeout(() => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
         try {
-            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+            await Preferences.set({
+                key: 'biblia_favoritos',
+                value: JSON.stringify(favoritos)
+            });
+            console.log("[NativeStorage] Favoritos sincronizados com sucesso.");
         } catch (e) {
-            console.error("[BibliaDB] Falha no salvamento:", e);
+            console.error("[NativeStorage] Erro ao sincronizar:", e);
         }
-    }, 10);
+    }, 100);
 }
 
 export async function initDB() {
@@ -35,7 +43,7 @@ export async function initDB() {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
         
-        loadFavoritos();
+        await loadFavoritos();
         
         // Indexar livros
         bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));

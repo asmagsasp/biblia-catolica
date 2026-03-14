@@ -1,5 +1,6 @@
 import './style.css';
 import * as db from './db.js';
+import { Preferences } from '@capacitor/preferences';
 
 // ===== STATE =====
 let allBooks = [];
@@ -8,7 +9,7 @@ let currentChapter = 1;
 let totalChapters = 0;
 let heroData = null;
 let planData = null;
-let readingPlanDays = JSON.parse(localStorage.getItem('biblia_plan_days') || '{}');
+let readingPlanDays = {};
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isNavigating = false;
@@ -30,12 +31,16 @@ window.onunhandledrejection = function(event) {
 // ===== INIT =====
 async function init() {
   // Restore theme & font
-  const savedTheme = localStorage.getItem('biblia_theme') || 'dark';
-  setTheme(savedTheme);
+  const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
+  setTheme(savedTheme || 'dark');
 
-  const savedFont = localStorage.getItem('biblia_font') || 'normal';
+  const { value: savedFont } = await Preferences.get({ key: 'biblia_font' }) || { value: 'normal' };
   currentFontIdx = fonts.indexOf(savedFont) !== -1 ? fonts.indexOf(savedFont) : 0;
   document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
+
+  // Restore Plan
+  const { value: savedPlan } = await Preferences.get({ key: 'biblia_plan_days' });
+  readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
 
   // Load data
   try {
@@ -75,14 +80,16 @@ function setTheme(theme) {
 
 window.toggleTheme = function () {
   const cur = document.documentElement.getAttribute('data-theme');
-  setTheme(cur === 'dark' ? 'light' : 'dark');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  Preferences.set({ key: 'biblia_theme', value: next });
 };
 
 window.toggleFontSize = function () {
   currentFontIdx = (currentFontIdx + 1) % fonts.length;
   const f = fonts[currentFontIdx];
   document.documentElement.setAttribute('data-font', f);
-  localStorage.setItem('biblia_font', f);
+  Preferences.set({ key: 'biblia_font', value: f });
   showToast('Tamanho da letra ajustado \uD83D\uDD0D');
 };
 
@@ -448,12 +455,17 @@ window.showPlan = function () {
   }, 10);
 };
 
-document.getElementById('planContainer').addEventListener('click', e => {
+document.getElementById('planContainer').addEventListener('click', async e => {
   const day = e.target.closest('.plan-day');
   if (day) {
     const dia = parseInt(day.dataset.dia);
     readingPlanDays[dia] = !readingPlanDays[dia];
-    localStorage.setItem('biblia_plan_days', JSON.stringify(readingPlanDays));
+    
+    await Preferences.set({
+        key: 'biblia_plan_days',
+        value: JSON.stringify(readingPlanDays)
+    });
+    
     day.classList.toggle('completed', readingPlanDays[dia]);
     updatePlanProgress();
     if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! \uD83D\uDE4F');
