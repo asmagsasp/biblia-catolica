@@ -255,6 +255,8 @@ document.getElementById('searchResults').addEventListener('click', e => {
 window.showFavorites = function () {
   showView('favoritesView');
   const container = document.getElementById('favoritesContainer');
+  if (container.dataset.loaded) return;
+
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
@@ -268,7 +270,17 @@ window.showFavorites = function () {
           </div>`;
     });
     container.innerHTML = h;
-  }, 50);
+    container.dataset.loaded = '1';
+  }, 10);
+};
+
+// Limpar cache de favoritos quando favoritar algo
+const originalToggleFavorito = db.toggleFavorito;
+db.toggleFavorito = function(...args) {
+  const res = originalToggleFavorito(...args);
+  const container = document.getElementById('favoritesContainer');
+  if (container) delete container.dataset.loaded;
+  return res;
 };
 
 document.getElementById('favoritesContainer').addEventListener('click', e => {
@@ -350,7 +362,7 @@ window.showPlan = function () {
       const todayEl = document.querySelector('.plan-day.today');
       if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
-  }, 50);
+  }, 10);
 };
 
 document.getElementById('planContainer').addEventListener('click', e => {
@@ -375,11 +387,13 @@ function updatePlanProgress() {
 // ===== VIEW MANAGEMENT =====
 function showView(id) {
   ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView'].forEach(v => {
-    document.getElementById(v).classList.toggle('hidden', v !== id);
+    const el = document.getElementById(v);
+    if(el) el.classList.toggle('hidden', v !== id);
   });
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
   const map = { homeView: 'bnHome', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
+  window.scrollTo(0, 0);
 }
 
 window.goHome = function () {
