@@ -12,7 +12,6 @@ let readingPlanDays = JSON.parse(localStorage.getItem('biblia_plan_days') || '{}
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isNavigating = false;
-let favLock = false; // Trava específica para o botão de favoritos
 
 // ===== INIT =====
 async function init() {
@@ -226,39 +225,18 @@ window.navigateChapter = function (d) {
 document.getElementById('versesContainer').addEventListener('click', e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
-    if (favLock || !db.isReady()) return;
-    
     e.preventDefault();
     e.stopPropagation();
-
-    try {
-      favLock = true;
-      // UI Otimista: muda o visual ANTES do processamento pesado
-      const isNowFavorited = favBtn.classList.toggle('favorited');
-      
-      // Comunicação com o DB acontece em segundo plano
-      setTimeout(() => {
-        const result = db.toggleFavorito(
-          parseInt(favBtn.dataset.livro),
-          parseInt(favBtn.dataset.cap),
-          parseInt(favBtn.dataset.ver)
-        );
-        
-        // Sincroniza visual com o resultado real se houver erro (raro)
-        favBtn.classList.toggle('favorited', result === 1);
-        
-        showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
-        
-        const favContainer = document.getElementById('favoritesContainer');
-        if (favContainer) delete favContainer.dataset.loaded;
-
-        updateFavCountOnly();
-        favLock = false;
-      }, 10);
-    } catch(err) {
-      console.error("Fav error:", err);
-      favLock = false;
-    }
+    const result = db.toggleFavorito(
+      parseInt(favBtn.dataset.livro),
+      parseInt(favBtn.dataset.cap),
+      parseInt(favBtn.dataset.ver)
+    );
+    favBtn.classList.toggle('favorited', result === 1);
+    showToast(result ? '\u2764\uFE0F Nos favoritos' : 'Removido');
+    const favContainer = document.getElementById('favoritesContainer');
+    if (favContainer) delete favContainer.dataset.loaded;
+    updateFavCountOnly();
     return;
   }
   const waBtn = e.target.closest('.wa-btn');
@@ -279,40 +257,34 @@ document.getElementById('versesContainer').addEventListener('click', e => {
 
 // ===== SEARCH =====
 function doSearch() {
-  if (isNavigating) return;
   const t = document.getElementById('searchInput').value.trim();
   if (t.length < 3) { showToast('Digite ao menos 3 caracteres'); return; }
-  isNavigating = true;
+  
   showView('searchView');
+  const container = document.getElementById('searchResults');
+  container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+
   setTimeout(() => {
     try {
       const resultados = db.buscar(t);
-      const header = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} para "${t}"</p></div></div></div>`;
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultados para "${t}"</p></div></div></div>`;
       
-      const container = document.getElementById('searchResults');
       if (!resultados.length) {
-        container.innerHTML = header + '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
-        isNavigating = false;
-        return;
+        h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
+      } else {
+        resultados.forEach(r => {
+          const hl = r.texto.replace(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                  <div class="search-result-text">${hl}</div>
+              </div>`;
+        });
       }
-
-      container.innerHTML = header;
-      const items = resultados.map(r => {
-        const hl = r.texto.replace(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
-        return `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
-                <div class="search-result-text">${hl}</div>
-            </div>`;
-      });
-      
-      renderInChunks(container, items, 15, () => {
-        isNavigating = false;
-      });
+      container.innerHTML = h;
     } catch (e) {
       console.error("Search error:", e);
-      isNavigating = false;
     }
-  }, 50);
+  }, 10);
 }
 
 document.getElementById('searchResults').addEventListener('click', e => {
@@ -326,41 +298,33 @@ document.getElementById('searchResults').addEventListener('click', e => {
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
-  if (isNavigating || !db.isReady()) return;
   showView('favoritesView');
   const container = document.getElementById('favoritesContainer');
   if (container.dataset.loaded === '1') return;
 
-  isNavigating = true;
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
     try {
       const d = db.getFavoritos();
-      const header = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículo${d.length !== 1 ? 's' : ''} salvos</p></div></div></div>`;
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículos</p></div></div></div>`;
       
       if (!d.length) {
-        container.innerHTML = header + `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado ainda.</p></div>`;
-        container.dataset.loaded = '1';
-        isNavigating = false;
-        return;
-      }
-
-      container.innerHTML = header;
-      const items = d.map(r => `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
+        h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado.</p></div>`;
+      } else {
+        d.forEach(r => {
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
                   <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
                   <div class="search-result-text">${r.texto}</div>
-              </div>`);
-              
-      renderInChunks(container, items, 20, () => {
-        container.dataset.loaded = '1';
-        isNavigating = false;
-      });
+              </div>`;
+        });
+      }
+      container.innerHTML = h;
+      container.dataset.loaded = '1';
     } catch (e) {
       console.error("Favoritos Error:", e);
-      isNavigating = false;
     }
-  }, 50);
+  }, 10);
 };
 
 
@@ -423,12 +387,10 @@ document.getElementById('galleryGrid').addEventListener('click', e => {
 
 // ===== READING PLAN =====
 window.showPlan = function () {
-  if (isNavigating || !db.isReady()) return;
   showView('planView');
   const c = document.getElementById('planContainer');
   if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
 
-  isNavigating = true;
   c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
@@ -437,11 +399,12 @@ window.showPlan = function () {
       const now = new Date();
       const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
-      const items = plan.map(d => {
+      let h = '';
+      plan.forEach(d => {
         const isToday = d.dia === dayOfYear;
         const done = readingPlanDays[d.dia] || false;
         const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-        return `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
                 <div class="plan-day-num">${d.dia}</div>
                 <div class="plan-day-content">
                     <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Hoje' : `Dia ${d.dia}`}</div>
@@ -450,42 +413,17 @@ window.showPlan = function () {
                 <div class="plan-day-check"><i class="fas fa-check"></i></div>
             </div>`;
       });
-
-      c.innerHTML = '';
-      renderInChunks(c, items, 30, () => {
-        c.dataset.loaded = '1';
-        updatePlanProgress();
-        isNavigating = false;
-        const todayEl = document.querySelector('.plan-day.today');
-        if (todayEl) todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); // Smooth scroll seguro em lista pequena ya renderizada
-      });
+      c.innerHTML = h;
+      c.dataset.loaded = '1';
+      updatePlanProgress();
+      
+      const todayEl = document.querySelector('.plan-day.today');
+      if (todayEl) todayEl.scrollIntoView({ block: 'center' });
     } catch (e) {
       console.error("Plan Error:", e);
-      isNavigating = false;
     }
-  }, 50);
+  }, 10);
 };
-
-// Auxiliar para renderização segmentada (evita travar o browser)
-function renderInChunks(container, items, chunkSize, onComplete) {
-  let index = 0;
-  function nextChunk() {
-    const fragment = document.createDocumentFragment();
-    const limit = Math.min(index + chunkSize, items.length);
-    for (; index < limit; index++) {
-      const div = document.createElement('div');
-      div.innerHTML = items[index];
-      fragment.appendChild(div.firstChild);
-    }
-    container.appendChild(fragment);
-    if (index < items.length) {
-      requestAnimationFrame(nextChunk);
-    } else if (onComplete) {
-      onComplete();
-    }
-  }
-  nextChunk();
-}
 
 document.getElementById('planContainer').addEventListener('click', e => {
   const day = e.target.closest('.plan-day');

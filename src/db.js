@@ -12,20 +12,16 @@ function loadFavoritos() {
         const saved = localStorage.getItem('biblia_favoritos');
         favoritos = saved ? JSON.parse(saved) : {};
     } catch (e) {
-        console.error("[BibliaDB] Erro ao ler favoritos:", e);
         favoritos = {};
     }
 }
 
 function saveFavoritos() {
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-        try {
-            localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-        } catch (e) {
-            console.error("[BibliaDB] Erro ao salvar favoritos:", e);
-        }
-    }, 500);
+    try {
+        localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
+    } catch (e) {
+        console.error("[BibliaDB] Erro ao salvar:", e);
+    }
 }
 
 export async function initDB() {
@@ -112,8 +108,6 @@ export function getVersiculoDoDia() {
 
 export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
     const key = `${idLivro}_${idCapitulo}_${idVersiculo}`;
-    const result = !favoritos[key];
-    
     if (favoritos[key]) {
         delete favoritos[key];
         favoritosCount = Math.max(0, favoritosCount - 1);
@@ -121,9 +115,8 @@ export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
         favoritos[key] = true;
         favoritosCount++;
     }
-    
     saveFavoritos();
-    return result ? 1 : 0;
+    return favoritos[key] ? 1 : 0;
 }
 
 export function getFavoritos() {
