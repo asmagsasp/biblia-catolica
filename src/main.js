@@ -626,8 +626,8 @@ window.copyPix = function () {
 };
 
 // ===== AI HOMILY =====
-// INSIRA SUA CHAVE DA API AQUI
-const GEMINI_API_KEY = "AIzaSyCtLkYhWRsG8lfaS88adVpR5Bxo1oBwECw"; 
+// A chave agora é lida das variáveis de ambiente (para não vazar no GitHub!)
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ""; 
 
 window.closeHomilyModal = function () {
   document.getElementById('homilyModal').classList.add('hidden');
