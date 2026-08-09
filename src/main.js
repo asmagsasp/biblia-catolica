@@ -68,10 +68,10 @@ function setTheme(theme) {
   stopSpeech();
 }
 
-window.stopSpeech = async function() {
+window.stopSpeech = async function () {
   stopRequested = true;
   isSpeaking = false;
-  try { await TextToSpeech.stop(); } catch(e) {}
+  try { await TextToSpeech.stop(); } catch (e) { }
   document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
 };
 
@@ -95,7 +95,7 @@ function loadStats() {
   const s = db.getStats();
   const container = document.getElementById('statsBar');
   if (!container) return;
-  
+
   // Atualização atômica para não travar a UI
   container.innerHTML = `
         <div class="stat-item"><span class="stat-number">${s.total_livros}</span><span class="stat-label">Livros</span></div>
@@ -216,9 +216,12 @@ function loadVerses() {
   const verses = db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
     c.innerHTML = `
-      <div class="chapter-actions-top">
+      <div class="chapter-actions-top" style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn-read-all" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
+        </button>
+        <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-color: transparent;">
+          <i class="fas fa-sparkles"></i> Homilia do Capítulo
         </button>
       </div>
     ` + verses.map(v => `
@@ -230,6 +233,7 @@ function loadVerses() {
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
+                    <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Reflexão IA" style="color: #60a5fa;"><i class="fas fa-sparkles"></i></button>
                 </div>
             </div>
         `).join('');
@@ -258,7 +262,7 @@ document.getElementById('versesContainer').addEventListener('click', e => {
         parseInt(favBtn.dataset.ver)
       );
       favBtn.classList.toggle('favorited', result === 1);
-      
+
       // Feedback mínimo e assíncrono para não travar a UI
       requestAnimationFrame(() => {
         showToast(result ? '❤ Favoritado' : 'Removido');
@@ -285,6 +289,12 @@ document.getElementById('versesContainer').addEventListener('click', e => {
     showToast('\uD83D\uDCCB Versículo copiado!');
     return;
   }
+  const aiBtn = e.target.closest('.ai-btn');
+  if (aiBtn) {
+    e.stopPropagation();
+    generateHomily(aiBtn.dataset.livro, aiBtn.dataset.cap, aiBtn.dataset.ver, aiBtn.dataset.txt);
+    return;
+  }
   const speakBtn = e.target.closest('.speak-btn');
   if (speakBtn) {
     e.stopPropagation();
@@ -296,18 +306,18 @@ document.getElementById('versesContainer').addEventListener('click', e => {
   }
 });
 
-window.speakText = async function(text, vNum = null) {
+window.speakText = async function (text, vNum = null) {
   await stopSpeech();
   if (!text) return;
-  
+
   isSpeaking = true;
   stopRequested = false;
-  
+
   if (vNum) {
     const el = document.getElementById(`v-${vNum}`);
     if (el) el.classList.add('reading');
   }
-  
+
   try {
     await TextToSpeech.speak({
       text: text,
@@ -328,20 +338,20 @@ window.speakText = async function(text, vNum = null) {
   }
 };
 
-window.readFullChapter = async function() {
+window.readFullChapter = async function () {
   await stopSpeech();
   const verses = document.querySelectorAll('.verse');
   stopRequested = false;
 
   for (let i = 0; i < verses.length; i++) {
     if (stopRequested) break;
-    
+
     const v = verses[i];
     const text = v.querySelector('.verse-text').textContent;
-    
+
     v.classList.add('reading');
     v.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
+
     try {
       await TextToSpeech.speak({
         text: text,
@@ -354,10 +364,10 @@ window.readFullChapter = async function() {
     } catch (e) {
       break;
     }
-    
+
     v.classList.remove('reading');
   }
-  
+
   document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
   isSpeaking = false;
 };
@@ -366,7 +376,7 @@ window.readFullChapter = async function() {
 function doSearch() {
   const t = document.getElementById('searchInput').value.trim();
   if (t.length < 3) { showToast('Digite ao menos 3 caracteres'); return; }
-  
+
   showView('searchView');
   const container = document.getElementById('searchResults');
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
@@ -375,7 +385,7 @@ function doSearch() {
     try {
       const resultados = db.buscar(t);
       let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultados para "${t}"</p></div></div></div>`;
-      
+
       if (!resultados.length) {
         h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
       } else {
@@ -415,7 +425,7 @@ window.showFavorites = function () {
     try {
       const d = db.getFavoritos();
       let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículos</p></div></div></div>`;
-      
+
       if (!d.length) {
         h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado.</p></div>`;
       } else {
@@ -450,7 +460,7 @@ window.showGallery = function () {
   showView('galleryView');
   const g = document.getElementById('galleryGrid');
   if (g.dataset.loaded) return;
-  
+
   g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:100px"><div class="loading-spinner"></div></div>';
 
   setTimeout(() => {
@@ -521,7 +531,7 @@ window.showPlan = function () {
       c.innerHTML = h;
       c.dataset.loaded = '1';
       updatePlanProgress();
-      
+
       const todayEl = document.querySelector('.plan-day.today');
       if (todayEl) todayEl.scrollIntoView({ block: 'center' });
     } catch (e) {
@@ -535,12 +545,12 @@ document.getElementById('planContainer').addEventListener('click', async e => {
   if (day) {
     const dia = parseInt(day.dataset.dia);
     readingPlanDays[dia] = !readingPlanDays[dia];
-    
+
     await Preferences.set({
-        key: 'biblia_plan_days',
-        value: JSON.stringify(readingPlanDays)
+      key: 'biblia_plan_days',
+      value: JSON.stringify(readingPlanDays)
     });
-    
+
     day.classList.toggle('completed', readingPlanDays[dia]);
     updatePlanProgress();
     if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! \uD83D\uDE4F');
@@ -559,7 +569,7 @@ function showView(id) {
   stopSpeech();
   ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView'].forEach(v => {
     const el = document.getElementById(v);
-    if(el) el.classList.toggle('hidden', v !== id);
+    if (el) el.classList.toggle('hidden', v !== id);
   });
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
   const map = { homeView: 'bnHome', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
@@ -580,3 +590,164 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// ===== DONATE MODAL =====
+window.showDonateModal = function () {
+  document.getElementById('donateModal').classList.remove('hidden');
+};
+
+window.closeDonateModal = function () {
+  document.getElementById('donateModal').classList.add('hidden');
+};
+
+window.copyPix = function () {
+  const pixKey = document.getElementById('pixKey').innerText;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(pixKey).then(() => {
+      showToast('Chave Pix copiada com sucesso!');
+    }).catch(err => {
+      console.error('Erro ao copiar chave Pix', err);
+      showToast('Erro ao copiar. Tente manualmente.');
+    });
+  } else {
+    // Fallback
+    const textArea = document.createElement("textarea");
+    textArea.value = pixKey;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      showToast('Chave Pix copiada com sucesso!');
+    } catch (err) {
+      showToast('Erro ao copiar. Tente manualmente.');
+    }
+    document.body.removeChild(textArea);
+  }
+};
+
+// ===== AI HOMILY =====
+// INSIRA SUA CHAVE DA API AQUI
+const GEMINI_API_KEY = "AIzaSyCtLkYhWRsG8lfaS88adVpR5Bxo1oBwECw"; 
+
+window.closeHomilyModal = function () {
+  document.getElementById('homilyModal').classList.add('hidden');
+};
+
+window.generateHomilyForChapter = function () {
+  const verses = db.getVersiculos(currentBook.id, currentChapter);
+  const text = verses.map(v => v.texto).join(" ");
+  // Trim to avoid extremely large context, though Gemini handles large contexts well
+  const truncatedText = text.length > 5000 ? text.substring(0, 5000) + "..." : text;
+  generateHomily(currentBook.nome, currentChapter, "completo", truncatedText);
+};
+
+window.generateHomily = async function (bookName, chapter, verse, text) {
+  const modal = document.getElementById('homilyModal');
+  const title = document.getElementById('homilyTitle');
+  const ref = document.getElementById('homilyReference');
+  const excerpt = document.getElementById('homilyTextExcerpt');
+  const body = document.getElementById('homilyBody');
+  const speakBtn = document.getElementById('homilySpeakBtn');
+
+  modal.classList.remove('hidden');
+  ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
+  excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
+  speakBtn.classList.add('hidden');
+  speakBtn.removeAttribute('data-homily');
+
+  if (GEMINI_API_KEY === "COLE_SUA_CHAVE_AQUI" || !GEMINI_API_KEY) {
+    body.innerHTML = `
+      <div style="text-align:center; padding: 20px;">
+        <i class="fas fa-exclamation-triangle" style="font-size:30px; color:var(--gold-400); margin-bottom:10px;"></i>
+        <p>A inteligência artificial ainda não foi configurada.</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:10px;">
+          Para ativar as homilias, você precisa obter uma Chave de API gratuita no <a href="https://aistudio.google.com/" target="_blank" style="color:#60a5fa;">Google AI Studio</a> e colá-la na variável GEMINI_API_KEY no final do arquivo src/main.js.
+        </p>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div style="text-align: center; padding: 30px;">
+        <div class="loading-spinner" style="border-color: rgba(59,130,246,0.3); border-top-color: #3b82f6; width: 40px; height: 40px; margin: 0 auto 15px;"></div>
+        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando a homilia...</p>
+    </div>
+  `;
+
+  try {
+    const prompt = `Aja como um padre católico acolhedor, sábio e com profunda bagagem teológica. 
+Faça uma bela homilia ou reflexão devocional (máximo de 3 ou 4 parágrafos curtos) baseada nesta passagem: 
+${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
+
+Concentre-se em trazer conforto, esperança e um ensinamento prático para a vida diária do fiel moderno, baseado no Magistério da Igreja. Destaque palavras importantes com *negrito* ou **negrito**. Termine com uma bênção curta.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, topP: 0.95 }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Detalhes da API:", errorText);
+      throw new Error(`Código ${response.status}. A Chave pode ser inválida. Detalhes: ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let homily = data.candidates[0].content.parts[0].text;
+
+    // Parse simple markdown to HTML (bold and paragraphs)
+    const formattedHomily = homily
+      .split('\n\n')
+      .map(p => `<p style="margin-bottom: 12px;">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`)
+      .join('');
+
+    body.innerHTML = formattedHomily;
+
+    // Setup speak button
+    speakBtn.dataset.homily = homily.replace(/\*/g, ''); // Text to speak (no asterisks)
+    speakBtn.classList.remove('hidden');
+
+  } catch (err) {
+    console.error("Erro ao gerar homilia:", err);
+    body.innerHTML = `
+      <div style="text-align:center; padding: 20px;">
+        <i class="fas fa-times-circle" style="font-size:30px; color:#ef4444; margin-bottom:10px;"></i>
+        <p>Desculpe, ocorreu um erro ao se comunicar com a IA.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:10px; word-break: break-all; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+          <strong>Erro técnico:</strong><br> ${err.message}
+        </p>
+      </div>`;
+  }
+};
+
+window.speakHomily = function () {
+  const btn = document.getElementById('homilySpeakBtn');
+  const textToSpeak = btn.dataset.homily;
+  if (textToSpeak) {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      window.Capacitor.Plugins.TextToSpeech.speak({
+        text: textToSpeak,
+        lang: 'pt-BR',
+        rate: 1.0,
+        pitch: 1.0,
+        category: 'ambient'
+      }).catch(e => {
+        console.error("Erro TTS:", e);
+        showToast("Erro ao ler homilia.");
+      });
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.lang = 'pt-BR';
+      window.speechSynthesis.speak(utterance);
+    } else {
+      showToast("Seu dispositivo não suporta leitura em voz alta.");
+    }
+  }
+};
