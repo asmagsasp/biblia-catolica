@@ -31,9 +31,9 @@ jobs:
         run: npm install
 
       - name: 5️⃣ Construir Projeto Web
-        run: npm run build
-        env:
-          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+        run: |
+          echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY }}" > .env
+          npm run build
 
       - name: Configurar Permissão do Gradle
         run: |
