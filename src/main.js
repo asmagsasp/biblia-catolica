@@ -46,10 +46,10 @@ async function init() {
   }
 
   // Load UI
-  allBooks = db.getLivros() || [];
+  allBooks = await db.getLivros() || [];
   renderBooks(allBooks);
-  loadVersiculoDoDia();
-  loadStats();
+  await loadVersiculoDoDia();
+  await loadStats();
 
   // Events
   document.getElementById('searchInput').addEventListener('keydown', e => {
@@ -91,8 +91,8 @@ window.toggleFontSize = function () {
 };
 
 // ===== STATS =====
-function loadStats() {
-  const s = db.getStats();
+async function loadStats() {
+  const s = await db.getStats();
   const container = document.getElementById('statsBar');
   if (!container) return;
 
@@ -105,10 +105,10 @@ function loadStats() {
     `;
 }
 
-function updateFavCountOnly() {
+async function updateFavCountOnly() {
   const el = document.getElementById('statsFavCount');
   if (el) {
-    const s = db.getStats();
+    const s = await db.getStats();
     el.textContent = s.total_favoritos;
   }
 }
@@ -152,8 +152,8 @@ window.filterTestamento = function (id, btn) {
 };
 
 // ===== VERSICULO DO DIA =====
-function loadVersiculoDoDia() {
-  heroData = db.getVersiculoDoDia();
+async function loadVersiculoDoDia() {
+  heroData = await db.getVersiculoDoDia();
   if (heroData) {
     document.getElementById('heroText').textContent = `\u201C${heroData.texto}\u201D`;
     document.getElementById('heroRef').textContent = `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`;
@@ -171,7 +171,7 @@ window.shareHeroWhatsApp = function () {
 };
 
 // ===== OPEN BOOK =====
-function openBook(id, nome, total) {
+async function openBook(id, nome, total) {
   if (!db.isReady()) return;
   try {
     if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
@@ -182,7 +182,7 @@ function openBook(id, nome, total) {
     document.getElementById('chapterTitle').textContent = nome;
     document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
     renderChapterSelector();
-    loadVerses();
+    await loadVerses();
     window.scrollTo(0, 0);
     stopSpeech();
   } catch (e) {
@@ -198,22 +198,22 @@ function renderChapterSelector() {
 }
 
 // Event delegation para capitulos
-document.getElementById('chaptersSelector').addEventListener('click', e => {
+document.getElementById('chaptersSelector').addEventListener('click', async e => {
   const btn = e.target.closest('.chapter-btn');
-  if (btn) selectChapter(parseInt(btn.dataset.cap));
+  if (btn) await selectChapter(parseInt(btn.dataset.cap));
 });
 
-function selectChapter(n) {
+async function selectChapter(n) {
   currentChapter = n;
   renderChapterSelector();
-  loadVerses();
+  await loadVerses();
   window.scrollTo(0, 0);
   stopSpeech();
 }
 
-function loadVerses() {
+async function loadVerses() {
   const c = document.getElementById('versesContainer');
-  const verses = db.getVersiculos(currentBook.id, currentChapter);
+  const verses = await db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
     c.innerHTML = `
       <div class="chapter-actions-top" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -250,13 +250,13 @@ window.navigateChapter = function (d) {
 };
 
 // Event delegation para ações de versículos
-document.getElementById('versesContainer').addEventListener('click', e => {
+document.getElementById('versesContainer').addEventListener('click', async e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
     e.preventDefault();
     e.stopPropagation();
     try {
-      const result = db.toggleFavorito(
+      const result = await db.toggleFavorito(
         parseInt(favBtn.dataset.livro),
         parseInt(favBtn.dataset.cap),
         parseInt(favBtn.dataset.ver)
@@ -264,11 +264,11 @@ document.getElementById('versesContainer').addEventListener('click', e => {
       favBtn.classList.toggle('favorited', result === 1);
 
       // Feedback mínimo e assíncrono para não travar a UI
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         showToast(result ? '❤ Favoritado' : 'Removido');
         const favContainer = document.getElementById('favoritesContainer');
         if (favContainer) delete favContainer.dataset.loaded;
-        updateFavCountOnly();
+        await updateFavCountOnly();
       });
     } catch (err) {
       console.error("Erro no Favorito:", err);
@@ -381,9 +381,9 @@ function doSearch() {
   const container = document.getElementById('searchResults');
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      const resultados = db.buscar(t);
+      const resultados = await db.buscar(t);
       let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultados para "${t}"</p></div></div></div>`;
 
       if (!resultados.length) {
@@ -421,9 +421,9 @@ window.showFavorites = function () {
 
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
     try {
-      const d = db.getFavoritos();
+      const d = await db.getFavoritos();
       let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículos</p></div></div></div>`;
 
       if (!d.length) {
@@ -463,9 +463,9 @@ window.showGallery = function () {
 
   g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:100px"><div class="loading-spinner"></div></div>';
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      const imgs = db.getImgVersiculos();
+      const imgs = await db.getImgVersiculos();
       let h = '';
       imgs.forEach(img => {
         h += `
@@ -508,9 +508,9 @@ window.showPlan = function () {
 
   c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
     try {
-      const plan = db.getPlanoLeitura();
+      const plan = await db.getPlanoLeitura();
       const now = new Date();
       const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
 
@@ -633,8 +633,8 @@ window.closeHomilyModal = function () {
   document.getElementById('homilyModal').classList.add('hidden');
 };
 
-window.generateHomilyForChapter = function () {
-  const verses = db.getVersiculos(currentBook.id, currentChapter);
+window.generateHomilyForChapter = async function () {
+  const verses = await db.getVersiculos(currentBook.id, currentChapter);
   const text = verses.map(v => v.texto).join(" ");
   // Trim to avoid extremely large context, though Gemini handles large contexts well
   const truncatedText = text.length > 5000 ? text.substring(0, 5000) + "..." : text;

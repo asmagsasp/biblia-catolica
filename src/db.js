@@ -1,6 +1,7 @@
 import { Preferences } from '@capacitor/preferences';
 
 export let isDBReady = false;
+let useBackend = false;
 let bibliaData = null;
 let planCache = null;
 let livrosMap = new Map();
@@ -9,7 +10,7 @@ let favoritosCount = 0;
 let favoritos = {};
 let saveTimeout = null;
 
-async function loadFavoritos() {
+async function loadFavoritosLocal() {
     return new Promise(async (resolve) => {
         const timeout = setTimeout(() => {
             favoritos = {};
@@ -22,7 +23,7 @@ async function loadFavoritos() {
             favoritos = value ? JSON.parse(value) : {};
             favoritosCount = Object.keys(favoritos).length;
         } catch (e) {
-            console.error("[BibliaDB] Erro no carregamento:", e);
+            console.error("[BibliaDB] Erro no carregamento de favoritos locais:", e);
             favoritos = {};
             favoritosCount = 0;
         } finally {
@@ -32,7 +33,7 @@ async function loadFavoritos() {
     });
 }
 
-function saveFavoritos() {
+function saveFavoritosLocal() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
         try {
@@ -41,21 +42,35 @@ function saveFavoritos() {
                 value: JSON.stringify(favoritos)
             });
         } catch (e) {
-            console.error("[NativeStorage] Erro ao sincronizar:", e);
+            console.error("[NativeStorage] Erro ao sincronizar favoritos locais:", e);
         }
     }, 100);
 }
 
 export async function initDB() {
-    if (bibliaData) return;
     try {
-        const res = await fetch('data/biblia.json'); // Caminho relativo para funcionar no APK
+        // Tentar conectar ao backend em /api/stats
+        const checkRes = await fetch('/api/stats', { cache: 'no-cache' });
+        if (checkRes.ok) {
+            useBackend = true;
+            isDBReady = true;
+            console.log('[BibliaDB] Conectado ao servidor Backend SQLite (/api)!');
+            await loadFavoritosLocal();
+            return;
+        }
+    } catch (err) {
+        console.warn('[BibliaDB] Backend não acessível, usando banco local JSON (Fallback):', err);
+    }
+
+    // Fallback local se o backend não estiver disponível (ex: app offline)
+    useBackend = false;
+    try {
+        const res = await fetch('data/biblia.json');
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
         
-        await loadFavoritos();
+        await loadFavoritosLocal();
         
-        // Indexar livros
         bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
         
         totalVersiculosPrecalc = 0;
@@ -65,12 +80,8 @@ export async function initDB() {
         
         favoritosCount = Object.keys(favoritos).length;
         isDBReady = true;
-        
-        // Aquecer cache em background (não trava o boot)
-        setTimeout(() => getPlanoLeitura(), 1000);
     } catch (e) {
-        console.error("[BibliaDB] ERRO CRÍTICO NO INIT:", e);
-        // Fallback básico para não travar o app na splash
+        console.error("[BibliaDB] ERRO CRÍTICO NO INIT LOCAL:", e);
         bibliaData = { livros: [], versiculos: {}, img_versiculos: [] };
         isDBReady = true;
     }
@@ -78,11 +89,37 @@ export async function initDB() {
 
 export function isReady() { return isDBReady; }
 
-export function getLivros() {
-    return bibliaData.livros;
+export async function getLivros() {
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/livros');
+            if (res.ok) return await res.json();
+        } catch (err) {
+            console.warn('[BibliaDB] Falha no backend getLivros, usando local:', err);
+        }
+    }
+    return bibliaData ? bibliaData.livros : [];
 }
 
-export function getVersiculos(idLivro, idCapitulo) {
+export async function getVersiculos(idLivro, idCapitulo) {
+    if (useBackend) {
+        try {
+            const res = await fetch(`/api/livros/${idLivro}/capitulos/${idCapitulo}/versiculos`);
+            if (res.ok) {
+                const backendVs = await res.json();
+                // Mesclar favoritos locais caso o backend não tenha dados específicos de favoritos do usuario
+                return backendVs.map(v => ({
+                    id_versiculo: v.id_versiculo,
+                    texto: v.texto,
+                    favorito: v.favorito || (favoritos[`${idLivro}_${idCapitulo}_${v.id_versiculo}`] ? 1 : 0)
+                }));
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha no backend getVersiculos, usando local:', err);
+        }
+    }
+
+    if (!bibliaData) return [];
     const key = `${idLivro}_${idCapitulo}`;
     const vs = bibliaData.versiculos[key] || [];
     return vs.map(v => ({
@@ -92,8 +129,19 @@ export function getVersiculos(idLivro, idCapitulo) {
     }));
 }
 
-export function buscar(termo) {
+export async function buscar(termo) {
     if (!termo || termo.length < 3) return [];
+
+    if (useBackend) {
+        try {
+            const res = await fetch(`/api/busca?q=${encodeURIComponent(termo)}`);
+            if (res.ok) return await res.json();
+        } catch (err) {
+            console.warn('[BibliaDB] Falha na busca backend, usando local:', err);
+        }
+    }
+
+    if (!bibliaData) return [];
     const lower = termo.toLowerCase();
     const resultados = [];
 
@@ -118,31 +166,70 @@ export function buscar(termo) {
     return resultados;
 }
 
-export function getVersiculoDoDia() {
+export async function getVersiculoDoDia() {
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/versiculo-do-dia');
+            if (res.ok) {
+                const v = await res.json();
+                if (v) return v;
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha versiculo-do-dia backend, usando local:', err);
+        }
+    }
+
+    if (!bibliaData || !bibliaData.img_versiculos || !bibliaData.img_versiculos.length) return null;
     const imgs = bibliaData.img_versiculos;
-    if (!imgs.length) return null;
     const today = new Date();
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
     return imgs[dayOfYear % imgs.length];
 }
 
-export function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
+export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
     const key = `${idLivro}_${idCapitulo}_${idVersiculo}`;
+    let isFav = 0;
+
     if (favoritos[key]) {
         delete favoritos[key];
         favoritosCount = Math.max(0, favoritosCount - 1);
+        isFav = 0;
     } else {
         favoritos[key] = true;
         favoritosCount++;
+        isFav = 1;
     }
-    saveFavoritos();
-    return favoritos[key] ? 1 : 0;
+    saveFavoritosLocal();
+
+    if (useBackend) {
+        try {
+            await fetch('/api/favoritos/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idLivro, idCapitulo, idVersiculo })
+            });
+        } catch (err) {
+            console.warn('[BibliaDB] Sincronização de favorito no backend falhou:', err);
+        }
+    }
+
+    return isFav;
 }
 
-export function getFavoritos() {
+export async function getFavoritos() {
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/favoritos');
+            if (res.ok) {
+                const backendFavs = await res.json();
+                if (backendFavs && backendFavs.length > 0) return backendFavs;
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha getFavoritos backend, usando local:', err);
+        }
+    }
+
     const result = [];
-    if (!isDBReady) return [];
-    
     const keys = Object.keys(favoritos);
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
@@ -154,12 +241,13 @@ export function getFavoritos() {
             const cap = parseInt(parts[1]);
             const ver = parseInt(parts[2]);
             
-            const livroInfo = livrosMap.get(livroId);
+            let livroInfo = livrosMap.get(livroId);
+            if (!livroInfo && bibliaData) {
+                livroInfo = bibliaData.livros.find(l => l.id_livro === livroId);
+            }
             if (!livroInfo) continue;
             
-            const keyVs = `${livroId}_${cap}`;
-            const vs = bibliaData.versiculos[keyVs] || [];
-            // Otimização: find direto
+            let vs = bibliaData ? (bibliaData.versiculos[`${livroId}_${cap}`] || []) : [];
             const v = vs.find(x => x.v === ver);
             
             if (v) {
@@ -176,34 +264,37 @@ export function getFavoritos() {
     return result.sort((a, b) => a.id_livro - b.id_livro || a.id_capitulo - b.id_capitulo || a.id_versiculo - b.id_versiculo);
 }
 
-function limparFavoritosOrfaos() {
-    if (!isDBReady) return;
-    let changed = false;
-    for (const key of Object.keys(favoritos)) {
-        const parts = key.split('_').map(Number);
-        const [lid, cap, ver] = parts;
-        const vs = bibliaData.versiculos[`${lid}_${cap}`] || [];
-        if (!vs.find(x => x.v === ver)) {
-            delete favoritos[key];
-            changed = true;
+export async function getImgVersiculos() {
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/img-versiculos');
+            if (res.ok) return await res.json();
+        } catch (err) {
+            console.warn('[BibliaDB] Falha getImgVersiculos backend, usando local:', err);
         }
     }
-    if (changed) {
-        favoritosCount = Object.keys(favoritos).length;
-        localStorage.setItem('biblia_favoritos', JSON.stringify(favoritos));
-    }
+    return bibliaData ? bibliaData.img_versiculos : [];
 }
 
-export function getImgVersiculos() {
-    return bibliaData.img_versiculos;
-}
-
-export function getPlanoLeitura() {
+export async function getPlanoLeitura() {
     if (planCache) return planCache;
-    if (!bibliaData) return [];
+
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/plano-leitura');
+            if (res.ok) {
+                planCache = await res.json();
+                return planCache;
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha getPlanoLeitura backend, usando local:', err);
+        }
+    }
+
+    const livros = await getLivros();
+    if (!livros || !livros.length) return [];
     
     const allChapters = [];
-    const livros = bibliaData.livros;
     for (let i = 0; i < livros.length; i++) {
         const livro = livros[i];
         for (let cap = 1; cap <= livro.total_capitulos; cap++) {
@@ -231,14 +322,22 @@ export function getPlanoLeitura() {
     return plano;
 }
 
-export function getStats() {
-    if (!bibliaData) return {};
+export async function getStats() {
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/stats');
+            if (res.ok) return await res.json();
+        } catch (err) {
+            console.warn('[BibliaDB] Falha getStats backend, usando local:', err);
+        }
+    }
+
     return {
-        total_livros: bibliaData.livros.length,
+        total_livros: bibliaData ? bibliaData.livros.length : 0,
         total_versiculos: totalVersiculosPrecalc,
         total_favoritos: favoritosCount,
-        total_imagens: bibliaData.img_versiculos.length,
-        livros_at: 46, // Constante para economizar CPU
-        livros_nt: 27  // Constante para economizar CPU
+        total_imagens: bibliaData ? bibliaData.img_versiculos.length : 0,
+        livros_at: 46,
+        livros_nt: 27
     };
 }

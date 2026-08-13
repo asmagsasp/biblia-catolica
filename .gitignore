@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Databases & local build binaries
+server/data/*.db
+*.zip
+*.apk
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
