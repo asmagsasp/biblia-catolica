@@ -681,23 +681,7 @@ ${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
 
 Concentre-se em trazer conforto, esperança e um ensinamento prático para a vida diária do fiel moderno, baseado no Magistério da Igreja. Destaque palavras importantes com *negrito* ou **negrito**. Termine com uma bênção curta.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, topP: 0.95 }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Detalhes da API:", errorText);
-      throw new Error(`Código ${response.status}. A Chave pode ser inválida. Detalhes: ${errorText}`);
-    }
-
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
+    const data = await callGeminiAPIWithFallback(prompt);
 
     let homily = data.candidates[0].content.parts[0].text;
 
@@ -725,6 +709,68 @@ Concentre-se em trazer conforto, esperança e um ensinamento prático para a vid
       </div>`;
   }
 };
+
+async function callGeminiAPIWithFallback(prompt) {
+  const models = ['gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-pro-latest'];
+  let lastError = null;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s max timeout per request
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 600 }
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            return data;
+          }
+        }
+
+        const errorText = await response.text();
+        console.warn(`Erro no modelo ${model} (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
+
+        if (response.status === 400 || response.status === 403) {
+          throw new Error("A sua Chave de API do Gemini é inválida ou expirou. Por favor, verifique a chave no Google AI Studio.");
+        }
+
+        lastError = new Error(`Código ${response.status}: Servidor do Gemini indisponível.`);
+        
+        if (response.status === 503 || response.status === 429 || response.status >= 500) {
+          await new Promise(res => setTimeout(res, 500 * (attempt + 1)));
+          continue;
+        }
+        break;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err;
+        if (err.name === 'AbortError') {
+          console.warn(`Modelo ${model} demorou mais de 6s e foi cancelado (timeout). Alternando modelo...`);
+          lastError = new Error("Tempo de resposta esgotado. Tentando modelo mais rápido...");
+        } else if (err.message.includes('inválida')) {
+          throw err;
+        }
+      }
+    }
+  }
+
+  if (lastError && !lastError.message.includes('inválida')) {
+    throw new Error("Os servidores do Gemini estão enfrentando alta demanda no momento (sobrecarga temporária). Por favor, tente novamente em alguns instantes.");
+  }
+  throw lastError;
+}
 
 window.speakHomily = function () {
   const btn = document.getElementById('homilySpeakBtn');
