@@ -636,9 +636,7 @@ window.closeHomilyModal = function () {
 window.generateHomilyForChapter = async function () {
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
   const text = verses.map(v => v.texto).join(" ");
-  // Trim to avoid extremely large context, though Gemini handles large contexts well
-  const truncatedText = text.length > 5000 ? text.substring(0, 5000) + "..." : text;
-  generateHomily(currentBook.nome, currentChapter, "completo", truncatedText);
+  generateHomily(currentBook.nome, currentChapter, "completo", text);
 };
 
 window.generateHomily = async function (bookName, chapter, verse, text) {
@@ -717,7 +715,7 @@ async function callGeminiAPIWithFallback(prompt) {
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s max timeout per request
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per request for complete generation
 
       try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
@@ -726,7 +724,7 @@ async function callGeminiAPIWithFallback(prompt) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 600 }
+            generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 2048 }
           })
         });
 
@@ -757,7 +755,7 @@ async function callGeminiAPIWithFallback(prompt) {
         clearTimeout(timeoutId);
         lastError = err;
         if (err.name === 'AbortError') {
-          console.warn(`Modelo ${model} demorou mais de 6s e foi cancelado (timeout). Alternando modelo...`);
+          console.warn(`Modelo ${model} demorou mais de 12s e foi cancelado (timeout). Alternando modelo...`);
           lastError = new Error("Tempo de resposta esgotado. Tentando modelo mais rápido...");
         } else if (err.message.includes('inválida')) {
           throw err;
