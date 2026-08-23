@@ -207,24 +207,32 @@
   </div>
 
   <!-- DONATE MODAL -->
-  <div id="donateModal" class="donate-modal-overlay hidden">
+  <div id="donateModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="donateTitle">
     <div class="donate-modal-content">
-      <button class="donate-close-btn" onclick="closeDonateModal()"><i class="fas fa-times"></i></button>
+      <button class="donate-close-btn" onclick="closeDonateModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
       <div class="donate-header">
         <div class="donate-icon-container pulse-animation">
           <i class="fas fa-hand-holding-heart donate-icon"></i>
         </div>
-        <h2>Apoie este Projeto</h2>
+        <h2 id="donateTitle">Apoie este Projeto</h2>
         <p>Sua doação ajuda a manter o app no ar e sem anúncios.</p>
       </div>
       <div class="donate-body">
-        <div class="pix-container">
+        <div class="pix-container" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
           <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" alt="Pix" class="pix-logo">
           <p class="pix-instruction">Chave Pix (E-mail):</p>
-          <div class="pix-key-box">
-            <span id="pixKey">minhabibliacatolica1@gmail.com</span>
-            <button class="pix-copy-btn" onclick="copyPix()"><i class="far fa-copy"></i> Copiar</button>
+          <div class="pix-key-box" onclick="copyPix()" title="Toque para copiar a chave Pix" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
+            <span id="pixKey" class="pix-key-text" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">minhabibliacatolica1@gmail.com</span>
+            <button id="pixCopyBtn" class="pix-copy-btn" onclick="event.stopPropagation(); copyPix()" type="button" aria-label="Copiar chave Pix">
+              <i class="far fa-copy"></i> <span>Copiar</span>
+            </button>
           </div>
+          <p class="pix-tip"><i class="fas fa-info-circle"></i> Toque na chave ou no botão para copiar</p>
+        </div>
+        <div class="donate-actions">
+          <button class="donate-already-btn" onclick="markAsDonated()">
+            <i class="fas fa-check-circle"></i> Já fiz minha doação
+          </button>
         </div>
       </div>
     </div>

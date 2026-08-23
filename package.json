@@ -12,15 +12,16 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "vite": "^8.0.0"
+    "concurrently": "^8.2.2",
+    "vite": "^5.4.14"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "^8.0.0",
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
+    "@capacitor/clipboard": "^8.0.1",
     "@capacitor/core": "^8.2.0",
     "@capacitor/preferences": "^8.0.1",
-    "concurrently": "^10.0.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

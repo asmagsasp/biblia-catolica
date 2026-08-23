@@ -1,6 +1,61 @@
 import './style.css';
 import * as db from './db.js';
 import { Preferences } from '@capacitor/preferences';
+import { Clipboard } from '@capacitor/clipboard';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+
+// ===== CLIPBOARD UTILITY =====
+export async function copyToClipboard(text) {
+  if (!text) return false;
+
+  // 1. Try Capacitor Native Clipboard (Android / iOS)
+  try {
+    if (Clipboard && typeof Clipboard.write === 'function') {
+      await Clipboard.write({ string: text });
+      return true;
+    }
+  } catch (e) {
+    console.warn("Capacitor clipboard failed, tentando fallback:", e);
+  }
+
+  // 2. Try modern Web Clipboard API
+  if (navigator?.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      console.warn("navigator.clipboard.writeText failed, tentando fallback DOM:", e);
+    }
+  }
+
+  // 3. Fallback: DOM execCommand for WebViews, older browsers or restricted contexts
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.contain = "strict";
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "-9999px";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+
+    const range = document.createRange();
+    range.selectNodeContents(textArea);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    textArea.setSelectionRange(0, 999999);
+
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    if (successful) return true;
+  } catch (err) {
+    console.error("DOM fallback execCommand copy failed:", err);
+  }
+
+  return false;
+}
 
 // ===== STATE =====
 let allBooks = [];
@@ -10,7 +65,6 @@ let totalChapters = 0;
 let heroData = null;
 let planData = null;
 let readingPlanDays = {};
-import { TextToSpeech } from '@capacitor-community/text-to-speech';
 
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
@@ -19,6 +73,9 @@ let stopRequested = false;
 
 // ===== INIT =====
 async function init() {
+  // Inicia timer de doação
+  checkAndStartDonateTimer();
+
   // Restore theme & font
   const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
   setTheme(savedTheme || 'dark');
@@ -154,19 +211,44 @@ window.filterTestamento = function (id, btn) {
 // ===== VERSICULO DO DIA =====
 async function loadVersiculoDoDia() {
   heroData = await db.getVersiculoDoDia();
-  if (heroData) {
-    document.getElementById('heroText').textContent = `\u201C${heroData.texto}\u201D`;
-    document.getElementById('heroRef').textContent = `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`;
-    if (heroData.oracao) document.getElementById('heroOracao').textContent = `\u2014 ${heroData.oracao}`;
+  if (heroData && heroData.texto) {
+    const nomeLivro = heroData.nome_livro || 'Salmos';
+    const cap = heroData.id_capitulo || 23;
+    const ver = heroData.id_versiculo || 1;
+    const ref = heroData.referencia || `${nomeLivro} ${cap},${ver}`;
+
+    document.getElementById('heroText').textContent = `“${heroData.texto.trim()}”`;
+    document.getElementById('heroRef').textContent = ref;
+    const oracaoEl = document.getElementById('heroOracao');
+    if (oracaoEl) {
+      if (heroData.oracao) {
+        oracaoEl.textContent = `— ${heroData.oracao}`;
+        oracaoEl.style.display = 'block';
+      } else {
+        oracaoEl.textContent = '';
+        oracaoEl.style.display = 'none';
+      }
+    }
   } else {
-    document.getElementById('heroText').textContent = '\u201CNo princípio, Deus criou o céu e a terra.\u201D';
-    document.getElementById('heroRef').textContent = 'Gênesis 1,1';
+    document.getElementById('heroText').textContent = '“O Senhor é o meu pastor; nada me faltará.”';
+    document.getElementById('heroRef').textContent = 'Salmos 23,1';
+    const oracaoEl = document.getElementById('heroOracao');
+    if (oracaoEl) oracaoEl.textContent = '— Senhor, conduzi os meus passos e dai-me a paz de descansar em Teus braços.';
   }
 }
 
 window.shareHeroWhatsApp = function () {
-  if (!heroData) return;
-  const txt = `\u201C${heroData.texto}\u201D\n\n\u2014 ${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}\n\n_Bíblia Sagrada Católica_`;
+  if (!heroData || !heroData.texto) return;
+  const nomeLivro = heroData.nome_livro || 'Salmos';
+  const cap = heroData.id_capitulo || 23;
+  const ver = heroData.id_versiculo || 1;
+  const ref = heroData.referencia || `${nomeLivro} ${cap},${ver}`;
+
+  let txt = `“${heroData.texto.trim()}”\n\n— ${ref}`;
+  if (heroData.oracao) {
+    txt += `\n\n_${heroData.oracao}_`;
+  }
+  txt += `\n\n*Bíblia Sagrada Católica*`;
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 };
 
@@ -285,8 +367,14 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   const copyBtn = e.target.closest('.copy-btn');
   if (copyBtn) {
     e.stopPropagation();
-    navigator.clipboard.writeText(`"${copyBtn.dataset.txt}" \u2014 ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`);
-    showToast('\uD83D\uDCCB Versículo copiado!');
+    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
+    copyToClipboard(verseText).then(ok => {
+      if (ok) {
+        showToast('📋 Versículo copiado!');
+      } else {
+        showToast('Erro ao copiar versículo');
+      }
+    });
     return;
   }
   const aiBtn = e.target.closest('.ai-btn');
@@ -591,37 +679,114 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ===== DONATE MODAL =====
+// ===== DONATE MODAL & RECURRING REMINDER =====
+let donateInterval = null;
+const DONATE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos
+
+async function checkAndStartDonateTimer() {
+  try {
+    const res = await Preferences.get({ key: 'biblia_already_donated' });
+    const alreadyDonated = res && (res.value === 'true' || res.value === true);
+    if (alreadyDonated) {
+      console.log('[Donate] Usuário já marcou como doado. Timer desativado.');
+      return;
+    }
+
+    if (donateInterval) clearInterval(donateInterval);
+    console.log('[Donate] Timer de apoio ativado: abrirá a cada 2 minutos.');
+
+    donateInterval = setInterval(async () => {
+      try {
+        const check = await Preferences.get({ key: 'biblia_already_donated' });
+        if (check && (check.value === 'true' || check.value === true)) {
+          if (donateInterval) clearInterval(donateInterval);
+          return;
+        }
+
+        const modal = document.getElementById('donateModal');
+        const homilyModal = document.getElementById('homilyModal');
+        const homilyVisible = homilyModal && !homilyModal.classList.contains('hidden');
+
+        if (modal && modal.classList.contains('hidden') && !homilyVisible) {
+          console.log('[Donate] 2 minutos decorridos. Exibindo modal de apoio.');
+          showDonateModal();
+        }
+      } catch (err) {
+        console.error('[Donate] Erro no ciclo do timer:', err);
+      }
+    }, DONATE_INTERVAL_MS);
+  } catch (err) {
+    console.error("[Donate] Erro ao verificar timer de doação:", err);
+  }
+}
+
 window.showDonateModal = function () {
-  document.getElementById('donateModal').classList.remove('hidden');
+  const modal = document.getElementById('donateModal');
+  if (modal) modal.classList.remove('hidden');
 };
 
 window.closeDonateModal = function () {
-  document.getElementById('donateModal').classList.add('hidden');
+  const modal = document.getElementById('donateModal');
+  if (modal) modal.classList.add('hidden');
 };
 
-window.copyPix = function () {
-  const pixKey = document.getElementById('pixKey').innerText;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(pixKey).then(() => {
-      showToast('Chave Pix copiada com sucesso!');
-    }).catch(err => {
-      console.error('Erro ao copiar chave Pix', err);
-      showToast('Erro ao copiar. Tente manualmente.');
-    });
-  } else {
-    // Fallback
-    const textArea = document.createElement("textarea");
-    textArea.value = pixKey;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      showToast('Chave Pix copiada com sucesso!');
-    } catch (err) {
-      showToast('Erro ao copiar. Tente manualmente.');
+window.markAsDonated = async function () {
+  try {
+    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+    if (donateInterval) {
+      clearInterval(donateInterval);
+      donateInterval = null;
     }
-    document.body.removeChild(textArea);
+    closeDonateModal();
+    showToast('🙏 Deus abençoe sua generosidade! Muito obrigado por apoiar o projeto.');
+  } catch (err) {
+    console.error("[Donate] Erro ao salvar status de doação:", err);
+    closeDonateModal();
+  }
+};
+
+window.resetDonateStatus = async function () {
+  try {
+    await Preferences.remove({ key: 'biblia_already_donated' });
+    checkAndStartDonateTimer();
+    showToast('Status de doação reiniciado (2 min).');
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+window.copyPix = async function () {
+  const pixKeyEl = document.getElementById('pixKey');
+  const pixKey = pixKeyEl ? (pixKeyEl.innerText || pixKeyEl.textContent || '').trim() : 'minhabibliacatolica1@gmail.com';
+  
+  const success = await copyToClipboard(pixKey);
+  const copyBtn = document.getElementById('pixCopyBtn');
+
+  if (success) {
+    showToast('Chave Pix copiada com sucesso!');
+    if (copyBtn) {
+      const originalHtml = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> <span>Copiado!</span>';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.innerHTML = originalHtml;
+        copyBtn.classList.remove('copied');
+      }, 2500);
+    }
+  } else {
+    // If all clipboard methods fail, automatically select the text for easy manual copy
+    if (pixKeyEl) {
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(pixKeyEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) {
+        console.warn("Could not select text range:", e);
+      }
+    }
+    showToast('Chave selecionada! Copie manualmente.');
   }
 };
 

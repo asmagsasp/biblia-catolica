@@ -1510,11 +1510,12 @@ body::before {
     border-radius: 16px;
     padding: 20px;
     border: 1px dashed var(--gold-600);
+    text-align: center;
 }
 
 .pix-logo {
     width: 80px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
 }
 
@@ -1522,6 +1523,7 @@ body::before {
     font-size: 13px;
     color: var(--text-secondary);
     margin-bottom: 12px;
+    font-weight: 500;
 }
 
 .pix-key-box {
@@ -1530,36 +1532,113 @@ body::before {
     justify-content: space-between;
     background: var(--bg-primary);
     border-radius: 12px;
-    padding: 10px 15px;
+    padding: 10px 14px;
     gap: 10px;
-    border: 1px solid rgba(212, 168, 83, 0.2);
+    border: 1px solid rgba(212, 168, 83, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: all !important;
+    -webkit-user-select: all !important;
 }
 
-.pix-key-box span {
+.pix-key-box:hover {
+    border-color: var(--gold-400);
+    box-shadow: 0 0 15px rgba(212, 168, 83, 0.2);
+    transform: translateY(-1px);
+}
+
+.pix-key-box:active {
+    transform: scale(0.99);
+}
+
+.pix-key-box .pix-key-text {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13.5px;
     color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     letter-spacing: 0.5px;
+    user-select: all !important;
+    -webkit-user-select: all !important;
+    -moz-user-select: all !important;
+    -ms-user-select: all !important;
+    cursor: copy;
 }
 
 .pix-copy-btn {
     background: var(--gold-500);
     color: var(--burgundy-900);
     border: none;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: 8px;
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
-    transition: transform 0.1s;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.pix-copy-btn:hover {
+    background: var(--gold-400);
+    box-shadow: 0 2px 8px rgba(212, 168, 83, 0.4);
 }
 
 .pix-copy-btn:active {
     transform: scale(0.95);
+}
+
+.pix-copy-btn.copied {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4) !important;
+}
+
+.pix-tip {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.donate-actions {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.donate-already-btn {
+    background: rgba(212, 168, 83, 0.1);
+    color: var(--gold-300);
+    border: 1px solid rgba(212, 168, 83, 0.3);
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.donate-already-btn:hover {
+    background: rgba(212, 168, 83, 0.2);
+    border-color: var(--gold-400);
+    color: var(--gold-200);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 168, 83, 0.15);
+}
+
+.donate-already-btn:active {
+    transform: scale(0.98);
 }
