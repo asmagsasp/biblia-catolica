@@ -118,10 +118,23 @@ export function getDevotionalHomily(bookName, chapter, verse, text) {
     `<p style="margin-bottom: 12px; font-style: italic; color: var(--gold-300);">Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, desça sobre você, sua família e ilumine seus caminhos hoje e sempre. Amém.</p>`
   ];
 
+  const cleanInsight = themeInsight.replace(/<[^>]*>?/gm, '');
+
+  const textToSpeak = [
+    `Queridos irmãos e irmãs em Cristo.`,
+    `Ao meditarmos na Sagrada Escritura em ${reference}, a Palavra de Deus ${cleanInsight}`,
+    `O Senhor nos ensina que a fé católica não é apenas uma teoria distante, mas uma experiência viva e transformadora. No silêncio do coração, Deus nos chama a sermos sal da terra e luz do mundo, testemunhando a esperança que nunca decepciona mesmo em tempos desafiadores.`,
+    `Como aplicar esta Palavra no seu dia a dia:`,
+    `Primeiro: ${practicalAdvice[0]}`,
+    `Segundo: ${practicalAdvice[1]}`,
+    `Terceiro: ${practicalAdvice[2]}`,
+    `Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, desça sobre você, sua família e ilumine seus caminhos hoje e sempre. Amém.`
+  ].join('\n\n');
+
   return {
     reference,
     textExcerpt: cleanText,
     html: paragraphs.join(''),
-    textToSpeak: `Queridos irmãos e irmãs em Cristo. Ao meditarmos na Sagrada Escritura em ${reference}. ${cleanText}. Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, esteja com você e sua família hoje e sempre. Amém.`
+    textToSpeak
   };
 }

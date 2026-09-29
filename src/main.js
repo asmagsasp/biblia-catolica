@@ -1101,6 +1101,7 @@ function updateSpeakBtnState(speaking) {
 }
 
 function stopHomilyAudio() {
+  isHomilySpeaking = false;
   if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
     try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
   }
@@ -1138,12 +1139,42 @@ window.speakHomily = function () {
     });
   } else if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'pt-BR';
-    utterance.rate = 0.95;
-    utterance.onend = () => updateSpeakBtnState(false);
-    utterance.onerror = () => updateSpeakBtnState(false);
-    window.speechSynthesis.speak(utterance);
+
+    // Divide em sentenças para pronúncia clara e contínua
+    const sentences = textToSpeak
+      .split(/(?<=[.?!:])\s+|\n+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    let index = 0;
+    function speakNextSentence() {
+      if (!isHomilySpeaking || index >= sentences.length) {
+        updateSpeakBtnState(false);
+        return;
+      }
+
+      const sentence = sentences[index++];
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+
+      utterance.onend = () => {
+        if (isHomilySpeaking) {
+          speakNextSentence();
+        }
+      };
+
+      utterance.onerror = (e) => {
+        console.warn("SpeechSynthesis error:", e);
+        if (isHomilySpeaking) {
+          speakNextSentence();
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    speakNextSentence();
   } else {
     updateSpeakBtnState(false);
     showToast("Seu dispositivo não suporta leitura em voz alta.");
