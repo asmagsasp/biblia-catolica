@@ -1,5 +1,6 @@
 import './style.css';
 import * as db from './db.js';
+import { getDevotionalHomily } from './homilyService.js';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -790,13 +791,106 @@ window.copyPix = async function () {
   }
 };
 
-// ===== AI HOMILY =====
-// A chave agora é lida das variáveis de ambiente (para não vazar no GitHub!)
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || ""; 
+// ===== AI HOMILY & DEVOTIONAL REFLECTION =====
+function getGeminiApiKey() {
+  const localKey = (localStorage.getItem('biblia_gemini_api_key') || '').trim();
+  if (localKey) return localKey;
+  const envKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
+  if (envKey && envKey !== 'COLE_SUA_CHAVE_AQUI') return envKey;
+  return '';
+}
 
 window.closeHomilyModal = function () {
-  document.getElementById('homilyModal').classList.add('hidden');
+  const modal = document.getElementById('homilyModal');
+  if (modal) modal.classList.add('hidden');
+  stopHomilyAudio();
 };
+
+window.saveGeminiApiKeyFromInput = function () {
+  const input = document.getElementById('geminiApiKeyInput');
+  if (!input) return;
+  const key = input.value.trim();
+  if (!key) {
+    showToast('Por favor, informe uma chave de API válida.');
+    return;
+  }
+  localStorage.setItem('biblia_gemini_api_key', key);
+  showToast('Chave de API salva com sucesso!');
+  if (window._lastHomilyParams) {
+    const { bookName, chapter, verse, text } = window._lastHomilyParams;
+    generateDynamicGeminiHomily(bookName, chapter, verse, text);
+  }
+};
+
+window.clearGeminiApiKey = function () {
+  localStorage.removeItem('biblia_gemini_api_key');
+  showToast('Chave removida.');
+  if (window._lastHomilyParams) {
+    const { bookName, chapter, verse, text } = window._lastHomilyParams;
+    generateHomily(bookName, chapter, verse, text);
+  }
+};
+
+function renderApiKeySetupUI(container, isInvalid = false) {
+  const currentKey = getGeminiApiKey();
+  const maskedKey = currentKey ? currentKey.substring(0, 6) + '...' + currentKey.substring(Math.max(0, currentKey.length - 4)) : '';
+
+  container.innerHTML = `
+    <div style="text-align:center; padding: 10px 5px;">
+      <div style="width: 50px; height: 50px; border-radius: 50%; background: ${isInvalid ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+        <i class="fas ${isInvalid ? 'fa-key' : 'fa-sparkles'}" style="font-size:22px; color: ${isInvalid ? '#ef4444' : '#60a5fa'};"></i>
+      </div>
+      
+      <h3 style="font-size: 16px; margin-bottom: 8px; color: var(--text-primary); font-family: 'Cinzel', serif;">
+        ${isInvalid ? 'Chave de API Inválida ou Expirada' : 'Configurar Chave do Gemini IA'}
+      </h3>
+      
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.5;">
+        ${isInvalid 
+          ? 'A chave do Google Gemini foi recusada ou expirou. Você pode obter uma nova chave gratuita no Google AI Studio e colá-la abaixo:' 
+          : 'Para gerar reflexões em tempo real diretamente pelos servidores do Google Gemini, você pode obter uma chave gratuita no Google AI Studio:'}
+      </p>
+
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" 
+         style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #60a5fa; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 9px 15px; border-radius: 8px; text-decoration: none; margin-bottom: 18px; font-weight: 500;">
+        <i class="fas fa-external-link-alt"></i> Obter Chave Gratuita no Google AI Studio
+      </a>
+
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 14px; text-align: left;">
+        <label for="geminiApiKeyInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
+          Cole sua Chave de API (começa com AIza...):
+        </label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="geminiApiKeyInput" placeholder="AIzaSy..." 
+                 value="${currentKey || ''}"
+                 style="flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 12px; border-radius: 8px; font-size: 13px; font-family: monospace; outline: none; width: 100%;">
+        </div>
+        ${maskedKey ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Chave configurada: <code>${maskedKey}</code></div>` : ''}
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+        <button onclick="saveGeminiApiKeyFromInput()" 
+                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-save"></i> Salvar e Gerar
+        </button>
+        <button onclick="if(window._lastHomilyParams){ const p = window._lastHomilyParams; generateHomily(p.bookName, p.chapter, p.verse, p.text); }"
+                style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer;">
+          Voltar para Reflexão Padrão
+        </button>
+        ${currentKey ? `
+          <button onclick="clearGeminiApiKey()" title="Remover chave salva no navegador"
+                  style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer;">
+            <i class="fas fa-trash-alt"></i> Limpar
+          </button>
+        ` : ''}
+      </div>
+
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 14px;">
+        🔒 Sua chave é salva no armazenamento local do seu dispositivo ou pode ser definida via <code>.env</code> (<code>VITE_GEMINI_API_KEY</code>).
+      </p>
+    </div>
+  `;
+}
 
 window.generateHomilyForChapter = async function () {
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
@@ -804,7 +898,8 @@ window.generateHomilyForChapter = async function () {
   generateHomily(currentBook.nome, currentChapter, "completo", text);
 };
 
-window.generateHomily = async function (bookName, chapter, verse, text) {
+// Gera a homilia devocional nativa católica imediatamente (igual ao the-bible-app)
+window.generateHomily = function (bookName, chapter, verse, text) {
   const modal = document.getElementById('homilyModal');
   const title = document.getElementById('homilyTitle');
   const ref = document.getElementById('homilyReference');
@@ -812,28 +907,53 @@ window.generateHomily = async function (bookName, chapter, verse, text) {
   const body = document.getElementById('homilyBody');
   const speakBtn = document.getElementById('homilySpeakBtn');
 
+  window._lastHomilyParams = { bookName, chapter, verse, text };
+
   modal.classList.remove('hidden');
   ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
-  speakBtn.classList.add('hidden');
-  speakBtn.removeAttribute('data-homily');
 
-  if (GEMINI_API_KEY === "COLE_SUA_CHAVE_AQUI" || !GEMINI_API_KEY) {
-    body.innerHTML = `
-      <div style="text-align:center; padding: 20px;">
-        <i class="fas fa-exclamation-triangle" style="font-size:30px; color:var(--gold-400); margin-bottom:10px;"></i>
-        <p>A inteligência artificial ainda não foi configurada.</p>
-        <p style="font-size:13px; color:var(--text-muted); margin-top:10px;">
-          Para ativar as homilias, você precisa obter uma Chave de API gratuita no <a href="https://aistudio.google.com/" target="_blank" style="color:#60a5fa;">Google AI Studio</a> e colá-la na variável GEMINI_API_KEY no final do arquivo src/main.js.
-        </p>
-      </div>`;
+  // 1. Gera reflexão católica instantânea através do motor devocional nativo
+  const devotional = getDevotionalHomily(bookName, chapter, verse, text);
+  
+  body.innerHTML = `
+    ${devotional.html}
+    <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+      </span>
+      <button onclick="triggerGeminiHomily()" 
+              style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-sparkles"></i> Gerar com IA Gemini
+      </button>
+    </div>
+  `;
+
+  // 2. Prepara botão de áudio
+  speakBtn.dataset.homily = devotional.textToSpeak;
+  speakBtn.classList.remove('hidden');
+  updateSpeakBtnState(false);
+};
+
+window.triggerGeminiHomily = function () {
+  if (!window._lastHomilyParams) return;
+  const { bookName, chapter, verse, text } = window._lastHomilyParams;
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    renderApiKeySetupUI(document.getElementById('homilyBody'), false);
     return;
   }
+  generateDynamicGeminiHomily(bookName, chapter, verse, text);
+};
+
+window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
+  const body = document.getElementById('homilyBody');
+  const speakBtn = document.getElementById('homilySpeakBtn');
 
   body.innerHTML = `
     <div style="text-align: center; padding: 30px;">
         <div class="loading-spinner" style="border-color: rgba(59,130,246,0.3); border-top-color: #3b82f6; width: 40px; height: 40px; margin: 0 auto 15px;"></div>
-        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando a homilia...</p>
+        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando a homilia personalizada...</p>
     </div>
   `;
 
@@ -842,48 +962,78 @@ window.generateHomily = async function (bookName, chapter, verse, text) {
 Faça uma bela homilia ou reflexão devocional (máximo de 3 ou 4 parágrafos curtos) baseada nesta passagem: 
 ${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
 
-Concentre-se em trazer conforto, esperança e um ensinamento prático para a vida diária do fiel moderno, baseado no Magistério da Igreja. Destaque palavras importantes com *negrito* ou **negrito**. Termine com uma bênção curta.`;
+Concentre-se em trazer conforto, esperança e um ensinamento prático para a vida diária do fiel moderno, baseado no Magistério da Igreja Católica. Destaque palavras importantes com *negrito* ou **negrito**. Termine com uma bênção curta.`;
 
     const data = await callGeminiAPIWithFallback(prompt);
-
     let homily = data.candidates[0].content.parts[0].text;
 
-    // Parse simple markdown to HTML (bold and paragraphs)
     const formattedHomily = homily
       .split('\n\n')
       .map(p => `<p style="margin-bottom: 12px;">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`)
       .join('');
 
-    body.innerHTML = formattedHomily;
+    body.innerHTML = `
+      ${formattedHomily}
+      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <span style="font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 5px;">
+          <i class="fas fa-sparkles"></i> Gerado com Google Gemini IA
+        </span>
+        <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
+                style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
+          <i class="fas fa-cog"></i> Configurar Chave
+        </button>
+      </div>
+    `;
 
-    // Setup speak button
-    speakBtn.dataset.homily = homily.replace(/\*/g, ''); // Text to speak (no asterisks)
+    speakBtn.dataset.homily = homily.replace(/\*/g, '');
     speakBtn.classList.remove('hidden');
+    updateSpeakBtnState(false);
 
   } catch (err) {
-    console.error("Erro ao gerar homilia:", err);
-    body.innerHTML = `
-      <div style="text-align:center; padding: 20px;">
-        <i class="fas fa-times-circle" style="font-size:30px; color:#ef4444; margin-bottom:10px;"></i>
-        <p>Desculpe, ocorreu um erro ao se comunicar com a IA.</p>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:10px; word-break: break-all; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-          <strong>Erro técnico:</strong><br> ${err.message}
-        </p>
-      </div>`;
+    console.error("Erro ao gerar homilia com Gemini:", err);
+    if (err.message === 'INVALID_OR_EXPIRED_KEY') {
+      renderApiKeySetupUI(body, true);
+    } else if (err.message === 'KEY_NOT_CONFIGURED') {
+      renderApiKeySetupUI(body, false);
+    } else {
+      // Fallback gracioso para a homilia devocional nativa com aviso suave
+      const devotional = getDevotionalHomily(bookName, chapter, verse, text);
+      body.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 12px; color: var(--text-secondary);">
+          <i class="fas fa-info-circle" style="color: #ef4444;"></i> Servidores de IA ocupados. Exibindo reflexão espiritual padrão:
+        </div>
+        ${devotional.html}
+      `;
+      speakBtn.dataset.homily = devotional.textToSpeak;
+      speakBtn.classList.remove('hidden');
+      updateSpeakBtnState(false);
+    }
   }
 };
 
 async function callGeminiAPIWithFallback(prompt) {
-  const models = ['gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-pro-latest'];
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error("KEY_NOT_CONFIGURED");
+  }
+
+  // Modelos suportados no Google Gemini API v1beta
+  const models = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-2.0-flash-lite'
+  ];
   let lastError = null;
 
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per request for complete generation
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per request
 
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
           method: 'POST',
           signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
@@ -906,7 +1056,7 @@ async function callGeminiAPIWithFallback(prompt) {
         console.warn(`Erro no modelo ${model} (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
 
         if (response.status === 400 || response.status === 403) {
-          throw new Error("A sua Chave de API do Gemini é inválida ou expirou. Por favor, verifique a chave no Google AI Studio.");
+          throw new Error("INVALID_OR_EXPIRED_KEY");
         }
 
         lastError = new Error(`Código ${response.status}: Servidor do Gemini indisponível.`);
@@ -922,41 +1072,80 @@ async function callGeminiAPIWithFallback(prompt) {
         if (err.name === 'AbortError') {
           console.warn(`Modelo ${model} demorou mais de 12s e foi cancelado (timeout). Alternando modelo...`);
           lastError = new Error("Tempo de resposta esgotado. Tentando modelo mais rápido...");
-        } else if (err.message.includes('inválida')) {
+        } else if (err.message === 'INVALID_OR_EXPIRED_KEY' || err.message === 'KEY_NOT_CONFIGURED') {
           throw err;
         }
       }
     }
   }
 
-  if (lastError && !lastError.message.includes('inválida')) {
+  if (lastError && lastError.message !== 'INVALID_OR_EXPIRED_KEY' && lastError.message !== 'KEY_NOT_CONFIGURED') {
     throw new Error("Os servidores do Gemini estão enfrentando alta demanda no momento (sobrecarga temporária). Por favor, tente novamente em alguns instantes.");
   }
   throw lastError;
 }
 
-window.speakHomily = function () {
+let isHomilySpeaking = false;
+
+function updateSpeakBtnState(speaking) {
+  isHomilySpeaking = speaking;
   const btn = document.getElementById('homilySpeakBtn');
-  const textToSpeak = btn.dataset.homily;
-  if (textToSpeak) {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
-      window.Capacitor.Plugins.TextToSpeech.speak({
-        text: textToSpeak,
-        lang: 'pt-BR',
-        rate: 1.0,
-        pitch: 1.0,
-        category: 'ambient'
-      }).catch(e => {
-        console.error("Erro TTS:", e);
-        showToast("Erro ao ler homilia.");
-      });
-    } else if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = 'pt-BR';
-      window.speechSynthesis.speak(utterance);
-    } else {
-      showToast("Seu dispositivo não suporta leitura em voz alta.");
-    }
+  if (!btn) return;
+  if (speaking) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar Leitura';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+  } else {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Homilia';
+    btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+  }
+}
+
+function stopHomilyAudio() {
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  updateSpeakBtnState(false);
+}
+
+window.speakHomily = function () {
+  if (isHomilySpeaking) {
+    stopHomilyAudio();
+    return;
+  }
+
+  const btn = document.getElementById('homilySpeakBtn');
+  const textToSpeak = btn ? btn.dataset.homily : null;
+  if (!textToSpeak) return;
+
+  updateSpeakBtnState(true);
+
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    window.Capacitor.Plugins.TextToSpeech.speak({
+      text: textToSpeak,
+      lang: 'pt-BR',
+      rate: 1.0,
+      pitch: 1.0,
+      category: 'ambient'
+    }).then(() => {
+      updateSpeakBtnState(false);
+    }).catch(e => {
+      console.error("Erro TTS:", e);
+      updateSpeakBtnState(false);
+      showToast("Erro ao ler homilia.");
+    });
+  } else if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.95;
+    utterance.onend = () => updateSpeakBtnState(false);
+    utterance.onerror = () => updateSpeakBtnState(false);
+    window.speechSynthesis.speak(utterance);
+  } else {
+    updateSpeakBtnState(false);
+    showToast("Seu dispositivo não suporta leitura em voz alta.");
   }
 };
