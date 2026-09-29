@@ -5,6 +5,8 @@ import {
     buscar,
     getVersiculoDoDia,
     getImgVersiculos,
+    addImgVersiculo,
+    deleteImgVersiculo,
     toggleFavorito,
     getFavoritos,
     getPlanoLeitura,
@@ -60,14 +62,51 @@ router.get('/versiculo-do-dia', async (req, res) => {
     }
 });
 
-// GET /api/img-versiculos
+// GET /api/img-versiculos?q=termo&categoria=all
 router.get('/img-versiculos', async (req, res) => {
     try {
-        const imgs = await getImgVersiculos();
+        const q = req.query.q || '';
+        const categoria = req.query.categoria || 'all';
+        const imgs = await getImgVersiculos(q, categoria);
         res.json(imgs);
     } catch (err) {
         console.error('Erro ao buscar imagens de versículos:', err);
         res.status(500).json({ error: 'Erro interno' });
+    }
+});
+
+// POST /api/img-versiculos
+router.post('/img-versiculos', async (req, res) => {
+    try {
+        const { id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao } = req.body;
+        if (!address && !texto) {
+            return res.status(400).json({ error: 'Imagem ou texto são obrigatórios' });
+        }
+        const novaImg = await addImgVersiculo({
+            id_livro: id_livro ? parseInt(id_livro) : null,
+            nome_livro: nome_livro || 'Bíblia',
+            id_capitulo: id_capitulo ? parseInt(id_capitulo) : null,
+            id_versiculo: id_versiculo ? parseInt(id_versiculo) : null,
+            texto: texto || '',
+            address: address || '',
+            oracao: oracao || ''
+        });
+        res.status(201).json(novaImg);
+    } catch (err) {
+        console.error('Erro ao salvar imagem de versículo:', err);
+        res.status(500).json({ error: 'Erro interno ao salvar imagem' });
+    }
+});
+
+// DELETE /api/img-versiculos/:id
+router.delete('/img-versiculos/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const result = await deleteImgVersiculo(id);
+        res.json(result);
+    } catch (err) {
+        console.error('Erro ao excluir imagem:', err);
+        res.status(500).json({ error: 'Erro interno ao excluir imagem' });
     }
 });
 

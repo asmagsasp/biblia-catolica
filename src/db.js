@@ -8,7 +8,11 @@ let livrosMap = new Map();
 let totalVersiculosPrecalc = 0;
 let favoritosCount = 0;
 let favoritos = {};
+let userImages = [];
+let favoriteImages = {};
 let saveTimeout = null;
+let saveImagesTimeout = null;
+let saveFavImagesTimeout = null;
 
 async function loadFavoritosLocal() {
     return new Promise(async (resolve) => {
@@ -33,6 +37,52 @@ async function loadFavoritosLocal() {
     });
 }
 
+async function loadUserImagesLocal() {
+    try {
+        const { value } = await Preferences.get({ key: 'biblia_user_images' });
+        userImages = value ? JSON.parse(value) : [];
+    } catch (e) {
+        userImages = [];
+    }
+}
+
+async function loadFavoriteImagesLocal() {
+    try {
+        const { value } = await Preferences.get({ key: 'biblia_favorite_images' });
+        favoriteImages = value ? JSON.parse(value) : {};
+    } catch (e) {
+        favoriteImages = {};
+    }
+}
+
+function saveUserImagesLocal() {
+    if (saveImagesTimeout) clearTimeout(saveImagesTimeout);
+    saveImagesTimeout = setTimeout(async () => {
+        try {
+            await Preferences.set({
+                key: 'biblia_user_images',
+                value: JSON.stringify(userImages)
+            });
+        } catch (e) {
+            console.error("[NativeStorage] Erro ao salvar imagens de usuário locais:", e);
+        }
+    }, 100);
+}
+
+function saveFavoriteImagesLocal() {
+    if (saveFavImagesTimeout) clearTimeout(saveFavImagesTimeout);
+    saveFavImagesTimeout = setTimeout(async () => {
+        try {
+            await Preferences.set({
+                key: 'biblia_favorite_images',
+                value: JSON.stringify(favoriteImages)
+            });
+        } catch (e) {
+            console.error("[NativeStorage] Erro ao salvar favoritos de imagens locais:", e);
+        }
+    }, 100);
+}
+
 function saveFavoritosLocal() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
@@ -55,7 +105,7 @@ export async function initDB() {
             useBackend = true;
             isDBReady = true;
             console.log('[BibliaDB] Conectado ao servidor Backend SQLite (/api)!');
-            await loadFavoritosLocal();
+            await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);
             return;
         }
     } catch (err) {
@@ -69,7 +119,7 @@ export async function initDB() {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         bibliaData = await res.json();
         
-        await loadFavoritosLocal();
+        await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);
         
         bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
         
@@ -327,16 +377,169 @@ export async function getFavoritos() {
     return result.sort((a, b) => a.id_livro - b.id_livro || a.id_capitulo - b.id_capitulo || a.id_versiculo - b.id_versiculo);
 }
 
-export async function getImgVersiculos() {
+export async function getImgVersiculos(searchQuery = '', filterCategory = 'all') {
+    let allImgs = [];
+
     if (useBackend) {
         try {
-            const res = await fetch('/api/img-versiculos');
-            if (res.ok) return await res.json();
+            const params = new URLSearchParams();
+            if (searchQuery) params.set('q', searchQuery);
+            if (filterCategory && filterCategory !== 'all' && filterCategory !== 'favorites') params.set('categoria', filterCategory);
+            
+            const res = await fetch(`/api/img-versiculos?${params.toString()}`);
+            if (res.ok) {
+                const backendImgs = await res.json();
+                allImgs = backendImgs.map(img => ({
+                    id: img.id,
+                    id_livro: img.id_livro,
+                    nome_livro: img.nome_livro,
+                    id_capitulo: img.id_capitulo,
+                    id_versiculo: img.id_versiculo,
+                    texto: img.texto,
+                    address: img.address || img.url,
+                    oracao: img.oracao || '',
+                    is_user_upload: !!img.is_user_upload,
+                    created_at: img.created_at
+                }));
+            }
         } catch (err) {
             console.warn('[BibliaDB] Falha getImgVersiculos backend, usando local:', err);
         }
     }
-    return bibliaData ? bibliaData.img_versiculos : [];
+
+    if (!allImgs.length) {
+        const baseImgs = (bibliaData && bibliaData.img_versiculos) ? bibliaData.img_versiculos.map((img, idx) => ({
+            id: `base_${idx + 1}`,
+            id_livro: img.id_livro,
+            nome_livro: img.nome_livro,
+            id_capitulo: img.id_capitulo,
+            id_versiculo: img.id_versiculo,
+            texto: img.texto,
+            address: img.address || img.url,
+            oracao: img.oracao || '',
+            is_user_upload: false,
+            created_at: null
+        })) : [];
+
+        allImgs = [...userImages, ...baseImgs];
+
+        // Apply local filtering
+        if (searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            allImgs = allImgs.filter(img => {
+                const ref = `${img.nome_livro || ''} ${img.id_capitulo || ''},${img.id_versiculo || ''}`.toLowerCase();
+                return (
+                    (img.nome_livro && img.nome_livro.toLowerCase().includes(q)) ||
+                    (img.texto && img.texto.toLowerCase().includes(q)) ||
+                    (img.oracao && img.oracao.toLowerCase().includes(q)) ||
+                    ref.includes(q)
+                );
+            });
+        }
+
+        if (filterCategory === 'uploads') {
+            allImgs = allImgs.filter(img => img.is_user_upload);
+        } else if (filterCategory === 'salmos') {
+            allImgs = allImgs.filter(img => img.id_livro === 21 || (img.nome_livro && img.nome_livro.toLowerCase().includes('salmo')));
+        } else if (filterCategory === 'evangelhos') {
+            allImgs = allImgs.filter(img => [47, 48, 49, 50].includes(img.id_livro));
+        } else if (filterCategory === 'at') {
+            allImgs = allImgs.filter(img => img.id_livro && img.id_livro <= 46);
+        } else if (filterCategory === 'nt') {
+            allImgs = allImgs.filter(img => img.id_livro && img.id_livro >= 47);
+        }
+    }
+
+    // Attach favorites flag
+    allImgs = allImgs.map(img => ({
+        ...img,
+        is_favorite: !!favoriteImages[String(img.id)] || !!favoriteImages[`${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}`]
+    }));
+
+    if (filterCategory === 'favorites') {
+        allImgs = allImgs.filter(img => img.is_favorite);
+    }
+
+    return allImgs;
+}
+
+export async function addImgVersiculo(imgData) {
+    const newImg = {
+        id: `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        id_livro: imgData.id_livro ? parseInt(imgData.id_livro) : null,
+        nome_livro: imgData.nome_livro || 'Bíblia',
+        id_capitulo: imgData.id_capitulo ? parseInt(imgData.id_capitulo) : null,
+        id_versiculo: imgData.id_versiculo ? parseInt(imgData.id_versiculo) : null,
+        texto: imgData.texto || '',
+        address: imgData.address || '',
+        oracao: imgData.oracao || '',
+        is_user_upload: true,
+        created_at: new Date().toISOString()
+    };
+
+    userImages.unshift(newImg);
+    saveUserImagesLocal();
+
+    if (useBackend) {
+        try {
+            const res = await fetch('/api/img-versiculos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newImg)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                newImg.id = created.id;
+                saveUserImagesLocal();
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha ao sincronizar nova imagem com backend:', err);
+        }
+    }
+
+    return newImg;
+}
+
+export async function deleteImgVersiculo(id) {
+    const idStr = String(id);
+    userImages = userImages.filter(img => String(img.id) !== idStr);
+    saveUserImagesLocal();
+
+    if (favoriteImages[idStr]) {
+        delete favoriteImages[idStr];
+        saveFavoriteImagesLocal();
+    }
+
+    if (useBackend && !isNaN(parseInt(id))) {
+        try {
+            await fetch(`/api/img-versiculos/${id}`, { method: 'DELETE' });
+        } catch (err) {
+            console.warn('[BibliaDB] Falha ao deletar imagem no backend:', err);
+        }
+    }
+
+    return true;
+}
+
+export function toggleFavoriteImage(imgId, refKey = '') {
+    const key = String(imgId);
+    let isFav = false;
+    if (favoriteImages[key] || (refKey && favoriteImages[refKey])) {
+        delete favoriteImages[key];
+        if (refKey) delete favoriteImages[refKey];
+        isFav = false;
+    } else {
+        favoriteImages[key] = true;
+        if (refKey) favoriteImages[refKey] = true;
+        isFav = true;
+    }
+    saveFavoriteImagesLocal();
+    return isFav;
+}
+
+export function isFavoriteImage(imgId, refKey = '') {
+    const key = String(imgId);
+    return !!favoriteImages[key] || (refKey ? !!favoriteImages[refKey] : false);
 }
 
 export async function getPlanoLeitura() {
@@ -399,7 +602,7 @@ export async function getStats() {
         total_livros: bibliaData ? bibliaData.livros.length : 0,
         total_versiculos: totalVersiculosPrecalc,
         total_favoritos: favoritosCount,
-        total_imagens: bibliaData ? bibliaData.img_versiculos.length : 0,
+        total_imagens: (bibliaData && bibliaData.img_versiculos ? bibliaData.img_versiculos.length : 147) + userImages.length,
         livros_at: 46,
         livros_nt: 27
     };

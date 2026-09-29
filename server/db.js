@@ -92,9 +92,15 @@ export async function initDatabase() {
                 await run(`
                     CREATE TABLE IF NOT EXISTS img_versiculos (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        url TEXT,
+                        id_livro INTEGER,
+                        nome_livro TEXT,
+                        id_capitulo INTEGER,
+                        id_versiculo INTEGER,
                         texto TEXT,
-                        referencia TEXT
+                        address TEXT,
+                        oracao TEXT,
+                        is_user_upload INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 `);
 
@@ -102,9 +108,10 @@ export async function initDatabase() {
                 await run(`CREATE INDEX IF NOT EXISTS idx_versiculos_busca ON versiculos(id_livro, id_capitulo)`);
 
                 const countRow = await getOne(`SELECT COUNT(*) as count FROM livros`);
+                const jsonPath = path.join(__dirname, '..', 'public', 'data', 'biblia.json');
+
                 if (countRow.count === 0) {
                     console.log('[Backend DB] Populando banco SQLite a partir do biblia.json...');
-                    const jsonPath = path.join(__dirname, '..', 'public', 'data', 'biblia.json');
                     if (fs.existsSync(jsonPath)) {
                         const rawData = fs.readFileSync(jsonPath, 'utf-8');
                         const bibliaData = JSON.parse(rawData);
@@ -127,9 +134,9 @@ export async function initDatabase() {
                         stmtVer.finalize();
 
                         if (bibliaData.img_versiculos && Array.isArray(bibliaData.img_versiculos)) {
-                            const stmtImg = db.prepare(`INSERT INTO img_versiculos (url, texto, referencia) VALUES (?, ?, ?)`);
+                            const stmtImg = db.prepare(`INSERT INTO img_versiculos (id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao, is_user_upload) VALUES (?, ?, ?, ?, ?, ?, ?, 0)`);
                             for (const img of bibliaData.img_versiculos) {
-                                stmtImg.run(img.url || '', img.texto || '', img.referencia || '');
+                                stmtImg.run(img.id_livro || null, img.nome_livro || '', img.id_capitulo || null, img.id_versiculo || null, img.texto || '', img.address || '', img.oracao || '');
                             }
                             stmtImg.finalize();
                         }
@@ -140,6 +147,50 @@ export async function initDatabase() {
                         console.warn('[Backend DB] Arquivo biblia.json não encontrado em:', jsonPath);
                     }
                 } else {
+                    // Check if img_versiculos needs upgrade (e.g. has address column with content or less than 147 items)
+                    let needsUpgrade = false;
+                    try {
+                        const countImg = await getOne(`SELECT COUNT(*) as total FROM img_versiculos`);
+                        const sampleImg = await getOne(`SELECT address, is_user_upload FROM img_versiculos LIMIT 1`);
+                        if (!countImg || countImg.total < 140 || !sampleImg || !sampleImg.address) {
+                            needsUpgrade = true;
+                        }
+                    } catch (e) {
+                        needsUpgrade = true;
+                    }
+
+                    if (needsUpgrade) {
+                        console.log('[Backend DB] Migrando tabela img_versiculos para nova estrutura...');
+                        if (fs.existsSync(jsonPath)) {
+                            const rawData = fs.readFileSync(jsonPath, 'utf-8');
+                            const bibliaData = JSON.parse(rawData);
+                            
+                            await run(`DROP TABLE IF EXISTS img_versiculos`);
+                            await run(`
+                                CREATE TABLE IF NOT EXISTS img_versiculos (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    id_livro INTEGER,
+                                    nome_livro TEXT,
+                                    id_capitulo INTEGER,
+                                    id_versiculo INTEGER,
+                                    texto TEXT,
+                                    address TEXT,
+                                    oracao TEXT,
+                                    is_user_upload INTEGER DEFAULT 0,
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                                )
+                            `);
+                            
+                            await run('BEGIN TRANSACTION');
+                            const stmtImg = db.prepare(`INSERT INTO img_versiculos (id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao, is_user_upload) VALUES (?, ?, ?, ?, ?, ?, ?, 0)`);
+                            for (const img of bibliaData.img_versiculos) {
+                                stmtImg.run(img.id_livro || null, img.nome_livro || '', img.id_capitulo || null, img.id_versiculo || null, img.texto || '', img.address || '', img.oracao || '');
+                            }
+                            await new Promise((resFin) => stmtImg.finalize(resFin));
+                            await run('COMMIT');
+                            console.log('[Backend DB] Tabela img_versiculos atualizada com', bibliaData.img_versiculos.length, 'imagens!');
+                        }
+                    }
                     console.log('[Backend DB] Banco de dados SQLite pronto. Registros de livros:', countRow.count);
                 }
                 isInitialized = true;
@@ -276,9 +327,53 @@ export async function getVersiculoDoDia() {
     };
 }
 
-export async function getImgVersiculos() {
+export async function getImgVersiculos(searchQuery = '', filterCategory = 'all') {
     await ensureDB();
-    return await getAll(`SELECT * FROM img_versiculos`);
+    let sql = `SELECT * FROM img_versiculos`;
+    const params = [];
+    const conditions = [];
+
+    if (searchQuery && searchQuery.trim().length > 0) {
+        const term = `%${searchQuery.trim()}%`;
+        conditions.push(`(nome_livro LIKE ? OR texto LIKE ? OR oracao LIKE ? OR (nome_livro || ' ' || id_capitulo || ',' || id_versiculo) LIKE ?)`);
+        params.push(term, term, term, term);
+    }
+
+    if (filterCategory === 'uploads') {
+        conditions.push(`is_user_upload = 1`);
+    } else if (filterCategory === 'salmos') {
+        conditions.push(`(id_livro = 21 OR nome_livro LIKE '%Salmo%')`);
+    } else if (filterCategory === 'evangelhos') {
+        conditions.push(`id_livro IN (47, 48, 49, 50)`);
+    } else if (filterCategory === 'at') {
+        conditions.push(`id_livro <= 46`);
+    } else if (filterCategory === 'nt') {
+        conditions.push(`id_livro >= 47`);
+    }
+
+    if (conditions.length > 0) {
+        sql += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    sql += ` ORDER BY is_user_upload DESC, id ASC`;
+    return await getAll(sql, params);
+}
+
+export async function addImgVersiculo(data) {
+    await ensureDB();
+    const { id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao } = data;
+    const res = await run(
+        `INSERT INTO img_versiculos (id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao, is_user_upload) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+        [id_livro || null, nome_livro || 'Bíblia', id_capitulo || null, id_versiculo || null, texto || '', address || '', oracao || '']
+    );
+    const newId = res.lastID;
+    return await getOne(`SELECT * FROM img_versiculos WHERE id = ?`, [newId]);
+}
+
+export async function deleteImgVersiculo(id) {
+    await ensureDB();
+    await run(`DELETE FROM img_versiculos WHERE id = ?`, [id]);
+    return { success: true, id };
 }
 
 export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {

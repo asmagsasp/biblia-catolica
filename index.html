@@ -120,15 +120,68 @@
     <!-- GALLERY -->
     <div id="galleryView" class="hidden">
       <div class="gallery-view">
-        <div class="chapter-header">
-          <div class="chapter-header-left">
-            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
-            <div>
-              <h2 class="chapter-title">Galeria de Versículos</h2>
-              <p class="chapter-subtitle">Imagens para meditar e compartilhar</p>
+        <div class="gallery-header-wrapper">
+          <div class="chapter-header">
+            <div class="chapter-header-left">
+              <button class="btn-back" onclick="goHome()" title="Voltar ao início"><i class="fas fa-arrow-left"></i></button>
+              <div>
+                <h2 class="chapter-title">Galeria Sagrada</h2>
+                <p class="chapter-subtitle">Versículos e imagens para meditação diária</p>
+              </div>
+            </div>
+            <div class="gallery-header-actions">
+              <button class="gallery-btn-upload" onclick="openGalleryUploadModal()">
+                <i class="fas fa-plus-circle"></i> <span>Nova Imagem / Criar Card</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- GALLERY SEARCH & FILTER TOOLBAR -->
+          <div class="gallery-toolbar">
+            <div class="gallery-search-box">
+              <i class="fas fa-search gallery-search-icon"></i>
+              <input type="text" id="gallerySearchInput" class="gallery-search-input" placeholder="Buscar por livro, versículo, tema ou oração (ex: Salmos, paz, amor)...">
+              <button id="gallerySearchClear" class="gallery-search-clear hidden" onclick="clearGallerySearch()" title="Limpar busca">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="gallery-chips-scroll">
+              <button class="gallery-chip active" data-category="all" onclick="filterGalleryCategory('all', this)">
+                <i class="fas fa-border-all"></i> Todas (<span id="galleryCountAll">147+</span>)
+              </button>
+              <button class="gallery-chip" data-category="favorites" onclick="filterGalleryCategory('favorites', this)">
+                <i class="fas fa-heart" style="color: #ef4444;"></i> Favoritas
+              </button>
+              <button class="gallery-chip" data-category="uploads" onclick="filterGalleryCategory('uploads', this)">
+                <i class="fas fa-cloud-upload-alt" style="color: var(--gold-400);"></i> Meus Uploads
+              </button>
+              <button class="gallery-chip" data-category="salmos" onclick="filterGalleryCategory('salmos', this)">
+                <i class="fas fa-music"></i> Salmos
+              </button>
+              <button class="gallery-chip" data-category="evangelhos" onclick="filterGalleryCategory('evangelhos', this)">
+                <i class="fas fa-cross"></i> Evangelhos
+              </button>
+              <button class="gallery-chip" data-category="at" onclick="filterGalleryCategory('at', this)">
+                <i class="fas fa-scroll"></i> Antigo Testamento
+              </button>
+              <button class="gallery-chip" data-category="nt" onclick="filterGalleryCategory('nt', this)">
+                <i class="fas fa-dove"></i> Novo Testamento
+              </button>
+            </div>
+            <div class="gallery-status-bar">
+              <span id="galleryStatusText" class="gallery-status-text">Carregando acervo sagrado...</span>
+              <div class="gallery-sort-select-wrapper">
+                <i class="fas fa-sort-amount-down"></i>
+                <select id="gallerySortSelect" onchange="changeGallerySort(this.value)">
+                  <option value="canonical">Ordem Canônica</option>
+                  <option value="recent">Recentes / Uploads</option>
+                  <option value="random">Aleatório</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
+
         <div class="gallery-grid" id="galleryGrid">
           <div class="loading">
             <div class="loading-spinner"></div>
@@ -234,6 +287,197 @@
             <i class="fas fa-check-circle"></i> Já fiz minha doação
           </button>
         </div>
+      </div>
+    </div>
+  <!-- GALLERY LIGHTBOX MODAL -->
+  <div id="galleryLightboxModal" class="gallery-lightbox-overlay hidden" role="dialog" aria-modal="true" aria-label="Visualizador de Imagem Sagrada">
+    <div class="gallery-lightbox-backdrop" onclick="closeGalleryLightbox()"></div>
+    <div class="gallery-lightbox-container">
+      <button class="gallery-lightbox-close" onclick="closeGalleryLightbox()" aria-label="Fechar visualizador">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <button class="gallery-lightbox-nav prev" onclick="navigateLightbox(-1)" title="Imagem anterior (Seta esquerda)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button class="gallery-lightbox-nav next" onclick="navigateLightbox(1)" title="Próxima imagem (Seta direita)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+
+      <div class="gallery-lightbox-content">
+        <div class="gallery-lightbox-img-wrapper">
+          <img id="lightboxImg" src="" alt="Imagem Bíblica" class="gallery-lightbox-img">
+          <div class="gallery-lightbox-badges">
+            <span id="lightboxRefBadge" class="lightbox-badge-ref"></span>
+            <span id="lightboxUploadBadge" class="lightbox-badge-upload hidden"><i class="fas fa-sparkles"></i> Minha Imagem</span>
+          </div>
+        </div>
+        <div class="gallery-lightbox-info">
+          <div class="lightbox-meta">
+            <h3 id="lightboxTitle" class="lightbox-title"></h3>
+            <p id="lightboxOracao" class="lightbox-oracao"></p>
+          </div>
+          <div class="lightbox-verse-box">
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p id="lightboxVerseText" class="lightbox-verse-text"></p>
+            <i class="fas fa-quote-right quote-icon quote-end"></i>
+          </div>
+          <div class="lightbox-actions-bar">
+            <button id="lightboxBtnWhatsApp" class="lightbox-btn btn-wa" onclick="shareLightboxWhatsApp()">
+              <i class="fab fa-whatsapp"></i> <span>WhatsApp</span>
+            </button>
+            <button id="lightboxBtnDownload" class="lightbox-btn btn-download" onclick="downloadLightboxImage()">
+              <i class="fas fa-download"></i> <span>Baixar</span>
+            </button>
+            <button id="lightboxBtnCopy" class="lightbox-btn btn-copy" onclick="copyLightboxVerse()">
+              <i class="far fa-copy"></i> <span>Copiar</span>
+            </button>
+            <button id="lightboxBtnFavorite" class="lightbox-btn btn-fav" onclick="toggleLightboxFavorite()">
+              <i class="far fa-heart" id="lightboxFavIcon"></i> <span>Favoritar</span>
+            </button>
+            <button id="lightboxBtnReadChapter" class="lightbox-btn btn-read" onclick="readLightboxChapter()">
+              <i class="fas fa-book-open"></i> <span>Ler Capítulo</span>
+            </button>
+            <button id="lightboxBtnDelete" class="lightbox-btn btn-delete hidden" onclick="deleteCurrentLightboxImage()">
+              <i class="fas fa-trash-alt"></i> <span>Excluir</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY UPLOAD & CARD STUDIO MODAL -->
+  <div id="galleryUploadModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+    <div class="donate-modal-content gallery-upload-modal-content">
+      <button class="donate-close-btn" onclick="closeGalleryUploadModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+      
+      <div class="donate-header" style="padding-bottom: 10px;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,168,83,0.12);">
+          <i class="fas fa-camera donate-icon" style="color: var(--gold-300);"></i>
+        </div>
+        <h2 id="uploadModalTitle">Estúdio de Imagens Sagradas</h2>
+        <p>Faça upload de fotos ou crie lindos cards bíblicos para meditar e compartilhar</p>
+      </div>
+
+      <!-- TABS FOR MODAL -->
+      <div class="gallery-modal-tabs">
+        <button type="button" class="gallery-modal-tab active" id="tabBtnUpload" onclick="switchUploadTab('upload')">
+          <i class="fas fa-cloud-upload-alt"></i> Upload de Foto
+        </button>
+        <button type="button" class="gallery-modal-tab" id="tabBtnStudio" onclick="switchUploadTab('studio')">
+          <i class="fas fa-magic"></i> Criador de Cards com IA / Arte
+        </button>
+      </div>
+
+      <div class="donate-body" style="max-height: 60vh; overflow-y: auto; padding-right: 4px;">
+        
+        <!-- SECTION 1: UPLOAD -->
+        <div id="uploadSection" class="upload-section">
+          <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileUploadInput').click()">
+            <input type="file" id="fileUploadInput" accept="image/*" class="hidden" onchange="handleImageFileSelected(this)">
+            <div id="dropzoneEmpty">
+              <i class="fas fa-camera-retro dropzone-icon"></i>
+              <p class="dropzone-text"><strong>Toque ou arraste</strong> uma foto do seu dispositivo</p>
+              <span class="dropzone-sub">JPG, PNG, WEBP, GIF (máx 15MB)</span>
+            </div>
+            <div id="dropzonePreview" class="dropzone-preview-container hidden">
+              <img id="uploadImgPreview" src="" alt="Preview" class="dropzone-img">
+              <button type="button" class="dropzone-remove-btn" onclick="event.stopPropagation(); removeUploadImage()"><i class="fas fa-times"></i> Trocar Imagem</button>
+            </div>
+          </div>
+
+          <div class="upload-field-row" style="margin-top: 14px;">
+            <label class="upload-label"><i class="fas fa-link"></i> Ou cole o link direto de uma imagem na internet:</label>
+            <input type="url" id="uploadUrlInput" class="upload-input" placeholder="https://exemplo.com/imagem-catolica.jpg" oninput="handleImageUrlInput(this.value)">
+          </div>
+
+          <div class="upload-form-grid">
+            <div class="upload-field">
+              <label class="upload-label"><i class="fas fa-book"></i> Livro da Bíblia:</label>
+              <select id="uploadBookSelect" class="upload-input" onchange="handleUploadBookChanged()">
+                <!-- Populated dynamically with 73 Catholic books -->
+              </select>
+            </div>
+            <div class="upload-field-row-split">
+              <div class="upload-field">
+                <label class="upload-label">Capítulo:</label>
+                <input type="number" id="uploadChapterInput" class="upload-input" value="1" min="1" max="150" onchange="handleUploadCapVerChanged()">
+              </div>
+              <div class="upload-field">
+                <label class="upload-label">Versículo:</label>
+                <input type="number" id="uploadVerseInput" class="upload-input" value="1" min="1" max="176" onchange="handleUploadCapVerChanged()">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 6px; margin-bottom: 12px; text-align: right;">
+            <button type="button" class="upload-btn-fetch" onclick="fetchVerseTextForUpload()">
+              <i class="fas fa-sparkles"></i> Puxar Texto Oficial da Bíblia
+            </button>
+          </div>
+
+          <div class="upload-field">
+            <label class="upload-label"><i class="fas fa-quote-left"></i> Texto do Versículo / Citação:</label>
+            <textarea id="uploadVerseText" class="upload-textarea" rows="3" placeholder="Digite ou puxe o texto do versículo bíblico..."></textarea>
+          </div>
+
+          <div class="upload-field">
+            <label class="upload-label"><i class="fas fa-praying-hands"></i> Oração ou Mensagem de Fé (Opcional):</label>
+            <input type="text" id="uploadOracaoInput" class="upload-input" placeholder="Ex: Senhor, sois meu pastor e nada me faltará...">
+          </div>
+
+          <div class="upload-actions">
+            <button type="button" id="uploadSubmitBtn" class="hero-donate-btn" onclick="saveUploadedImage()" style="width: 100%;">
+              <i class="fas fa-save"></i> Adicionar à Minha Galeria
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 2: CARD STUDIO CREATOR -->
+        <div id="studioSection" class="upload-section hidden">
+          <p class="studio-desc">Crie um lindo card sagrado personalizado para evangelizar nas redes!</p>
+
+          <div class="studio-canvas-container">
+            <canvas id="studioCanvas" width="1080" height="1080" class="studio-canvas-preview"></canvas>
+          </div>
+
+          <div class="studio-controls-grid">
+            <div class="upload-field">
+              <label class="upload-label"><i class="fas fa-palette"></i> Fundo Sagrado:</label>
+              <select id="studioThemeSelect" class="upload-input" onchange="updateStudioCard()">
+                <option value="gold">Dourado Sagrado & Luz Celestial</option>
+                <option value="burgundy">Bordeaux Real & Luz de Velas</option>
+                <option value="navy">Azul Celeste Noturno & Estrelas</option>
+                <option value="emerald">Verde Esperança & Aurora da Fé</option>
+                <option value="purple">Púrpura Imperial & Oração</option>
+                <option value="dark">Noite Mariana Profunda & Ouro</option>
+              </select>
+            </div>
+
+            <div class="upload-field">
+              <label class="upload-label"><i class="fas fa-cross"></i> Símbolo Sagrado:</label>
+              <select id="studioIconSelect" class="upload-input" onchange="updateStudioCard()">
+                <option value="✝">✝ Cruz Latina Clássica</option>
+                <option value="☧">☧ Cristograma (Chi-Rho)</option>
+                <option value="🕊️">🕊️ Espírito Santo</option>
+                <option value="❤️">❤️ Sagrado Coração de Jesus</option>
+                <option value="🛡️">🛡️ Medalha de São Bento</option>
+                <option value="👑">👑 Coroa de Cristo Rei</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="studio-actions-row">
+            <button type="button" class="upload-btn-secondary" onclick="downloadStudioCard()">
+              <i class="fas fa-download"></i> Baixar Imagem
+            </button>
+            <button type="button" class="hero-donate-btn" onclick="saveStudioCardToGallery()">
+              <i class="fas fa-save"></i> Salvar na Minha Galeria
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

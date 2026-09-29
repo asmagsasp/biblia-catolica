@@ -544,50 +544,868 @@ document.getElementById('favoritesContainer').addEventListener('click', e => {
   }
 });
 
-// ===== GALLERY =====
+// ===== GALLERY & SACRED STUDIO =====
+let allGalleryItems = [];
+let currentGalleryList = [];
+let currentGalleryCategory = 'all';
+let currentGallerySearch = '';
+let currentGallerySort = 'canonical';
+let activeLightboxIndex = 0;
+let currentLightboxList = [];
+let uploadedImageData = '';
+let gallerySearchDebounceTimer = null;
+
 window.showGallery = function () {
   showView('galleryView');
-  const g = document.getElementById('galleryGrid');
-  if (g.dataset.loaded) return;
-
-  g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:100px"><div class="loading-spinner"></div></div>';
-
-  setTimeout(async () => {
-    try {
-      const imgs = await db.getImgVersiculos();
-      let h = '';
-      imgs.forEach(img => {
-        h += `
-          <div class="gallery-card">
-              <img src="${img.address}" alt="${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}" loading="lazy"
-                   onerror="this.parentElement.style.background='var(--burgundy-700)';this.style.display='none'">
-              <div class="gallery-card-overlay">
-                  <div class="gallery-card-info">
-                      <div class="gallery-card-ref">${img.nome_livro} ${img.id_capitulo},${img.id_versiculo}</div>
-                      <div class="gallery-card-txt">${img.texto}</div>
-                  </div>
-                  <button class="gallery-wa" data-livro="${img.nome_livro}" data-cap="${img.id_capitulo}" data-ver="${img.id_versiculo}" data-txt="${img.texto.replace(/"/g, '&quot;')}">
-                      <i class="fab fa-whatsapp"></i>
-                  </button>
-              </div>
-          </div>`;
-      });
-      g.innerHTML = h;
-      g.dataset.loaded = '1';
-    } catch (e) {
-      console.error("Gallery Error:", e);
-    }
-  }, 30);
+  loadGalleryData();
 };
 
-document.getElementById('galleryGrid').addEventListener('click', e => {
-  const btn = e.target.closest('.gallery-wa');
-  if (btn) {
-    e.stopPropagation();
-    const msg = `\u201C${btn.dataset.txt}\u201D\n\n\u2014 ${btn.dataset.livro} ${btn.dataset.cap},${btn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+async function loadGalleryData(forceRefresh = false) {
+  const g = document.getElementById('galleryGrid');
+  const statusEl = document.getElementById('galleryStatusText');
+  const countAllEl = document.getElementById('galleryCountAll');
+
+  if (!g) return;
+
+  if (g.dataset.loaded && !forceRefresh && currentGalleryList.length > 0) {
+    return;
+  }
+
+  g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:80px"><div class="loading-spinner"></div></div>';
+  if (statusEl) statusEl.textContent = 'Carregando versículos com imagem...';
+
+  try {
+    const rawImgs = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
+    allGalleryItems = rawImgs || [];
+
+    if (countAllEl && currentGalleryCategory === 'all' && !currentGallerySearch) {
+      countAllEl.textContent = `${allGalleryItems.length}`;
+    }
+
+    renderGalleryGrid();
+    g.dataset.loaded = '1';
+  } catch (e) {
+    console.error("Gallery Error:", e);
+    g.innerHTML = `<div class="gallery-empty-state">
+      <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444;"></i>
+      <h3 class="gallery-empty-title">Erro ao carregar imagens</h3>
+      <p class="gallery-empty-desc">${e.message || 'Verifique sua conexão ou tente novamente.'}</p>
+      <button class="hero-donate-btn" onclick="loadGalleryData(true)"><i class="fas fa-redo"></i> Tentar Novamente</button>
+    </div>`;
+  }
+}
+
+function renderGalleryGrid() {
+  const g = document.getElementById('galleryGrid');
+  const statusEl = document.getElementById('galleryStatusText');
+  if (!g) return;
+
+  let list = [...allGalleryItems];
+
+  // Apply sorting
+  if (currentGallerySort === 'recent') {
+    list.sort((a, b) => {
+      if (a.is_user_upload && !b.is_user_upload) return -1;
+      if (!a.is_user_upload && b.is_user_upload) return 1;
+      return (b.id || 0) - (a.id || 0);
+    });
+  } else if (currentGallerySort === 'random') {
+    list.sort(() => Math.random() - 0.5);
+  } else {
+    // Canonical order
+    list.sort((a, b) => (a.id_livro || 999) - (b.id_livro || 999) || (a.id_capitulo || 0) - (b.id_capitulo || 0) || (a.id_versiculo || 0) - (b.id_versiculo || 0));
+  }
+
+  currentGalleryList = list;
+  currentLightboxList = list;
+
+  if (statusEl) {
+    if (list.length === 0) {
+      statusEl.textContent = 'Nenhuma imagem encontrada';
+    } else {
+      statusEl.textContent = `Exibindo ${list.length} ${list.length === 1 ? 'imagem' : 'imagens'}`;
+    }
+  }
+
+  if (list.length === 0) {
+    let emptyMsg = 'Nenhuma imagem encontrada com os filtros atuais.';
+    let emptyCta = `<button class="hero-donate-btn" onclick="clearGallerySearch()"><i class="fas fa-undo"></i> Limpar Filtros</button>`;
+    
+    if (currentGalleryCategory === 'uploads') {
+      emptyMsg = 'Você ainda não fez upload de imagens nem criou cards bíblicos.';
+      emptyCta = `<button class="hero-donate-btn" onclick="openGalleryUploadModal()"><i class="fas fa-plus-circle"></i> Fazer Upload / Criar Card</button>`;
+    } else if (currentGalleryCategory === 'favorites') {
+      emptyMsg = 'Você ainda não favoritou nenhuma imagem. Clique no coração das fotos que mais gostar!';
+      emptyCta = `<button class="hero-donate-btn" onclick="filterGalleryCategory('all', document.querySelector('.gallery-chip[data-category=\\'all\\']'))"><i class="fas fa-images"></i> Ver Todas as Imagens</button>`;
+    }
+
+    g.innerHTML = `
+      <div class="gallery-empty-state">
+        <i class="fas fa-images gallery-empty-icon"></i>
+        <h3 class="gallery-empty-title">Galeria Vazia</h3>
+        <p class="gallery-empty-desc">${emptyMsg}</p>
+        <div>${emptyCta}</div>
+      </div>`;
+    return;
+  }
+
+  let h = '';
+  list.forEach((img, idx) => {
+    const isFav = img.is_favorite;
+    const isUpload = img.is_user_upload;
+    const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+    const txt = (img.texto || '').trim();
+    const oracao = (img.oracao || '').trim();
+    const imgSrc = img.address || img.url || '';
+
+    h += `
+      <div class="gallery-card" onclick="openGalleryLightbox(${idx})">
+          <img src="${imgSrc}" alt="${ref}" loading="lazy"
+               onerror="this.parentElement.style.background='linear-gradient(135deg, #2D1018 0%, #1A0A0E 100%)';this.style.opacity='0.2'">
+          
+          <div class="gallery-card-badge">${ref}</div>
+          ${isUpload ? '<div class="gallery-card-user-tag"><i class="fas fa-sparkles"></i> Minha Imagem</div>' : ''}
+          
+          <div class="gallery-card-actions" onclick="event.stopPropagation()">
+              <button class="gallery-action-btn btn-heart ${isFav ? 'active' : ''}" 
+                      title="${isFav ? 'Remover dos favoritos' : 'Favoritar imagem'}" 
+                      onclick="toggleCardFavorite(event, '${img.id}', '${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}')">
+                  <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}" style="${isFav ? 'color:#ef4444;' : ''}"></i>
+              </button>
+              <button class="gallery-action-btn" title="Compartilhar no WhatsApp"
+                      onclick="shareCardWhatsApp(event, '${escapeHtml(ref)}', '${escapeHtml(txt)}')">
+                  <i class="fab fa-whatsapp" style="color:#22c55e;"></i>
+              </button>
+              ${isUpload ? `
+              <button class="gallery-action-btn btn-delete" title="Excluir imagem"
+                      onclick="deleteCardImage(event, '${img.id}')">
+                  <i class="fas fa-trash-alt"></i>
+              </button>` : ''}
+          </div>
+
+          <div class="gallery-card-overlay">
+              <div class="gallery-card-text">“${txt}”</div>
+              ${oracao ? `<div class="gallery-card-oracao-tag"><i class="fas fa-praying-hands"></i> ${oracao}</div>` : ''}
+          </div>
+      </div>`;
+  });
+
+  g.innerHTML = h;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\n/g, ' ');
+}
+
+// Category filter
+window.filterGalleryCategory = function (category, chipEl) {
+  currentGalleryCategory = category;
+  document.querySelectorAll('.gallery-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  loadGalleryData(true);
+};
+
+// Search handling
+const searchInput = document.getElementById('gallerySearchInput');
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    const val = e.target.value;
+    currentGallerySearch = val;
+    const clearBtn = document.getElementById('gallerySearchClear');
+    if (clearBtn) {
+      clearBtn.classList.toggle('hidden', val.length === 0);
+    }
+    if (gallerySearchDebounceTimer) clearTimeout(gallerySearchDebounceTimer);
+    gallerySearchDebounceTimer = setTimeout(() => {
+      loadGalleryData(true);
+    }, 300);
+  });
+}
+
+window.clearGallerySearch = function () {
+  const input = document.getElementById('gallerySearchInput');
+  const clearBtn = document.getElementById('gallerySearchClear');
+  if (input) input.value = '';
+  if (clearBtn) clearBtn.classList.add('hidden');
+  currentGallerySearch = '';
+  loadGalleryData(true);
+};
+
+window.changeGallerySort = function (sortVal) {
+  currentGallerySort = sortVal;
+  renderGalleryGrid();
+};
+
+// Card quick actions
+window.toggleCardFavorite = function (e, id, refKey) {
+  e.stopPropagation();
+  const isNowFav = db.toggleFavoriteImage(id, refKey);
+  showToast(isNowFav ? '❤️ Imagem favoritada!' : 'Imagem removida dos favoritos');
+  
+  // Update local memory flag
+  const target = allGalleryItems.find(img => String(img.id) === String(id));
+  if (target) target.is_favorite = isNowFav;
+  
+  if (currentGalleryCategory === 'favorites') {
+    loadGalleryData(true);
+  } else {
+    renderGalleryGrid();
+  }
+};
+
+window.shareCardWhatsApp = function (e, ref, txt) {
+  e.stopPropagation();
+  const msg = `\u201C${txt}\u201D\n\n\u2014 ${ref}\n\n_B\u00EDblia Sagrada Cat\u00F3lica_\nhttps://minhabibliacatolica.com`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.deleteCardImage = async function (e, id) {
+  e.stopPropagation();
+  if (!confirm('Deseja realmente excluir esta imagem da sua galeria?')) return;
+
+  try {
+    await db.deleteImgVersiculo(id);
+    showToast('Imagem excluída com sucesso');
+    allGalleryItems = allGalleryItems.filter(img => String(img.id) !== String(id));
+    loadGalleryData(true);
+  } catch (err) {
+    showToast('Erro ao excluir imagem');
+  }
+};
+
+// ===== FULLSCREEN LIGHTBOX =====
+window.openGalleryLightbox = function (idx) {
+  if (!currentLightboxList || !currentLightboxList[idx]) return;
+  activeLightboxIndex = idx;
+  updateLightboxContent();
+
+  const modal = document.getElementById('galleryLightboxModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+function updateLightboxContent() {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+
+  const modalImg = document.getElementById('lightboxImg');
+  const refBadge = document.getElementById('lightboxRefBadge');
+  const uploadBadge = document.getElementById('lightboxUploadBadge');
+  const title = document.getElementById('lightboxTitle');
+  const oracao = document.getElementById('lightboxOracao');
+  const verseText = document.getElementById('lightboxVerseText');
+  const favIcon = document.getElementById('lightboxFavIcon');
+  const favBtn = document.getElementById('lightboxBtnFavorite');
+  const delBtn = document.getElementById('lightboxBtnDelete');
+
+  const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+  const txt = (img.texto || '').trim();
+  const oracaoTxt = (img.oracao || '').trim();
+  const imgSrc = img.address || img.url || '';
+
+  if (modalImg) {
+    modalImg.src = imgSrc;
+    modalImg.alt = ref;
+  }
+  if (refBadge) refBadge.textContent = ref;
+  if (uploadBadge) uploadBadge.classList.toggle('hidden', !img.is_user_upload);
+  if (title) title.textContent = ref;
+  if (oracao) {
+    oracao.textContent = oracaoTxt ? `Oração: “${oracaoTxt}”` : '';
+    oracao.style.display = oracaoTxt ? 'block' : 'none';
+  }
+  if (verseText) verseText.textContent = txt;
+
+  const isFav = img.is_favorite || db.isFavoriteImage(img.id, `${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}`);
+  if (favIcon && favBtn) {
+    favIcon.className = isFav ? 'fas fa-heart' : 'far fa-heart';
+    favIcon.style.color = isFav ? '#ef4444' : '';
+    favBtn.classList.toggle('active', isFav);
+  }
+
+  if (delBtn) {
+    delBtn.classList.toggle('hidden', !img.is_user_upload);
+  }
+}
+
+window.closeGalleryLightbox = function () {
+  const modal = document.getElementById('galleryLightboxModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+window.navigateLightbox = function (direction) {
+  if (!currentLightboxList.length) return;
+  activeLightboxIndex = (activeLightboxIndex + direction + currentLightboxList.length) % currentLightboxList.length;
+  updateLightboxContent();
+};
+
+window.shareLightboxWhatsApp = function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+  const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+  const txt = (img.texto || '').trim();
+  const msg = `\u201C${txt}\u201D\n\n\u2014 ${ref}\n\n_B\u00EDblia Sagrada Cat\u00F3lica_\nhttps://minhabibliacatolica.com`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.downloadLightboxImage = async function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+  const imgSrc = img.address || img.url;
+  if (!imgSrc) {
+    showToast('Imagem não disponível para download');
+    return;
+  }
+
+  try {
+    showToast('Preparando download da imagem...');
+    // If it's a data URL or same origin
+    if (imgSrc.startsWith('data:')) {
+      const a = document.createElement('a');
+      a.href = imgSrc;
+      a.download = `versiculo_${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Imagem salva com sucesso! 📥');
+      return;
+    }
+
+    // Attempt fetch blob for external images
+    const res = await fetch(imgSrc, { mode: 'cors' }).catch(() => null);
+    if (res && res.ok) {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `versiculo_${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      showToast('Imagem salva com sucesso! 📥');
+    } else {
+      // Fallback open in new tab
+      window.open(imgSrc, '_blank');
+      showToast('Toque e segure na imagem para salvar 📥');
+    }
+  } catch (e) {
+    window.open(imgSrc, '_blank');
+    showToast('Toque e segure na imagem para salvar 📥');
+  }
+};
+
+window.copyLightboxVerse = async function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+  const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+  const txt = (img.texto || '').trim();
+  const textToCopy = `“${txt}” (${ref})`;
+  const ok = await copyToClipboard(textToCopy);
+  if (ok) showToast('📋 Versículo copiado para a área de transferência!');
+  else showToast('Erro ao copiar versículo');
+};
+
+window.toggleLightboxFavorite = function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+  const isNowFav = db.toggleFavoriteImage(img.id, `${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}`);
+  img.is_favorite = isNowFav;
+  updateLightboxContent();
+  showToast(isNowFav ? '❤️ Imagem favoritada!' : 'Imagem removida dos favoritos');
+  renderGalleryGrid();
+};
+
+window.readLightboxChapter = function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img || !img.id_livro) return;
+  closeGalleryLightbox();
+  openBook(parseInt(img.id_livro), img.nome_livro, 0);
+  setTimeout(() => selectChapter(parseInt(img.id_capitulo || 1)), 150);
+};
+
+window.deleteCurrentLightboxImage = async function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img) return;
+  if (!confirm('Deseja excluir esta imagem da sua galeria?')) return;
+  
+  await db.deleteImgVersiculo(img.id);
+  showToast('Imagem excluída');
+  closeGalleryLightbox();
+  allGalleryItems = allGalleryItems.filter(item => String(item.id) !== String(img.id));
+  loadGalleryData(true);
+};
+
+// Keyboard navigation for Lightbox
+document.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('galleryLightboxModal');
+  if (!modal || modal.classList.contains('hidden')) return;
+
+  if (e.key === 'ArrowLeft') {
+    navigateLightbox(-1);
+  } else if (e.key === 'ArrowRight') {
+    navigateLightbox(1);
+  } else if (e.key === 'Escape') {
+    closeGalleryLightbox();
   }
 });
+
+// ===== UPLOAD & CARD STUDIO MODAL =====
+window.openGalleryUploadModal = function () {
+  populateUploadBooksDropdown();
+  resetUploadForm();
+  switchUploadTab('upload');
+  updateStudioCard();
+
+  const modal = document.getElementById('galleryUploadModal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeGalleryUploadModal = function () {
+  const modal = document.getElementById('galleryUploadModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.switchUploadTab = function (tabName) {
+  const tabBtnUpload = document.getElementById('tabBtnUpload');
+  const tabBtnStudio = document.getElementById('tabBtnStudio');
+  const uploadSec = document.getElementById('uploadSection');
+  const studioSec = document.getElementById('studioSection');
+
+  if (tabName === 'upload') {
+    if (tabBtnUpload) tabBtnUpload.classList.add('active');
+    if (tabBtnStudio) tabBtnStudio.classList.remove('active');
+    if (uploadSec) uploadSec.classList.remove('hidden');
+    if (studioSec) studioSec.classList.add('hidden');
+  } else {
+    if (tabBtnStudio) tabBtnStudio.classList.add('active');
+    if (tabBtnUpload) tabBtnUpload.classList.remove('active');
+    if (studioSec) studioSec.classList.remove('hidden');
+    if (uploadSec) uploadSec.classList.add('hidden');
+    updateStudioCard();
+  }
+};
+
+function populateUploadBooksDropdown() {
+  const select = document.getElementById('uploadBookSelect');
+  if (!select || select.children.length > 0) return;
+
+  let h = '';
+  allBooks.forEach(b => {
+    h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}">${b.nome_livro}</option>`;
+  });
+  select.innerHTML = h;
+
+  // Set default book to Salmos (id 21) if present
+  const salmosOpt = select.querySelector('option[value="21"]');
+  if (salmosOpt) {
+    select.value = '21';
+    const capInput = document.getElementById('uploadChapterInput');
+    const verInput = document.getElementById('uploadVerseInput');
+    if (capInput) { capInput.value = '23'; capInput.max = '150'; }
+    if (verInput) { verInput.value = '1'; }
+  }
+}
+
+function resetUploadForm() {
+  uploadedImageData = '';
+  const fileInput = document.getElementById('fileUploadInput');
+  const urlInput = document.getElementById('uploadUrlInput');
+  const dropEmpty = document.getElementById('dropzoneEmpty');
+  const dropPreview = document.getElementById('dropzonePreview');
+  const previewImg = document.getElementById('uploadImgPreview');
+  const verseText = document.getElementById('uploadVerseText');
+  const oracaoInput = document.getElementById('uploadOracaoInput');
+
+  if (fileInput) fileInput.value = '';
+  if (urlInput) urlInput.value = '';
+  if (dropEmpty) dropEmpty.classList.remove('hidden');
+  if (dropPreview) dropPreview.classList.add('hidden');
+  if (previewImg) previewImg.src = '';
+  if (verseText && !verseText.value) verseText.value = 'O Senhor é o meu pastor; nada me faltará.';
+  if (oracaoInput) oracaoInput.value = '';
+}
+
+window.handleImageFileSelected = function (input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  if (file.size > 20 * 1024 * 1024) {
+    showToast('A imagem deve ter no máximo 20MB');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    uploadedImageData = e.target.result;
+    showImagePreview(uploadedImageData);
+  };
+  reader.readAsDataURL(file);
+};
+
+window.handleImageUrlInput = function (url) {
+  if (!url || !url.trim().startsWith('http')) return;
+  uploadedImageData = url.trim();
+  showImagePreview(uploadedImageData);
+};
+
+function showImagePreview(src) {
+  const dropEmpty = document.getElementById('dropzoneEmpty');
+  const dropPreview = document.getElementById('dropzonePreview');
+  const previewImg = document.getElementById('uploadImgPreview');
+
+  if (previewImg) previewImg.src = src;
+  if (dropEmpty) dropEmpty.classList.add('hidden');
+  if (dropPreview) dropPreview.classList.remove('hidden');
+}
+
+window.removeUploadImage = function () {
+  uploadedImageData = '';
+  const fileInput = document.getElementById('fileUploadInput');
+  const urlInput = document.getElementById('uploadUrlInput');
+  const dropEmpty = document.getElementById('dropzoneEmpty');
+  const dropPreview = document.getElementById('dropzonePreview');
+
+  if (fileInput) fileInput.value = '';
+  if (urlInput) urlInput.value = '';
+  if (dropEmpty) dropEmpty.classList.remove('hidden');
+  if (dropPreview) dropPreview.classList.add('hidden');
+};
+
+window.handleUploadBookChanged = function () {
+  const select = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  if (!select || !capInput) return;
+
+  const opt = select.options[select.selectedIndex];
+  const totalCaps = opt ? parseInt(opt.dataset.total || 50) : 50;
+  capInput.max = totalCaps;
+  if (parseInt(capInput.value) > totalCaps) capInput.value = '1';
+  updateStudioCard();
+};
+
+window.handleUploadCapVerChanged = function () {
+  updateStudioCard();
+};
+
+window.fetchVerseTextForUpload = async function () {
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+  const verseTextArea = document.getElementById('uploadVerseText');
+
+  if (!bookSelect || !capInput || !verInput) return;
+
+  const bookId = parseInt(bookSelect.value);
+  const cap = parseInt(capInput.value) || 1;
+  const ver = parseInt(verInput.value) || 1;
+
+  try {
+    showToast('Buscando versículo na Bíblia Sagrada...');
+    const verses = await db.getVersiculos(bookId, cap);
+    const match = verses.find(v => v.id_versiculo === ver);
+    if (match && match.texto) {
+      if (verseTextArea) verseTextArea.value = match.texto.trim();
+      showToast(`Versículo carregado: ${match.texto.substring(0, 30)}... ✨`);
+      updateStudioCard();
+    } else {
+      showToast('Versículo não encontrado para este capítulo.');
+    }
+  } catch (err) {
+    showToast('Erro ao consultar a Bíblia.');
+  }
+};
+
+window.saveUploadedImage = async function () {
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+  const verseTextArea = document.getElementById('uploadVerseText');
+  const oracaoInput = document.getElementById('uploadOracaoInput');
+
+  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : 'Salmos';
+  const bookId = bookSelect ? parseInt(bookSelect.value) : 21;
+  const cap = capInput ? parseInt(capInput.value) : 1;
+  const ver = verInput ? parseInt(verInput.value) : 1;
+  const txt = verseTextArea ? verseTextArea.value.trim() : '';
+  const oracao = oracaoInput ? oracaoInput.value.trim() : '';
+
+  if (!uploadedImageData && !txt) {
+    showToast('Por favor, selecione uma imagem ou digite o texto.');
+    return;
+  }
+
+  // If no image uploaded, generate a studio canvas card automatically
+  let finalImgAddress = uploadedImageData;
+  if (!finalImgAddress) {
+    updateStudioCard();
+    const canvas = document.getElementById('studioCanvas');
+    finalImgAddress = canvas ? canvas.toDataURL('image/jpeg', 0.9) : '';
+  }
+
+  try {
+    showToast('Salvando imagem na sua galeria...');
+    const created = await db.addImgVersiculo({
+      id_livro: bookId,
+      nome_livro: bookName,
+      id_capitulo: cap,
+      id_versiculo: ver,
+      texto: txt,
+      address: finalImgAddress,
+      oracao: oracao
+    });
+
+    closeGalleryUploadModal();
+    showToast('✨ Imagem adicionada com sucesso à Galeria!');
+    
+    // Switch to "Meus Uploads" to immediately show what was added
+    filterGalleryCategory('uploads', document.querySelector('.gallery-chip[data-category="uploads"]'));
+  } catch (err) {
+    console.error("Save image error:", err);
+    showToast('Erro ao salvar imagem');
+  }
+};
+
+// ===== CARD STUDIO GENERATOR (CANVAS) =====
+window.updateStudioCard = function () {
+  const canvas = document.getElementById('studioCanvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const themeSelect = document.getElementById('studioThemeSelect');
+  const iconSelect = document.getElementById('studioIconSelect');
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+  const verseTextArea = document.getElementById('uploadVerseText');
+  const oracaoInput = document.getElementById('uploadOracaoInput');
+
+  const theme = themeSelect ? themeSelect.value : 'gold';
+  const icon = iconSelect ? iconSelect.value : '✝';
+  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : 'Salmos';
+  const cap = capInput ? capInput.value : '23';
+  const ver = verInput ? verInput.value : '1';
+  const verseText = verseTextArea && verseTextArea.value.trim() ? verseTextArea.value.trim() : 'O Senhor é o meu pastor; nada me faltará.';
+  const oracaoText = oracaoInput ? oracaoInput.value.trim() : '';
+
+  // Background Theme Gradients
+  let bgGrad;
+  if (theme === 'burgundy') {
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#5E1B2B');
+    bgGrad.addColorStop(0.5, '#350E17');
+    bgGrad.addColorStop(1, '#150509');
+  } else if (theme === 'navy') {
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#1B2A4A');
+    bgGrad.addColorStop(0.6, '#0D1627');
+    bgGrad.addColorStop(1, '#050911');
+  } else if (theme === 'emerald') {
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#104A3A');
+    bgGrad.addColorStop(0.6, '#08281E');
+    bgGrad.addColorStop(1, '#03120C');
+  } else if (theme === 'purple') {
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#42165A');
+    bgGrad.addColorStop(0.6, '#230931');
+    bgGrad.addColorStop(1, '#0F0315');
+  } else if (theme === 'dark') {
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#221D24');
+    bgGrad.addColorStop(0.6, '#130F15');
+    bgGrad.addColorStop(1, '#080609');
+  } else {
+    // Gold Celestial
+    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+    bgGrad.addColorStop(0, '#3D1B22');
+    bgGrad.addColorStop(0.5, '#250E15');
+    bgGrad.addColorStop(1, '#100508');
+  }
+
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Sacred Aura & Golden Border
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(40, 40, w - 80, h - 80);
+
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(55, 55, w - 110, h - 110);
+
+  // Decorative Corner Crosses
+  drawCornerAccents(ctx, 40, 40);
+  drawCornerAccents(ctx, w - 40, 40);
+  drawCornerAccents(ctx, 40, h - 40);
+  drawCornerAccents(ctx, w - 40, h - 40);
+
+  // Top Sacred Symbol
+  ctx.font = '72px "Cinzel", serif, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E8C98A';
+  ctx.shadowColor = 'rgba(212, 168, 83, 0.6)';
+  ctx.shadowBlur = 18;
+  ctx.fillText(icon, w / 2, 160);
+  ctx.shadowBlur = 0;
+
+  // Book Reference Title
+  const refTitle = `${bookName.toUpperCase()} ${cap}, ${ver}`;
+  ctx.font = 'bold 36px "Cinzel", serif';
+  ctx.fillStyle = '#F5E6C8';
+  ctx.letterSpacing = '3px';
+  ctx.fillText(refTitle, w / 2, 235);
+
+  // Dividing Line with Star
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 140, 270);
+  ctx.lineTo(w / 2 - 20, 270);
+  ctx.moveTo(w / 2 + 20, 270);
+  ctx.lineTo(w / 2 + 140, 270);
+  ctx.stroke();
+
+  ctx.font = '18px sans-serif';
+  ctx.fillStyle = '#D4A853';
+  ctx.fillText('✦', w / 2, 276);
+
+  // Verse Quotation Text Wrapping
+  const maxTextWidth = w - 240;
+  let fontSize = 42;
+  if (verseText.length > 220) fontSize = 32;
+  else if (verseText.length > 140) fontSize = 36;
+  else if (verseText.length < 60) fontSize = 48;
+
+  ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  ctx.shadowBlur = 10;
+
+  const lines = wrapTextLines(ctx, `“${verseText}”`, maxTextWidth);
+  const lineHeight = fontSize * 1.5;
+  const totalTextHeight = lines.length * lineHeight;
+  
+  // Center verse text vertically in the middle area
+  let startY = 330 + (420 - totalTextHeight) / 2;
+  if (startY < 310) startY = 310;
+
+  lines.forEach((line, i) => {
+    ctx.fillText(line, w / 2, startY + i * lineHeight);
+  });
+
+  ctx.shadowBlur = 0;
+
+  // Devotional Prayer Note (if exists)
+  if (oracaoText) {
+    ctx.font = 'italic 26px "Cormorant Garamond", Georgia, serif';
+    ctx.fillStyle = '#E8C98A';
+    ctx.fillText(`“${oracaoText}”`, w / 2, h - 160);
+  }
+
+  // App Branding Footer
+  ctx.font = '600 20px "Cinzel", serif';
+  ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 85);
+};
+
+function drawCornerAccents(ctx, x, y) {
+  ctx.save();
+  ctx.strokeStyle = '#D4A853';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function wrapTextLines(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const width = ctx.measureText(currentLine + ' ' + word).width;
+    if (width < maxWidth) {
+      currentLine += ' ' + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+}
+
+window.downloadStudioCard = function () {
+  updateStudioCard();
+  const canvas = document.getElementById('studioCanvas');
+  if (!canvas) return;
+
+  const dataUrl = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `card_biblico_${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('✨ Card Sagrado baixado com sucesso!');
+};
+
+window.saveStudioCardToGallery = async function () {
+  updateStudioCard();
+  const canvas = document.getElementById('studioCanvas');
+  if (!canvas) return;
+
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+  const verseTextArea = document.getElementById('uploadVerseText');
+  const oracaoInput = document.getElementById('uploadOracaoInput');
+
+  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : 'Salmos';
+  const bookId = bookSelect ? parseInt(bookSelect.value) : 21;
+  const cap = capInput ? parseInt(capInput.value) : 1;
+  const ver = verInput ? parseInt(verInput.value) : 1;
+  const txt = verseTextArea ? verseTextArea.value.trim() : 'O Senhor é o meu pastor; nada me faltará.';
+  const oracao = oracaoInput ? oracaoInput.value.trim() : '';
+
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+  try {
+    showToast('Salvando Card Sagrado na Galeria...');
+    await db.addImgVersiculo({
+      id_livro: bookId,
+      nome_livro: bookName,
+      id_capitulo: cap,
+      id_versiculo: ver,
+      texto: txt,
+      address: dataUrl,
+      oracao: oracao
+    });
+
+    closeGalleryUploadModal();
+    showToast('✨ Card salvo com sucesso na sua Galeria!');
+    filterGalleryCategory('uploads', document.querySelector('.gallery-chip[data-category="uploads"]'));
+  } catch (err) {
+    showToast('Erro ao salvar card');
+  }
+};
 
 // ===== READING PLAN =====
 window.showPlan = function () {
