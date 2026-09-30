@@ -673,26 +673,30 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   ctx.drawImage(imgElement, 0, 0, w, h);
 
   const showOverlay = config.showOverlay !== false;
+  const narrativa = (config.narrativa || '').trim();
   const verseText = (config.verseText || '').trim();
+  const mainHighlightText = narrativa || verseText;
   const bookRef = (config.bookRef || '').trim();
   const oracaoText = (config.oracaoText || '').trim();
+  const isCenterHighlight = config.centerHighlight !== false;
+  const useQuotes = config.useQuotes !== false;
 
-  if (!showOverlay || (!verseText && !bookRef && !oracaoText)) {
+  if (!showOverlay || (!mainHighlightText && !bookRef && !oracaoText)) {
     return;
   }
 
   // 2. Vinheta gradiente de iluminação cinematográfica para legibilidade sublime
   const grad = ctx.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, 'rgba(10, 4, 6, 0.7)');
-  grad.addColorStop(0.2, 'rgba(10, 4, 6, 0.25)');
-  grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.1)');
-  grad.addColorStop(0.7, 'rgba(10, 4, 6, 0.45)');
-  grad.addColorStop(1, 'rgba(10, 4, 6, 0.9)');
+  grad.addColorStop(0.2, 'rgba(10, 4, 6, 0.3)');
+  grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)');
+  grad.addColorStop(0.8, 'rgba(10, 4, 6, 0.5)');
+  grad.addColorStop(1, 'rgba(10, 4, 6, 0.92)');
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  // 3. Moldura dourada fina com aura sagrada
+  // 3. Moldura dourada externa da obra
   ctx.strokeStyle = 'rgba(212, 168, 83, 0.6)';
   ctx.lineWidth = 3.5;
   ctx.strokeRect(36, 36, w - 72, h - 72);
@@ -702,71 +706,136 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   ctx.strokeRect(46, 46, w - 92, h - 92);
 
   // 4. Símbolo Topo (Cruz Dourada)
-  ctx.font = '48px "Cinzel", serif, sans-serif';
+  ctx.font = '46px "Cinzel", serif, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#E8C98A';
   try {
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 14;
   } catch (e) {}
-  ctx.fillText('✝', w / 2, 110);
+  ctx.fillText('✝', w / 2, 105);
 
-  // 5. Título de Referência no Topo
+  // 5. Título / Referência Bíblica no Topo
   if (bookRef) {
-    ctx.font = 'bold 30px "Cinzel", serif';
+    ctx.font = 'bold 28px "Cinzel", serif';
     ctx.fillStyle = '#F5E6C8';
-    ctx.fillText(bookRef.toUpperCase(), w / 2, 160);
+    ctx.fillText(bookRef.toUpperCase(), w / 2, 150);
 
     // Divisor com estrela
     ctx.strokeStyle = 'rgba(212, 168, 83, 0.6)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(w / 2 - 100, 185);
-    ctx.lineTo(w / 2 - 15, 185);
-    ctx.moveTo(w / 2 + 15, 185);
-    ctx.lineTo(w / 2 + 100, 185);
+    ctx.moveTo(w / 2 - 100, 172);
+    ctx.lineTo(w / 2 - 15, 172);
+    ctx.moveTo(w / 2 + 15, 172);
+    ctx.lineTo(w / 2 + 100, 172);
     ctx.stroke();
 
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#D4A853';
-    ctx.fillText('✦', w / 2, 190);
+    ctx.fillText('✦', w / 2, 177);
   }
 
-  // 6. Texto do Versículo no Centro/Base
-  if (verseText) {
-    const maxTextWidth = w - 180;
-    let fontSize = 38;
-    if (verseText.length > 200) fontSize = 28;
-    else if (verseText.length > 130) fontSize = 32;
+  // 6. RENDERIZAÇÃO DO TEXTO / NARRATIVA PRINCIPAL
+  if (mainHighlightText) {
+    const rawFormattedText = useQuotes && !mainHighlightText.startsWith('“') ? `“${mainHighlightText}”` : mainHighlightText;
 
-    ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
-    ctx.fillStyle = '#FFFFFF';
-    try {
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-      ctx.shadowBlur = 14;
-    } catch (e) {}
+    if (isCenterHighlight) {
+      // === DESTAQUE CENTRAL: MOLDURA SAGRADA ILUMINADA NO CENTRO DA IMAGEM ===
+      const boxMaxWidth = w - 160; // 920px
+      const textPadding = 45;
+      const innerTextWidth = boxMaxWidth - (textPadding * 2);
 
-    const lines = wrapCanvasText(ctx, `“${verseText}”`, maxTextWidth);
-    const lineHeight = fontSize * 1.45;
-    const totalTextHeight = lines.length * lineHeight;
+      let fontSize = 36;
+      if (mainHighlightText.length > 280) fontSize = 24;
+      else if (mainHighlightText.length > 180) fontSize = 28;
+      else if (mainHighlightText.length > 100) fontSize = 32;
 
-    let startY = h - 220 - totalTextHeight;
-    if (startY < 280) startY = 280;
+      ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+      const lines = wrapCanvasText(ctx, rawFormattedText, innerTextWidth);
+      const lineHeight = fontSize * 1.48;
+      const totalTextHeight = lines.length * lineHeight;
+      const boxHeight = Math.max(160, totalTextHeight + (textPadding * 2));
+      const boxY = (h - boxHeight) / 2 + 15;
+      const boxX = 80;
 
-    lines.forEach((line, i) => {
-      ctx.fillText(line, w / 2, startY + i * lineHeight);
-    });
+      // Fundo em vidro sagrado translúcido (Glassmorphism)
+      ctx.save();
+      const glassGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxHeight);
+      glassGrad.addColorStop(0, 'rgba(14, 5, 8, 0.78)');
+      glassGrad.addColorStop(0.5, 'rgba(24, 9, 15, 0.85)');
+      glassGrad.addColorStop(1, 'rgba(10, 3, 6, 0.92)');
+
+      ctx.fillStyle = glassGrad;
+      try {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+        ctx.shadowBlur = 25;
+      } catch (e) {}
+      ctx.fillRect(boxX, boxY, boxMaxWidth, boxHeight);
+
+      // Moldura Dourada do Box Central
+      ctx.strokeStyle = 'rgba(212, 168, 83, 0.85)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(boxX, boxY, boxMaxWidth, boxHeight);
+
+      // Linha dourada interna fina
+      ctx.strokeStyle = 'rgba(212, 168, 83, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(boxX + 8, boxY + 8, boxMaxWidth - 16, boxHeight - 16);
+
+      // Detalhes nos cantos do Box Central (Fleurons)
+      drawBoxCornerFleurons(ctx, boxX, boxY, boxMaxWidth, boxHeight);
+
+      // Texto no Centro
+      ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+      ctx.fillStyle = '#FFFFFF';
+      try {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+        ctx.shadowBlur = 12;
+      } catch (e) {}
+
+      const startY = boxY + textPadding + fontSize;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, w / 2, startY + i * lineHeight);
+      });
+      ctx.restore();
+
+    } else {
+      // === LAYOUT CLÁSSICO NA BASE DO CARD ===
+      const maxTextWidth = w - 180;
+      let fontSize = 36;
+      if (mainHighlightText.length > 200) fontSize = 26;
+      else if (mainHighlightText.length > 120) fontSize = 30;
+
+      ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+      ctx.fillStyle = '#FFFFFF';
+      try {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+        ctx.shadowBlur = 14;
+      } catch (e) {}
+
+      const lines = wrapCanvasText(ctx, rawFormattedText, maxTextWidth);
+      const lineHeight = fontSize * 1.45;
+      const totalTextHeight = lines.length * lineHeight;
+
+      let startY = h - 200 - totalTextHeight;
+      if (startY < 260) startY = 260;
+
+      lines.forEach((line, i) => {
+        ctx.fillText(line, w / 2, startY + i * lineHeight);
+      });
+    }
   }
 
   // 7. Oração ou Mensagem devocional na base
   if (oracaoText) {
-    ctx.font = 'italic 24px "Cormorant Garamond", Georgia, serif';
+    ctx.font = 'italic 22px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = '#E8C98A';
     try {
       ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
       ctx.shadowBlur = 10;
     } catch (e) {}
-    ctx.fillText(`“${oracaoText}”`, w / 2, h - 115);
+    ctx.fillText(`“${oracaoText}”`, w / 2, h - 110);
   }
 
   // 8. Rodapé do Aplicativo
@@ -775,10 +844,32 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   try {
     ctx.shadowBlur = 6;
   } catch (e) {}
-  ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 60);
+  ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 55);
   try {
     ctx.shadowBlur = 0;
   } catch (e) {}
+}
+
+function drawBoxCornerFleurons(ctx, x, y, width, height) {
+  ctx.save();
+  ctx.strokeStyle = '#D4A853';
+  ctx.fillStyle = '#E8C98A';
+  ctx.lineWidth = 1.5;
+
+  const corners = [
+    [x, y],
+    [x + width, y],
+    [x, y + height],
+    [x + width, y + height]
+  ];
+
+  corners.forEach(([cx, cy]) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
 }
 
 function wrapCanvasText(ctx, text, maxWidth) {
@@ -800,3 +891,4 @@ function wrapCanvasText(ctx, text, maxWidth) {
   if (currentLine) lines.push(currentLine);
   return lines;
 }
+

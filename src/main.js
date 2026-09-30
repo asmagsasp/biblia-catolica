@@ -1460,6 +1460,35 @@ window.generateAiArt = async function (isRegen = false) {
   }
 };
 
+window.copyVerseToNarrative = function () {
+  const verseText = document.getElementById('uploadVerseText');
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+  const narrativeInput = document.getElementById('aiNarrativaInput');
+
+  if (!narrativeInput) return;
+
+  const txt = verseText ? verseText.value.trim() : '';
+  const selectedVal = bookSelect ? bookSelect.value : '';
+  const bookOpt = (bookSelect && selectedVal && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : '';
+  const cap = capInput ? capInput.value : '';
+  const ver = verInput ? verInput.value : '';
+
+  if (txt) {
+    narrativeInput.value = txt;
+    showToast('✨ Versículo copiado para a narrativa central!');
+  } else if (bookName) {
+    narrativeInput.value = `“Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.”`;
+    showToast('✨ Citação bíblica inserida na narrativa!');
+  } else {
+    narrativeInput.value = 'O Senhor é o meu pastor, nada me faltará. Em verdes prados Ele me faz repousar.';
+    showToast('✨ Narrativa devocional inserida!');
+  }
+  renderStudioAiCanvas();
+};
+
 window.renderStudioAiCanvas = function () {
   try {
     const canvas = document.getElementById('studioCanvas');
@@ -1468,11 +1497,19 @@ window.renderStudioAiCanvas = function () {
     const overlayCheck = document.getElementById('aiOverlayVerseCheck');
     const showOverlay = overlayCheck ? overlayCheck.checked : true;
 
+    const narrativeInput = document.getElementById('aiNarrativaInput');
+    const centerHighlightCheck = document.getElementById('aiCenterHighlightCheck');
+    const narrativeQuotesCheck = document.getElementById('aiNarrativeQuotesCheck');
+
     const verseTextArea = document.getElementById('uploadVerseText');
     const bookSelect = document.getElementById('uploadBookSelect');
     const capInput = document.getElementById('uploadChapterInput');
     const verInput = document.getElementById('uploadVerseInput');
     const oracaoInput = document.getElementById('uploadOracaoInput');
+
+    const narrativa = narrativeInput ? narrativeInput.value.trim() : '';
+    const centerHighlight = centerHighlightCheck ? centerHighlightCheck.checked : true;
+    const useQuotes = narrativeQuotesCheck ? narrativeQuotesCheck.checked : true;
 
     const verseText = verseTextArea ? verseTextArea.value.trim() : '';
     const selectedVal = bookSelect ? bookSelect.value : '';
@@ -1486,12 +1523,22 @@ window.renderStudioAiCanvas = function () {
     if (currentAiImageElement) {
       composeCardOnCanvas(canvas, currentAiImageElement, {
         showOverlay: showOverlay,
+        narrativa: narrativa,
+        centerHighlight: centerHighlight,
+        useQuotes: useQuotes,
         verseText: verseText,
         bookRef: bookRef,
         oracaoText: oracao
       });
     } else {
-      drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao);
+      drawDefaultSacredPlaceholder(canvas, {
+        narrativa: narrativa,
+        centerHighlight: centerHighlight,
+        useQuotes: useQuotes,
+        verseText: verseText,
+        bookRef: bookRef,
+        oracao: oracao
+      });
     }
   } catch (err) {
     console.error("renderStudioAiCanvas error:", err);
@@ -1549,11 +1596,29 @@ function drawGeneratingStudioCanvas(canvas, prompt) {
   ctx.fillText('✨ A Inteligência Artificial está pintando sua cena bíblica...', w / 2, h / 2 + 170);
 }
 
-function drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao) {
+function drawDefaultSacredPlaceholder(canvas, options = {}) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const w = canvas.width;
   const h = canvas.height;
+
+  let verseText = '';
+  let bookRef = '';
+  let oracao = '';
+  let narrativa = '';
+  let centerHighlight = true;
+  let useQuotes = true;
+
+  if (typeof options === 'string') {
+    verseText = options;
+  } else if (options && typeof options === 'object') {
+    verseText = options.verseText || '';
+    bookRef = options.bookRef || '';
+    oracao = options.oracao || '';
+    narrativa = options.narrativa || '';
+    centerHighlight = options.centerHighlight !== false;
+    useQuotes = options.useQuotes !== false;
+  }
 
   const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
   bgGrad.addColorStop(0, '#3D1B22');
@@ -1603,22 +1668,72 @@ function drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao) {
   ctx.fillStyle = '#D4A853';
   ctx.fillText('✦', w / 2, 276);
 
-  // Text
-  const txt = verseText || 'Digite um tema acima e clique em "Gerar Obra Sacra com IA" para criar arte personalizada!';
-  const isCustomVerse = !!verseText;
-  
-  ctx.font = `italic ${isCustomVerse ? '38px' : '30px'} "Cormorant Garamond", Georgia, serif`;
-  ctx.fillStyle = isCustomVerse ? '#FFFFFF' : '#E8C98A';
-  
-  const displayTxt = isCustomVerse ? (txt.startsWith('“') ? txt : `“${txt}”`) : txt;
-  const lines = wrapTextLines(ctx, displayTxt, w - 240);
-  const lineHeight = isCustomVerse ? 54 : 44;
-  let startY = 360 + (360 - lines.length * lineHeight) / 2;
-  if (startY < 330) startY = 330;
-  
-  lines.forEach((line, i) => {
-    ctx.fillText(line, w / 2, startY + i * lineHeight);
-  });
+  // Text / Narrativa
+  const mainHighlight = (narrativa || verseText).trim();
+  const isCustom = !!mainHighlight;
+  const rawText = mainHighlight || 'Digite um tema sagrado e uma narrativa acima e clique em "Gerar Obra Sacra com IA" para criar arte personalizada!';
+  const displayTxt = (useQuotes && isCustom && !rawText.startsWith('“')) ? `“${rawText}”` : rawText;
+
+  if (centerHighlight && isCustom) {
+    const boxMaxWidth = w - 160;
+    const textPadding = 45;
+    const innerTextWidth = boxMaxWidth - (textPadding * 2);
+
+    let fontSize = 36;
+    if (displayTxt.length > 280) fontSize = 24;
+    else if (displayTxt.length > 180) fontSize = 28;
+    else if (displayTxt.length > 100) fontSize = 32;
+
+    ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+    const lines = wrapTextLines(ctx, displayTxt, innerTextWidth);
+    const lineHeight = fontSize * 1.48;
+    const totalTextHeight = lines.length * lineHeight;
+    const boxHeight = Math.max(160, totalTextHeight + (textPadding * 2));
+    const boxY = (h - boxHeight) / 2 + 15;
+    const boxX = 80;
+
+    // Glass backdrop
+    ctx.save();
+    const glassGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxHeight);
+    glassGrad.addColorStop(0, 'rgba(24, 8, 12, 0.88)');
+    glassGrad.addColorStop(1, 'rgba(12, 4, 7, 0.95)');
+    ctx.fillStyle = glassGrad;
+    ctx.fillRect(boxX, boxY, boxMaxWidth, boxHeight);
+
+    ctx.strokeStyle = 'rgba(212, 168, 83, 0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(boxX, boxY, boxMaxWidth, boxHeight);
+
+    ctx.strokeStyle = 'rgba(212, 168, 83, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(boxX + 8, boxY + 8, boxMaxWidth - 16, boxHeight - 16);
+
+    drawCornerAccents(ctx, boxX + 8, boxY + 8);
+    drawCornerAccents(ctx, boxX + boxMaxWidth - 8, boxY + 8);
+    drawCornerAccents(ctx, boxX + 8, boxY + boxHeight - 8);
+    drawCornerAccents(ctx, boxX + boxMaxWidth - 8, boxY + boxHeight - 8);
+
+    ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+    ctx.fillStyle = '#FFFFFF';
+    const startY = boxY + textPadding + fontSize;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, w / 2, startY + i * lineHeight);
+    });
+    ctx.restore();
+
+  } else {
+    ctx.font = `italic ${isCustom ? '38px' : '30px'} "Cormorant Garamond", Georgia, serif`;
+    ctx.fillStyle = isCustom ? '#FFFFFF' : '#E8C98A';
+    
+    const lines = wrapTextLines(ctx, displayTxt, w - 240);
+    const lineHeight = isCustom ? 54 : 44;
+    let startY = 360 + (360 - lines.length * lineHeight) / 2;
+    if (startY < 330) startY = 330;
+    
+    lines.forEach((line, i) => {
+      ctx.fillText(line, w / 2, startY + i * lineHeight);
+    });
+  }
 
   if (oracao) {
     ctx.font = 'italic 24px "Cormorant Garamond", Georgia, serif';
@@ -1685,6 +1800,7 @@ window.saveStudioCardToGallery = async function () {
   const capInput = document.getElementById('uploadChapterInput');
   const verInput = document.getElementById('uploadVerseInput');
   const verseTextArea = document.getElementById('uploadVerseText');
+  const narrativeInput = document.getElementById('aiNarrativaInput');
   const oracaoInput = document.getElementById('uploadOracaoInput');
 
   const selectedVal = bookSelect ? bookSelect.value : '';
@@ -1693,7 +1809,9 @@ window.saveStudioCardToGallery = async function () {
   const bookId = selectedVal ? parseInt(selectedVal) : null;
   const cap = (bookId && capInput && capInput.value) ? parseInt(capInput.value) : null;
   const ver = (bookId && verInput && verInput.value) ? parseInt(verInput.value) : null;
+  const narrativa = narrativeInput ? narrativeInput.value.trim() : '';
   const txt = verseTextArea ? verseTextArea.value.trim() : '';
+  const finalTxt = narrativa || txt;
   const oracao = oracaoInput ? oracaoInput.value.trim() : '';
 
   // Use canvas dataUrl (which contains the composed artwork with or without overlay)
@@ -1706,7 +1824,7 @@ window.saveStudioCardToGallery = async function () {
       nome_livro: bookName,
       id_capitulo: cap,
       id_versiculo: ver,
-      texto: txt,
+      texto: finalTxt,
       address: dataUrl,
       oracao: oracao
     });

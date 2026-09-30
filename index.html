@@ -481,13 +481,35 @@
             </div>
 
             <div class="upload-field">
-              <label class="upload-label"><i class="fas fa-layer-group"></i> Sobreposição de Versículo:</label>
+              <label class="upload-label"><i class="fas fa-layer-group"></i> Sobreposição de Texto:</label>
               <div class="ai-toggle-box">
                 <label class="ai-checkbox-label">
                   <input type="checkbox" id="aiOverlayVerseCheck" checked onchange="toggleAiVerseOverlay()">
-                  <span>Sobrepor citação bíblica no Card</span>
+                  <span>Sobrepor texto no Card</span>
                 </label>
               </div>
+            </div>
+          </div>
+
+          <!-- NARRATIVA / MENSAGEM EM DESTAQUE NO CENTRO -->
+          <div class="upload-field" style="margin-top: 4px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="upload-label"><i class="fas fa-feather-alt"></i> Narrativa / Mensagem em Destaque Central:</label>
+              <button type="button" class="upload-btn-fetch" onclick="copyVerseToNarrative()" title="Copiar o versículo da aba anterior para a narrativa">
+                <i class="fas fa-quote-right"></i> Puxar do Versículo
+              </button>
+            </div>
+            <textarea id="aiNarrativaInput" class="upload-textarea" rows="2" placeholder="Digite uma narrativa, história sagrada, citação ou meditação para ficar destacada no centro do card..." oninput="renderStudioAiCanvas()"></textarea>
+            
+            <div style="margin-top: 6px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+              <label class="ai-checkbox-label">
+                <input type="checkbox" id="aiCenterHighlightCheck" checked onchange="renderStudioAiCanvas()">
+                <span><i class="fas fa-certificate" style="color: var(--gold-400);"></i> Destacar no Centro (Moldura de Vidro Sagrado)</span>
+              </label>
+              <label class="ai-checkbox-label">
+                <input type="checkbox" id="aiNarrativeQuotesCheck" checked onchange="renderStudioAiCanvas()">
+                <span>Aspas Clássicas (“ ”)</span>
+              </label>
             </div>
           </div>
 
