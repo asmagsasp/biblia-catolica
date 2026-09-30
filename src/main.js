@@ -1408,10 +1408,15 @@ window.generateAiArt = async function (isRegen = false) {
     generateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Pintando com IA...</span>`;
   }
   if (loadingContainer) loadingContainer.classList.remove('hidden');
-  if (resultContainer) resultContainer.style.opacity = '0.35';
+  if (resultContainer) resultContainer.style.opacity = '0.9';
+
+  const studioCanvas = document.getElementById('studioCanvas');
+  if (studioCanvas) {
+    drawGeneratingStudioCanvas(studioCanvas, prompt || bookRef);
+  }
 
   try {
-    showToast(isRegen ? 'Criando nova variação com IA... ✨' : 'Conectando ao modelo de IA generativa... ✨');
+    showToast(isRegen ? 'Criando nova variação sacra... ✨' : 'Pintando cena bíblica com Inteligência Artificial... ✨');
     
     const dataUrl = await generateSacredAIImage(prompt, styleId, {
       verseText: verseText,
@@ -1492,6 +1497,57 @@ window.renderStudioAiCanvas = function () {
     console.error("renderStudioAiCanvas error:", err);
   }
 };
+
+function drawGeneratingStudioCanvas(canvas, prompt) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Fundo gradiente sagrado escuro
+  const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, w * 0.7);
+  bgGrad.addColorStop(0, '#2D1219');
+  bgGrad.addColorStop(0.6, '#18070B');
+  bgGrad.addColorStop(1, '#080204');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Moldura dourada
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(36, 36, w - 72, h - 72);
+
+  // Aura
+  const aura = ctx.createRadialGradient(w / 2, h / 2 - 40, 20, w / 2, h / 2 - 40, 180);
+  aura.addColorStop(0, 'rgba(212, 168, 83, 0.35)');
+  aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(w / 2, h / 2 - 40, 180, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cruz
+  ctx.font = '84px "Cinzel", serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E8C98A';
+  ctx.fillText('✝', w / 2, h / 2 - 15);
+
+  // Mensagem
+  ctx.font = 'bold 30px "Cinzel", serif';
+  ctx.fillStyle = '#F5E6C8';
+  ctx.fillText('CRIANDO OBRA DE ARTE SACRA...', w / 2, h / 2 + 75);
+
+  if (prompt) {
+    ctx.font = 'italic 22px "Cormorant Garamond", Georgia, serif';
+    ctx.fillStyle = '#D4A853';
+    const displayP = prompt.length > 55 ? prompt.slice(0, 52) + '...' : prompt;
+    ctx.fillText(`“${displayP}”`, w / 2, h / 2 + 120);
+  }
+
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = 'rgba(232, 201, 138, 0.7)';
+  ctx.fillText('✨ A Inteligência Artificial está pintando sua cena bíblica...', w / 2, h / 2 + 170);
+}
 
 function drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao) {
   const ctx = canvas.getContext('2d');

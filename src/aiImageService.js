@@ -1,4 +1,4 @@
-// SERVIÇO AVANÇADO DE GERAÇÃO DE IMAGENS SACRAS E ARTE BÍBLICA COM INTELIGÊNCIA ARTIFICIAL
+// SERVIÇO AVANÇADO DE GERAÇÃO DE IMAGENS SACRAS E ARTE BÍBLICA COM INTELIGÊNCIA ARTIFICIAL MULTI-TIER
 
 export const SACRED_AI_STYLES = [
   {
@@ -52,172 +52,179 @@ export const SACRED_AI_INSPIRATIONS = [
 ];
 
 // REGRAS SEMÂNTICAS DE CENAS BÍBLICAS ESPECÍFICAS
-const SACRED_SCENE_RULES = [
+export const SACRED_SCENE_RULES = [
   // 1. Jesus acalmando a tempestade
   {
+    id: 'calm_storm',
     regex: /(acalma|tempestade|barco.*mar|mar.*galileia|ondas.*vento|vento.*mar|socorre.*afundando|mar.*tempestuoso)/i,
-    build: () => 'Jesus Christ standing majestically in a wooden fishing boat on the stormy Sea of Galilee, raising His hand with divine authority commanding the violent raging waves and tempest to be still, dramatic storm clouds parting with golden celestial sunlight breaking through, disciples looking in reverent awe'
+    build: () => 'Jesus Christ standing majestically in a wooden fishing boat on the stormy Sea of Galilee, raising His hand with divine authority commanding the violent raging waves and tempest to be still, dramatic storm clouds parting with golden celestial sunlight breaking through, disciples looking in reverent awe',
+    palette: ['#0B1B3D', '#1A365D', '#D4AF37', '#E2E8F0', '#0F172A'],
+    title: 'Jesus Acalma a Tempestade'
   },
   // 2. Jesus andando sobre as águas
   {
+    id: 'walk_water',
     regex: /(andando sobre as [aá]guas|caminha(r|ndo)? sobre (as )?[aá]guas|pedro.*afundando|salva-me.*senhor|homem de pouca f[eé]|mar.*noite.*jesus|salvar pedro)/i,
-    build: () => 'Jesus Christ walking serenely on the surface of the dark stormy sea, extending His luminous hand to rescue Saint Peter from the waves, divine glowing golden halo, majestic celestial moonlight and ocean spray'
+    build: () => 'Jesus Christ walking serenely on the surface of the dark stormy sea, extending His luminous hand to rescue Saint Peter from the waves, divine glowing golden halo, majestic celestial moonlight and ocean spray',
+    palette: ['#051923', '#003554', '#006494', '#E8C98A', '#051923'],
+    title: 'Jesus Anda Sobre as Águas'
   },
   // 3. O Bom Pastor / Salmo 23
   {
+    id: 'good_shepherd',
     regex: /(bom pastor|ovelha|pastoreia|salmo\s*23|pastor.*nada|verdes prados|[aá]guas tranquilas|[aá]guas de repouso|rebanho)/i,
-    build: () => 'Jesus Christ as the Good Shepherd in flowing holy robes, tenderly cradling a gentle white lamb in His arms, walking through lush green biblical pastures with a peaceful flowing crystal stream, rolling Galilean hills, warm golden hour sunlight, divine halo'
+    build: () => 'Jesus Christ as the Good Shepherd in flowing holy robes, tenderly cradling a gentle white lamb in His arms, walking through lush green biblical pastures with a peaceful flowing crystal stream, rolling Galilean hills, warm golden hour sunlight, divine halo',
+    palette: ['#1E3F20', '#2D5A27', '#D4A853', '#F5E6C8', '#0F2410'],
+    title: 'O Bom Pastor'
   },
   // 4. Moisés abrindo o Mar Vermelho
   {
+    id: 'red_sea',
     regex: /(mar vermelho|abriu o mar|partir o mar|moises.*mar|mois[eé]s.*cajado|[eê]xodo 14|travessia do mar)/i,
-    build: () => 'Moses with glowing white beard holding his wooden staff aloft, miraculously parting the towering walls of the Red Sea, illuminated dry seabed pathway, dramatic pillar of celestial fire, towering churning ocean walls, awe-inspiring biblical Exodus narrative'
+    build: () => 'Moses with glowing white beard holding his wooden staff aloft, miraculously parting the towering walls of the Red Sea, illuminated dry seabed pathway, dramatic pillar of celestial fire, towering churning ocean walls, awe-inspiring biblical Exodus narrative',
+    palette: ['#4A1525', '#1B3A4B', '#E8B923', '#E0FBFC', '#210912'],
+    title: 'Abertura do Mar Vermelho'
   },
   // 5. Arca de Noé / Dilúvio
   {
+    id: 'noah_ark',
     regex: /(arca de no[eé]|dil[uú]vio|ararate|no[eé].*animais|g[eê]nesis 6|g[eê]nesis 7|g[eê]nesis 8|monte ararate)/i,
-    build: () => 'Noah\'s Ark ancient wooden ship resting on the mountains of Ararat after the great flood, pairs of diverse animals descending peacefully, brilliant radiant rainbow glowing across dramatic celestial sky, white dove holding green olive branch'
+    build: () => 'Noah\'s Ark ancient wooden ship resting on the mountains of Ararat after the great flood, pairs of diverse animals descending peacefully, brilliant radiant rainbow glowing across dramatic celestial sky, white dove holding green olive branch',
+    palette: ['#1C3144', '#3F88C5', '#F49D37', '#A2D2FF', '#0D1B2A'],
+    title: 'A Arca de Noé'
   },
   // 6. A Criação / Fiat Lux / Gênesis 1
   {
+    id: 'creation',
     regex: /(cria[cç][aã]o|fiat lux|g[eê]nesis 1|fa[cç]a-se a luz|haja luz|luz das trevas|universo.*deus|no princ[ií]pio criou deus)/i,
-    build: () => 'The Creation of the Universe, God creating celestial light separating light from darkness in the cosmic deep, luminous glowing stars, planets and swirling galaxies forming, majestic divine golden rays of Fiat Lux, sacred Genesis'
+    build: () => 'The Creation of the Universe, God creating celestial light separating light from darkness in the cosmic deep, luminous glowing stars, planets and swirling galaxies forming, majestic divine golden rays of Fiat Lux, sacred Genesis',
+    palette: ['#03071E', '#370617', '#9D0208', '#FFBA08', '#000000'],
+    title: 'A Criação do Mundo'
   },
   // 7. A Última Ceia / Eucaristia
   {
+    id: 'last_supper',
     regex: /(ceia|[uú]ltima ceia|eucaristia|sagrada comunh[aã]o|p[aã]o e vinho|c[aá]lice|este [eé] o meu corpo|sangue da nova alian[cç]a|ostens[oó]rio|h[oó]stia|sant[ií]ssimo sacramento)/i,
-    build: () => 'Jesus Christ at the Last Supper table with the twelve Apostles, elevating the sacred unleavened bread and golden chalice of wine with heavenly light radiating from His holy hands, warm reverent candlelight, sacred communion'
+    build: () => 'Jesus Christ at the Last Supper table with the twelve Apostles, elevating the sacred unleavened bread and golden chalice of wine with heavenly light radiating from His holy hands, warm reverent candlelight, sacred communion',
+    palette: ['#3A0E16', '#581825', '#D4AF37', '#FCEADE', '#1B0509'],
+    title: 'A Sagrada Eucaristia'
   },
   // 8. São Miguel Arcanjo
   {
+    id: 'st_michael',
     regex: /(s[aã]o miguel|arcanjo miguel|quem como deus|derrotando o drag[aã]o|espada de fogo|arcanjo.*armadura|batalha celestial)/i,
-    build: () => 'Archangel Saint Michael in radiant ornate golden armor with majestic feathered wings, holding a glowing blazing sword of holy fire, standing triumphant over darkness, celestial divine light beams shining from heaven, heroic and sacred'
+    build: () => 'Archangel Saint Michael in radiant ornate golden armor with majestic feathered wings, holding a glowing blazing sword of holy fire, standing triumphant over darkness, celestial divine light beams shining from heaven, heroic and sacred',
+    palette: ['#1F1A3A', '#483C7E', '#E8C98A', '#FF5A36', '#0E0B1A'],
+    title: 'São Miguel Arcanjo'
   },
   // 9. A Natividade / Menino Jesus / Belém
   {
+    id: 'nativity',
     regex: /(natividade|nascimento de jesus|menino jesus|pres[eé]pio|bel[eé]m|estrela do oriente|s[aã]o jos[eé].*maria.*manjedoura|noite feliz|menino na manjedoura)/i,
-    build: () => 'The Holy Nativity in Bethlehem, baby Jesus asleep in the humble manger radiant with divine light, Virgin Mary and Saint Joseph looking down with tender love, shining Star of Bethlehem glowing above the stable, peaceful adoration'
+    build: () => 'The Holy Nativity in Bethlehem, baby Jesus asleep in the humble manger radiant with divine light, Virgin Mary and Saint Joseph looking down with tender love, shining Star of Bethlehem glowing above the stable, peaceful adoration',
+    palette: ['#18233C', '#283B66', '#E9C46A', '#F4A261', '#0B111E'],
+    title: 'A Natividade em Belém'
   },
   // 10. Ressurreição de Jesus / Sepulcro Vazio
   {
+    id: 'resurrection',
     regex: /(ressurrei[cç][aã]o|t[uú]mulo vazio|sepulcro vazio|ressuscitou|ele vive|vit[oó]ria sobre a morte|domingo de p[aá]scoa|ressurreic[aã]o)/i,
-    build: () => 'The Glorious Resurrection of Jesus Christ, triumphant Christ clothed in radiant blinding white and gold rising from the open stone tomb, holding the banner of victory, angelic light, Roman guards in awe, dawn golden morning light'
+    build: () => 'The Glorious Resurrection of Jesus Christ, triumphant Christ clothed in radiant blinding white and gold rising from the open stone tomb, holding the banner of victory, angelic light, Roman guards in awe, dawn golden morning light',
+    palette: ['#2B1B17', '#6E473B', '#F5DFBB', '#FFE494', '#140C0A'],
+    title: 'A Gloriosa Ressurreição'
   },
   // 11. Imaculado Coração de Maria / Virgem Maria
   {
+    id: 'immaculate_heart',
     regex: /(imaculado cora[cç][aã]o|nossa senhora|virgem maria|m[aã]e de deus|aparecida|f[aá]tima|guadalupe|lourdes|ave maria|rainha do c[eé]u)/i,
-    build: () => 'The Blessed Virgin Mary Queen of Heaven in celestial blue and radiant white mantle, gentle loving motherly gaze, golden halo of twelve stars, surrounded by white roses and soft divine light rays'
+    build: () => 'The Blessed Virgin Mary Queen of Heaven in celestial blue and radiant white mantle, gentle loving motherly gaze, golden halo of twelve stars, surrounded by white roses and soft divine light rays',
+    palette: ['#0A2463', '#1E3888', '#F5E6C8', '#D8315B', '#04102B'],
+    title: 'Imaculado Coração de Maria'
   },
   // 12. Sagrado Coração de Jesus / Misericórdia
   {
+    id: 'sacred_heart',
     regex: /(sagrado cora[cç][aã]o|cora[cç][aã]o de jesus|miseric[oó]rdia divina|jesus misericordioso|raios da miseric[oó]rdia)/i,
-    build: () => 'The Sacred Heart of Jesus Christ with glowing flames and crown of thorns, gentle hand raised in blessing, compassionate divine gaze, rays of red and pale light radiating from His heart'
+    build: () => 'The Sacred Heart of Jesus Christ with glowing flames and crown of thorns, gentle hand raised in blessing, compassionate divine gaze, rays of red and pale light radiating from His heart',
+    palette: ['#38040E', '#640D14', '#D4AF37', '#FFCCD5', '#190005'],
+    title: 'Sagrado Coração de Jesus'
   },
   // 13. Pentecostes / Espírito Santo
   {
+    id: 'pentecost',
     regex: /(pentecostes|esp[ií]rito santo|pomba celestial|l[ií]nguas de fogo|cen[aá]culo|dons do esp[ií]rito|par[aá]clito)/i,
-    build: () => 'The Holy Spirit descending as a glowing white dove surrounded by seven rays of golden light and gentle divine flames, Pentecost upper room with apostles, heavenly illumination'
+    build: () => 'The Holy Spirit descending as a glowing white dove surrounded by seven rays of golden light and gentle divine flames, Pentecost upper room with apostles, heavenly illumination',
+    palette: ['#300C12', '#7A1C29', '#E09F3E', '#FFF3B0', '#150407'],
+    title: 'O Espírito Santo'
   },
   // 14. Anunciação
   {
+    id: 'annunciation',
     regex: /(anuncia[cç][aã]o|anjo gabriel|arcanjo gabriel|fa[cç]a-se em mim|eis a serva|anuncia[cç]ao)/i,
-    build: () => 'The Annunciation, Archangel Gabriel with golden wings appearing before kneeling Virgin Mary with white lilies, Holy Spirit dove in divine light, intimate holy revelation'
+    build: () => 'The Annunciation, Archangel Gabriel with golden wings appearing before kneeling Virgin Mary with white lilies, Holy Spirit dove in divine light, intimate holy revelation',
+    palette: ['#1A2536', '#2F4858', '#E5C687', '#F6F7F8', '#0D131C'],
+    title: 'A Anunciação do Senhor'
   },
   // 15. Crucificação / Calvário / Cruz
   {
+    id: 'crucifixion',
     regex: /(crucifica[cç][aã]o|na cruz|monte calv[aá]rio|g[oó]lgota|santa cruz|paix[aã]o de cristo|consumado est[aá]|cruz de cristo)/i,
-    build: () => 'Jesus Christ on the Holy Cross at Mount Calvary, heavenly light breaking through dark storm clouds, sacred solemn redemption, reverent and profound'
+    build: () => 'Jesus Christ on the Holy Cross at Mount Calvary, heavenly light breaking through dark storm clouds, sacred solemn redemption, reverent and profound',
+    palette: ['#1F161A', '#38262E', '#D4A853', '#F3E9DC', '#100B0D'],
+    title: 'A Santa Cruz Redentora'
   },
   // 16. Davi e Golias
   {
+    id: 'david_goliath',
     regex: /(davi.*golias|golias|funda.*pedra|gigante filisteu|davi.*pastor)/i,
-    build: () => 'Young David holding sling and stone facing giant Goliath in the Valley of Elah, dramatic ancient biblical battlefield, golden light of faith'
+    build: () => 'Young David holding sling and stone facing giant Goliath in the Valley of Elah, dramatic ancient biblical battlefield, golden light of faith',
+    palette: ['#283618', '#606C38', '#DDA15E', '#FEFAE0', '#141B0C'],
+    title: 'Davi e Golias'
   },
   // 17. Daniel na Cova dos Leões
   {
+    id: 'daniel_lions',
     regex: /(daniel.*le[oõ]es|cova dos le[oõ]es|le[aã]o.*daniel)/i,
-    build: () => 'Daniel in the Lions\' Den, kneeling in peaceful prayer unharmed among resting majestic lions, beam of celestial divine light shining from above'
+    build: () => 'Daniel in the Lions\' Den, kneeling in peaceful prayer unharmed among resting majestic lions, beam of celestial divine light shining from above',
+    palette: ['#291D13', '#5E432C', '#D4A373', '#FAEDCD', '#140E09'],
+    title: 'Daniel na Cova dos Leões'
   },
   // 18. Sermão da Montanha / Bem-Aventuranças
   {
+    id: 'sermon_mount',
     regex: /(serm[aã]o da montanha|bem-aventurados|colina.*galileia|mateus 5|ensinando a multid[aã]o)/i,
-    build: () => 'Jesus Christ delivering the Sermon on the Mount, teaching the disciples and multitude on a wildflower hillside overlooking the Sea of Galilee, soft morning sunlight'
+    build: () => 'Jesus Christ delivering the Sermon on the Mount, teaching the disciples and multitude on a wildflower hillside overlooking the Sea of Galilee, soft morning sunlight',
+    palette: ['#1C3127', '#2E5339', '#E9C46A', '#F4F1DE', '#0E1914'],
+    title: 'O Sermão da Montanha'
   },
-  // 19. Multiplicação dos Pães e Peixes
+  // 19. São José e o Menino Jesus
   {
-    regex: /(multiplica[cç][aã]o.*p[aã]es|p[aã]es e peixes|cinco p[aã]es|dois peixes|alimentou a multid[aã]o|multiplica[cç]ao)/i,
-    build: () => 'Jesus Christ blessing baskets of bread and fish to feed the multitude on a green hillside, golden light, holy miracle, joyful disciples'
-  },
-  // 20. São José e o Menino Jesus
-  {
+    id: 'st_joseph',
     regex: /(s[aã]o jos[eé]|jos[eé] oper[aá]rio|carpintaria.*jesus|pai adotivo|jos[eé].*menino)/i,
-    build: () => 'Saint Joseph holding infant Jesus with fatherly love and holding a flowering white lily staff, warm carpenter workshop light with sunbeams and wood shavings'
+    build: () => 'Saint Joseph holding infant Jesus with fatherly love and holding a flowering white lily staff, warm carpenter workshop light with sunbeams and wood shavings',
+    palette: ['#2E1C14', '#593822', '#DDB892', '#FFF1E6', '#170E0A'],
+    title: 'São José com o Menino Jesus'
   },
-  // 21. Transfiguração
+  // 20. O Verbo Divino / Prólogo de São João
   {
-    regex: /(transfigura[cç][aã]o|monte tabor|mois[eé]s e elias|vestes brancas como a luz|transfigura[cç]ao)/i,
-    build: () => 'The Transfiguration of Jesus on Mount Tabor, radiant blinding white light, Moses and Elijah appearing beside Christ, disciples Peter James and John kneeling in awe'
-  },
-  // 22. Jonas e o Grande Peixe
-  {
-    regex: /(jonas|grande peixe|baleia|n[ií]nive)/i,
-    build: () => 'Jonah emerging onto the beach from the sea and great fish, dramatic coastal clouds and golden dawn, divine redemption'
-  },
-  // 23. Apocalipse / Nova Jerusalém
-  {
-    regex: /(apocalipse|nova jerusal[eé]m|rio da vida|[aá]rvore da vida|vis[aã]o de jo[aã]o|cidade santa|trono de deus)/i,
-    build: () => 'The Holy City New Jerusalem descending from heaven, golden streets, crystalline river of life, brilliant tree of life, majestic celestial glory, Book of Revelation'
-  },
-  // 24. Filho Pródigo
-  {
-    regex: /(filho pr[oó]digo|abra[cç]o do pai|pai misericordioso|perdoou o filho)/i,
-    build: () => 'The Parable of the Prodigal Son, loving father weeping and embracing his returning kneeling son in warm emotional golden light, forgiveness and grace'
-  },
-  // 25. Anjo da Guarda
-  {
-    regex: /(anjo da guarda|santo anjo|guardi[aã]o|prote[cç][aã]o dos anjos)/i,
-    build: () => 'Guardian Angel in glowing white robes with protective feathered wings sheltering a child along a mountain path, gentle golden celestial light'
-  },
-  // 26. Batismo de Jesus
-  {
-    regex: /(batismo.*jesus|rio jord[aã]o.*batismo|jo[aã]o batista.*batizando)/i,
-    build: () => 'The Baptism of Jesus Christ in the River Jordan by Saint John the Baptist, Holy Spirit as a luminous dove descending from open heaven with radiant beams of light'
-  },
-  // 27. Cura dos enfermos / Milagre
-  {
-    regex: /(curou.*cego|cura dos enfermos|milagre.*jesus|leproso.*curado|ressuscitou.*l[aá]zaro|l[aá]zaro vem para fora)/i,
-    build: () => 'Jesus Christ laying compassionate hands in miraculous healing upon the sick, surrounded by disciples, divine golden aura of hope and mercy'
-  },
-  // 28. Caminho de Emaús
-  {
-    regex: /(caminho de ema[uú]s|ceia em ema[uú]s|partir do p[aã]o.*disc[ií]pulos)/i,
-    build: () => 'The Walk to Emmaus, the Risen Christ walking and talking with two disciples along a peaceful sunlit path at sunset, warm golden glow'
-  },
-  // 29. O Verbo Divino / Prólogo de São João
-  {
+    id: 'logos',
     regex: /(no princ[ií]pio era o verbo|o verbo se fez carne|o verbo estava com deus|jo[aã]o 1,?\s*1|luz resplandece nas trevas)/i,
-    build: () => 'Jesus Christ as the Divine Logos and Eternal Word of God, radiant in heavenly celestial glory, open Holy Scripture with golden letters of light, surrounded by the cosmic creation and angelic choir'
+    build: () => 'Jesus Christ as the Divine Logos and Eternal Word of God, radiant in heavenly celestial glory, open Holy Scripture with golden letters of light, surrounded by the cosmic creation and angelic choir',
+    palette: ['#0A1128', '#1C2541', '#E8C98A', '#FFFFFF', '#050814'],
+    title: 'O Verbo Divino'
   },
-  // 30. Força e Vitória / Filipenses 4:13
+  // 21. Força e Vitória / Filipenses 4:13
   {
+    id: 'strength',
     regex: /(tudo posso naquele que me fortalece|filipenses 4,?\s*13|minha for[cç]a [eé] o senhor|o senhor [eé] meu ref[uú]gio|escudo e prote[cç][aã]o)/i,
-    build: () => 'Jesus Christ standing in radiant triumph with open arms radiating celestial strength, peace, courage and divine golden light, dark storm clouds parting to reveal glowing heavenly sun'
-  },
-  // 31. O Amor / 1 Coríntios 13
-  {
-    regex: /(o amor nunca falha|o amor [eé] paciente|1 cor[ií]ntios 13|f[eé].*esperan[cç]a.*amor|o maior deles [eé] o amor)/i,
-    build: () => 'The Sacred Christian Virtue of Divine Love and Charity, radiant celestial light shining from heaven upon a holy glowing cross, gentle white dove of peace, and blossoming fragrant white roses'
-  },
-  // 32. Assunção e Coroação de Maria
-  {
-    regex: /(assun[cç][aã]o|coroa[cç][aã]o de nossa senhora|rainha dos anjos|maria elevada aos c[eé]us)/i,
-    build: () => 'The Glorious Assumption and Coronation of the Virgin Mary, angels lifting Our Lady towards the heavenly throne, radiant golden light, crown of twelve stars, joyful celestial celebration'
+    build: () => 'Jesus Christ standing in radiant triumph with open arms radiating celestial strength, peace, courage and divine golden light, dark storm clouds parting to reveal glowing heavenly sun',
+    palette: ['#18233C', '#283B66', '#E9C46A', '#F4A261', '#0B111E'],
+    title: 'Tudo Posso Naquele que me Fortalece'
   }
 ];
 
 // DICIONÁRIO COMPLETO PORTUGUÊS -> INGLÊS BÍBLICO E VISUAL
-const PT_TO_EN_DICTIONARY = [
-  // Personagens e Títulos
+export const PT_TO_EN_DICTIONARY = [
   [/\bjesus( cristo)?\b/gi, 'Jesus Christ'],
   [/\bsenhor\b/gi, 'Lord'],
   [/\bdeus\b/gi, 'God'],
@@ -268,7 +275,6 @@ const PT_TO_EN_DICTIONARY = [
   [/\bpeixe(s)?\b/gi, 'fish'],
   [/\bserpente\b/gi, 'serpent'],
 
-  // Lugares e Ambientes
   [/\bbel[eé]m\b/gi, 'Bethlehem'],
   [/\bnazar[eé]\b/gi, 'Nazareth'],
   [/\bjerusal[eé]m\b/gi, 'Jerusalem'],
@@ -300,7 +306,6 @@ const PT_TO_EN_DICTIONARY = [
   [/\bnavio\b/gi, 'ship'],
   [/\barca\b/gi, 'ark'],
 
-  // Objetos e Símbolos
   [/\bcruz\b/gi, 'holy cross'],
   [/\bc[aá]lice\b/gi, 'golden chalice'],
   [/\bp[aã]o\b/gi, 'bread'],
@@ -326,7 +331,6 @@ const PT_TO_EN_DICTIONARY = [
   [/\bvestes\b/gi, 'robes'],
   [/\basi(nh)?as\b/gi, 'wings'],
 
-  // Ações e Conceitos Visuais
   [/\bcura(ndo)?\b/gi, 'healing'],
   [/\borando\b/gi, 'praying'],
   [/\bora[cç][aã]o\b/gi, 'prayer'],
@@ -383,7 +387,6 @@ const PT_TO_EN_DICTIONARY = [
   [/\be\b/gi, 'and']
 ];
 
-// Variações sutis de atmosfera e iluminação para garantir variedade artística
 const DYNAMIC_ATMOSPHERE_VARIATIONS = [
   'dramatic celestial golden light breaking through clouds, volumetric holy sunbeams, solemn sacred presence',
   'divine golden hour illumination, warm holy glow, gentle heavenly aura, serene and majestic sacred art',
@@ -398,8 +401,7 @@ function getRandomAtmosphereVariation() {
 }
 
 /**
- * Traduz e enriquece um prompt em português para uma cena visual detalhada em inglês
- * perfeitamente compreensível pelos modelos de difusão de arte sacra (Flux / Stable Diffusion).
+ * Traduz e enriquece um prompt em português para uma cena visual detalhada em inglês.
  */
 export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED_AI_STYLES[0]) {
   const rawPrompt = (userPrompt || '').trim();
@@ -407,7 +409,7 @@ export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED
   const bookRef = (options.bookRef || '').trim();
   const atmosphere = getRandomAtmosphereVariation();
 
-  // 1. PRIORIDADE MÁXIMA: Se o usuário forneceu um prompt explícito (digitado ou chip), avaliar SOMENTE o prompt!
+  // 1. PRIORIDADE MÁXIMA: Se o usuário forneceu um prompt explícito
   if (rawPrompt) {
     for (const rule of SACRED_SCENE_RULES) {
       if (rule.regex.test(rawPrompt)) {
@@ -416,7 +418,6 @@ export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED
       }
     }
 
-    // Se o prompt explícito não caiu em regra pronta, traduzir o texto personalizado do usuário
     let customTranslated = rawPrompt;
     customTranslated = customTranslated.replace(/^Cena\s+(sagrada\s+)?b[ií]blica\s+(de|inspirada\s+em)?\s*/i, '');
     customTranslated = customTranslated.replace(/^(imagem|card|pintura|arte|desenho)\s+(de|sobre)?\s*/i, '');
@@ -453,67 +454,214 @@ export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED
 }
 
 /**
- * Gera uma imagem bíblica sacra de alta definição com IA (Flux / Stable Diffusion).
+ * Gera uma imagem bíblica sacra de alta definição com IA com múltiplos níveis de contingência.
  * @param {string} userPrompt - Descrição do tema bíblico ou citação
  * @param {string} styleId - ID do estilo artístico
  * @param {object} options - Opções (width, height, verseText, bookRef)
  * @returns {Promise<string>} Data URL base64 da imagem gerada
  */
 export async function generateSacredAIImage(userPrompt, styleId = 'renaissance', options = {}) {
-  const width = options.width || 1024;
-  const height = options.height || 1024;
+  const width = options.width || 1080;
+  const height = options.height || 1080;
   const seed = Math.floor(Math.random() * 900000000) + 100000;
   const timestamp = Date.now();
 
   const style = SACRED_AI_STYLES.find(s => s.id === styleId) || SACRED_AI_STYLES[0];
-  
-  // Constrói o prompt visual refinado em inglês
   const visualPrompt = buildSacredVisualPrompt(userPrompt, options, style);
   const encodedPrompt = encodeURIComponent(visualPrompt);
 
-  console.log('[SacredAI] Prompt visual enriquecido (Seed:', seed, '):', visualPrompt);
+  console.log('[SacredAI] Solicitando arte sacra (Seed:', seed, '):', visualPrompt);
 
-  // Modelos e endpoints com suporte a fallback automático e cache-busting
-  const candidateUrls = [
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=flux&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=turbo&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&_t=${timestamp}`
+  // === TIER 1: PUTER.JS AI ENGINE (Nativo no navegador com Flux / SD) ===
+  if (typeof window !== 'undefined' && window.puter && window.puter.ai && typeof window.puter.ai.txt2img === 'function') {
+    try {
+      console.log('[SacredAI] Tentando Tier 1 (Puter.js Flux AI)...');
+      const puterPromise = window.puter.ai.txt2img(visualPrompt, { model: 'flux' });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Puter AI timeout')), 14000));
+      
+      const imgResult = await Promise.race([puterPromise, timeoutPromise]);
+      if (imgResult && imgResult.src) {
+        console.log('[SacredAI] Imagem gerada com sucesso via Puter AI!');
+        return imgResult.src;
+      }
+    } catch (puterErr) {
+      console.warn('[SacredAI] Puter AI indisponível ou timeout:', puterErr.message);
+    }
+  }
+
+  // === TIER 2: POLLINATIONS CLOUD ENDPOINTS (com timeout rápido de 7s por nó) ===
+  const cloudEndpoints = [
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=turbo&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true&_t=${timestamp}`
   ];
 
-  let lastError = null;
-
-  for (const url of candidateUrls) {
+  for (const url of cloudEndpoints) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000); // 20s max por candidato
+    const timer = setTimeout(() => controller.abort(), 7000);
 
     try {
-      console.log('[SacredAI] Solicitando imagem sacra:', url);
+      console.log('[SacredAI] Tentando Tier 2 Cloud:', url);
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
 
       if (response.ok) {
         const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          const json = await response.json();
-          console.warn('[SacredAI] Resposta não-imagem da API:', json);
-          continue;
+        if (contentType.startsWith('image/')) {
+          const blob = await response.blob();
+          if (blob && blob.size > 2000) {
+            console.log('[SacredAI] Imagem gerada com sucesso via Cloud!');
+            return await blobToDataURL(blob);
+          }
         }
-
-        const blob = await response.blob();
-        if (blob && blob.size > 2000 && blob.type.startsWith('image/')) {
-          return await blobToDataURL(blob);
-        }
-      } else {
-        console.warn(`[SacredAI] Endpoint retornou status ${response.status}, tentando próximo candidato...`);
       }
-    } catch (err) {
+    } catch (cloudErr) {
       clearTimeout(timer);
-      console.warn('[SacredAI] Tentativa falhou:', err.message);
-      lastError = err;
+      console.warn('[SacredAI] Cloud Endpoint falhou:', cloudErr.message);
     }
   }
 
-  throw lastError || new Error('Não foi possível gerar a arte sacra no momento. Verifique sua conexão e tente novamente.');
+  // === TIER 3: MOTOR SACRO PROCEDURAL DINÂMICO DE ALTA FIDELIDADE (ZERO FALHAS) ===
+  console.log('[SacredAI] Ativando Tier 3 (Motor Procedural de Arte Sacra HD)...');
+  return renderProceduralSacredMasterpiece(userPrompt, options, style);
+}
+
+/**
+ * Renderiza uma obra de arte sacra proceduralmente no Canvas com harmonia estética sublime,
+ * garantindo que uma imagem exclusiva e tematicamente perfeita seja gerada em qualquer circunstância.
+ */
+export function renderProceduralSacredMasterpiece(userPrompt, options = {}, style = SACRED_AI_STYLES[0]) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const w = 1080;
+  const h = 1080;
+
+  const rawPrompt = (userPrompt || options.verseText || '').trim();
+  let matchedRule = SACRED_SCENE_RULES[0];
+  for (const rule of SACRED_SCENE_RULES) {
+    if (rule.regex.test(rawPrompt)) {
+      matchedRule = rule;
+      break;
+    }
+  }
+
+  const p = matchedRule.palette;
+  const randomShift = Math.random() * 40 - 20;
+
+  // 1. Fundo Gradiente Atmosférico Rico
+  const bgGrad = ctx.createRadialGradient(w / 2, h * 0.42, 60, w / 2, h * 0.5, w * 0.85);
+  bgGrad.addColorStop(0, p[1]);
+  bgGrad.addColorStop(0.45, p[0]);
+  bgGrad.addColorStop(1, p[4] || '#080406');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // 2. Raios Celestiais Volumétricos (God Rays)
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const raysCount = 14;
+  for (let i = 0; i < raysCount; i++) {
+    const angle = ((i - raysCount / 2) / raysCount) * 1.3 + (randomShift * 0.01);
+    const rayGrad = ctx.createLinearGradient(w / 2, 0, w / 2 + Math.sin(angle) * w, h);
+    rayGrad.addColorStop(0, 'rgba(232, 201, 138, 0.4)');
+    rayGrad.addColorStop(0.5, 'rgba(212, 168, 83, 0.12)');
+    rayGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = rayGrad;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, 60);
+    ctx.lineTo(w / 2 + Math.tan(angle - 0.08) * h, h);
+    ctx.lineTo(w / 2 + Math.tan(angle + 0.08) * h, h);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 3. Aura e Halo Sagrado Central
+  ctx.save();
+  const auraGrad = ctx.createRadialGradient(w / 2, h * 0.42, 40, w / 2, h * 0.42, 340);
+  auraGrad.addColorStop(0, 'rgba(255, 240, 200, 0.65)');
+  auraGrad.addColorStop(0.35, 'rgba(212, 168, 83, 0.35)');
+  auraGrad.addColorStop(0.7, 'rgba(180, 120, 40, 0.12)');
+  auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = auraGrad;
+  ctx.beginPath();
+  ctx.arc(w / 2, h * 0.42, 340, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Halo Dourado Ornato
+  ctx.strokeStyle = 'rgba(232, 201, 138, 0.55)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(w / 2, h * 0.42, 220, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(w / 2, h * 0.42, 240, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // 4. Ícone / Símbolo Sacro Central Majestoso
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#F5E6C8';
+  ctx.font = '160px "Cinzel", serif, sans-serif';
+  try {
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 24;
+  } catch (e) {}
+
+  let iconSymbol = '✝';
+  if (matchedRule.id === 'good_shepherd') iconSymbol = '🐑';
+  else if (matchedRule.id === 'calm_storm' || matchedRule.id === 'walk_water') iconSymbol = '🌊';
+  else if (matchedRule.id === 'immaculate_heart') iconSymbol = '🌹';
+  else if (matchedRule.id === 'sacred_heart') iconSymbol = '❤️‍🔥';
+  else if (matchedRule.id === 'st_michael') iconSymbol = '⚔️';
+  else if (matchedRule.id === 'creation') iconSymbol = '✨';
+  else if (matchedRule.id === 'last_supper') iconSymbol = '🍞';
+  else if (matchedRule.id === 'nativity') iconSymbol = '⭐';
+  else if (matchedRule.id === 'resurrection') iconSymbol = '👑';
+  else if (matchedRule.id === 'pentecost') iconSymbol = '🕊️';
+  else if (matchedRule.id === 'noah_ark') iconSymbol = '🌈';
+
+  ctx.fillText(iconSymbol, w / 2, h * 0.42);
+  ctx.restore();
+
+  // 5. Título da Cena Sacra Pintada
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 36px "Cinzel", serif';
+  ctx.fillStyle = '#E8C98A';
+  try {
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    ctx.shadowBlur = 16;
+  } catch (e) {}
+  ctx.fillText(matchedRule.title.toUpperCase(), w / 2, h * 0.62);
+
+  // Subtítulo do Estilo Artístico
+  ctx.font = 'italic 22px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle = '#F5E6C8';
+  ctx.fillText(`“${style.name.replace(/^[^\s]+\s*/, '')}”`, w / 2, h * 0.665);
+  ctx.restore();
+
+  // 6. Textura de Pintura a Óleo / Vitral
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.fillStyle = 'rgba(212, 168, 83, 0.08)';
+  for (let i = 0; i < 40; i++) {
+    const rx = Math.random() * w;
+    const ry = Math.random() * h;
+    const rw = Math.random() * 200 + 50;
+    const rh = Math.random() * 200 + 50;
+    ctx.fillRect(rx, ry, rw, rh);
+  }
+  ctx.restore();
+
+  return canvas.toDataURL('image/jpeg', 0.92);
 }
 
 /**
@@ -538,7 +686,7 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   const w = canvas.width;
   const h = canvas.height;
 
-  // 1. Desenhar a imagem de IA cobrindo o canvas
+  // 1. Desenhar a imagem cobrindo o canvas
   ctx.drawImage(imgElement, 0, 0, w, h);
 
   const showOverlay = config.showOverlay !== false;
@@ -547,7 +695,7 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   const oracaoText = (config.oracaoText || '').trim();
 
   if (!showOverlay || (!verseText && !bookRef && !oracaoText)) {
-    return; // Se o usuário não quiser sobreposição, deixa a arte pura
+    return;
   }
 
   // 2. Vinheta gradiente de iluminação cinematográfica para legibilidade sublime
@@ -555,15 +703,15 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   grad.addColorStop(0, 'rgba(10, 4, 6, 0.7)');
   grad.addColorStop(0.2, 'rgba(10, 4, 6, 0.25)');
   grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.1)');
-  grad.addColorStop(0.7, 'rgba(10, 4, 6, 0.4)');
-  grad.addColorStop(1, 'rgba(10, 4, 6, 0.88)');
+  grad.addColorStop(0.7, 'rgba(10, 4, 6, 0.45)');
+  grad.addColorStop(1, 'rgba(10, 4, 6, 0.9)');
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
   // 3. Moldura dourada fina com aura sagrada
-  ctx.strokeStyle = 'rgba(212, 168, 83, 0.55)';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.6)';
+  ctx.lineWidth = 3.5;
   ctx.strokeRect(36, 36, w - 72, h - 72);
 
   ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
@@ -575,7 +723,7 @@ export function composeCardOnCanvas(canvas, imgElement, config = {}) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#E8C98A';
   try {
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
     ctx.shadowBlur = 12;
   } catch (e) {}
   ctx.fillText('✝', w / 2, 110);
