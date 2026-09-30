@@ -383,19 +383,14 @@ export function getDevotionalHomily(bookName, chapter, verse, text) {
 
   const html = [p1, p2, p3, p4, p5].join('');
 
-  // Texto para Síntese de Voz (TTS)
-  const textToSpeak = [
-    greeting,
-    `Ao meditarmos na Sagrada Escritura em ${reference}, contemplamos: ${homilyTitle}.`,
-    theologicalTheme,
-    `O Senhor nos ensina através desta Palavra que ${contentAnalysis.coreExcerpt}.`,
-    patristicTeaching.replace(/<[^>]*>?/gm, ''),
-    `Como viver esta Palavra no seu dia a dia:`,
-    `Primeiro: ${practicalAdvice[0]}`,
-    `Segundo: ${practicalAdvice[1]}`,
-    `Terceiro: ${practicalAdvice[2]}`,
-    `Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, desça sobre você e sua família e permaneça para sempre. Amém!`
-  ].join('\n\n');
+  // Texto para Síntese de Voz (TTS) - 100% idêntico palavra por palavra ao texto visual exibido
+  const spokenP1 = greeting;
+  const spokenP2 = `Ao abrirmos as Sagradas Escrituras em ${reference}, a Liturgia e a Tradição Católica nos colocam diante de uma verdade profunda: ${homilyTitle}. ${theologicalTheme}`;
+  const spokenP3 = `Ao meditarmos na passagem "${contentAnalysis.coreExcerpt}...", percebemos que o Senhor não se dirige a nós com palavras distantes ou frias, mas toca diretamente as realidades da nossa existência humana. Como ensinavam os Santos Padres: ${patristicTeaching.replace(/<[^>]*>?/gm, '')} A fé católica nos ensina que toda palavra saída da boca de Deus é viva, eficaz e capaz de transformar nosso coração de pedra em um coração de carne.`;
+  const spokenP4 = `Compromissos Práticos para o seu Dia a Dia: Primeiro: ${practicalAdvice[0]}. Segundo: ${practicalAdvice[1]}. Terceiro: ${practicalAdvice[2]}.`;
+  const spokenP5 = `Oração e Bênção Sacerdotal: Senhor Jesus Cristo, concedei-nos a graça de acolher Vossa Palavra e fazê-la frutificar em santidade e caridade. Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, desça sobre vós, vossa família e permaneça para sempre. Amém!`;
+
+  const textToSpeak = [spokenP1, spokenP2, spokenP3, spokenP4, spokenP5].join('\n\n');
 
   return {
     reference,

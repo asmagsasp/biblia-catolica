@@ -2446,9 +2446,11 @@ function updateSpeakBtnState(speaking) {
   if (speaking) {
     btn.innerHTML = '<i class="fas fa-stop"></i> Parar Leitura';
     btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
   } else {
     btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Homilia';
-    btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+    btn.style.background = 'linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%)';
+    btn.style.color = '#111827';
   }
 }
 
@@ -2470,7 +2472,19 @@ window.speakHomily = function () {
   }
 
   const btn = document.getElementById('homilySpeakBtn');
-  const textToSpeak = btn ? btn.dataset.homily : null;
+  let textToSpeak = btn ? btn.dataset.homily : null;
+
+  // Fallback garantido: extrai o texto exato renderizado na tela (ignorando botões de rodapé)
+  if (!textToSpeak) {
+    const body = document.getElementById('homilyBody');
+    if (body) {
+      const clone = body.cloneNode(true);
+      const footer = clone.querySelector('div[style*="border-top"]');
+      if (footer) footer.remove();
+      textToSpeak = (clone.innerText || clone.textContent || '').replace(/✝/g, '').trim();
+    }
+  }
+
   if (!textToSpeak) return;
 
   updateSpeakBtnState(true);
