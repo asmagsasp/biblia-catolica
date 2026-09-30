@@ -1375,7 +1375,10 @@ window.toggleAiVerseOverlay = function () {
 };
 
 window.generateAiArt = async function (isRegen = false) {
-  if (isGeneratingAiArt) return;
+  if (isGeneratingAiArt) {
+    showToast('Aguarde a IA concluir a pintura atual... 🎨');
+    return;
+  }
 
   const promptInput = document.getElementById('aiPromptInput');
   const styleSelect = document.getElementById('aiStyleSelect');
@@ -1405,7 +1408,7 @@ window.generateAiArt = async function (isRegen = false) {
     generateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Pintando com IA...</span>`;
   }
   if (loadingContainer) loadingContainer.classList.remove('hidden');
-  if (resultContainer) resultContainer.style.opacity = '0.4';
+  if (resultContainer) resultContainer.style.opacity = '0.35';
 
   try {
     showToast(isRegen ? 'Criando nova variação com IA... ✨' : 'Conectando ao modelo de IA generativa... ✨');
@@ -1419,33 +1422,36 @@ window.generateAiArt = async function (isRegen = false) {
 
     currentAiImageData = dataUrl;
     
-    const img = new Image();
-    img.onload = function () {
-      currentAiImageElement = img;
-      renderStudioAiCanvas();
-      if (loadingContainer) loadingContainer.classList.add('hidden');
-      if (resultContainer) resultContainer.style.opacity = '1';
-      isGeneratingAiArt = false;
-      if (generateBtn) {
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = `<i class="fas fa-sparkles"></i> <span>Gerar Obra Sacra com IA</span>`;
-      }
-      showToast('✨ Obra de Arte Sacra criada com sucesso pela IA!');
-    };
-    img.onerror = function () {
-      throw new Error('Falha ao processar canvas da imagem');
-    };
-    img.src = dataUrl;
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      const loadTimer = setTimeout(() => {
+        reject(new Error('Tempo limite para decodificar a imagem'));
+      }, 15000);
+      img.onload = () => {
+        clearTimeout(loadTimer);
+        currentAiImageElement = img;
+        renderStudioAiCanvas();
+        resolve();
+      };
+      img.onerror = () => {
+        clearTimeout(loadTimer);
+        reject(new Error('Falha ao processar os dados visuais da imagem'));
+      };
+      img.src = dataUrl;
+    });
+
+    showToast('✨ Obra de Arte Sacra criada com sucesso pela IA!');
   } catch (err) {
     console.error("AI Generation error:", err);
+    showToast('Falha temporária ao gerar com IA. Tente novamente em alguns instantes.');
+  } finally {
+    isGeneratingAiArt = false;
     if (loadingContainer) loadingContainer.classList.add('hidden');
     if (resultContainer) resultContainer.style.opacity = '1';
-    isGeneratingAiArt = false;
     if (generateBtn) {
       generateBtn.disabled = false;
       generateBtn.innerHTML = `<i class="fas fa-sparkles"></i> <span>Gerar Obra Sacra com IA</span>`;
     }
-    showToast('Falha temporária ao gerar com IA. Tente novamente em alguns instantes.');
   }
 };
 

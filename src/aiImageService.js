@@ -383,6 +383,20 @@ const PT_TO_EN_DICTIONARY = [
   [/\be\b/gi, 'and']
 ];
 
+// Variações sutis de atmosfera e iluminação para garantir variedade artística
+const DYNAMIC_ATMOSPHERE_VARIATIONS = [
+  'dramatic celestial golden light breaking through clouds, volumetric holy sunbeams, solemn sacred presence',
+  'divine golden hour illumination, warm holy glow, gentle heavenly aura, serene and majestic sacred art',
+  'radiant heavenly dawn with soft ethereal glow, celestial rays, transcendent peace, masterpiece composition',
+  'sublime heavenly luminescence, deep rich chiaroscuro shadows, pious atmosphere, museum quality fine art',
+  'glorious heavenly aura, vibrant sacred colors, spiritual transcendence, profound reverence, timeless masterpiece'
+];
+
+function getRandomAtmosphereVariation() {
+  const idx = Math.floor(Math.random() * DYNAMIC_ATMOSPHERE_VARIATIONS.length);
+  return DYNAMIC_ATMOSPHERE_VARIATIONS[idx];
+}
+
 /**
  * Traduz e enriquece um prompt em português para uma cena visual detalhada em inglês
  * perfeitamente compreensível pelos modelos de difusão de arte sacra (Flux / Stable Diffusion).
@@ -391,33 +405,51 @@ export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED
   const rawPrompt = (userPrompt || '').trim();
   const verseText = (options.verseText || '').trim();
   const bookRef = (options.bookRef || '').trim();
+  const atmosphere = getRandomAtmosphereVariation();
 
-  // 1. Verificar correspondência direta com regras de cenas bíblicas famosas
-  const fullTextToInspect = `${rawPrompt} ${verseText} ${bookRef}`;
-  for (const rule of SACRED_SCENE_RULES) {
-    if (rule.regex.test(fullTextToInspect)) {
-      const scene = rule.build(options);
-      return `${scene}, ${style.suffix}, highly detailed sacred art, 8k, flawless composition, pious Catholic devotion, no modern elements, no watermark, no text`;
+  // 1. PRIORIDADE MÁXIMA: Se o usuário forneceu um prompt explícito (digitado ou chip), avaliar SOMENTE o prompt!
+  if (rawPrompt) {
+    for (const rule of SACRED_SCENE_RULES) {
+      if (rule.regex.test(rawPrompt)) {
+        const scene = rule.build(options);
+        return `${scene}, ${atmosphere}, ${style.suffix}, highly detailed sacred art, 8k, flawless composition, pious Catholic devotion, no modern elements, no watermark, no text`;
+      }
     }
-  }
 
-  // 2. Se o usuário digitou um texto customizado em português, traduzir termos-chave
-  let translatedText = rawPrompt || verseText;
-  if (translatedText) {
-    // Remover prefixos genéricos
-    translatedText = translatedText.replace(/^Cena\s+(sagrada\s+)?b[ií]blica\s+(de|inspirada\s+em)?\s*/i, '');
-    translatedText = translatedText.replace(/^(imagem|card|pintura|arte|desenho)\s+(de|sobre)?\s*/i, '');
-    translatedText = translatedText.replace(/^[“”"']/g, '').replace(/[“”"']$/g, '');
+    // Se o prompt explícito não caiu em regra pronta, traduzir o texto personalizado do usuário
+    let customTranslated = rawPrompt;
+    customTranslated = customTranslated.replace(/^Cena\s+(sagrada\s+)?b[ií]blica\s+(de|inspirada\s+em)?\s*/i, '');
+    customTranslated = customTranslated.replace(/^(imagem|card|pintura|arte|desenho)\s+(de|sobre)?\s*/i, '');
+    customTranslated = customTranslated.replace(/^[“”"']/g, '').replace(/[“”"']$/g, '');
 
     for (const [pattern, replacement] of PT_TO_EN_DICTIONARY) {
-      translatedText = translatedText.replace(pattern, replacement);
+      customTranslated = customTranslated.replace(pattern, replacement);
     }
+
+    return `${customTranslated}, sacred biblical scene, ${atmosphere}, ${style.suffix}, glorious heavenly atmosphere, divine golden aura, pious reverent fine art, highly detailed, 8k resolution, no modern text, no watermark`;
   }
 
-  // 3. Fallback gracioso com contexto sagrado
-  const visualSubject = translatedText || (bookRef ? `Biblical scene inspired by ${bookRef}` : 'Divine heavenly light shining upon the Holy Bible and the Cross of Christ');
+  // 2. SE O PROMPT ESTIVER VAZIO: Inspecionar o versículo ou referência bíblica
+  if (verseText || bookRef) {
+    const verseToInspect = `${verseText} ${bookRef}`;
+    for (const rule of SACRED_SCENE_RULES) {
+      if (rule.regex.test(verseToInspect)) {
+        const scene = rule.build(options);
+        return `${scene}, ${atmosphere}, ${style.suffix}, highly detailed sacred art, 8k, flawless composition, pious Catholic devotion, no modern elements, no watermark, no text`;
+      }
+    }
 
-  return `${visualSubject}, sacred biblical narrative scene, ${style.suffix}, glorious heavenly atmosphere, divine golden aura, pious reverent fine art, highly detailed, 8k resolution, no modern text, no watermark`;
+    let translatedVerse = verseText;
+    for (const [pattern, replacement] of PT_TO_EN_DICTIONARY) {
+      translatedVerse = translatedVerse.replace(pattern, replacement);
+    }
+
+    const subject = translatedVerse ? `Sacred biblical narrative of ${translatedVerse}` : (bookRef ? `Biblical scene inspired by ${bookRef}` : 'Divine heavenly light shining upon the Holy Bible and the Cross of Christ');
+    return `${subject}, sacred biblical scene, ${atmosphere}, ${style.suffix}, glorious heavenly atmosphere, divine golden aura, pious reverent fine art, highly detailed, 8k resolution, no modern text, no watermark`;
+  }
+
+  // 3. Fallback Padrão Sagrado
+  return `Divine heavenly light shining upon the Holy Bible and the Holy Cross of Christ, ${atmosphere}, ${style.suffix}, glorious heavenly atmosphere, divine golden aura, pious reverent fine art, highly detailed, 8k resolution, no modern text, no watermark`;
 }
 
 /**
@@ -430,7 +462,8 @@ export function buildSacredVisualPrompt(userPrompt, options = {}, style = SACRED
 export async function generateSacredAIImage(userPrompt, styleId = 'renaissance', options = {}) {
   const width = options.width || 1024;
   const height = options.height || 1024;
-  const seed = Math.floor(Math.random() * 10000000);
+  const seed = Math.floor(Math.random() * 900000000) + 100000;
+  const timestamp = Date.now();
 
   const style = SACRED_AI_STYLES.find(s => s.id === styleId) || SACRED_AI_STYLES[0];
   
@@ -438,20 +471,20 @@ export async function generateSacredAIImage(userPrompt, styleId = 'renaissance',
   const visualPrompt = buildSacredVisualPrompt(userPrompt, options, style);
   const encodedPrompt = encodeURIComponent(visualPrompt);
 
-  console.log('[SacredAI] Prompt visual enriquecido:', visualPrompt);
+  console.log('[SacredAI] Prompt visual enriquecido (Seed:', seed, '):', visualPrompt);
 
-  // Modelos com suporte a fallback automático caso haja indisponibilidade temporária
+  // Modelos e endpoints com suporte a fallback automático e cache-busting
   const candidateUrls = [
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=flux&seed=${seed}&nologo=true`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=turbo&seed=${seed}&nologo=true`,
-    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=flux&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=turbo&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
+    `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&_t=${timestamp}`
   ];
 
   let lastError = null;
 
   for (const url of candidateUrls) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 35000);
+    const timer = setTimeout(() => controller.abort(), 20000); // 20s max por candidato
 
     try {
       console.log('[SacredAI] Solicitando imagem sacra:', url);
@@ -459,8 +492,15 @@ export async function generateSacredAIImage(userPrompt, styleId = 'renaissance',
       clearTimeout(timer);
 
       if (response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          console.warn('[SacredAI] Resposta não-imagem da API:', json);
+          continue;
+        }
+
         const blob = await response.blob();
-        if (blob && blob.size > 1000 && blob.type.startsWith('image/')) {
+        if (blob && blob.size > 2000 && blob.type.startsWith('image/')) {
           return await blobToDataURL(blob);
         }
       } else {
