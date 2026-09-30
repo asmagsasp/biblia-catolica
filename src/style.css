@@ -2638,6 +2638,94 @@ mark,
    PIX & DONATE MODAL
    ========================================================================== */
 
+/* Donate Audio Banner (Mensagem do Evangelizador) */
+.donate-audio-banner {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(139, 30, 63, 0.12) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  position: relative;
+  text-align: left;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.donate-audio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.donate-audio-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-300);
+  letter-spacing: 0.5px;
+}
+
+.donate-audio-title i {
+  color: var(--gold-400);
+  font-size: 14px;
+}
+
+.donate-audio-btn {
+  background: var(--gold-gradient);
+  border: none;
+  color: #120A10;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35);
+}
+
+.donate-audio-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.55);
+}
+
+.donate-audio-btn.speaking {
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+  animation: pulseSpeaking 1.5s infinite;
+}
+
+.donate-audio-text {
+  font-family: var(--font-scripture);
+  font-size: 16.5px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  font-style: italic;
+  margin: 0;
+}
+
+[data-theme="light"] .donate-audio-banner {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 45%, #FFFBEB 100%);
+  border-color: rgba(197, 155, 39, 0.55);
+  box-shadow: 0 6px 20px rgba(90, 60, 40, 0.12);
+}
+
+[data-theme="light"] .donate-audio-title {
+  color: #78350F;
+}
+
+[data-theme="light"] .donate-audio-text {
+  color: #451A03;
+}
+
 .pix-container {
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border-color);

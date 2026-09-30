@@ -284,8 +284,25 @@
           <i class="fas fa-hand-holding-heart donate-icon"></i>
         </div>
         <h2 id="donateTitle">Apoie este Projeto</h2>
-        <p>Sua doação ajuda a manter o app no ar e sem anúncios.</p>
+        <p>Sua doação ajuda a manter a Palavra de Deus no ar e sem anúncios.</p>
       </div>
+
+      <!-- MENSAGEM DO EVANGELIZADOR EM ÁUDIO / DESTAQUE -->
+      <div class="donate-audio-banner">
+        <div class="donate-audio-header">
+          <div class="donate-audio-title">
+            <i class="fas fa-broadcast-tower"></i>
+            <span>Mensagem do Evangelizador</span>
+          </div>
+          <button type="button" class="donate-audio-btn" id="btnDonateAudio" onclick="toggleDonateAudio()" title="Ouvir / Pausar mensagem em áudio">
+            <i class="fas fa-volume-up"></i> <span>Ouvir</span>
+          </button>
+        </div>
+        <p class="donate-audio-text">
+          “Não quer ver mais esse banner? Ajude este projeto a continuar evangelizando com qualquer valor, que poderá ser de 1 real, 2 reais ou o valor que desejar. Seja um evangelizador você também!”
+        </p>
+      </div>
+
       <div class="donate-body">
         <div class="pix-container" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
           <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" alt="Pix" class="pix-logo">
@@ -300,7 +317,7 @@
         </div>
         <div class="donate-actions">
           <button class="donate-already-btn" onclick="markAsDonated()">
-            <i class="fas fa-check-circle"></i> Já fiz minha doação
+            <i class="fas fa-check-circle"></i> Já fiz minha doação (Não mostrar mais)
           </button>
         </div>
       </div>

@@ -2261,6 +2261,82 @@ function showToast(msg) {
 // ===== DONATE MODAL & RECURRING REMINDER =====
 let donateInterval = null;
 const DONATE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos
+const DONATE_AUDIO_TEXT = "Não quer ver mais esse banner? Ajude este projeto a continuar evangelizando com qualquer valor, que poderá ser de 1 real, 2 reais ou o valor que desejar. Seja um evangelizador você também.";
+let isDonateAudioSpeaking = false;
+
+function updateDonateAudioBtnState(speaking) {
+  isDonateAudioSpeaking = speaking;
+  const btn = document.getElementById('btnDonateAudio');
+  if (!btn) return;
+  if (speaking) {
+    btn.classList.add('speaking');
+    btn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar</span>';
+  } else {
+    btn.classList.remove('speaking');
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+  }
+}
+
+window.stopDonateAudio = function () {
+  isDonateAudioSpeaking = false;
+  updateDonateAudioBtnState(false);
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      window.Capacitor.Plugins.TextToSpeech.stop();
+    }
+  } catch (e) {}
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+window.playDonateAudio = async function () {
+  stopDonateAudio();
+  updateDonateAudioBtnState(true);
+
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: DONATE_AUDIO_TEXT,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
+      updateDonateAudioBtnState(false);
+    } catch (e) {
+      console.warn("TTS capacitor donate audio failed, trying Web Speech fallback:", e);
+      speakDonateWithWebSpeech();
+    }
+  } else if ('speechSynthesis' in window) {
+    speakDonateWithWebSpeech();
+  } else {
+    updateDonateAudioBtnState(false);
+  }
+};
+
+function speakDonateWithWebSpeech() {
+  if (!('speechSynthesis' in window)) {
+    updateDonateAudioBtnState(false);
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(DONATE_AUDIO_TEXT);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 0.95;
+  utterance.onend = () => updateDonateAudioBtnState(false);
+  utterance.onerror = () => updateDonateAudioBtnState(false);
+  window.speechSynthesis.speak(utterance);
+}
+
+window.toggleDonateAudio = function () {
+  if (isDonateAudioSpeaking) {
+    stopDonateAudio();
+  } else {
+    playDonateAudio();
+  }
+};
 
 async function checkAndStartDonateTimer() {
   try {
@@ -2301,16 +2377,23 @@ async function checkAndStartDonateTimer() {
 
 window.showDonateModal = function () {
   const modal = document.getElementById('donateModal');
-  if (modal) modal.classList.remove('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      playDonateAudio();
+    }, 350);
+  }
 };
 
 window.closeDonateModal = function () {
   const modal = document.getElementById('donateModal');
   if (modal) modal.classList.add('hidden');
+  stopDonateAudio();
 };
 
 window.markAsDonated = async function () {
   try {
+    stopDonateAudio();
     await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
     if (donateInterval) {
       clearInterval(donateInterval);
