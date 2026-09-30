@@ -957,19 +957,44 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ===== UPLOAD & CARD STUDIO MODAL =====
-window.openGalleryUploadModal = function () {
-  populateUploadBooksDropdown();
-  resetUploadForm();
-  switchUploadTab('upload');
-  updateStudioCard();
-
+window.openGalleryUploadModal = async function () {
   const modal = document.getElementById('galleryUploadModal');
-  if (modal) modal.classList.remove('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  try {
+    await populateUploadBooksDropdown();
+  } catch (e) {
+    console.warn("populateUploadBooksDropdown error:", e);
+  }
+
+  try {
+    resetUploadForm();
+  } catch (e) {
+    console.warn("resetUploadForm error:", e);
+  }
+
+  try {
+    switchUploadTab('upload');
+  } catch (e) {
+    console.warn("switchUploadTab error:", e);
+  }
+
+  try {
+    updateStudioCard();
+  } catch (e) {
+    console.warn("updateStudioCard error:", e);
+  }
 };
 
 window.closeGalleryUploadModal = function () {
   const modal = document.getElementById('galleryUploadModal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
 };
 
 window.switchUploadTab = function (tabName) {
@@ -992,15 +1017,33 @@ window.switchUploadTab = function (tabName) {
   }
 };
 
-function populateUploadBooksDropdown() {
+async function populateUploadBooksDropdown() {
   const select = document.getElementById('uploadBookSelect');
-  if (!select || select.children.length > 0) return;
+  if (!select) return;
 
-  let h = '';
-  allBooks.forEach(b => {
-    h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}">${b.nome_livro}</option>`;
-  });
-  select.innerHTML = h;
+  if (select.children.length === 0) {
+    if (!allBooks || allBooks.length === 0) {
+      try {
+        allBooks = (await db.getLivros()) || [];
+      } catch (e) { }
+    }
+
+    let h = '';
+    if (allBooks && allBooks.length > 0) {
+      allBooks.forEach(b => {
+        h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}">${b.nome_livro}</option>`;
+      });
+    } else {
+      h += `
+        <option value="1" data-total="50">Gênesis</option>
+        <option value="21" data-total="150" selected>Salmos</option>
+        <option value="24" data-total="31">Provérbios</option>
+        <option value="47" data-total="28">Mateus</option>
+        <option value="50" data-total="21">João</option>
+      `;
+    }
+    select.innerHTML = h;
+  }
 
   // Set default book to Salmos (id 21) if present
   const salmosOpt = select.querySelector('option[value="21"]');
@@ -1129,7 +1172,7 @@ window.saveUploadedImage = async function () {
   const verseTextArea = document.getElementById('uploadVerseText');
   const oracaoInput = document.getElementById('uploadOracaoInput');
 
-  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookOpt = bookSelect && bookSelect.selectedIndex >= 0 ? bookSelect.options[bookSelect.selectedIndex] : null;
   const bookName = bookOpt ? bookOpt.text : 'Salmos';
   const bookId = bookSelect ? parseInt(bookSelect.value) : 21;
   const cap = capInput ? parseInt(capInput.value) : 1;
@@ -1152,7 +1195,7 @@ window.saveUploadedImage = async function () {
 
   try {
     showToast('Salvando imagem na sua galeria...');
-    const created = await db.addImgVersiculo({
+    await db.addImgVersiculo({
       id_livro: bookId,
       nome_livro: bookName,
       id_capitulo: cap,
@@ -1175,151 +1218,159 @@ window.saveUploadedImage = async function () {
 
 // ===== CARD STUDIO GENERATOR (CANVAS) =====
 window.updateStudioCard = function () {
-  const canvas = document.getElementById('studioCanvas');
-  if (!canvas) return;
+  try {
+    const canvas = document.getElementById('studioCanvas');
+    if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  const h = canvas.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
 
-  const themeSelect = document.getElementById('studioThemeSelect');
-  const iconSelect = document.getElementById('studioIconSelect');
-  const bookSelect = document.getElementById('uploadBookSelect');
-  const capInput = document.getElementById('uploadChapterInput');
-  const verInput = document.getElementById('uploadVerseInput');
-  const verseTextArea = document.getElementById('uploadVerseText');
-  const oracaoInput = document.getElementById('uploadOracaoInput');
+    const themeSelect = document.getElementById('studioThemeSelect');
+    const iconSelect = document.getElementById('studioIconSelect');
+    const bookSelect = document.getElementById('uploadBookSelect');
+    const capInput = document.getElementById('uploadChapterInput');
+    const verInput = document.getElementById('uploadVerseInput');
+    const verseTextArea = document.getElementById('uploadVerseText');
+    const oracaoInput = document.getElementById('uploadOracaoInput');
 
-  const theme = themeSelect ? themeSelect.value : 'gold';
-  const icon = iconSelect ? iconSelect.value : '✝';
-  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
-  const bookName = bookOpt ? bookOpt.text : 'Salmos';
-  const cap = capInput ? capInput.value : '23';
-  const ver = verInput ? verInput.value : '1';
-  const verseText = verseTextArea && verseTextArea.value.trim() ? verseTextArea.value.trim() : 'O Senhor é o meu pastor; nada me faltará.';
-  const oracaoText = oracaoInput ? oracaoInput.value.trim() : '';
+    const theme = themeSelect ? themeSelect.value : 'gold';
+    const icon = iconSelect ? iconSelect.value : '✝';
+    const bookOpt = bookSelect && bookSelect.selectedIndex >= 0 ? bookSelect.options[bookSelect.selectedIndex] : null;
+    const bookName = bookOpt ? bookOpt.text : 'Salmos';
+    const cap = capInput ? capInput.value : '23';
+    const ver = verInput ? verInput.value : '1';
+    const verseText = verseTextArea && verseTextArea.value.trim() ? verseTextArea.value.trim() : 'O Senhor é o meu pastor; nada me faltará.';
+    const oracaoText = oracaoInput ? oracaoInput.value.trim() : '';
 
-  // Background Theme Gradients
-  let bgGrad;
-  if (theme === 'burgundy') {
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#5E1B2B');
-    bgGrad.addColorStop(0.5, '#350E17');
-    bgGrad.addColorStop(1, '#150509');
-  } else if (theme === 'navy') {
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#1B2A4A');
-    bgGrad.addColorStop(0.6, '#0D1627');
-    bgGrad.addColorStop(1, '#050911');
-  } else if (theme === 'emerald') {
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#104A3A');
-    bgGrad.addColorStop(0.6, '#08281E');
-    bgGrad.addColorStop(1, '#03120C');
-  } else if (theme === 'purple') {
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#42165A');
-    bgGrad.addColorStop(0.6, '#230931');
-    bgGrad.addColorStop(1, '#0F0315');
-  } else if (theme === 'dark') {
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#221D24');
-    bgGrad.addColorStop(0.6, '#130F15');
-    bgGrad.addColorStop(1, '#080609');
-  } else {
-    // Gold Celestial
-    bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-    bgGrad.addColorStop(0, '#3D1B22');
-    bgGrad.addColorStop(0.5, '#250E15');
-    bgGrad.addColorStop(1, '#100508');
-  }
+    // Background Theme Gradients
+    let bgGrad;
+    if (theme === 'burgundy') {
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#5E1B2B');
+      bgGrad.addColorStop(0.5, '#350E17');
+      bgGrad.addColorStop(1, '#150509');
+    } else if (theme === 'navy') {
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#1B2A4A');
+      bgGrad.addColorStop(0.6, '#0D1627');
+      bgGrad.addColorStop(1, '#050911');
+    } else if (theme === 'emerald') {
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#104A3A');
+      bgGrad.addColorStop(0.6, '#08281E');
+      bgGrad.addColorStop(1, '#03120C');
+    } else if (theme === 'purple') {
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#42165A');
+      bgGrad.addColorStop(0.6, '#230931');
+      bgGrad.addColorStop(1, '#0F0315');
+    } else if (theme === 'dark') {
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#221D24');
+      bgGrad.addColorStop(0.6, '#130F15');
+      bgGrad.addColorStop(1, '#080609');
+    } else {
+      // Gold Celestial
+      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+      bgGrad.addColorStop(0, '#3D1B22');
+      bgGrad.addColorStop(0.5, '#250E15');
+      bgGrad.addColorStop(1, '#100508');
+    }
 
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
 
-  // Sacred Aura & Golden Border
-  ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(40, 40, w - 80, h - 80);
+    // Sacred Aura & Golden Border
+    ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(40, 40, w - 80, h - 80);
 
-  ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(55, 55, w - 110, h - 110);
+    ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(55, 55, w - 110, h - 110);
 
-  // Decorative Corner Crosses
-  drawCornerAccents(ctx, 40, 40);
-  drawCornerAccents(ctx, w - 40, 40);
-  drawCornerAccents(ctx, 40, h - 40);
-  drawCornerAccents(ctx, w - 40, h - 40);
+    // Decorative Corner Crosses
+    drawCornerAccents(ctx, 40, 40);
+    drawCornerAccents(ctx, w - 40, 40);
+    drawCornerAccents(ctx, 40, h - 40);
+    drawCornerAccents(ctx, w - 40, h - 40);
 
-  // Top Sacred Symbol
-  ctx.font = '72px "Cinzel", serif, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#E8C98A';
-  ctx.shadowColor = 'rgba(212, 168, 83, 0.6)';
-  ctx.shadowBlur = 18;
-  ctx.fillText(icon, w / 2, 160);
-  ctx.shadowBlur = 0;
-
-  // Book Reference Title
-  const refTitle = `${bookName.toUpperCase()} ${cap}, ${ver}`;
-  ctx.font = 'bold 36px "Cinzel", serif';
-  ctx.fillStyle = '#F5E6C8';
-  ctx.letterSpacing = '3px';
-  ctx.fillText(refTitle, w / 2, 235);
-
-  // Dividing Line with Star
-  ctx.strokeStyle = 'rgba(212, 168, 83, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(w / 2 - 140, 270);
-  ctx.lineTo(w / 2 - 20, 270);
-  ctx.moveTo(w / 2 + 20, 270);
-  ctx.lineTo(w / 2 + 140, 270);
-  ctx.stroke();
-
-  ctx.font = '18px sans-serif';
-  ctx.fillStyle = '#D4A853';
-  ctx.fillText('✦', w / 2, 276);
-
-  // Verse Quotation Text Wrapping
-  const maxTextWidth = w - 240;
-  let fontSize = 42;
-  if (verseText.length > 220) fontSize = 32;
-  else if (verseText.length > 140) fontSize = 36;
-  else if (verseText.length < 60) fontSize = 48;
-
-  ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  ctx.shadowBlur = 10;
-
-  const lines = wrapTextLines(ctx, `“${verseText}”`, maxTextWidth);
-  const lineHeight = fontSize * 1.5;
-  const totalTextHeight = lines.length * lineHeight;
-  
-  // Center verse text vertically in the middle area
-  let startY = 330 + (420 - totalTextHeight) / 2;
-  if (startY < 310) startY = 310;
-
-  lines.forEach((line, i) => {
-    ctx.fillText(line, w / 2, startY + i * lineHeight);
-  });
-
-  ctx.shadowBlur = 0;
-
-  // Devotional Prayer Note (if exists)
-  if (oracaoText) {
-    ctx.font = 'italic 26px "Cormorant Garamond", Georgia, serif';
+    // Top Sacred Symbol
+    ctx.font = '72px "Cinzel", serif, sans-serif';
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#E8C98A';
-    ctx.fillText(`“${oracaoText}”`, w / 2, h - 160);
-  }
+    try {
+      ctx.shadowColor = 'rgba(212, 168, 83, 0.6)';
+      ctx.shadowBlur = 18;
+    } catch (e) { }
+    ctx.fillText(icon, w / 2, 160);
+    try { ctx.shadowBlur = 0; } catch (e) { }
 
-  // App Branding Footer
-  ctx.font = '600 20px "Cinzel", serif';
-  ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
-  ctx.letterSpacing = '2px';
-  ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 85);
+    // Book Reference Title
+    const refTitle = `${bookName.toUpperCase()} ${cap}, ${ver}`;
+    ctx.font = 'bold 36px "Cinzel", serif';
+    ctx.fillStyle = '#F5E6C8';
+    try { ctx.letterSpacing = '3px'; } catch (e) { }
+    ctx.fillText(refTitle, w / 2, 235);
+
+    // Dividing Line with Star
+    ctx.strokeStyle = 'rgba(212, 168, 83, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - 140, 270);
+    ctx.lineTo(w / 2 - 20, 270);
+    ctx.moveTo(w / 2 + 20, 270);
+    ctx.lineTo(w / 2 + 140, 270);
+    ctx.stroke();
+
+    ctx.font = '18px sans-serif';
+    ctx.fillStyle = '#D4A853';
+    ctx.fillText('✦', w / 2, 276);
+
+    // Verse Quotation Text Wrapping
+    const maxTextWidth = w - 240;
+    let fontSize = 42;
+    if (verseText.length > 220) fontSize = 30;
+    else if (verseText.length > 140) fontSize = 36;
+    else if (verseText.length < 60) fontSize = 46;
+
+    ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
+    ctx.fillStyle = '#FFFFFF';
+    try {
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 10;
+    } catch (e) { }
+
+    const lines = wrapTextLines(ctx, `“${verseText}”`, maxTextWidth);
+    const lineHeight = fontSize * 1.5;
+    const totalTextHeight = lines.length * lineHeight;
+
+    let startY = 330 + (420 - totalTextHeight) / 2;
+    if (startY < 310) startY = 310;
+
+    lines.forEach((line, i) => {
+      ctx.fillText(line, w / 2, startY + i * lineHeight);
+    });
+
+    try { ctx.shadowBlur = 0; } catch (e) { }
+
+    // Devotional Prayer Note (if exists)
+    if (oracaoText) {
+      ctx.font = 'italic 26px "Cormorant Garamond", Georgia, serif';
+      ctx.fillStyle = '#E8C98A';
+      ctx.fillText(`“${oracaoText}”`, w / 2, h - 160);
+    }
+
+    // App Branding Footer
+    ctx.font = '600 20px "Cinzel", serif';
+    ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
+    try { ctx.letterSpacing = '2px'; } catch (e) { }
+    ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 85);
+  } catch (err) {
+    console.error("updateStudioCard error:", err);
+  }
 };
 
 function drawCornerAccents(ctx, x, y) {
@@ -1377,7 +1428,7 @@ window.saveStudioCardToGallery = async function () {
   const verseTextArea = document.getElementById('uploadVerseText');
   const oracaoInput = document.getElementById('uploadOracaoInput');
 
-  const bookOpt = bookSelect ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookOpt = bookSelect && bookSelect.selectedIndex >= 0 ? bookSelect.options[bookSelect.selectedIndex] : null;
   const bookName = bookOpt ? bookOpt.text : 'Salmos';
   const bookId = bookSelect ? parseInt(bookSelect.value) : 21;
   const cap = capInput ? parseInt(capInput.value) : 1;

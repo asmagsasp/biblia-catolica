@@ -348,7 +348,7 @@
   </div>
 
   <!-- GALLERY UPLOAD & CARD STUDIO MODAL -->
-  <div id="galleryUploadModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+  <div id="galleryUploadModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle" onclick="if(event.target===this) closeGalleryUploadModal()">
     <div class="donate-modal-content gallery-upload-modal-content">
       <button class="donate-close-btn" onclick="closeGalleryUploadModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
       
