@@ -559,11 +559,52 @@ window.readFullChapter = async function () {
   }
 };
 
+// ===== SEARCH HIGHLIGHTING HELPER =====
+export function highlightSearchTerms(text, query) {
+  if (!text || !query) return text || '';
+
+  const accentMap = {
+    'a': '[aáàâãäAÁÀÂÃÄ]',
+    'e': '[eéèêëEÉÈÊË]',
+    'i': '[iíìîïIÍÌÎÏ]',
+    'o': '[oóòôõöOÓÒÔÕÖ]',
+    'u': '[uúùûüUÚÙÛÜ]',
+    'c': '[cçCÇ]',
+    'n': '[nñNÑ]'
+  };
+
+  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const makePattern = (term) => {
+    return term
+      .split('')
+      .map(ch => {
+        if (/\s+/.test(ch)) return '\\s+';
+        const lower = ch.toLowerCase();
+        return accentMap[lower] || escapeRegex(ch);
+      })
+      .join('');
+  };
+
+  const trimmed = query.trim();
+  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return text;
+
+  // Include full phrase first so multi-word matches are highlighted as a single block
+  const termList = words.length > 1 ? [trimmed, ...words] : words;
+  const sortedTerms = termList.sort((a, b) => b.length - a.length);
+
+  const pattern = sortedTerms.map(makePattern).join('|');
+  const regex = new RegExp(`(${pattern})`, 'gi');
+
+  return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+}
+
 // ===== SEARCH =====
 function doSearch() {
   const input = document.getElementById('searchInput');
   const t = input ? input.value.trim() : '';
-  if (t.length < 3) { showToast('Digite ao menos 3 caracteres'); return; }
+  if (t.length < 2) { showToast('Digite ao menos 2 caracteres'); return; }
 
   if (input) input.blur();
 
@@ -574,15 +615,19 @@ function doSearch() {
   setTimeout(async () => {
     try {
       const resultados = await db.buscar(t);
-      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${resultados.length} resultados para "${t}"</p></div></div></div>`;
+      const count = resultados.length;
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${count} versículo${count === 1 ? '' : 's'} encontrado${count === 1 ? '' : 's'} para "${t}"</p></div></div></div>`;
 
       if (!resultados.length) {
-        h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum resultado encontrado.</p>';
+        h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum versículo encontrado para este termo.</p>';
       } else {
         resultados.forEach(r => {
-          const hl = r.texto.replace(new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
+          const hl = highlightSearchTerms(r.texto, t);
           h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+                  <div class="search-result-ref">
+                    <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
+                    <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+                  </div>
                   <div class="search-result-text">${hl}</div>
               </div>`;
         });
