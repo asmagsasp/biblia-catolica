@@ -112,8 +112,8 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 1800) {
 
 export async function initDB() {
     try {
-        // Tentar conectar ao backend em /api/stats com timeout de 1.5s
-        const checkRes = await fetchWithTimeout('/api/stats', { cache: 'no-cache' }, 1500);
+        // Tentar conectar ao backend em /api/stats com timeout de 3s
+        const checkRes = await fetchWithTimeout('/api/stats', { cache: 'no-cache' }, 3000);
         if (checkRes.ok) {
             useBackend = true;
             isDBReady = true;
@@ -419,7 +419,7 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
             if (searchQuery) params.set('q', searchQuery);
             if (filterCategory && filterCategory !== 'all' && filterCategory !== 'favorites') params.set('categoria', filterCategory);
             
-            const res = await fetchWithTimeout(`/api/img-versiculos?${params.toString()}`, {}, 1500);
+            const res = await fetchWithTimeout(`/api/img-versiculos?${params.toString()}`, {}, 5000);
             if (res.ok) {
                 const backendImgs = await res.json();
                 allImgs = backendImgs.map(img => ({
@@ -497,8 +497,7 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
 }
 
 export async function addImgVersiculo(imgData) {
-    const newImg = {
-        id: `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    let newImg = {
         id_livro: imgData.id_livro ? parseInt(imgData.id_livro) : null,
         nome_livro: imgData.nome_livro || 'Bíblia',
         id_capitulo: imgData.id_capitulo ? parseInt(imgData.id_capitulo) : null,
@@ -510,26 +509,31 @@ export async function addImgVersiculo(imgData) {
         created_at: new Date().toISOString()
     };
 
-    userImages.unshift(newImg);
-    saveUserImagesLocal();
-
     if (useBackend) {
         try {
             const res = await fetchWithTimeout('/api/img-versiculos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newImg)
-            }, 2500);
+            }, 15000);
             if (res.ok) {
                 const created = await res.json();
                 newImg.id = created.id;
+                newImg.is_user_upload = true;
+                if (created.created_at) newImg.created_at = created.created_at;
+                userImages.unshift(newImg);
                 saveUserImagesLocal();
+                return newImg;
             }
         } catch (err) {
             console.warn('[BibliaDB] Falha ao sincronizar nova imagem com backend:', err);
         }
     }
 
+    // Local fallback
+    newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    userImages.unshift(newImg);
+    saveUserImagesLocal();
     return newImg;
 }
 
@@ -543,9 +547,9 @@ export async function deleteImgVersiculo(id) {
         saveFavoriteImagesLocal();
     }
 
-    if (useBackend && !isNaN(parseInt(id))) {
+    if (useBackend) {
         try {
-            await fetchWithTimeout(`/api/img-versiculos/${id}`, { method: 'DELETE' }, 1800);
+            await fetchWithTimeout(`/api/img-versiculos/${id}`, { method: 'DELETE' }, 5000);
         } catch (err) {
             console.warn('[BibliaDB] Falha ao deletar imagem no backend:', err);
         }

@@ -15,6 +15,17 @@ import {
 
 const router = express.Router();
 
+// GET /api/stats
+router.get('/stats', async (req, res) => {
+    try {
+        const stats = await getStats();
+        res.json(stats);
+    } catch (err) {
+        console.error('Erro ao buscar stats:', err);
+        res.status(500).json({ error: 'Erro interno ao buscar stats' });
+    }
+});
+
 // GET /api/livros
 router.get('/livros', async (req, res) => {
     try {

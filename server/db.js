@@ -362,7 +362,7 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
         sql += ` WHERE ` + conditions.join(' AND ');
     }
 
-    sql += ` ORDER BY is_user_upload DESC, id ASC`;
+    sql += ` ORDER BY is_user_upload DESC, id DESC`;
     return await getAll(sql, params);
 }
 

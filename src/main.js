@@ -943,8 +943,13 @@ function renderGalleryGrid() {
   } else if (currentGallerySort === 'random') {
     list.sort(() => Math.random() - 0.5);
   } else {
-    // Canonical order
-    list.sort((a, b) => (a.id_livro || 999) - (b.id_livro || 999) || (a.id_capitulo || 0) - (b.id_capitulo || 0) || (a.id_versiculo || 0) - (b.id_versiculo || 0));
+    // Canonical order with user uploads featured first
+    list.sort((a, b) => {
+      if (a.is_user_upload && !b.is_user_upload) return -1;
+      if (!a.is_user_upload && b.is_user_upload) return 1;
+      if (a.is_user_upload && b.is_user_upload) return (b.id || 0) - (a.id || 0);
+      return (a.id_livro || 999) - (b.id_livro || 999) || (a.id_capitulo || 0) - (b.id_capitulo || 0) || (a.id_versiculo || 0) - (b.id_versiculo || 0);
+    });
   }
 
   currentGalleryList = list;
@@ -1462,22 +1467,63 @@ function resetUploadForm() {
   if (oracaoInput) oracaoInput.value = '';
 }
 
-window.handleImageFileSelected = function (input) {
+window.handleImageFileSelected = async function (input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
 
-  if (file.size > 20 * 1024 * 1024) {
-    showToast('A imagem deve ter no máximo 20MB');
+  if (file.size > 25 * 1024 * 1024) {
+    showToast('A imagem deve ter no máximo 25MB');
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    uploadedImageData = e.target.result;
+  showToast('Otimizando imagem...');
+  try {
+    const compressedDataUrl = await compressImageFile(file, 1280, 0.88);
+    uploadedImageData = compressedDataUrl;
     showImagePreview(uploadedImageData);
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    console.warn("Erro ao comprimir imagem, usando original:", err);
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      uploadedImageData = e.target.result;
+      showImagePreview(uploadedImageData);
+    };
+    reader.readAsDataURL(file);
+  }
 };
+
+function compressImageFile(file, maxDimension = 1280, quality = 0.88) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
 
 window.handleImageUrlInput = function (url, isManualClick = false) {
   if (!url || !url.trim()) {
