@@ -2063,6 +2063,10 @@ window.openAdminModal = function () {
   if (!modal) return;
   modal.classList.remove('hidden');
   lockAdminPanel();
+  setTimeout(() => {
+    const pinInput = document.getElementById('adminPinInput');
+    if (pinInput) pinInput.focus();
+  }, 100);
 };
 
 window.closeAdminModal = function () {
