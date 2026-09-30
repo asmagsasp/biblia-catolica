@@ -197,7 +197,11 @@ window.stopSpeech = async function () {
   if ('speechSynthesis' in window) {
     try { window.speechSynthesis.cancel(); } catch (e) {}
   }
-  document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
+  document.querySelectorAll('.verse.reading, .search-result-item.reading').forEach(v => v.classList.remove('reading'));
+  document.querySelectorAll('.search-speak-btn.speaking').forEach(b => {
+    b.classList.remove('speaking');
+    b.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+  });
 };
 
 window.toggleTheme = function () {
@@ -467,7 +471,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
 });
 
-window.speakText = async function (text, vNum = null) {
+window.speakText = async function (text, vNum = null, customEl = null) {
   await stopSpeech();
   if (!text) return;
 
@@ -478,22 +482,48 @@ window.speakText = async function (text, vNum = null) {
     const el = document.getElementById(`v-${vNum}`);
     if (el) el.classList.add('reading');
   }
+  if (customEl) {
+    customEl.classList.add('reading');
+    const speakBtn = customEl.querySelector('.search-speak-btn');
+    if (speakBtn) {
+      speakBtn.classList.add('speaking');
+      speakBtn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar</span>';
+    }
+  }
 
   try {
     await TextToSpeech.speak({
       text: text,
       lang: 'pt-BR',
-      rate: 0.9,
+      rate: 0.95,
       pitch: 1.0,
       volume: 1.0,
       category: 'ambient'
     });
   } catch (e) {
-    console.error('TTS error:', e);
+    // Fallback Web SpeechSynthesis se TextToSpeech não estiver disponível
+    if ('speechSynthesis' in window && !stopRequested) {
+      await new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        utterance.onend = () => resolve();
+        utterance.onerror = () => resolve();
+        window.speechSynthesis.speak(utterance);
+      });
+    }
   } finally {
     if (vNum) {
       const el = document.getElementById(`v-${vNum}`);
       if (el) el.classList.remove('reading');
+    }
+    if (customEl) {
+      customEl.classList.remove('reading');
+      const speakBtn = customEl.querySelector('.search-speak-btn');
+      if (speakBtn) {
+        speakBtn.classList.remove('speaking');
+        speakBtn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+      }
     }
     isSpeaking = false;
   }
@@ -623,10 +653,21 @@ function doSearch() {
       } else {
         resultados.forEach(r => {
           const hl = highlightSearchTerms(r.texto, t);
-          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                  <div class="search-result-ref">
-                    <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
-                    <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+          const isFav = r.favorito === 1 || db.isFavorito(r.id_livro, r.id_capitulo, r.id_versiculo);
+          const rawTextEscaped = (r.texto || '').replace(/"/g, '&quot;');
+
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}">
+                  <div class="search-result-header">
+                    <div class="search-result-ref">
+                      <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
+                      <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+                    </div>
+                    <div class="search-result-actions">
+                      <button class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button class="search-action-btn search-fav-btn ${isFav ? 'favorited' : ''}" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" title="${isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
+                      <button class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    </div>
                   </div>
                   <div class="search-result-text">${hl}</div>
               </div>`;
@@ -639,7 +680,72 @@ function doSearch() {
   }, 10);
 }
 
-document.getElementById('searchResults').addEventListener('click', e => {
+document.getElementById('searchResults').addEventListener('click', async e => {
+  // 1. Favoritar
+  const favBtn = e.target.closest('.search-fav-btn');
+  if (favBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const livroId = parseInt(favBtn.dataset.livro);
+      const cap = parseInt(favBtn.dataset.cap);
+      const ver = parseInt(favBtn.dataset.ver);
+      const result = await db.toggleFavorito(livroId, cap, ver);
+      favBtn.classList.toggle('favorited', result === 1);
+      favBtn.title = result === 1 ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+
+      showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
+      const favContainer = document.getElementById('favoritesContainer');
+      if (favContainer) delete favContainer.dataset.loaded;
+      await updateFavCountOnly();
+    } catch (err) {
+      console.error("Erro ao favoritar na busca:", err);
+    }
+    return;
+  }
+
+  // 2. Ouvir Trecho
+  const speakBtn = e.target.closest('.search-speak-btn');
+  if (speakBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const item = speakBtn.closest('.search-result-item');
+    const text = speakBtn.dataset.txt;
+
+    if (speakBtn.classList.contains('speaking')) {
+      await stopSpeech();
+      return;
+    }
+
+    await stopSpeech();
+    speakText(text, null, item);
+    return;
+  }
+
+  // 3. Copiar
+  const copyBtn = e.target.closest('.search-copy-btn');
+  if (copyBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
+    copyToClipboard(verseText).then(ok => {
+      if (ok) showToast('📋 Versículo copiado!');
+      else showToast('Erro ao copiar versículo');
+    });
+    return;
+  }
+
+  // 4. WhatsApp
+  const waBtn = e.target.closest('.search-wa-btn');
+  if (waBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    return;
+  }
+
+  // 5. Clicar no card para abrir o livro e capítulo
   const item = e.target.closest('.search-result-item');
   if (item) {
     const cap = parseInt(item.dataset.cap);
@@ -665,8 +771,20 @@ window.showFavorites = function () {
         h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado.</p></div>`;
       } else {
         d.forEach(r => {
-          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}">
-                  <div class="search-result-ref">${r.nome_livro} ${r.id_capitulo},${r.id_versiculo}</div>
+          const rawTextEscaped = (r.texto || '').replace(/"/g, '&quot;');
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}">
+                  <div class="search-result-header">
+                    <div class="search-result-ref">
+                      <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
+                      <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+                    </div>
+                    <div class="search-result-actions">
+                      <button class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button class="search-action-btn search-fav-btn favorited" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" title="Remover dos Favoritos" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
+                      <button class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    </div>
+                  </div>
                   <div class="search-result-text">${r.texto}</div>
               </div>`;
         });
@@ -679,9 +797,76 @@ window.showFavorites = function () {
   });
 };
 
+document.getElementById('favoritesContainer').addEventListener('click', async e => {
+  // 1. Favoritar (remover dos favoritos)
+  const favBtn = e.target.closest('.search-fav-btn');
+  if (favBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const livroId = parseInt(favBtn.dataset.livro);
+      const cap = parseInt(favBtn.dataset.cap);
+      const ver = parseInt(favBtn.dataset.ver);
+      const result = await db.toggleFavorito(livroId, cap, ver);
+      favBtn.classList.toggle('favorited', result === 1);
 
+      const item = favBtn.closest('.search-result-item');
+      if (result === 0 && item) {
+        item.style.opacity = '0.35';
+      } else if (item) {
+        item.style.opacity = '1';
+      }
 
-document.getElementById('favoritesContainer').addEventListener('click', e => {
+      showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
+      await updateFavCountOnly();
+    } catch (err) {
+      console.error("Erro ao favoritar nos favoritos:", err);
+    }
+    return;
+  }
+
+  // 2. Ouvir Trecho
+  const speakBtn = e.target.closest('.search-speak-btn');
+  if (speakBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const item = speakBtn.closest('.search-result-item');
+    const text = speakBtn.dataset.txt;
+
+    if (speakBtn.classList.contains('speaking')) {
+      await stopSpeech();
+      return;
+    }
+
+    await stopSpeech();
+    speakText(text, null, item);
+    return;
+  }
+
+  // 3. Copiar
+  const copyBtn = e.target.closest('.search-copy-btn');
+  if (copyBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
+    copyToClipboard(verseText).then(ok => {
+      if (ok) showToast('📋 Versículo copiado!');
+      else showToast('Erro ao copiar versículo');
+    });
+    return;
+  }
+
+  // 4. WhatsApp
+  const waBtn = e.target.closest('.search-wa-btn');
+  if (waBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    return;
+  }
+
+  // 5. Clicar no card para abrir o livro e capítulo
   const item = e.target.closest('.search-result-item');
   if (item) {
     const cap = parseInt(item.dataset.cap);

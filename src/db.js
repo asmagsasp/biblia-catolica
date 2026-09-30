@@ -205,7 +205,12 @@ export async function buscar(termo) {
             const res = await fetchWithTimeout(`/api/busca?q=${encodeURIComponent(termo)}`, {}, 1500);
             if (res.ok) {
                 const bRes = await res.json();
-                if (bRes && bRes.length > 0) return bRes;
+                if (bRes && bRes.length > 0) {
+                    return bRes.map(r => ({
+                        ...r,
+                        favorito: favoritos[`${r.id_livro}_${r.id_capitulo}_${r.id_versiculo}`] ? 1 : (r.favorito || 0)
+                    }));
+                }
             }
         } catch (err) {
             console.warn('[BibliaDB] Falha na busca backend, usando local:', err);
@@ -228,7 +233,8 @@ export async function buscar(termo) {
                         nome_livro: livro.nome_livro,
                         id_capitulo: cap,
                         id_versiculo: v.v,
-                        texto: v.t
+                        texto: v.t,
+                        favorito: favoritos[`${livro.id_livro}_${cap}_${v.v}`] ? 1 : 0
                     });
                     if (resultados.length >= 200) return resultados;
                 }
@@ -349,6 +355,11 @@ export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
     }
 
     return isFav;
+}
+
+export function isFavorito(idLivro, idCapitulo, idVersiculo) {
+    const key = `${idLivro}_${idCapitulo}_${idVersiculo}`;
+    return !!favoritos[key];
 }
 
 export async function getFavoritos() {
