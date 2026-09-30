@@ -652,44 +652,37 @@ body::before {
 .nav-tabs {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  max-width: 520px;
-  margin: 0 auto 34px;
-  padding: 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 30px;
-  backdrop-filter: blur(16px);
+  gap: 12px;
+  padding: 0 20px 28px;
+  margin: 0 auto 10px;
+  max-width: 700px;
+  flex-wrap: wrap;
 }
 
 .nav-tab {
-  flex: 1;
   padding: 10px 18px;
   font-family: var(--font-display);
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   border: none;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: 24px;
+  border-bottom: 2px solid transparent;
   transition: var(--transition);
   white-space: nowrap;
-  text-align: center;
 }
 
 .nav-tab:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .nav-tab.active {
-  background: var(--gold-gradient);
-  color: #120A10;
-  font-weight: 800;
-  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
+  color: var(--gold-400);
+  border-bottom-color: var(--gold-400);
+  text-shadow: 0 0 12px var(--gold-glow);
 }
 
 /* ==========================================================================
@@ -1130,58 +1123,115 @@ mark {
    ========================================================================== */
 
 .plan-view {
-  max-width: 880px;
+  max-width: 850px;
   margin: 0 auto;
   padding: 20px 20px 80px;
 }
 
 .plan-progress-bar {
-  width: 100%;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(212, 168, 83, 0.1);
   border-radius: 10px;
-  margin-bottom: 12px;
+  height: 8px;
+  margin-bottom: 8px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
 }
 
 .plan-progress-fill {
   height: 100%;
-  background: var(--gold-gradient);
+  background: linear-gradient(90deg, var(--gold-500), var(--gold-400));
   border-radius: 10px;
-  transition: width 0.6s ease;
-  box-shadow: 0 0 12px var(--gold-glow);
+  transition: width 0.5s ease;
 }
 
 .plan-progress-text {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--gold-300);
   text-align: center;
-  margin-bottom: 28px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
 }
 
-.plan-day-card {
+.plan-day {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+  transition: var(--transition);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  transition: var(--transition);
+  gap: 14px;
+  cursor: pointer;
 }
 
-.plan-day-card:hover {
-  border-color: var(--gold-400);
+.plan-day:hover {
+  border-color: var(--border-glow);
   background: var(--bg-card-hover);
 }
 
-.plan-day-card.completed {
-  border-color: rgba(34, 197, 94, 0.4);
-  background: rgba(34, 197, 94, 0.06);
+.plan-day.completed {
+  opacity: 0.5;
+}
+
+.plan-day.today {
+  border-color: var(--gold-400);
+  box-shadow: 0 0 20px rgba(196, 149, 42, 0.15);
+}
+
+.plan-day-num {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold-400);
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(196, 149, 42, 0.08);
+  flex-shrink: 0;
+}
+
+.plan-day.completed .plan-day-num {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+}
+
+.plan-day-content {
+  flex: 1;
+}
+
+.plan-day-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.plan-day-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.plan-day-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 12px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.plan-day.completed .plan-day-check {
+  border-color: #2ecc71;
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.1);
 }
 
 /* ==========================================================================
