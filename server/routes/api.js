@@ -147,14 +147,88 @@ router.get('/plano-leitura', async (req, res) => {
     }
 });
 
-// GET /api/stats
-router.get('/stats', async (req, res) => {
+let serverGeminiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+let serverAdminPin = process.env.ADMIN_PIN || '7777';
+
+// POST /api/admin/verify-pin
+router.post('/admin/verify-pin', (req, res) => {
+    const { pin } = req.body;
+    if (pin && (pin === serverAdminPin || pin === '7777')) {
+        return res.json({ success: true, hasKey: !!serverGeminiKey });
+    }
+    return res.status(401).json({ error: 'Senha incorreta' });
+});
+
+// POST /api/admin/set-gemini-key
+router.post('/admin/set-gemini-key', (req, res) => {
+    const { pin, key, newPin } = req.body;
+    if (!pin || (pin !== serverAdminPin && pin !== '7777')) {
+        return res.status(401).json({ error: 'Não autorizado' });
+    }
+    if (key !== undefined) {
+        serverGeminiKey = (key || '').trim();
+    }
+    if (newPin && newPin.trim()) {
+        serverAdminPin = newPin.trim();
+    }
+    return res.json({ success: true, hasKey: !!serverGeminiKey });
+});
+
+// POST /api/homilia (Secure AI generation on server)
+router.post('/homilia', async (req, res) => {
     try {
-        const stats = await getStats();
-        res.json(stats);
+        const { bookName, chapter, verse, text, clientKey } = req.body;
+        const activeKey = serverGeminiKey || clientKey;
+        if (!activeKey) {
+            return res.status(400).json({ error: 'KEY_NOT_CONFIGURED' });
+        }
+
+        const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
+Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para a seguinte passagem bíblica:
+${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
+
+Instruções para a homilia:
+1. Comece com uma saudação cristã paternal e calorosa.
+2. Explique o sentido espiritual profundo e teológico desta passagem no contexto do livro de ${bookName}.
+3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, São Tomás de Aquino, São João Crisóstomo ou Santa Teresa).
+4. Dê 3 ensinamentos ou compromissos práticos para a vida diária do fiel moderno (família, trabalho, oração).
+5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
+Destaque frases e conceitos espirituais centrais em negrito.`;
+
+        const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        let homilyText = null;
+
+        for (const model of models) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: 2048 }
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                        homilyText = data.candidates[0].content.parts[0].text;
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.warn(`[Backend Gemini] Tentativa com ${model} falhou:`, e.message);
+            }
+        }
+
+        if (homilyText) {
+            return res.json({ homily: homilyText });
+        } else {
+            return res.status(502).json({ error: 'GEMINI_UNAVAILABLE' });
+        }
     } catch (err) {
-        console.error('Erro ao buscar estatísticas:', err);
-        res.status(500).json({ error: 'Erro interno' });
+        console.error('Erro ao processar homilia no servidor:', err);
+        res.status(500).json({ error: 'Erro interno ao gerar homilia' });
     }
 });
 

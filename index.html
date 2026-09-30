@@ -32,7 +32,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-brand" onclick="goHome()">
-      <span class="cross">&#10013;</span>
+      <span class="cross" onclick="event.stopPropagation(); handleHeaderCrossClick()" title="Bíblia Sagrada">&#10013;</span>
       <h1>Bíblia Sagrada<span>Edição Católica</span></h1>
     </div>
     <div class="search-container">
@@ -548,6 +548,95 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL MODAL (PROTECTED BY PASSWORD/PIN) -->
+  <div id="adminModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="adminPanelTitle" onclick="if(event.target===this) closeAdminModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeAdminModal()" aria-label="Fechar painel de administração"><i class="fas fa-times"></i></button>
+      
+      <!-- ADMIN STATE 1: PIN LOCK -->
+      <div id="adminPinSection" style="text-align: center; padding: 10px 0;">
+        <div class="donate-icon-container pulse-animation" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.12);">
+          <i class="fas fa-user-shield donate-icon" style="color: #ef4444;"></i>
+        </div>
+        <h2 id="adminPanelTitle" style="color: var(--text-primary); font-family: 'Cinzel', serif; font-size: 18px; margin-bottom: 6px;">Painel do Administrador</h2>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 18px;">Área restrita e protegida por senha para gerenciamento de chaves de IA e configurações.</p>
+        
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: left;">
+          <label for="adminPinInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
+            <i class="fas fa-key" style="color: var(--gold-400); margin-right: 4px;"></i> Digite o PIN ou Senha de Administrador:
+          </label>
+          <input type="password" id="adminPinInput" class="upload-input" placeholder="••••" style="font-size: 16px; letter-spacing: 4px; text-align: center;" onkeydown="if(event.key==='Enter') unlockAdminPanel()">
+          <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 6px;">(PIN padrão inicial: <code>7777</code>)</span>
+        </div>
+
+        <button type="button" class="hero-donate-btn" onclick="unlockAdminPanel()" style="width: 100%; font-size: 14px; padding: 11px;">
+          <i class="fas fa-unlock-alt"></i> Acessar Painel
+        </button>
+      </div>
+
+      <!-- ADMIN STATE 2: DASHBOARD (UNLOCKED) -->
+      <div id="adminDashboardSection" class="hidden" style="padding: 5px 0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-shield-alt" style="color: #10b981; font-size: 20px;"></i>
+            <div>
+              <h3 style="font-size: 16px; color: var(--text-primary); margin: 0; font-family: 'Cinzel', serif;">Administração do Sistema</h3>
+              <span style="font-size: 11px; color: #10b981;"><i class="fas fa-check-circle"></i> Sessão Autorizada</span>
+            </div>
+          </div>
+          <button type="button" onclick="lockAdminPanel()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+            <i class="fas fa-sign-out-alt"></i> Bloquear
+          </button>
+        </div>
+
+        <!-- 1. GEMINI API KEY CONFIGURATION -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="adminGeminiKeyInput" style="font-size: 12px; font-weight: 600; color: var(--text-primary);">
+              <i class="fas fa-sparkles" style="color: #60a5fa;"></i> Chave Secreta Google Gemini IA:
+            </label>
+            <span id="adminKeyStatusBadge" style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: rgba(59,130,246,0.15); color: #60a5fa;">Verificando...</span>
+          </div>
+          <input type="text" id="adminGeminiKeyInput" class="upload-input" placeholder="AIzaSy..." style="font-family: monospace; font-size: 12px; margin-bottom: 8px;">
+          
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="hero-donate-btn" onclick="saveAdminGeminiKey()" style="padding: 8px 14px; font-size: 12px; flex: 1;">
+              <i class="fas fa-save"></i> Salvar Chave
+            </button>
+            <button type="button" class="upload-btn-secondary" onclick="testAdminGeminiKey()" style="padding: 8px 14px; font-size: 12px; flex: 1;">
+              <i class="fas fa-vial"></i> Testar Conexão
+            </button>
+            <button type="button" onclick="clearAdminGeminiKey()" style="background: transparent; border: 1px solid var(--border-color); color: #ef4444; border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer;">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+          <div id="adminTestStatus" style="font-size: 11px; margin-top: 8px; display: none;"></div>
+        </div>
+
+        <!-- 2. CHANGE ADMIN PIN -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <label for="adminNewPinInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
+            <i class="fas fa-lock" style="color: var(--gold-400);"></i> Alterar PIN / Senha de Administrador:
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="adminNewPinInput" class="upload-input" placeholder="Novo PIN (ex: 8899)" style="flex: 1;">
+            <button type="button" class="upload-btn-secondary" onclick="updateAdminPin()" style="white-space: nowrap; padding: 8px 14px; font-size: 12px;">
+              <i class="fas fa-check"></i> Alterar PIN
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. SYSTEM DIAGNOSTICS -->
+        <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding: 6px 4px;">
+          <span>Bíblia Católica • Modo Seguro</span>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color: #60a5fa; text-decoration: none;">
+            <i class="fas fa-external-link-alt"></i> Console Google AI Studio
+          </a>
+        </div>
       </div>
     </div>
   </div>

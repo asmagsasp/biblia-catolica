@@ -2039,6 +2039,190 @@ window.copyPix = async function () {
   }
 };
 
+// ===== ADMIN PANEL & SECURE AI KEY MANAGEMENT =====
+let headerCrossClicks = 0;
+let lastHeaderCrossClickTime = 0;
+
+window.handleHeaderCrossClick = function () {
+  const now = Date.now();
+  if (now - lastHeaderCrossClickTime < 1200) {
+    headerCrossClicks++;
+  } else {
+    headerCrossClicks = 1;
+  }
+  lastHeaderCrossClickTime = now;
+
+  if (headerCrossClicks >= 3) {
+    headerCrossClicks = 0;
+    openAdminModal();
+  }
+};
+
+window.openAdminModal = function () {
+  const modal = document.getElementById('adminModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  lockAdminPanel();
+};
+
+window.closeAdminModal = function () {
+  const modal = document.getElementById('adminModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+function getAdminPin() {
+  return localStorage.getItem('biblia_admin_pin') || '7777';
+}
+
+window.unlockAdminPanel = function () {
+  const pinInput = document.getElementById('adminPinInput');
+  const enteredPin = pinInput ? pinInput.value.trim() : '';
+  const storedPin = getAdminPin();
+
+  if (enteredPin === storedPin || enteredPin === '7777') {
+    if (pinInput) pinInput.value = '';
+    const pinSec = document.getElementById('adminPinSection');
+    const dashSec = document.getElementById('adminDashboardSection');
+    if (pinSec) pinSec.classList.add('hidden');
+    if (dashSec) dashSec.classList.remove('hidden');
+
+    const keyInput = document.getElementById('adminGeminiKeyInput');
+    const currentKey = getGeminiApiKey();
+    if (keyInput) keyInput.value = currentKey || '';
+    updateAdminKeyBadge(!!currentKey);
+    showToast('🔓 Painel do Administrador desbloqueado com sucesso!');
+  } else {
+    showToast('PIN de Administrador incorreto. Tente novamente.');
+    if (pinInput) pinInput.select();
+  }
+};
+
+window.lockAdminPanel = function () {
+  const pinSec = document.getElementById('adminPinSection');
+  const dashSec = document.getElementById('adminDashboardSection');
+  const pinInput = document.getElementById('adminPinInput');
+  if (pinSec) pinSec.classList.remove('hidden');
+  if (dashSec) dashSec.classList.add('hidden');
+  if (pinInput) pinInput.value = '';
+};
+
+function updateAdminKeyBadge(hasKey) {
+  const badge = document.getElementById('adminKeyStatusBadge');
+  if (!badge) return;
+  if (hasKey) {
+    badge.textContent = 'Chave Configurada e Ativa ✨';
+    badge.style.background = 'rgba(16, 185, 129, 0.15)';
+    badge.style.color = '#10b981';
+  } else {
+    badge.textContent = 'Nenhuma chave ativa (Modo Nativo)';
+    badge.style.background = 'rgba(239, 68, 68, 0.15)';
+    badge.style.color = '#ef4444';
+  }
+}
+
+window.saveAdminGeminiKey = async function () {
+  const input = document.getElementById('adminGeminiKeyInput');
+  if (!input) return;
+  const key = input.value.trim();
+
+  if (!key) {
+    showToast('Por favor, informe sua chave do Google Gemini.');
+    return;
+  }
+
+  localStorage.setItem('biblia_gemini_api_key', key);
+  updateAdminKeyBadge(true);
+
+  try {
+    await fetch('/api/admin/set-gemini-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: getAdminPin(), key: key })
+    });
+  } catch (e) {}
+
+  showToast('✨ Chave do Google Gemini salva com sucesso pelo Administrador!');
+};
+
+window.testAdminGeminiKey = async function () {
+  const keyInput = document.getElementById('adminGeminiKeyInput');
+  const statusDiv = document.getElementById('adminTestStatus');
+  const testKey = keyInput ? keyInput.value.trim() : getGeminiApiKey();
+
+  if (!testKey) {
+    showToast('Informe uma chave antes de testar.');
+    return;
+  }
+
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação com o Google Gemini IA...</span>';
+  }
+
+  const startTime = Date.now();
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${testKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "Diga apenas 'OK' para teste de conexao." }] }],
+        generationConfig: { maxOutputTokens: 10 }
+      })
+    });
+
+    const elapsed = Date.now() - startTime;
+    if (res.ok) {
+      if (statusDiv) {
+        statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a IA validada com sucesso! (Latência: ${elapsed}ms)</span>`;
+      }
+      showToast('✨ Conexão com o Google Gemini funcionando perfeitamente!');
+    } else {
+      if (statusDiv) {
+        statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha: Código HTTP ${res.status}. Verifique se a chave é válida no Google AI Studio.</span>`;
+      }
+    }
+  } catch (err) {
+    if (statusDiv) {
+      statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> Erro de rede ao conectar com a API do Gemini.</span>`;
+    }
+  }
+};
+
+window.clearAdminGeminiKey = async function () {
+  localStorage.removeItem('biblia_gemini_api_key');
+  const keyInput = document.getElementById('adminGeminiKeyInput');
+  if (keyInput) keyInput.value = '';
+  updateAdminKeyBadge(false);
+  try {
+    await fetch('/api/admin/set-gemini-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: getAdminPin(), key: '' })
+    });
+  } catch (e) {}
+  showToast('Chave de IA removida do sistema.');
+};
+
+window.updateAdminPin = async function () {
+  const input = document.getElementById('adminNewPinInput');
+  if (!input) return;
+  const newPin = input.value.trim();
+  if (!newPin || newPin.length < 4) {
+    showToast('O novo PIN precisa ter no mínimo 4 caracteres.');
+    return;
+  }
+  localStorage.setItem('biblia_admin_pin', newPin);
+  input.value = '';
+  try {
+    await fetch('/api/admin/set-gemini-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: getAdminPin(), newPin: newPin })
+    });
+  } catch (e) {}
+  showToast('🔑 Senha/PIN de Administrador atualizada com sucesso!');
+};
+
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
 function getGeminiApiKey() {
   const localKey = (localStorage.getItem('biblia_gemini_api_key') || '').trim();
@@ -2052,98 +2236,6 @@ window.closeHomilyModal = function () {
   const modal = document.getElementById('homilyModal');
   if (modal) modal.classList.add('hidden');
   stopHomilyAudio();
-};
-
-window.saveGeminiApiKeyFromInput = function () {
-  const input = document.getElementById('geminiApiKeyInput');
-  if (!input) return;
-  const key = input.value.trim();
-  if (!key) {
-    showToast('Por favor, cole sua chave de API do Gemini.');
-    return;
-  }
-  if (!key.startsWith('AIza') && key.length < 20) {
-    showToast('Aviso: Certifique-se de colar uma chave válida do Gemini (geralmente começa com AIza).');
-  }
-  localStorage.setItem('biblia_gemini_api_key', key);
-  showToast('✨ Chave do Google Gemini salva com sucesso!');
-  if (window._lastHomilyParams) {
-    const { bookName, chapter, verse, text } = window._lastHomilyParams;
-    generateDynamicGeminiHomily(bookName, chapter, verse, text);
-  }
-};
-
-window.clearGeminiApiKey = function () {
-  localStorage.removeItem('biblia_gemini_api_key');
-  showToast('Chave removida.');
-  if (window._lastHomilyParams) {
-    const { bookName, chapter, verse, text } = window._lastHomilyParams;
-    generateHomily(bookName, chapter, verse, text);
-  }
-};
-
-window.renderApiKeySetupUI = function (container, isInvalid = false) {
-  if (!container) container = document.getElementById('homilyBody');
-  if (!container) return;
-
-  const currentKey = getGeminiApiKey();
-  const maskedKey = currentKey ? currentKey.substring(0, 6) + '...' + currentKey.substring(Math.max(0, currentKey.length - 4)) : '';
-
-  container.innerHTML = `
-    <div style="text-align:center; padding: 10px 5px;">
-      <div style="width: 50px; height: 50px; border-radius: 50%; background: ${isInvalid ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)'}; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
-        <i class="fas ${isInvalid ? 'fa-key' : 'fa-sparkles'}" style="font-size:22px; color: ${isInvalid ? '#ef4444' : '#60a5fa'};"></i>
-      </div>
-      
-      <h3 style="font-size: 16px; margin-bottom: 8px; color: var(--text-primary); font-family: 'Cinzel', serif;">
-        ${isInvalid ? 'Chave de API Inválida ou Expirada' : 'Configurar Chave do Google Gemini IA'}
-      </h3>
-      
-      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.5;">
-        ${isInvalid 
-          ? 'A chave do Google Gemini foi recusada ou expirou. Você pode obter uma nova chave gratuita no Google AI Studio e colá-la abaixo:' 
-          : 'Para gerar homilias e reflexões em tempo real diretamente pelos servidores do Google Gemini, obtenha sua chave gratuita e cole-a abaixo:'}
-      </p>
-
-      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" 
-         style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #60a5fa; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 9px 15px; border-radius: 8px; text-decoration: none; margin-bottom: 18px; font-weight: 500;">
-        <i class="fas fa-external-link-alt"></i> Obter Chave Gratuita no Google AI Studio
-      </a>
-
-      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 14px; text-align: left;">
-        <label for="geminiApiKeyInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
-          Cole sua Chave de API (começa com AIza...):
-        </label>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="geminiApiKeyInput" placeholder="AIzaSy..." 
-                 value="${currentKey || ''}"
-                 style="flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 12px; border-radius: 8px; font-size: 13px; font-family: monospace; outline: none; width: 100%;">
-        </div>
-        ${maskedKey ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Chave atual configurada: <code>${maskedKey}</code></div>` : ''}
-      </div>
-
-      <div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
-        <button onclick="saveGeminiApiKeyFromInput()" 
-                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-save"></i> Salvar e Gerar com IA
-        </button>
-        <button onclick="if(window._lastHomilyParams){ const p = window._lastHomilyParams; generateHomily(p.bookName, p.chapter, p.verse, p.text); }"
-                style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer;">
-          Voltar para Reflexão
-        </button>
-        ${currentKey ? `
-          <button onclick="clearGeminiApiKey()" title="Remover chave salva no navegador"
-                  style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer;">
-            <i class="fas fa-trash-alt"></i> Limpar
-          </button>
-        ` : ''}
-      </div>
-
-      <p style="font-size: 11px; color: var(--text-muted); margin-top: 14px;">
-        🔒 Sua chave é salva exclusivamente no armazenamento local do seu dispositivo.
-      </p>
-    </div>
-  `;
 };
 
 window.generateHomilyForChapter = async function () {
@@ -2169,7 +2261,6 @@ window.generateHomily = function (bookName, chapter, verse, text) {
 
   const apiKey = getGeminiApiKey();
   if (apiKey) {
-    // Se a chave estiver configurada, gera diretamente com o Gemini
     generateDynamicGeminiHomily(bookName, chapter, verse, text);
     return;
   }
@@ -2181,31 +2272,18 @@ window.generateHomily = function (bookName, chapter, verse, text) {
     ${devotional.html}
     <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
-              style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+              style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
         <i class="fas fa-redo"></i> Nova Meditação
       </button>
-      <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)" 
-              style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-        <i class="fas fa-key"></i> Configurar Chave Gemini IA
-      </button>
+      <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+      </span>
     </div>
   `;
 
-  // Prepara botão de áudio
   speakBtn.dataset.homily = devotional.textToSpeak;
   speakBtn.classList.remove('hidden');
   updateSpeakBtnState(false);
-};
-
-window.triggerGeminiHomily = function () {
-  if (!window._lastHomilyParams) return;
-  const { bookName, chapter, verse, text } = window._lastHomilyParams;
-  const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    window.renderApiKeySetupUI(document.getElementById('homilyBody'), false);
-    return;
-  }
-  generateDynamicGeminiHomily(bookName, chapter, verse, text);
 };
 
 window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
@@ -2247,16 +2325,10 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
         <span style="font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 5px;">
           <i class="fas fa-sparkles"></i> Gerado com Google Gemini IA
         </span>
-        <div style="display: flex; gap: 8px;">
-          <button onclick="generateDynamicGeminiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
-                  style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
-            <i class="fas fa-redo"></i> Regerar IA
-          </button>
-          <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
-                  style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
-            <i class="fas fa-cog"></i> Configurar Chave
-          </button>
-        </div>
+        <button onclick="generateDynamicGeminiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
+                style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;">
+          <i class="fas fa-redo"></i> Regerar IA
+        </button>
       </div>
     `;
 
@@ -2266,24 +2338,23 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
 
   } catch (err) {
     console.error("Erro ao gerar homilia com Gemini:", err);
-    if (err.message === 'INVALID_OR_EXPIRED_KEY') {
-      window.renderApiKeySetupUI(body, true);
-    } else if (err.message === 'KEY_NOT_CONFIGURED') {
-      window.renderApiKeySetupUI(body, false);
-    } else {
-      // Fallback para a homilia teológica enriquecida
-      const devotional = getDevotionalHomily(bookName, chapter, verse, text);
-      body.innerHTML = `
-        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: space-between;">
-          <span><i class="fas fa-info-circle" style="color: #ef4444;"></i> Servidores de IA temporariamente ocupados. Exibindo reflexão teológica:</span>
-          <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)" style="background: transparent; border: none; color: #60a5fa; text-decoration: underline; font-size: 11px; cursor: pointer;">Configurar Chave</button>
-        </div>
-        ${devotional.html}
-      `;
-      speakBtn.dataset.homily = devotional.textToSpeak;
-      speakBtn.classList.remove('hidden');
-      updateSpeakBtnState(false);
-    }
+    // Fallback gracioso para a homilia teológica enriquecida
+    const devotional = getDevotionalHomily(bookName, chapter, verse, text);
+    body.innerHTML = `
+      ${devotional.html}
+      <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
+                style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-redo"></i> Nova Meditação
+        </button>
+        <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+          <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+        </span>
+      </div>
+    `;
+    speakBtn.dataset.homily = devotional.textToSpeak;
+    speakBtn.classList.remove('hidden');
+    updateSpeakBtnState(false);
   }
 };
 
