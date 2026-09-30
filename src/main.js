@@ -956,37 +956,94 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Canonical list of all 73 Catholic Books for instant synchronous dropdowns
+const CATHOLIC_BOOKS = [
+  { id_livro: 1, nome_livro: "Gênesis", total_capitulos: 50 },
+  { id_livro: 2, nome_livro: "Êxodo", total_capitulos: 40 },
+  { id_livro: 3, nome_livro: "Levítico", total_capitulos: 27 },
+  { id_livro: 4, nome_livro: "Números", total_capitulos: 36 },
+  { id_livro: 5, nome_livro: "Deuteronômio", total_capitulos: 34 },
+  { id_livro: 6, nome_livro: "Josué", total_capitulos: 24 },
+  { id_livro: 7, nome_livro: "Juízes", total_capitulos: 21 },
+  { id_livro: 8, nome_livro: "Rute", total_capitulos: 4 },
+  { id_livro: 9, nome_livro: "I Samuel", total_capitulos: 31 },
+  { id_livro: 10, nome_livro: "II Samuel", total_capitulos: 24 },
+  { id_livro: 11, nome_livro: "I Reis", total_capitulos: 22 },
+  { id_livro: 12, nome_livro: "II Reis", total_capitulos: 25 },
+  { id_livro: 13, nome_livro: "I Crônicas", total_capitulos: 29 },
+  { id_livro: 14, nome_livro: "II Crônicas", total_capitulos: 36 },
+  { id_livro: 15, nome_livro: "Esdras", total_capitulos: 10 },
+  { id_livro: 16, nome_livro: "Neemias", total_capitulos: 13 },
+  { id_livro: 17, nome_livro: "Tobias", total_capitulos: 14 },
+  { id_livro: 18, nome_livro: "Judite", total_capitulos: 16 },
+  { id_livro: 19, nome_livro: "Ester", total_capitulos: 16 },
+  { id_livro: 20, nome_livro: "Jó", total_capitulos: 42 },
+  { id_livro: 21, nome_livro: "Salmos", total_capitulos: 150 },
+  { id_livro: 22, nome_livro: "I Macabeus", total_capitulos: 16 },
+  { id_livro: 23, nome_livro: "II Macabeus", total_capitulos: 15 },
+  { id_livro: 24, nome_livro: "Provérbios", total_capitulos: 31 },
+  { id_livro: 25, nome_livro: "Eclesiastes", total_capitulos: 12 },
+  { id_livro: 26, nome_livro: "Cântico dos Cânticos", total_capitulos: 8 },
+  { id_livro: 27, nome_livro: "Sabedoria", total_capitulos: 19 },
+  { id_livro: 28, nome_livro: "Eclesiástico", total_capitulos: 29 },
+  { id_livro: 29, nome_livro: "Isaías", total_capitulos: 66 },
+  { id_livro: 30, nome_livro: "Jeremias", total_capitulos: 52 },
+  { id_livro: 31, nome_livro: "Lamentações", total_capitulos: 5 },
+  { id_livro: 32, nome_livro: "Baruc", total_capitulos: 6 },
+  { id_livro: 33, nome_livro: "Ezequiel", total_capitulos: 48 },
+  { id_livro: 34, nome_livro: "Daniel", total_capitulos: 14 },
+  { id_livro: 35, nome_livro: "Oséias", total_capitulos: 14 },
+  { id_livro: 36, nome_livro: "Joel", total_capitulos: 4 },
+  { id_livro: 37, nome_livro: "Amós", total_capitulos: 9 },
+  { id_livro: 38, nome_livro: "Abdias", total_capitulos: 1 },
+  { id_livro: 39, nome_livro: "Jonas", total_capitulos: 4 },
+  { id_livro: 40, nome_livro: "Miquéias", total_capitulos: 7 },
+  { id_livro: 41, nome_livro: "Naum", total_capitulos: 3 },
+  { id_livro: 42, nome_livro: "Habacuc", total_capitulos: 3 },
+  { id_livro: 43, nome_livro: "Sofonias", total_capitulos: 3 },
+  { id_livro: 44, nome_livro: "Ageu", total_capitulos: 2 },
+  { id_livro: 45, nome_livro: "Zacarias", total_capitulos: 14 },
+  { id_livro: 46, nome_livro: "Malaquias", total_capitulos: 3 },
+  { id_livro: 47, nome_livro: "São Mateus", total_capitulos: 28 },
+  { id_livro: 48, nome_livro: "São Marcos", total_capitulos: 16 },
+  { id_livro: 49, nome_livro: "São Lucas", total_capitulos: 24 },
+  { id_livro: 50, nome_livro: "São João", total_capitulos: 21 },
+  { id_livro: 51, nome_livro: "Atos dos Apóstolos", total_capitulos: 28 },
+  { id_livro: 52, nome_livro: "Romanos", total_capitulos: 16 },
+  { id_livro: 53, nome_livro: "I Coríntios", total_capitulos: 16 },
+  { id_livro: 54, nome_livro: "II Coríntios", total_capitulos: 13 },
+  { id_livro: 55, nome_livro: "Gálatas", total_capitulos: 6 },
+  { id_livro: 56, nome_livro: "Efésios", total_capitulos: 6 },
+  { id_livro: 57, nome_livro: "Filipenses", total_capitulos: 4 },
+  { id_livro: 58, nome_livro: "Colossenses", total_capitulos: 4 },
+  { id_livro: 59, nome_livro: "I Tessalonicenses", total_capitulos: 5 },
+  { id_livro: 60, nome_livro: "II Tessalonicenses", total_capitulos: 16 },
+  { id_livro: 61, nome_livro: "I Timóteo", total_capitulos: 6 },
+  { id_livro: 62, nome_livro: "II Timóteo", total_capitulos: 4 },
+  { id_livro: 63, nome_livro: "Tito", total_capitulos: 3 },
+  { id_livro: 64, nome_livro: "Filêmon", total_capitulos: 1 },
+  { id_livro: 65, nome_livro: "Hebreus", total_capitulos: 13 },
+  { id_livro: 66, nome_livro: "São Tiago", total_capitulos: 5 },
+  { id_livro: 67, nome_livro: "I São Pedro", total_capitulos: 5 },
+  { id_livro: 68, nome_livro: "II São Pedro", total_capitulos: 16 },
+  { id_livro: 69, nome_livro: "I São João", total_capitulos: 5 },
+  { id_livro: 70, nome_livro: "II São João", total_capitulos: 1 },
+  { id_livro: 71, nome_livro: "III São João", total_capitulos: 1 },
+  { id_livro: 72, nome_livro: "São Judas", total_capitulos: 1 },
+  { id_livro: 73, nome_livro: "Apocalipse", total_capitulos: 22 }
+];
+
 // ===== UPLOAD & CARD STUDIO MODAL =====
-window.openGalleryUploadModal = async function () {
+window.openGalleryUploadModal = function () {
   const modal = document.getElementById('galleryUploadModal');
   if (modal) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
-  try {
-    await populateUploadBooksDropdown();
-  } catch (e) {
-    console.warn("populateUploadBooksDropdown error:", e);
-  }
-
-  try {
-    resetUploadForm();
-  } catch (e) {
-    console.warn("resetUploadForm error:", e);
-  }
-
-  try {
-    switchUploadTab('upload');
-  } catch (e) {
-    console.warn("switchUploadTab error:", e);
-  }
-
-  try {
-    updateStudioCard();
-  } catch (e) {
-    console.warn("updateStudioCard error:", e);
-  }
+  populateUploadBooksDropdown();
+  resetUploadForm();
+  switchUploadTab('upload');
 };
 
 window.closeGalleryUploadModal = function () {
@@ -1013,41 +1070,27 @@ window.switchUploadTab = function (tabName) {
     if (tabBtnUpload) tabBtnUpload.classList.remove('active');
     if (studioSec) studioSec.classList.remove('hidden');
     if (uploadSec) uploadSec.classList.add('hidden');
-    updateStudioCard();
+    requestAnimationFrame(() => updateStudioCard());
   }
 };
 
-async function populateUploadBooksDropdown() {
+function populateUploadBooksDropdown() {
   const select = document.getElementById('uploadBookSelect');
   if (!select) return;
 
   if (select.children.length === 0) {
-    if (!allBooks || allBooks.length === 0) {
-      try {
-        allBooks = (await db.getLivros()) || [];
-      } catch (e) { }
-    }
-
+    const list = (allBooks && allBooks.length > 0) ? allBooks : CATHOLIC_BOOKS;
     let h = '';
-    if (allBooks && allBooks.length > 0) {
-      allBooks.forEach(b => {
-        h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}">${b.nome_livro}</option>`;
-      });
-    } else {
-      h += `
-        <option value="1" data-total="50">Gênesis</option>
-        <option value="21" data-total="150" selected>Salmos</option>
-        <option value="24" data-total="31">Provérbios</option>
-        <option value="47" data-total="28">Mateus</option>
-        <option value="50" data-total="21">João</option>
-      `;
-    }
+    list.forEach(b => {
+      const selected = b.id_livro === 21 ? 'selected' : '';
+      h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}" ${selected}>${b.nome_livro}</option>`;
+    });
     select.innerHTML = h;
   }
 
   // Set default book to Salmos (id 21) if present
   const salmosOpt = select.querySelector('option[value="21"]');
-  if (salmosOpt) {
+  if (salmosOpt && !select.value) {
     select.value = '21';
     const capInput = document.getElementById('uploadChapterInput');
     const verInput = document.getElementById('uploadVerseInput');

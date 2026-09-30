@@ -97,10 +97,23 @@ function saveFavoritosLocal() {
     }, 100);
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 1800) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
+    }
+}
+
 export async function initDB() {
     try {
-        // Tentar conectar ao backend em /api/stats
-        const checkRes = await fetch('/api/stats', { cache: 'no-cache' });
+        // Tentar conectar ao backend em /api/stats com timeout de 1.5s
+        const checkRes = await fetchWithTimeout('/api/stats', { cache: 'no-cache' }, 1500);
         if (checkRes.ok) {
             useBackend = true;
             isDBReady = true;
@@ -142,7 +155,7 @@ export function isReady() { return isDBReady; }
 export async function getLivros() {
     if (useBackend) {
         try {
-            const res = await fetch('/api/livros');
+            const res = await fetchWithTimeout('/api/livros', {}, 1500);
             if (res.ok) return await res.json();
         } catch (err) {
             console.warn('[BibliaDB] Falha no backend getLivros, usando local:', err);
@@ -154,7 +167,7 @@ export async function getLivros() {
 export async function getVersiculos(idLivro, idCapitulo) {
     if (useBackend) {
         try {
-            const res = await fetch(`/api/livros/${idLivro}/capitulos/${idCapitulo}/versiculos`);
+            const res = await fetchWithTimeout(`/api/livros/${idLivro}/capitulos/${idCapitulo}/versiculos`, {}, 1500);
             if (res.ok) {
                 const backendVs = await res.json();
                 // Mesclar favoritos locais caso o backend não tenha dados específicos de favoritos do usuario
@@ -184,7 +197,7 @@ export async function buscar(termo) {
 
     if (useBackend) {
         try {
-            const res = await fetch(`/api/busca?q=${encodeURIComponent(termo)}`);
+            const res = await fetchWithTimeout(`/api/busca?q=${encodeURIComponent(termo)}`, {}, 1500);
             if (res.ok) return await res.json();
         } catch (err) {
             console.warn('[BibliaDB] Falha na busca backend, usando local:', err);
@@ -254,7 +267,7 @@ const VERSICULOS_INSPIRADORES = [
 export async function getVersiculoDoDia() {
     if (useBackend) {
         try {
-            const res = await fetch('/api/versiculo-do-dia');
+            const res = await fetchWithTimeout('/api/versiculo-do-dia', {}, 1500);
             if (res.ok) {
                 const v = await res.json();
                 if (v && v.texto) return v;
@@ -316,11 +329,11 @@ export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 
     if (useBackend) {
         try {
-            await fetch('/api/favoritos/toggle', {
+            await fetchWithTimeout('/api/favoritos/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idLivro, idCapitulo, idVersiculo })
-            });
+            }, 1500);
         } catch (err) {
             console.warn('[BibliaDB] Sincronização de favorito no backend falhou:', err);
         }
@@ -332,7 +345,7 @@ export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 export async function getFavoritos() {
     if (useBackend) {
         try {
-            const res = await fetch('/api/favoritos');
+            const res = await fetchWithTimeout('/api/favoritos', {}, 1500);
             if (res.ok) {
                 const backendFavs = await res.json();
                 if (backendFavs && backendFavs.length > 0) return backendFavs;
@@ -386,7 +399,7 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
             if (searchQuery) params.set('q', searchQuery);
             if (filterCategory && filterCategory !== 'all' && filterCategory !== 'favorites') params.set('categoria', filterCategory);
             
-            const res = await fetch(`/api/img-versiculos?${params.toString()}`);
+            const res = await fetchWithTimeout(`/api/img-versiculos?${params.toString()}`, {}, 1500);
             if (res.ok) {
                 const backendImgs = await res.json();
                 allImgs = backendImgs.map(img => ({
@@ -482,11 +495,11 @@ export async function addImgVersiculo(imgData) {
 
     if (useBackend) {
         try {
-            const res = await fetch('/api/img-versiculos', {
+            const res = await fetchWithTimeout('/api/img-versiculos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newImg)
-            });
+            }, 2500);
             if (res.ok) {
                 const created = await res.json();
                 newImg.id = created.id;
@@ -512,7 +525,7 @@ export async function deleteImgVersiculo(id) {
 
     if (useBackend && !isNaN(parseInt(id))) {
         try {
-            await fetch(`/api/img-versiculos/${id}`, { method: 'DELETE' });
+            await fetchWithTimeout(`/api/img-versiculos/${id}`, { method: 'DELETE' }, 1800);
         } catch (err) {
             console.warn('[BibliaDB] Falha ao deletar imagem no backend:', err);
         }
@@ -547,7 +560,7 @@ export async function getPlanoLeitura() {
 
     if (useBackend) {
         try {
-            const res = await fetch('/api/plano-leitura');
+            const res = await fetchWithTimeout('/api/plano-leitura', {}, 1500);
             if (res.ok) {
                 planCache = await res.json();
                 return planCache;
@@ -591,7 +604,7 @@ export async function getPlanoLeitura() {
 export async function getStats() {
     if (useBackend) {
         try {
-            const res = await fetch('/api/stats');
+            const res = await fetchWithTimeout('/api/stats', {}, 1500);
             if (res.ok) return await res.json();
         } catch (err) {
             console.warn('[BibliaDB] Falha getStats backend, usando local:', err);
