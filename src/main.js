@@ -140,6 +140,8 @@ async function init() {
         e.preventDefault();
         doSearch();
       } else if (e.key === 'Escape') {
+        mainSearchInput.value = '';
+        if (searchClearBtn) searchClearBtn.classList.add('hidden');
         mainSearchInput.blur();
       }
     });
@@ -156,17 +158,21 @@ async function init() {
     });
 
     mainSearchInput.addEventListener('blur', () => {
-      setTimeout(() => {
-        if (headerEl) headerEl.classList.remove('search-focused');
-        if (searchContainer) searchContainer.classList.remove('active');
-      }, 180);
+      if (headerEl) headerEl.classList.remove('search-focused');
+      if (searchContainer) searchContainer.classList.remove('active');
     });
   }
 
-  window.clearMainSearch = function () {
+  window.clearMainSearch = function (e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (mainSearchInput) {
       mainSearchInput.value = '';
       if (searchClearBtn) searchClearBtn.classList.add('hidden');
+      if (headerEl) headerEl.classList.add('search-focused');
+      if (searchContainer) searchContainer.classList.add('active');
       mainSearchInput.focus();
     }
   };

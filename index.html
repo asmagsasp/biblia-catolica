@@ -41,7 +41,7 @@
     <div class="search-container" id="searchContainer">
       <i class="fas fa-search search-icon"></i>
       <input type="text" class="search-input" id="searchInput" placeholder="Buscar na Palavra de Deus..." dir="ltr" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      <button type="button" class="search-clear-btn hidden" id="searchClearBtn" onclick="clearMainSearch()" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
+      <button type="button" class="search-clear-btn hidden" id="searchClearBtn" onmousedown="event.preventDefault()" onclick="clearMainSearch(event)" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
     </div>
     <div class="header-actions">
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i

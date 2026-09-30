@@ -2639,14 +2639,17 @@ mark {
     max-width: 220px;
   }
 
+  .header:has(.search-input:focus) .header-brand h1,
   .header.search-focused .header-brand h1 {
     display: none;
   }
 
+  .header:has(.search-input:focus) .header-actions,
   .header.search-focused .header-actions {
     display: none;
   }
 
+  .header:has(.search-input:focus) .search-container,
   .header.search-focused .search-container {
     max-width: 100% !important;
     flex: 10 !important;
