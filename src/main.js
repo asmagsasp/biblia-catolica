@@ -2059,11 +2059,14 @@ window.saveGeminiApiKeyFromInput = function () {
   if (!input) return;
   const key = input.value.trim();
   if (!key) {
-    showToast('Por favor, informe uma chave de API válida.');
+    showToast('Por favor, cole sua chave de API do Gemini.');
     return;
   }
+  if (!key.startsWith('AIza') && key.length < 20) {
+    showToast('Aviso: Certifique-se de colar uma chave válida do Gemini (geralmente começa com AIza).');
+  }
   localStorage.setItem('biblia_gemini_api_key', key);
-  showToast('Chave de API salva com sucesso!');
+  showToast('✨ Chave do Google Gemini salva com sucesso!');
   if (window._lastHomilyParams) {
     const { bookName, chapter, verse, text } = window._lastHomilyParams;
     generateDynamicGeminiHomily(bookName, chapter, verse, text);
@@ -2079,7 +2082,10 @@ window.clearGeminiApiKey = function () {
   }
 };
 
-function renderApiKeySetupUI(container, isInvalid = false) {
+window.renderApiKeySetupUI = function (container, isInvalid = false) {
+  if (!container) container = document.getElementById('homilyBody');
+  if (!container) return;
+
   const currentKey = getGeminiApiKey();
   const maskedKey = currentKey ? currentKey.substring(0, 6) + '...' + currentKey.substring(Math.max(0, currentKey.length - 4)) : '';
 
@@ -2090,13 +2096,13 @@ function renderApiKeySetupUI(container, isInvalid = false) {
       </div>
       
       <h3 style="font-size: 16px; margin-bottom: 8px; color: var(--text-primary); font-family: 'Cinzel', serif;">
-        ${isInvalid ? 'Chave de API Inválida ou Expirada' : 'Configurar Chave do Gemini IA'}
+        ${isInvalid ? 'Chave de API Inválida ou Expirada' : 'Configurar Chave do Google Gemini IA'}
       </h3>
       
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.5;">
         ${isInvalid 
           ? 'A chave do Google Gemini foi recusada ou expirou. Você pode obter uma nova chave gratuita no Google AI Studio e colá-la abaixo:' 
-          : 'Para gerar reflexões em tempo real diretamente pelos servidores do Google Gemini, você pode obter uma chave gratuita no Google AI Studio:'}
+          : 'Para gerar homilias e reflexões em tempo real diretamente pelos servidores do Google Gemini, obtenha sua chave gratuita e cole-a abaixo:'}
       </p>
 
       <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" 
@@ -2113,17 +2119,17 @@ function renderApiKeySetupUI(container, isInvalid = false) {
                  value="${currentKey || ''}"
                  style="flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 12px; border-radius: 8px; font-size: 13px; font-family: monospace; outline: none; width: 100%;">
         </div>
-        ${maskedKey ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Chave configurada: <code>${maskedKey}</code></div>` : ''}
+        ${maskedKey ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Chave atual configurada: <code>${maskedKey}</code></div>` : ''}
       </div>
 
       <div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
         <button onclick="saveGeminiApiKeyFromInput()" 
                 style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-save"></i> Salvar e Gerar
+          <i class="fas fa-save"></i> Salvar e Gerar com IA
         </button>
         <button onclick="if(window._lastHomilyParams){ const p = window._lastHomilyParams; generateHomily(p.bookName, p.chapter, p.verse, p.text); }"
                 style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 8px; padding: 10px 14px; font-size: 13px; cursor: pointer;">
-          Voltar para Reflexão Padrão
+          Voltar para Reflexão
         </button>
         ${currentKey ? `
           <button onclick="clearGeminiApiKey()" title="Remover chave salva no navegador"
@@ -2134,11 +2140,11 @@ function renderApiKeySetupUI(container, isInvalid = false) {
       </div>
 
       <p style="font-size: 11px; color: var(--text-muted); margin-top: 14px;">
-        🔒 Sua chave é salva no armazenamento local do seu dispositivo ou pode ser definida via <code>.env</code> (<code>VITE_GEMINI_API_KEY</code>).
+        🔒 Sua chave é salva exclusivamente no armazenamento local do seu dispositivo.
       </p>
     </div>
   `;
-}
+};
 
 window.generateHomilyForChapter = async function () {
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
@@ -2178,9 +2184,9 @@ window.generateHomily = function (bookName, chapter, verse, text) {
               style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
         <i class="fas fa-redo"></i> Nova Meditação
       </button>
-      <button onclick="triggerGeminiHomily()" 
+      <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)" 
               style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-        <i class="fas fa-sparkles"></i> Gerar com Google Gemini IA
+        <i class="fas fa-key"></i> Configurar Chave Gemini IA
       </button>
     </div>
   `;
@@ -2196,7 +2202,7 @@ window.triggerGeminiHomily = function () {
   const { bookName, chapter, verse, text } = window._lastHomilyParams;
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
-    renderApiKeySetupUI(document.getElementById('homilyBody'), false);
+    window.renderApiKeySetupUI(document.getElementById('homilyBody'), false);
     return;
   }
   generateDynamicGeminiHomily(bookName, chapter, verse, text);
@@ -2246,7 +2252,7 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
                   style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
             <i class="fas fa-redo"></i> Regerar IA
           </button>
-          <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
+          <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
                   style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
             <i class="fas fa-cog"></i> Configurar Chave
           </button>
@@ -2261,16 +2267,16 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
   } catch (err) {
     console.error("Erro ao gerar homilia com Gemini:", err);
     if (err.message === 'INVALID_OR_EXPIRED_KEY') {
-      renderApiKeySetupUI(body, true);
+      window.renderApiKeySetupUI(body, true);
     } else if (err.message === 'KEY_NOT_CONFIGURED') {
-      renderApiKeySetupUI(body, false);
+      window.renderApiKeySetupUI(body, false);
     } else {
       // Fallback para a homilia teológica enriquecida
       const devotional = getDevotionalHomily(bookName, chapter, verse, text);
       body.innerHTML = `
         <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: space-between;">
           <span><i class="fas fa-info-circle" style="color: #ef4444;"></i> Servidores de IA temporariamente ocupados. Exibindo reflexão teológica:</span>
-          <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)" style="background: transparent; border: none; color: #60a5fa; text-decoration: underline; font-size: 11px; cursor: pointer;">Configurar Chave</button>
+          <button onclick="window.renderApiKeySetupUI(document.getElementById('homilyBody'), false)" style="background: transparent; border: none; color: #60a5fa; text-decoration: underline; font-size: 11px; cursor: pointer;">Configurar Chave</button>
         </div>
         ${devotional.html}
       `;
