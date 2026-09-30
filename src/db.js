@@ -110,15 +110,90 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 1800) {
     }
 }
 
+export function getApiUrl(endpoint) {
+    if (!endpoint) return '';
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;
+    const clean = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+    // 1. Explicit env var
+    let envApi = '';
+    try {
+        if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+            envApi = (import.meta.env.VITE_API_URL || '').trim();
+        }
+    } catch (e) {}
+
+    if (envApi) {
+        return `${envApi.replace(/\/$/, '')}${clean}`;
+    }
+
+    // 2. If running on Capacitor Native Android/iOS or custom host
+    if (typeof window !== 'undefined') {
+        const customUrl = localStorage.getItem('biblia_custom_api_url');
+        if (customUrl && customUrl.trim()) {
+            return `${customUrl.trim().replace(/\/$/, '')}${clean}`;
+        }
+        
+        // If loaded in a mobile browser on LAN (e.g. http://192.168.1.10:5173), relative /api works
+        // If loaded inside Capacitor (capacitor://localhost or https://localhost), check stored dev IP
+        if (window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && !window.location.port)) {
+            const devHost = localStorage.getItem('biblia_dev_host_ip');
+            if (devHost) {
+                return `http://${devHost}:3001${clean}`;
+            }
+        }
+    }
+
+    // 3. In web browser (Vite proxy / express)
+    return clean;
+}
+
+export async function syncPendingUserImagesToBackend() {
+    if (!useBackend || !userImages || userImages.length === 0) return;
+
+    for (let i = 0; i < userImages.length; i++) {
+        const img = userImages[i];
+        if (typeof img.id === 'string' && img.id.startsWith('usr_')) {
+            try {
+                const res = await fetchWithTimeout(getApiUrl('/api/img-versiculos'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_livro: img.id_livro,
+                        nome_livro: img.nome_livro,
+                        id_capitulo: img.id_capitulo,
+                        id_versiculo: img.id_versiculo,
+                        texto: img.texto,
+                        address: img.address,
+                        oracao: img.oracao
+                    })
+                }, 15000);
+                if (res.ok) {
+                    const created = await res.json();
+                    userImages[i].id = created.id;
+                    userImages[i].is_user_upload = true;
+                    if (created.created_at) userImages[i].created_at = created.created_at;
+                    saveUserImagesLocal();
+                    console.log('[BibliaDB] Imagem local sincronizada com sucesso no SQLite global:', created.id);
+                }
+            } catch (err) {
+                console.warn('[BibliaDB] Erro ao sincronizar imagem pendente:', err);
+            }
+        }
+    }
+}
+
 export async function initDB() {
     try {
         // Tentar conectar ao backend em /api/stats com timeout de 3s
-        const checkRes = await fetchWithTimeout('/api/stats', { cache: 'no-cache' }, 3000);
+        const checkRes = await fetchWithTimeout(getApiUrl('/api/stats'), { cache: 'no-cache' }, 3000);
         if (checkRes.ok) {
             useBackend = true;
             isDBReady = true;
             console.log('[BibliaDB] Conectado ao servidor Backend SQLite (/api)!');
             await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);
+            // Sincronizar em segundo plano quaisquer imagens que o usuário criou localmente
+            syncPendingUserImagesToBackend().catch(e => console.warn('[BibliaDB] Erro no sync em segundo plano:', e));
             return;
         }
     } catch (err) {
@@ -155,7 +230,7 @@ export function isReady() { return isDBReady; }
 export async function getLivros() {
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/livros', {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl('/api/livros'), {}, 1500);
             if (res.ok) return await res.json();
         } catch (err) {
             console.warn('[BibliaDB] Falha no backend getLivros, usando local:', err);
@@ -167,7 +242,7 @@ export async function getLivros() {
 export async function getVersiculos(idLivro, idCapitulo) {
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout(`/api/livros/${idLivro}/capitulos/${idCapitulo}/versiculos`, {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl(`/api/livros/${idLivro}/capitulos/${idCapitulo}/versiculos`), {}, 1500);
             if (res.ok) {
                 const backendVs = await res.json();
                 // Mesclar favoritos locais caso o backend não tenha dados específicos de favoritos do usuario
@@ -202,7 +277,7 @@ export async function buscar(termo) {
 
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout(`/api/busca?q=${encodeURIComponent(termo)}`, {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl(`/api/busca?q=${encodeURIComponent(termo)}`), {}, 1500);
             if (res.ok) {
                 const bRes = await res.json();
                 if (bRes && bRes.length > 0) {
@@ -282,7 +357,7 @@ const VERSICULOS_INSPIRADORES = [
 export async function getVersiculoDoDia() {
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/versiculo-do-dia', {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl('/api/versiculo-do-dia'), {}, 1500);
             if (res.ok) {
                 const v = await res.json();
                 if (v && v.texto) return v;
@@ -344,7 +419,7 @@ export async function toggleFavorito(idLivro, idCapitulo, idVersiculo) {
 
     if (useBackend) {
         try {
-            await fetchWithTimeout('/api/favoritos/toggle', {
+            await fetchWithTimeout(getApiUrl('/api/favoritos/toggle'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idLivro, idCapitulo, idVersiculo })
@@ -365,7 +440,7 @@ export function isFavorito(idLivro, idCapitulo, idVersiculo) {
 export async function getFavoritos() {
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/favoritos', {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl('/api/favoritos'), {}, 1500);
             if (res.ok) {
                 const backendFavs = await res.json();
                 if (backendFavs && backendFavs.length > 0) return backendFavs;
@@ -419,7 +494,7 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
             if (searchQuery) params.set('q', searchQuery);
             if (filterCategory && filterCategory !== 'all' && filterCategory !== 'favorites') params.set('categoria', filterCategory);
             
-            const res = await fetchWithTimeout(`/api/img-versiculos?${params.toString()}`, {}, 5000);
+            const res = await fetchWithTimeout(getApiUrl(`/api/img-versiculos?${params.toString()}`), {}, 5000);
             if (res.ok) {
                 const backendImgs = await res.json();
                 allImgs = backendImgs.map(img => ({
@@ -434,6 +509,20 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
                     is_user_upload: !!img.is_user_upload,
                     created_at: img.created_at
                 }));
+
+                // Mesclar imagens criadas localmente que ainda não foram sincronizadas
+                const backendIds = new Set(allImgs.map(x => String(x.id)));
+                for (const u of userImages) {
+                    if (typeof u.id === 'string' && u.id.startsWith('usr_') && !backendIds.has(String(u.id))) {
+                        allImgs.unshift({
+                            ...u,
+                            is_user_upload: true
+                        });
+                    }
+                }
+
+                // Disparar sincronização em segundo plano de imagens pendentes
+                syncPendingUserImagesToBackend().catch(() => {});
             }
         } catch (err) {
             console.warn('[BibliaDB] Falha getImgVersiculos backend, usando local:', err);
@@ -511,7 +600,7 @@ export async function addImgVersiculo(imgData) {
 
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/img-versiculos', {
+            const res = await fetchWithTimeout(getApiUrl('/api/img-versiculos'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newImg)
@@ -549,7 +638,7 @@ export async function deleteImgVersiculo(id) {
 
     if (useBackend) {
         try {
-            await fetchWithTimeout(`/api/img-versiculos/${id}`, { method: 'DELETE' }, 5000);
+            await fetchWithTimeout(getApiUrl(`/api/img-versiculos/${id}`), { method: 'DELETE' }, 5000);
         } catch (err) {
             console.warn('[BibliaDB] Falha ao deletar imagem no backend:', err);
         }
@@ -584,7 +673,7 @@ export async function getPlanoLeitura() {
 
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/plano-leitura', {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl('/api/plano-leitura'), {}, 1500);
             if (res.ok) {
                 planCache = await res.json();
                 return planCache;
@@ -628,7 +717,7 @@ export async function getPlanoLeitura() {
 export async function getStats() {
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout('/api/stats', {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl('/api/stats'), {}, 1500);
             if (res.ok) return await res.json();
         } catch (err) {
             console.warn('[BibliaDB] Falha getStats backend, usando local:', err);

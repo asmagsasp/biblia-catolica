@@ -2597,7 +2597,7 @@ window.saveAdminGeminiKey = async function () {
   updateAdminKeyBadge(true);
 
   try {
-    await fetch('/api/admin/set-gemini-key', {
+    await fetch(db.getApiUrl('/api/admin/set-gemini-key'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: getAdminPin(), key: key })
@@ -2657,7 +2657,7 @@ window.clearAdminGeminiKey = async function () {
   if (keyInput) keyInput.value = '';
   updateAdminKeyBadge(false);
   try {
-    await fetch('/api/admin/set-gemini-key', {
+    await fetch(db.getApiUrl('/api/admin/set-gemini-key'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: getAdminPin(), key: '' })
@@ -2677,7 +2677,7 @@ window.updateAdminPin = async function () {
   localStorage.setItem('biblia_admin_pin', newPin);
   input.value = '';
   try {
-    await fetch('/api/admin/set-gemini-key', {
+    await fetch(db.getApiUrl('/api/admin/set-gemini-key'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: getAdminPin(), newPin: newPin })

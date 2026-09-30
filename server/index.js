@@ -8,7 +8,7 @@ async function startServer() {
         console.log('[Backend Server] Inicializando banco de dados...');
         await initDatabase();
         
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`[Backend Server] Servidor de Banco de Dados rodando em http://localhost:${PORT}`);
             console.log(`[Backend Server] APIs disponíveis em http://localhost:${PORT}/api/`);
         });
