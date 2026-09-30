@@ -2146,7 +2146,7 @@ window.generateHomilyForChapter = async function () {
   generateHomily(currentBook.nome, currentChapter, "completo", text);
 };
 
-// Gera a homilia devocional nativa católica imediatamente (igual ao the-bible-app)
+// Gera a homilia devocional católica com exegese bíblica e IA
 window.generateHomily = function (bookName, chapter, verse, text) {
   const modal = document.getElementById('homilyModal');
   const title = document.getElementById('homilyTitle');
@@ -2161,23 +2161,31 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
-  // 1. Gera reflexão católica instantânea através do motor devocional nativo
+  const apiKey = getGeminiApiKey();
+  if (apiKey) {
+    // Se a chave estiver configurada, gera diretamente com o Gemini
+    generateDynamicGeminiHomily(bookName, chapter, verse, text);
+    return;
+  }
+
+  // Gera homilia católica profunda e contextualizada via motor exegético nativo
   const devotional = getDevotionalHomily(bookName, chapter, verse, text);
   
   body.innerHTML = `
     ${devotional.html}
     <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
-        <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
-      </span>
+      <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
+              style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-redo"></i> Nova Meditação
+      </button>
       <button onclick="triggerGeminiHomily()" 
-              style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-        <i class="fas fa-sparkles"></i> Gerar com IA Gemini
+              style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-sparkles"></i> Gerar com Google Gemini IA
       </button>
     </div>
   `;
 
-  // 2. Prepara botão de áudio
+  // Prepara botão de áudio
   speakBtn.dataset.homily = devotional.textToSpeak;
   speakBtn.classList.remove('hidden');
   updateSpeakBtnState(false);
@@ -2201,23 +2209,30 @@ window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, t
   body.innerHTML = `
     <div style="text-align: center; padding: 30px;">
         <div class="loading-spinner" style="border-color: rgba(59,130,246,0.3); border-top-color: #3b82f6; width: 40px; height: 40px; margin: 0 auto 15px;"></div>
-        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando a homilia personalizada...</p>
+        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando sua homilia personalizada...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">Consultando a Sagrada Escritura e o Magistério da Igreja...</span>
     </div>
   `;
 
   try {
-    const prompt = `Aja como um padre católico acolhedor, sábio e com profunda bagagem teológica. 
-Faça uma bela homilia ou reflexão devocional (máximo de 3 ou 4 parágrafos curtos) baseada nesta passagem: 
+    const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
+Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para a seguinte passagem bíblica:
 ${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
 
-Concentre-se em trazer conforto, esperança e um ensinamento prático para a vida diária do fiel moderno, baseado no Magistério da Igreja Católica. Destaque palavras importantes com *negrito* ou **negrito**. Termine com uma bênção curta.`;
+Instruções para a homilia:
+1. Comece com uma saudação cristã paternal e calorosa.
+2. Explique o sentido espiritual profundo e teológico desta passagem no contexto do livro de ${bookName}.
+3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, São Tomás de Aquino, São João Crisóstomo ou Santa Teresa).
+4. Dê 3 ensinamentos ou compromissos práticos para a vida diária do fiel moderno (família, trabalho, oração).
+5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
+Destaque frases e conceitos espirituais centrais em negrito.`;
 
     const data = await callGeminiAPIWithFallback(prompt);
     let homily = data.candidates[0].content.parts[0].text;
 
     const formattedHomily = homily
       .split('\n\n')
-      .map(p => `<p style="margin-bottom: 12px;">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`)
+      .map(p => `<p style="margin-bottom: 12px; line-height: 1.65;">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`)
       .join('');
 
     body.innerHTML = `
@@ -2226,10 +2241,16 @@ Concentre-se em trazer conforto, esperança e um ensinamento prático para a vid
         <span style="font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 5px;">
           <i class="fas fa-sparkles"></i> Gerado com Google Gemini IA
         </span>
-        <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
-                style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
-          <i class="fas fa-cog"></i> Configurar Chave
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="generateDynamicGeminiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
+                  style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
+            <i class="fas fa-redo"></i> Regerar IA
+          </button>
+          <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)"
+                  style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
+            <i class="fas fa-cog"></i> Configurar Chave
+          </button>
+        </div>
       </div>
     `;
 
@@ -2244,11 +2265,12 @@ Concentre-se em trazer conforto, esperança e um ensinamento prático para a vid
     } else if (err.message === 'KEY_NOT_CONFIGURED') {
       renderApiKeySetupUI(body, false);
     } else {
-      // Fallback gracioso para a homilia devocional nativa com aviso suave
+      // Fallback para a homilia teológica enriquecida
       const devotional = getDevotionalHomily(bookName, chapter, verse, text);
       body.innerHTML = `
-        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 12px; color: var(--text-secondary);">
-          <i class="fas fa-info-circle" style="color: #ef4444;"></i> Servidores de IA ocupados. Exibindo reflexão espiritual padrão:
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 15px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: space-between;">
+          <span><i class="fas fa-info-circle" style="color: #ef4444;"></i> Servidores de IA temporariamente ocupados. Exibindo reflexão teológica:</span>
+          <button onclick="renderApiKeySetupUI(document.getElementById('homilyBody'), false)" style="background: transparent; border: none; color: #60a5fa; text-decoration: underline; font-size: 11px; cursor: pointer;">Configurar Chave</button>
         </div>
         ${devotional.html}
       `;
