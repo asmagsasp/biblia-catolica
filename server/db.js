@@ -152,7 +152,7 @@ export async function initDatabase() {
                     try {
                         const countImg = await getOne(`SELECT COUNT(*) as total FROM img_versiculos`);
                         const sampleImg = await getOne(`SELECT address, is_user_upload FROM img_versiculos LIMIT 1`);
-                        if (!countImg || countImg.total < 140 || !sampleImg || !sampleImg.address) {
+                        if (!countImg || countImg.total < 150 || !sampleImg || !sampleImg.address) {
                             needsUpgrade = true;
                         }
                     } catch (e) {

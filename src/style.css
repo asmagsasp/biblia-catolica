@@ -1500,29 +1500,6 @@ mark,
   flex-wrap: wrap;
 }
 
-.gallery-btn-sync {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(212, 175, 55, 0.12);
-  color: var(--gold-300);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  padding: 10px 18px;
-  border-radius: 24px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.gallery-btn-sync:hover {
-  background: rgba(212, 175, 55, 0.22);
-  border-color: var(--gold-400);
-  transform: translateY(-2px);
-  color: var(--gold-200);
-}
 
 .gallery-btn-upload {
   display: inline-flex;

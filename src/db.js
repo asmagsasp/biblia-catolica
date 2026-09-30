@@ -728,7 +728,7 @@ export async function getStats() {
         total_livros: bibliaData ? bibliaData.livros.length : 0,
         total_versiculos: totalVersiculosPrecalc,
         total_favoritos: favoritosCount,
-        total_imagens: (bibliaData && bibliaData.img_versiculos ? bibliaData.img_versiculos.length : 147) + userImages.length,
+        total_imagens: (bibliaData && bibliaData.img_versiculos ? bibliaData.img_versiculos.length : 150) + userImages.length,
         livros_at: 46,
         livros_nt: 27
     };
