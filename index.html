@@ -319,7 +319,7 @@
             <h3 id="lightboxTitle" class="lightbox-title"></h3>
             <p id="lightboxOracao" class="lightbox-oracao"></p>
           </div>
-          <div class="lightbox-verse-box">
+          <div class="lightbox-verse-box" id="lightboxVerseBox">
             <i class="fas fa-quote-left quote-icon"></i>
             <p id="lightboxVerseText" class="lightbox-verse-text"></p>
             <i class="fas fa-quote-right quote-icon quote-end"></i>
@@ -381,7 +381,7 @@
             <div id="dropzoneEmpty">
               <i class="fas fa-camera-retro dropzone-icon"></i>
               <p class="dropzone-text"><strong>Toque ou arraste</strong> uma foto do seu dispositivo</p>
-              <span class="dropzone-sub">JPG, PNG, WEBP, GIF (máx 15MB)</span>
+              <span class="dropzone-sub">JPG, PNG, WEBP, GIF (máx 20MB)</span>
             </div>
             <div id="dropzonePreview" class="dropzone-preview-container hidden">
               <img id="uploadImgPreview" src="" alt="Preview" class="dropzone-img">
@@ -390,25 +390,30 @@
           </div>
 
           <div class="upload-field-row" style="margin-top: 14px;">
-            <label class="upload-label"><i class="fas fa-link"></i> Ou cole o link direto de uma imagem na internet:</label>
-            <input type="url" id="uploadUrlInput" class="upload-input" placeholder="https://exemplo.com/imagem-catolica.jpg" oninput="handleImageUrlInput(this.value)">
+            <label class="upload-label"><i class="fas fa-link"></i> Ou cole o link direto de uma imagem da web:</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="url" id="uploadUrlInput" class="upload-input" placeholder="https://exemplo.com/imagem-catolica.jpg" oninput="handleImageUrlInput(this.value)" style="flex: 1;">
+              <button type="button" class="upload-btn-fetch" onclick="handleImageUrlInput(document.getElementById('uploadUrlInput').value, true)" style="white-space: nowrap; padding: 10px 14px;">
+                <i class="fas fa-check"></i> Carregar Link
+              </button>
+            </div>
           </div>
 
           <div class="upload-form-grid">
             <div class="upload-field">
-              <label class="upload-label"><i class="fas fa-book"></i> Livro da Bíblia:</label>
+              <label class="upload-label"><i class="fas fa-book"></i> Livro da Bíblia (Opcional):</label>
               <select id="uploadBookSelect" class="upload-input" onchange="handleUploadBookChanged()">
                 <!-- Populated dynamically with 73 Catholic books -->
               </select>
             </div>
             <div class="upload-field-row-split">
               <div class="upload-field">
-                <label class="upload-label">Capítulo:</label>
-                <input type="number" id="uploadChapterInput" class="upload-input" value="1" min="1" max="150" onchange="handleUploadCapVerChanged()">
+                <label class="upload-label">Capítulo (Opcional):</label>
+                <input type="number" id="uploadChapterInput" class="upload-input" placeholder="Ex: 23" min="1" max="150" onchange="handleUploadCapVerChanged()">
               </div>
               <div class="upload-field">
-                <label class="upload-label">Versículo:</label>
-                <input type="number" id="uploadVerseInput" class="upload-input" value="1" min="1" max="176" onchange="handleUploadCapVerChanged()">
+                <label class="upload-label">Versículo (Opcional):</label>
+                <input type="number" id="uploadVerseInput" class="upload-input" placeholder="Ex: 1" min="1" max="176" onchange="handleUploadCapVerChanged()">
               </div>
             </div>
           </div>
@@ -420,8 +425,8 @@
           </div>
 
           <div class="upload-field">
-            <label class="upload-label"><i class="fas fa-quote-left"></i> Texto do Versículo / Citação:</label>
-            <textarea id="uploadVerseText" class="upload-textarea" rows="3" placeholder="Digite ou puxe o texto do versículo bíblico..."></textarea>
+            <label class="upload-label"><i class="fas fa-quote-left"></i> Texto do Versículo / Citação (Opcional):</label>
+            <textarea id="uploadVerseText" class="upload-textarea" rows="3" placeholder="Digite ou puxe o texto do versículo bíblico (opcional)..."></textarea>
           </div>
 
           <div class="upload-field">

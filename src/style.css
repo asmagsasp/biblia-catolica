@@ -1574,33 +1574,55 @@ body::before {
 
 .dropzone-preview-container {
     position: relative;
-    max-height: 220px;
-    border-radius: 12px;
+    width: 100%;
+    min-height: 200px;
+    max-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.4);
     overflow: hidden;
+    border: 1px solid rgba(212, 168, 83, 0.3);
+    padding: 8px;
 }
 
 .dropzone-img {
-    max-height: 200px;
+    max-height: 300px;
     max-width: 100%;
+    width: auto;
+    height: auto;
     border-radius: 10px;
     object-fit: contain;
     margin: 0 auto;
     display: block;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
 }
 
 .dropzone-remove-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(239, 68, 68, 0.85);
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 38, 38, 0.9);
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.dropzone-remove-btn:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: scale(1.05);
 }
 
 .upload-form-grid {
