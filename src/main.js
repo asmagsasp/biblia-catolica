@@ -2309,7 +2309,7 @@ function showToast(msg) {
 // ===== DONATE MODAL & RECURRING REMINDER =====
 let donateInterval = null;
 const DONATE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos
-const DONATE_AUDIO_TEXT = "Não quer ver mais esse banner? Ajude este projeto a continuar evangelizando com qualquer valor, que poderá ser de 1 real, 2 reais ou o valor que desejar. Seja um evangelizador você também.";
+const DONATE_AUDIO_TEXT = "Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde Já fiz minha doação e o banner deixará de aparecer. Seja um evangelizador você também!";
 let isDonateAudioSpeaking = false;
 
 function updateDonateAudioBtnState(speaking) {
