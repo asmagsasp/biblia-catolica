@@ -1,6 +1,7 @@
 import './style.css';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
+import { generateSacredAIImage, composeCardOnCanvas, SACRED_AI_INSPIRATIONS, SACRED_AI_STYLES } from './aiImageService.js';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -1082,7 +1083,13 @@ window.switchUploadTab = function (tabName) {
     if (tabBtnUpload) tabBtnUpload.classList.remove('active');
     if (studioSec) studioSec.classList.remove('hidden');
     if (uploadSec) uploadSec.classList.add('hidden');
-    requestAnimationFrame(() => updateStudioCard());
+    
+    populateAiInspirations();
+    const promptInput = document.getElementById('aiPromptInput');
+    if (promptInput && !promptInput.value.trim()) {
+      useVerseAsAiPrompt();
+    }
+    requestAnimationFrame(() => renderStudioAiCanvas());
   }
 };
 
@@ -1312,168 +1319,256 @@ window.saveUploadedImage = async function () {
   }
 };
 
-// ===== CARD STUDIO GENERATOR (CANVAS) =====
-window.updateStudioCard = function () {
+// ===== AI SACRED ART & CARD STUDIO =====
+let currentAiImageData = null;
+let currentAiImageElement = null;
+let isGeneratingAiArt = false;
+
+function populateAiInspirations() {
+  const container = document.getElementById('aiInspirationChips');
+  if (!container || container.children.length > 0) return;
+
+  let h = '';
+  SACRED_AI_INSPIRATIONS.forEach((item, idx) => {
+    h += `<button type="button" class="ai-chip" onclick="selectAiInspiration(${idx})">${item.label}</button>`;
+  });
+  container.innerHTML = h;
+}
+
+window.selectAiInspiration = function (idx) {
+  const item = SACRED_AI_INSPIRATIONS[idx];
+  if (!item) return;
+  const promptInput = document.getElementById('aiPromptInput');
+  if (promptInput) {
+    promptInput.value = item.prompt;
+  }
+  generateAiArt();
+};
+
+window.useVerseAsAiPrompt = function () {
+  const verseText = document.getElementById('uploadVerseText');
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const promptInput = document.getElementById('aiPromptInput');
+
+  const txt = verseText ? verseText.value.trim() : '';
+  const selectedVal = bookSelect ? bookSelect.value : '';
+  const bookOpt = (bookSelect && selectedVal && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : '';
+  const cap = capInput ? capInput.value : '';
+
+  if (!promptInput) return;
+
+  if (txt) {
+    promptInput.value = `Cena sagrada bíblica de ${bookName ? bookName + ' ' + cap + ': ' : ''}“${txt}”`;
+    showToast('Versículo inserido no prompt da IA! ✨');
+  } else if (bookName) {
+    promptInput.value = `Cena bíblica inspirada no livro de ${bookName} ${cap}`;
+    showToast('Referência bíblica inserida no prompt da IA! ✨');
+  } else {
+    promptInput.value = 'Luz divina celestial iluminando a Sagrada Escritura e a Cruz de Cristo';
+  }
+};
+
+window.toggleAiVerseOverlay = function () {
+  renderStudioAiCanvas();
+};
+
+window.generateAiArt = async function (isRegen = false) {
+  if (isGeneratingAiArt) return;
+
+  const promptInput = document.getElementById('aiPromptInput');
+  const styleSelect = document.getElementById('aiStyleSelect');
+  const loadingContainer = document.getElementById('aiLoadingContainer');
+  const resultContainer = document.getElementById('aiResultContainer');
+  const generateBtn = document.getElementById('btnGenerateAiArt');
+
+  const prompt = promptInput ? promptInput.value.trim() : '';
+  const styleId = styleSelect ? styleSelect.value : 'renaissance';
+
+  const verseTextArea = document.getElementById('uploadVerseText');
+  const bookSelect = document.getElementById('uploadBookSelect');
+  const capInput = document.getElementById('uploadChapterInput');
+  const verInput = document.getElementById('uploadVerseInput');
+
+  const verseText = verseTextArea ? verseTextArea.value.trim() : '';
+  const selectedVal = bookSelect ? bookSelect.value : '';
+  const bookOpt = (bookSelect && selectedVal && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
+  const bookName = bookOpt ? bookOpt.text : '';
+  const cap = capInput ? capInput.value : '';
+  const ver = verInput ? verInput.value : '';
+  const bookRef = (bookName && cap) ? `${bookName} ${cap}${ver ? ',' + ver : ''}` : bookName;
+
+  isGeneratingAiArt = true;
+  if (generateBtn) {
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>Pintando com IA...</span>`;
+  }
+  if (loadingContainer) loadingContainer.classList.remove('hidden');
+  if (resultContainer) resultContainer.style.opacity = '0.4';
+
+  try {
+    showToast(isRegen ? 'Criando nova variação com IA... ✨' : 'Conectando ao modelo de IA generativa... ✨');
+    
+    const dataUrl = await generateSacredAIImage(prompt, styleId, {
+      verseText: verseText,
+      bookRef: bookRef,
+      width: 1080,
+      height: 1080
+    });
+
+    currentAiImageData = dataUrl;
+    
+    const img = new Image();
+    img.onload = function () {
+      currentAiImageElement = img;
+      renderStudioAiCanvas();
+      if (loadingContainer) loadingContainer.classList.add('hidden');
+      if (resultContainer) resultContainer.style.opacity = '1';
+      isGeneratingAiArt = false;
+      if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<i class="fas fa-sparkles"></i> <span>Gerar Obra Sacra com IA</span>`;
+      }
+      showToast('✨ Obra de Arte Sacra criada com sucesso pela IA!');
+    };
+    img.onerror = function () {
+      throw new Error('Falha ao processar canvas da imagem');
+    };
+    img.src = dataUrl;
+  } catch (err) {
+    console.error("AI Generation error:", err);
+    if (loadingContainer) loadingContainer.classList.add('hidden');
+    if (resultContainer) resultContainer.style.opacity = '1';
+    isGeneratingAiArt = false;
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = `<i class="fas fa-sparkles"></i> <span>Gerar Obra Sacra com IA</span>`;
+    }
+    showToast('Falha temporária ao gerar com IA. Tente novamente em alguns instantes.');
+  }
+};
+
+window.renderStudioAiCanvas = function () {
   try {
     const canvas = document.getElementById('studioCanvas');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const w = canvas.width;
-    const h = canvas.height;
+    const overlayCheck = document.getElementById('aiOverlayVerseCheck');
+    const showOverlay = overlayCheck ? overlayCheck.checked : true;
 
-    const themeSelect = document.getElementById('studioThemeSelect');
-    const iconSelect = document.getElementById('studioIconSelect');
+    const verseTextArea = document.getElementById('uploadVerseText');
     const bookSelect = document.getElementById('uploadBookSelect');
     const capInput = document.getElementById('uploadChapterInput');
     const verInput = document.getElementById('uploadVerseInput');
-    const verseTextArea = document.getElementById('uploadVerseText');
     const oracaoInput = document.getElementById('uploadOracaoInput');
 
-    const theme = themeSelect ? themeSelect.value : 'gold';
-    const icon = iconSelect ? iconSelect.value : '✝';
-    const selectedBook = bookSelect ? bookSelect.value : '';
-    const bookOpt = (bookSelect && selectedBook && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
-    const bookName = bookOpt ? bookOpt.text : 'BÍBLIA SAGRADA';
+    const verseText = verseTextArea ? verseTextArea.value.trim() : '';
+    const selectedVal = bookSelect ? bookSelect.value : '';
+    const bookOpt = (bookSelect && selectedVal && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
+    const bookName = bookOpt ? bookOpt.text : '';
     const cap = capInput ? capInput.value : '';
     const ver = verInput ? verInput.value : '';
-    const verseText = verseTextArea && verseTextArea.value.trim() ? verseTextArea.value.trim() : 'O Senhor é o meu pastor; nada me faltará.';
-    const oracaoText = oracaoInput ? oracaoInput.value.trim() : '';
+    const bookRef = (bookName && cap) ? `${bookName} ${cap}${ver ? ', ' + ver : ''}` : (bookName || '');
+    const oracao = oracaoInput ? oracaoInput.value.trim() : '';
 
-    // Background Theme Gradients
-    let bgGrad;
-    if (theme === 'burgundy') {
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#5E1B2B');
-      bgGrad.addColorStop(0.5, '#350E17');
-      bgGrad.addColorStop(1, '#150509');
-    } else if (theme === 'navy') {
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#1B2A4A');
-      bgGrad.addColorStop(0.6, '#0D1627');
-      bgGrad.addColorStop(1, '#050911');
-    } else if (theme === 'emerald') {
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#104A3A');
-      bgGrad.addColorStop(0.6, '#08281E');
-      bgGrad.addColorStop(1, '#03120C');
-    } else if (theme === 'purple') {
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#42165A');
-      bgGrad.addColorStop(0.6, '#230931');
-      bgGrad.addColorStop(1, '#0F0315');
-    } else if (theme === 'dark') {
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#221D24');
-      bgGrad.addColorStop(0.6, '#130F15');
-      bgGrad.addColorStop(1, '#080609');
+    if (currentAiImageElement) {
+      composeCardOnCanvas(canvas, currentAiImageElement, {
+        showOverlay: showOverlay,
+        verseText: verseText,
+        bookRef: bookRef,
+        oracaoText: oracao
+      });
     } else {
-      // Gold Celestial
-      bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
-      bgGrad.addColorStop(0, '#3D1B22');
-      bgGrad.addColorStop(0.5, '#250E15');
-      bgGrad.addColorStop(1, '#100508');
+      drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao);
     }
-
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Sacred Aura & Golden Border
-    ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(40, 40, w - 80, h - 80);
-
-    ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(55, 55, w - 110, h - 110);
-
-    // Decorative Corner Crosses
-    drawCornerAccents(ctx, 40, 40);
-    drawCornerAccents(ctx, w - 40, 40);
-    drawCornerAccents(ctx, 40, h - 40);
-    drawCornerAccents(ctx, w - 40, h - 40);
-
-    // Top Sacred Symbol
-    ctx.font = '72px "Cinzel", serif, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#E8C98A';
-    try {
-      ctx.shadowColor = 'rgba(212, 168, 83, 0.6)';
-      ctx.shadowBlur = 18;
-    } catch (e) { }
-    ctx.fillText(icon, w / 2, 160);
-    try { ctx.shadowBlur = 0; } catch (e) { }
-
-    // Book Reference Title
-    let refTitle = 'BÍBLIA SAGRADA';
-    if (selectedBook && bookName) {
-      refTitle = cap ? `${bookName.toUpperCase()} ${cap}${ver ? ', ' + ver : ''}` : bookName.toUpperCase();
-    } else if (cap) {
-      refTitle = `BÍBLIA ${cap}${ver ? ', ' + ver : ''}`;
-    }
-    ctx.font = 'bold 36px "Cinzel", serif';
-    ctx.fillStyle = '#F5E6C8';
-    try { ctx.letterSpacing = '3px'; } catch (e) { }
-    ctx.fillText(refTitle, w / 2, 235);
-
-    // Dividing Line with Star
-    ctx.strokeStyle = 'rgba(212, 168, 83, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(w / 2 - 140, 270);
-    ctx.lineTo(w / 2 - 20, 270);
-    ctx.moveTo(w / 2 + 20, 270);
-    ctx.lineTo(w / 2 + 140, 270);
-    ctx.stroke();
-
-    ctx.font = '18px sans-serif';
-    ctx.fillStyle = '#D4A853';
-    ctx.fillText('✦', w / 2, 276);
-
-    // Verse Quotation Text Wrapping
-    const maxTextWidth = w - 240;
-    let fontSize = 42;
-    if (verseText.length > 220) fontSize = 30;
-    else if (verseText.length > 140) fontSize = 36;
-    else if (verseText.length < 60) fontSize = 46;
-
-    ctx.font = `italic ${fontSize}px "Cormorant Garamond", Georgia, serif`;
-    ctx.fillStyle = '#FFFFFF';
-    try {
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowBlur = 10;
-    } catch (e) { }
-
-    const lines = wrapTextLines(ctx, `“${verseText}”`, maxTextWidth);
-    const lineHeight = fontSize * 1.5;
-    const totalTextHeight = lines.length * lineHeight;
-
-    let startY = 330 + (420 - totalTextHeight) / 2;
-    if (startY < 310) startY = 310;
-
-    lines.forEach((line, i) => {
-      ctx.fillText(line, w / 2, startY + i * lineHeight);
-    });
-
-    try { ctx.shadowBlur = 0; } catch (e) { }
-
-    // Devotional Prayer Note (if exists)
-    if (oracaoText) {
-      ctx.font = 'italic 26px "Cormorant Garamond", Georgia, serif';
-      ctx.fillStyle = '#E8C98A';
-      ctx.fillText(`“${oracaoText}”`, w / 2, h - 160);
-    }
-
-    // App Branding Footer
-    ctx.font = '600 20px "Cinzel", serif';
-    ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
-    try { ctx.letterSpacing = '2px'; } catch (e) { }
-    ctx.fillText('✝  BÍBLIA SAGRADA CATÓLICA  ✝', w / 2, h - 85);
   } catch (err) {
-    console.error("updateStudioCard error:", err);
+    console.error("renderStudioAiCanvas error:", err);
   }
 };
+
+function drawDefaultSacredPlaceholder(canvas, verseText, bookRef, oracao) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, w * 0.75);
+  bgGrad.addColorStop(0, '#3D1B22');
+  bgGrad.addColorStop(0.5, '#250E15');
+  bgGrad.addColorStop(1, '#100508');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Borders
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.45)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(40, 40, w - 80, h - 80);
+
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(55, 55, w - 110, h - 110);
+
+  // Corner accents
+  drawCornerAccents(ctx, 40, 40);
+  drawCornerAccents(ctx, w - 40, 40);
+  drawCornerAccents(ctx, 40, h - 40);
+  drawCornerAccents(ctx, w - 40, h - 40);
+
+  // Top Symbol
+  ctx.font = '72px "Cinzel", serif, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E8C98A';
+  ctx.fillText('✝', w / 2, 160);
+
+  // Title
+  const refTitle = bookRef ? bookRef.toUpperCase() : 'BÍBLIA SAGRADA';
+  ctx.font = 'bold 34px "Cinzel", serif';
+  ctx.fillStyle = '#F5E6C8';
+  ctx.fillText(refTitle, w / 2, 235);
+
+  // Divider
+  ctx.strokeStyle = 'rgba(212, 168, 83, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 120, 270);
+  ctx.lineTo(w / 2 - 20, 270);
+  ctx.moveTo(w / 2 + 20, 270);
+  ctx.lineTo(w / 2 + 120, 270);
+  ctx.stroke();
+
+  ctx.font = '18px sans-serif';
+  ctx.fillStyle = '#D4A853';
+  ctx.fillText('✦', w / 2, 276);
+
+  // Text
+  const txt = verseText || 'Digite um tema acima e clique em "Gerar Obra Sacra com IA" para criar arte personalizada!';
+  const isCustomVerse = !!verseText;
+  
+  ctx.font = `italic ${isCustomVerse ? '38px' : '30px'} "Cormorant Garamond", Georgia, serif`;
+  ctx.fillStyle = isCustomVerse ? '#FFFFFF' : '#E8C98A';
+  
+  const displayTxt = isCustomVerse ? (txt.startsWith('“') ? txt : `“${txt}”`) : txt;
+  const lines = wrapTextLines(ctx, displayTxt, w - 240);
+  const lineHeight = isCustomVerse ? 54 : 44;
+  let startY = 360 + (360 - lines.length * lineHeight) / 2;
+  if (startY < 330) startY = 330;
+  
+  lines.forEach((line, i) => {
+    ctx.fillText(line, w / 2, startY + i * lineHeight);
+  });
+
+  if (oracao) {
+    ctx.font = 'italic 24px "Cormorant Garamond", Georgia, serif';
+    ctx.fillStyle = '#E8C98A';
+    ctx.fillText(`“${oracao}”`, w / 2, h - 160);
+  }
+
+  // Footer
+  ctx.font = '600 20px "Cinzel", serif';
+  ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
+  ctx.fillText('✝  ESTÚDIO DE ARTE SACRA COM IA  ✝', w / 2, h - 85);
+}
 
 function drawCornerAccents(ctx, x, y) {
   ctx.save();
@@ -1488,7 +1583,7 @@ function drawCornerAccents(ctx, x, y) {
 function wrapTextLines(ctx, text, maxWidth) {
   const words = text.split(' ');
   const lines = [];
-  let currentLine = words[0];
+  let currentLine = words[0] || '';
 
   for (let i = 1; i < words.length; i++) {
     const word = words[i];
@@ -1500,27 +1595,27 @@ function wrapTextLines(ctx, text, maxWidth) {
       currentLine = word;
     }
   }
-  lines.push(currentLine);
+  if (currentLine) lines.push(currentLine);
   return lines;
 }
 
 window.downloadStudioCard = function () {
-  updateStudioCard();
+  renderStudioAiCanvas();
   const canvas = document.getElementById('studioCanvas');
   if (!canvas) return;
 
   const dataUrl = canvas.toDataURL('image/png');
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = `card_biblico_${Date.now()}.png`;
+  a.download = `arte_sacra_ia_${Date.now()}.png`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  showToast('✨ Card Sagrado baixado com sucesso!');
+  showToast('✨ Arte Sacra baixada com sucesso em alta resolução!');
 };
 
 window.saveStudioCardToGallery = async function () {
-  updateStudioCard();
+  renderStudioAiCanvas();
   const canvas = document.getElementById('studioCanvas');
   if (!canvas) return;
 
@@ -1532,17 +1627,18 @@ window.saveStudioCardToGallery = async function () {
 
   const selectedVal = bookSelect ? bookSelect.value : '';
   const bookOpt = (bookSelect && selectedVal && bookSelect.selectedIndex >= 0) ? bookSelect.options[bookSelect.selectedIndex] : null;
-  const bookName = bookOpt ? bookOpt.text : 'Card Sagrado';
+  const bookName = bookOpt ? bookOpt.text : 'Arte Sacra com IA';
   const bookId = selectedVal ? parseInt(selectedVal) : null;
   const cap = (bookId && capInput && capInput.value) ? parseInt(capInput.value) : null;
   const ver = (bookId && verInput && verInput.value) ? parseInt(verInput.value) : null;
   const txt = verseTextArea ? verseTextArea.value.trim() : '';
   const oracao = oracaoInput ? oracaoInput.value.trim() : '';
 
+  // Use canvas dataUrl (which contains the composed artwork with or without overlay)
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
   try {
-    showToast('Salvando Card Sagrado na Galeria...');
+    showToast('Salvando Arte com IA na sua Galeria...');
     await db.addImgVersiculo({
       id_livro: bookId,
       nome_livro: bookName,
@@ -1554,10 +1650,10 @@ window.saveStudioCardToGallery = async function () {
     });
 
     closeGalleryUploadModal();
-    showToast('✨ Card salvo com sucesso na sua Galeria!');
+    showToast('✨ Arte Sacra salva com sucesso na sua Galeria!');
     filterGalleryCategory('uploads', document.querySelector('.gallery-chip[data-category="uploads"]'));
   } catch (err) {
-    showToast('Erro ao salvar card');
+    showToast('Erro ao salvar arte na galeria');
   }
 };
 

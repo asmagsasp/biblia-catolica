@@ -1691,12 +1691,134 @@ body::before {
     color: #1A0A0E;
 }
 
-/* Studio Canvas */
+/* Studio & AI Sacred Art Creator */
+.studio-header-card {
+    background: rgba(212, 168, 83, 0.08);
+    border: 1px solid rgba(212, 168, 83, 0.25);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+}
+
 .studio-desc {
     font-size: 13px;
-    color: var(--text-secondary);
-    text-align: center;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.ai-inspiration-container {
     margin-bottom: 12px;
+}
+
+.ai-inspiration-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.ai-chips-scroll {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+}
+
+.ai-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ai-chip:hover {
+    background: rgba(212, 168, 83, 0.2);
+    border-color: var(--gold-400);
+    color: var(--gold-200);
+    transform: translateY(-1px);
+}
+
+.ai-toggle-box {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    height: 42px;
+}
+
+.ai-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ai-checkbox-label input[type="checkbox"] {
+    accent-color: var(--gold-400);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.ai-loading-container {
+    background: rgba(20, 8, 12, 0.85);
+    border: 1px solid var(--gold-400);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    box-shadow: 0 0 25px rgba(212, 168, 83, 0.2);
+}
+
+.ai-spinner-ring {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(212, 168, 83, 0.2);
+    border-top: 3px solid var(--gold-400);
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    animation: spin 1s linear infinite;
+}
+
+.ai-loading-cross {
+    font-size: 24px;
+    color: var(--gold-300);
+    position: absolute;
+    top: 46px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: pulseGlow 1.5s ease-in-out infinite alternate;
+}
+
+.ai-loading-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gold-200);
+    margin-bottom: 4px;
+}
+
+.ai-loading-sub {
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 .studio-canvas-container {
@@ -1707,10 +1829,11 @@ body::before {
 
 .studio-canvas-preview {
     max-width: 100%;
-    max-height: 260px;
+    max-height: 280px;
     border-radius: 16px;
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    background: #100508;
 }
 
 .studio-controls-grid {
@@ -1722,21 +1845,23 @@ body::before {
 
 .studio-actions-row {
     display: flex;
-    gap: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .upload-btn-secondary {
     flex: 1;
+    min-width: 110px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 10px 14px;
     border-radius: 24px;
     border: 1px solid var(--gold-400);
     background: transparent;
     color: var(--gold-300);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
