@@ -236,8 +236,10 @@ export async function getVersiculos(idLivro, idCapitulo) {
 
 export async function buscar(termo) {
     await ensureDB();
-    if (!termo || termo.length < 3) return [];
-    const sql = `
+    if (!termo || termo.trim().length < 2) return [];
+    
+    const words = termo.trim().split(/\s+/).filter(w => w.length > 0);
+    let sql = `
         SELECT 
             v.id_livro, 
             l.nome_livro, 
@@ -246,10 +248,15 @@ export async function buscar(termo) {
             v.texto
         FROM versiculos v
         JOIN livros l ON v.id_livro = l.id_livro
-        WHERE v.texto LIKE ?
-        LIMIT 50
     `;
-    return await getAll(sql, [`%${termo}%`]);
+    const params = [];
+    if (words.length > 0) {
+        const conditions = words.map(() => `v.texto LIKE ?`);
+        sql += ` WHERE ` + conditions.join(' AND ');
+        params.push(...words.map(w => `%${w}%`));
+    }
+    sql += ` LIMIT 200`;
+    return await getAll(sql, params);
 }
 
 const VERSICULOS_INSPIRADORES = [

@@ -192,20 +192,28 @@ export async function getVersiculos(idLivro, idCapitulo) {
     }));
 }
 
+function removeAccents(str) {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 export async function buscar(termo) {
-    if (!termo || termo.length < 3) return [];
+    if (!termo || termo.trim().length < 2) return [];
 
     if (useBackend) {
         try {
             const res = await fetchWithTimeout(`/api/busca?q=${encodeURIComponent(termo)}`, {}, 1500);
-            if (res.ok) return await res.json();
+            if (res.ok) {
+                const bRes = await res.json();
+                if (bRes && bRes.length > 0) return bRes;
+            }
         } catch (err) {
             console.warn('[BibliaDB] Falha na busca backend, usando local:', err);
         }
     }
 
     if (!bibliaData) return [];
-    const lower = termo.toLowerCase();
+    const words = termo.trim().split(/\s+/).map(w => removeAccents(w)).filter(w => w.length > 0);
     const resultados = [];
 
     for (const livro of bibliaData.livros) {
@@ -213,7 +221,8 @@ export async function buscar(termo) {
             const key = `${livro.id_livro}_${cap}`;
             const vs = bibliaData.versiculos[key] || [];
             for (const v of vs) {
-                if (v.t.toLowerCase().includes(lower)) {
+                const normText = removeAccents(v.t);
+                if (words.every(w => normText.includes(w))) {
                     resultados.push({
                         id_livro: livro.id_livro,
                         nome_livro: livro.nome_livro,
@@ -221,7 +230,7 @@ export async function buscar(termo) {
                         id_versiculo: v.v,
                         texto: v.t
                     });
-                    if (resultados.length >= 50) return resultados;
+                    if (resultados.length >= 200) return resultados;
                 }
             }
         }
