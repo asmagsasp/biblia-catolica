@@ -472,24 +472,7 @@ export async function generateSacredAIImage(userPrompt, styleId = 'renaissance',
 
   console.log('[SacredAI] Solicitando arte sacra (Seed:', seed, '):', visualPrompt);
 
-  // === TIER 1: PUTER.JS AI ENGINE (Nativo no navegador com Flux / SD) ===
-  if (typeof window !== 'undefined' && window.puter && window.puter.ai && typeof window.puter.ai.txt2img === 'function') {
-    try {
-      console.log('[SacredAI] Tentando Tier 1 (Puter.js Flux AI)...');
-      const puterPromise = window.puter.ai.txt2img(visualPrompt, { model: 'flux' });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Puter AI timeout')), 14000));
-      
-      const imgResult = await Promise.race([puterPromise, timeoutPromise]);
-      if (imgResult && imgResult.src) {
-        console.log('[SacredAI] Imagem gerada com sucesso via Puter AI!');
-        return imgResult.src;
-      }
-    } catch (puterErr) {
-      console.warn('[SacredAI] Puter AI indisponível ou timeout:', puterErr.message);
-    }
-  }
-
-  // === TIER 2: POLLINATIONS CLOUD ENDPOINTS (com timeout rápido de 7s por nó) ===
+  // === NÍVEL 1: GERAÇÃO DIRETA NA NUVEM (Com timeout ágil de 4s por nó) ===
   const cloudEndpoints = [
     `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&model=turbo&seed=${seed}&nologo=true&enhance=false&_t=${timestamp}`,
     `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${seed}&nologo=true&_t=${timestamp}`
@@ -497,10 +480,10 @@ export async function generateSacredAIImage(userPrompt, styleId = 'renaissance',
 
   for (const url of cloudEndpoints) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000);
+    const timer = setTimeout(() => controller.abort(), 4000);
 
     try {
-      console.log('[SacredAI] Tentando Tier 2 Cloud:', url);
+      console.log('[SacredAI] Tentando Cloud Endpoint:', url);
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
 
@@ -516,12 +499,12 @@ export async function generateSacredAIImage(userPrompt, styleId = 'renaissance',
       }
     } catch (cloudErr) {
       clearTimeout(timer);
-      console.warn('[SacredAI] Cloud Endpoint falhou:', cloudErr.message);
+      console.warn('[SacredAI] Cloud Endpoint falhou ou timeout:', cloudErr.message);
     }
   }
 
-  // === TIER 3: MOTOR SACRO PROCEDURAL DINÂMICO DE ALTA FIDELIDADE (ZERO FALHAS) ===
-  console.log('[SacredAI] Ativando Tier 3 (Motor Procedural de Arte Sacra HD)...');
+  // === NÍVEL 2: MOTOR SACRO PROCEDURAL DINÂMICO DE ALTA FIDELIDADE (INSTANTÂNEO / ZERO LOGIN) ===
+  console.log('[SacredAI] Ativando Motor Procedural de Arte Sacra HD (Sem Login / Sem Barreiras)...');
   return renderProceduralSacredMasterpiece(userPrompt, options, style);
 }
 
