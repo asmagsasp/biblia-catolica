@@ -2083,7 +2083,7 @@ window.unlockAdminPanel = function () {
   const enteredPin = pinInput ? pinInput.value.trim() : '';
   const storedPin = getAdminPin();
 
-  if (enteredPin === storedPin || enteredPin === '7777') {
+  if (enteredPin === storedPin) {
     if (pinInput) pinInput.value = '';
     const pinSec = document.getElementById('adminPinSection');
     const dashSec = document.getElementById('adminDashboardSection');

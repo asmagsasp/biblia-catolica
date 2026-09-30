@@ -153,7 +153,7 @@ let serverAdminPin = process.env.ADMIN_PIN || '7777';
 // POST /api/admin/verify-pin
 router.post('/admin/verify-pin', (req, res) => {
     const { pin } = req.body;
-    if (pin && (pin === serverAdminPin || pin === '7777')) {
+    if (pin && pin === serverAdminPin) {
         return res.json({ success: true, hasKey: !!serverGeminiKey });
     }
     return res.status(401).json({ error: 'Senha incorreta' });
@@ -162,7 +162,7 @@ router.post('/admin/verify-pin', (req, res) => {
 // POST /api/admin/set-gemini-key
 router.post('/admin/set-gemini-key', (req, res) => {
     const { pin, key, newPin } = req.body;
-    if (!pin || (pin !== serverAdminPin && pin !== '7777')) {
+    if (!pin || pin !== serverAdminPin) {
         return res.status(401).json({ error: 'Não autorizado' });
     }
     if (key !== undefined) {
