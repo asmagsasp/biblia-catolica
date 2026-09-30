@@ -206,9 +206,14 @@ function renderBooks(books) {
 }
 
 function bookCard(b) {
+  const isNT = b.id_testamento === 2;
+  const iconClass = isNT ? 'fa-cross' : 'fa-scroll';
   return `<div class="book-card" data-livro="${b.id_livro}" data-nome="${b.nome_livro}" data-caps="${b.total_capitulos}">
+        <div class="book-card-header">
+          <span class="book-icon"><i class="fas ${iconClass}"></i></span>
+          <span class="book-badge">${b.total_capitulos} cap.</span>
+        </div>
         <div class="book-name">${b.nome_livro}</div>
-        <div class="book-chapters">${b.total_capitulos} cap.</div>
     </div>`;
 }
 
