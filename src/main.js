@@ -128,10 +128,48 @@ async function init() {
   await loadVersiculoDoDia();
   await loadStats();
 
-  // Events
-  document.getElementById('searchInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doSearch();
-  });
+  // Events & Search Input Handling
+  const mainSearchInput = document.getElementById('searchInput');
+  const searchContainer = document.getElementById('searchContainer') || mainSearchInput?.parentElement;
+  const headerEl = document.querySelector('.header');
+  const searchClearBtn = document.getElementById('searchClearBtn');
+
+  if (mainSearchInput) {
+    mainSearchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doSearch();
+      } else if (e.key === 'Escape') {
+        mainSearchInput.blur();
+      }
+    });
+
+    mainSearchInput.addEventListener('input', e => {
+      if (searchClearBtn) {
+        searchClearBtn.classList.toggle('hidden', e.target.value.length === 0);
+      }
+    });
+
+    mainSearchInput.addEventListener('focus', () => {
+      if (headerEl) headerEl.classList.add('search-focused');
+      if (searchContainer) searchContainer.classList.add('active');
+    });
+
+    mainSearchInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (headerEl) headerEl.classList.remove('search-focused');
+        if (searchContainer) searchContainer.classList.remove('active');
+      }, 180);
+    });
+  }
+
+  window.clearMainSearch = function () {
+    if (mainSearchInput) {
+      mainSearchInput.value = '';
+      if (searchClearBtn) searchClearBtn.classList.add('hidden');
+      mainSearchInput.focus();
+    }
+  };
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -517,8 +555,11 @@ window.readFullChapter = async function () {
 
 // ===== SEARCH =====
 function doSearch() {
-  const t = document.getElementById('searchInput').value.trim();
+  const input = document.getElementById('searchInput');
+  const t = input ? input.value.trim() : '';
   if (t.length < 3) { showToast('Digite ao menos 3 caracteres'); return; }
+
+  if (input) input.blur();
 
   showView('searchView');
   const container = document.getElementById('searchResults');
