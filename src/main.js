@@ -72,6 +72,24 @@ const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isSpeaking = false;
 let stopRequested = false;
+let isChapterReading = false;
+
+function updateChapterReadBtnState(reading) {
+  isChapterReading = reading;
+  const btn = document.getElementById('btnReadChapter');
+  if (!btn) return;
+  if (reading) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar Leitura';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+    btn.style.borderColor = 'transparent';
+  } else {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Capítulo';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }
+}
 
 // ===== INIT =====
 async function init() {
@@ -130,7 +148,11 @@ function setTheme(theme) {
 window.stopSpeech = async function () {
   stopRequested = true;
   isSpeaking = false;
+  updateChapterReadBtnState(false);
   try { await TextToSpeech.stop(); } catch (e) { }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
   document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
 };
 
@@ -301,7 +323,7 @@ async function loadVerses() {
   if (verses.length) {
     c.innerHTML = `
       <div class="chapter-actions-top" style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn-read-all" onclick="readFullChapter()">
+        <button class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
         </button>
         <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
@@ -429,37 +451,63 @@ window.speakText = async function (text, vNum = null) {
 };
 
 window.readFullChapter = async function () {
-  await stopSpeech();
-  const verses = document.querySelectorAll('.verse');
-  stopRequested = false;
-
-  for (let i = 0; i < verses.length; i++) {
-    if (stopRequested) break;
-
-    const v = verses[i];
-    const text = v.querySelector('.verse-text').textContent;
-
-    v.classList.add('reading');
-    v.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    try {
-      await TextToSpeech.speak({
-        text: text,
-        lang: 'pt-BR',
-        rate: 0.95,
-        pitch: 1.0,
-        volume: 1.0,
-        category: 'ambient'
-      });
-    } catch (e) {
-      break;
-    }
-
-    v.classList.remove('reading');
+  if (isChapterReading) {
+    await stopSpeech();
+    return;
   }
 
-  document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
-  isSpeaking = false;
+  await stopSpeech();
+  const verses = document.querySelectorAll('.verse');
+  if (!verses || verses.length === 0) return;
+
+  stopRequested = false;
+  isSpeaking = true;
+  updateChapterReadBtnState(true);
+
+  try {
+    for (let i = 0; i < verses.length; i++) {
+      if (stopRequested) break;
+
+      const v = verses[i];
+      const textEl = v.querySelector('.verse-text');
+      if (!textEl) continue;
+      const text = textEl.textContent.trim();
+
+      v.classList.add('reading');
+      v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      try {
+        await TextToSpeech.speak({
+          text: text,
+          lang: 'pt-BR',
+          rate: 0.95,
+          pitch: 1.0,
+          volume: 1.0,
+          category: 'ambient'
+        });
+      } catch (e) {
+        // Fallback Web SpeechSynthesis se TextToSpeech não estiver disponível
+        if ('speechSynthesis' in window && !stopRequested) {
+          await new Promise((resolve) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 0.95;
+            utterance.onend = () => resolve();
+            utterance.onerror = () => resolve();
+            window.speechSynthesis.speak(utterance);
+          });
+        } else {
+          break;
+        }
+      } finally {
+        v.classList.remove('reading');
+      }
+    }
+  } finally {
+    document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
+    isSpeaking = false;
+    updateChapterReadBtnState(false);
+  }
 };
 
 // ===== SEARCH =====
