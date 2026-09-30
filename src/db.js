@@ -733,3 +733,50 @@ export async function getStats() {
         livros_nt: 27
     };
 }
+
+export function exportUserImages() {
+    return userImages || [];
+}
+
+export function getUserImagesCount() {
+    return (userImages || []).length;
+}
+
+export async function importUserImages(items) {
+    if (!Array.isArray(items) || items.length === 0) return 0;
+    
+    let addedCount = 0;
+    const existingIds = new Set((userImages || []).map(img => String(img.id)));
+    const existingTexts = new Set((userImages || []).map(img => `${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}_${img.texto}`));
+
+    for (const item of items) {
+        if (!item || (!item.address && !item.texto)) continue;
+        const key = `${item.nome_livro || ''}_${item.id_capitulo || ''}_${item.id_versiculo || ''}_${item.texto || ''}`;
+        
+        if (!existingTexts.has(key)) {
+            const newImg = {
+                id: (item.id && !existingIds.has(String(item.id))) ? item.id : `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                id_livro: item.id_livro ? parseInt(item.id_livro) : null,
+                nome_livro: item.nome_livro || 'Bíblia',
+                id_capitulo: item.id_capitulo ? parseInt(item.id_capitulo) : null,
+                id_versiculo: item.id_versiculo ? parseInt(item.id_versiculo) : null,
+                texto: item.texto || '',
+                address: item.address || item.url || '',
+                oracao: item.oracao || '',
+                is_user_upload: true,
+                created_at: item.created_at || new Date().toISOString()
+            };
+            userImages.unshift(newImg);
+            existingIds.add(String(newImg.id));
+            existingTexts.add(key);
+            addedCount++;
+        }
+    }
+
+    if (addedCount > 0) {
+        saveUserImagesLocal();
+        syncPendingUserImagesToBackend().catch(() => {});
+    }
+
+    return addedCount;
+}
