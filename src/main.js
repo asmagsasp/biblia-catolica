@@ -304,8 +304,8 @@ async function loadVerses() {
         <button class="btn-read-all" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
         </button>
-        <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-color: transparent;">
-          <i class="fas fa-sparkles"></i> Homilia do Capítulo
+        <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
+          <i class="fas fa-church"></i> Homilia do Capítulo
         </button>
       </div>
     ` + verses.map(v => `
@@ -317,7 +317,7 @@ async function loadVerses() {
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
-                    <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Reflexão IA" style="color: #60a5fa;"><i class="fas fa-sparkles"></i></button>
+                    <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
                 </div>
             </div>
         `).join('');
@@ -2244,7 +2244,7 @@ window.generateHomilyForChapter = async function () {
   generateHomily(currentBook.nome, currentChapter, "completo", text);
 };
 
-// Gera a homilia devocional católica com exegese bíblica e IA
+// Gera a homilia devocional católica com exegese bíblica e Tradição da Igreja
 window.generateHomily = function (bookName, chapter, verse, text) {
   const modal = document.getElementById('homilyModal');
   const title = document.getElementById('homilyTitle');
@@ -2256,6 +2256,7 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   window._lastHomilyParams = { bookName, chapter, verse, text };
 
   modal.classList.remove('hidden');
+  if (title) title.textContent = "Homilia & Meditação";
   ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
@@ -2292,8 +2293,8 @@ window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, t
 
   body.innerHTML = `
     <div style="text-align: center; padding: 30px;">
-        <div class="loading-spinner" style="border-color: rgba(59,130,246,0.3); border-top-color: #3b82f6; width: 40px; height: 40px; margin: 0 auto 15px;"></div>
-        <p style="color: #60a5fa; font-weight: bold; animation: pulse-glow 1.5s infinite;">O Padre de IA está preparando sua homilia personalizada...</p>
+        <div class="loading-spinner" style="border-color: rgba(212, 168, 83, 0.3); border-top-color: var(--gold-400); width: 40px; height: 40px; margin: 0 auto 15px;"></div>
+        <p style="color: var(--gold-300); font-weight: bold; animation: pulse-glow 1.5s infinite;">Preparando a homilia e meditação espiritual...</p>
         <span style="font-size: 12px; color: var(--text-muted);">Consultando a Sagrada Escritura e o Magistério da Igreja...</span>
     </div>
   `;
@@ -2322,13 +2323,13 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     body.innerHTML = `
       ${formattedHomily}
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <span style="font-size: 11px; color: #60a5fa; display: flex; align-items: center; gap: 5px;">
-          <i class="fas fa-sparkles"></i> Gerado com Google Gemini IA
-        </span>
         <button onclick="generateDynamicGeminiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
-                style="background: transparent; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer;">
-          <i class="fas fa-redo"></i> Regerar IA
+                style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-redo"></i> Nova Meditação
         </button>
+        <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+          <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+        </span>
       </div>
     `;
 
@@ -2337,8 +2338,8 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     updateSpeakBtnState(false);
 
   } catch (err) {
-    console.error("Erro ao gerar homilia com Gemini:", err);
-    // Fallback gracioso para a homilia teológica enriquecida
+    console.warn("Transição graciosa para o motor exegético católico:", err.message || err);
+    // Transição 100% silenciosa e perfeita para o motor exegético nativo
     const devotional = getDevotionalHomily(bookName, chapter, verse, text);
     body.innerHTML = `
       ${devotional.html}
