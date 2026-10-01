@@ -8,6 +8,8 @@ import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { getLiturgiaDiaria, LITURGICAL_COLORS } from './liturgiaService.js';
 import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
+import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
+import { sacredAudio, SACRED_TRACKS } from './audioAmbienteService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -139,6 +141,7 @@ async function init() {
   renderBooks(allBooks);
   await loadVersiculoDoDia();
   await loadStats();
+  initSacredAudioUI();
 
   // Remove splash com no mínimo 1.8 segundos de exibição suave para destacar o ícone
   const MIN_SPLASH_TIME_MS = 1800;
@@ -2503,7 +2506,7 @@ function showView(id) {
   stopSpeech();
   stopLiturgiaSpeech();
   stopRosarioSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView'].forEach(v => {
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -3775,3 +3778,370 @@ function showRosaryCompletedModal() {
   const m = currentRosarioState?.misterio?.nome || 'Santo Rosário';
   showToast(`🎉 Você concluiu a oração dos ${m}! Que Deus te abençoe! 🙏`);
 }
+
+// ==========================================================================
+// MURAL DE INTENÇÕES: "ACENDA UMA VELA VIRTUAL"
+// ==========================================================================
+let allVelasList = [];
+let currentVelasCategory = 'todos';
+let velasRezadasCache = [];
+
+window.showVelas = async function () {
+  showView('velasView');
+  await loadVelasData(true);
+};
+
+async function loadVelasData(forceRefresh = false) {
+  const grid = document.getElementById('velasGrid');
+  const statVelasEl = document.getElementById('statVelasAcesas');
+  const statOracoesEl = document.getElementById('statTotalOracoes');
+
+  if (!grid) return;
+
+  if (grid.dataset.loaded && !forceRefresh && allVelasList.length > 0) {
+    return;
+  }
+
+  grid.innerHTML = '<div class="loading" style="grid-column: 1 / -1; padding: 60px;"><div class="loading-spinner"></div></div>';
+
+  try {
+    const [velas, rezadas] = await Promise.all([
+      getVelasOracao(),
+      getVelasRezadasLocal()
+    ]);
+
+    allVelasList = velas || [];
+    velasRezadasCache = rezadas || [];
+
+    // Calculate community stats
+    const totalAcesas = allVelasList.length;
+    const totalOracoes = allVelasList.reduce((acc, v) => acc + (parseInt(v.oracoesCount) || 0), 0);
+
+    if (statVelasEl) statVelasEl.textContent = totalAcesas.toLocaleString('pt-BR');
+    if (statOracoesEl) statOracoesEl.textContent = totalOracoes.toLocaleString('pt-BR');
+
+    renderVelasGrid();
+    grid.dataset.loaded = '1';
+  } catch (err) {
+    console.error('[Velas] Erro ao carregar velas de oração:', err);
+    grid.innerHTML = `<div class="gallery-empty-state" style="grid-column: 1 / -1;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #ef4444; margin-bottom: 12px;"></i>
+      <h3 style="font-size: 16px; margin-bottom: 6px;">Não foi possível carregar o mural</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Verifique sua conexão e tente novamente.</p>
+      <button class="hero-donate-btn" onclick="loadVelasData(true)"><i class="fas fa-redo"></i> Recarregar</button>
+    </div>`;
+  }
+}
+
+function renderVelasGrid() {
+  const grid = document.getElementById('velasGrid');
+  if (!grid) return;
+
+  let list = allVelasList;
+  if (currentVelasCategory && currentVelasCategory !== 'todos') {
+    list = allVelasList.filter(v => v.categoria === currentVelasCategory);
+  }
+
+  if (list.length === 0) {
+    grid.innerHTML = `
+      <div class="gallery-empty-state" style="grid-column: 1 / -1; padding: 50px 20px;">
+        <i class="fas fa-fire" style="font-size: 36px; color: var(--gold-400); margin-bottom: 12px;"></i>
+        <h3 style="font-size: 17px; margin-bottom: 6px; font-family: var(--font-display);">Nenhuma vela nesta categoria</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Seja o primeiro a acender uma vela e partilhar sua intenção de oração!</p>
+        <button class="hero-donate-btn pulse-animation" onclick="openAcenderVelaModal()"><i class="fas fa-fire"></i> Acender Primeira Vela</button>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+  list.forEach(v => {
+    const catInfo = VELAS_CATEGORIAS[v.categoria] || VELAS_CATEGORIAS.graca;
+    const isRezado = velasRezadasCache.includes(v.id);
+    const statusTxt = formatarStatusVela(v.dataCriacao);
+    const count = parseInt(v.oracoesCount) || 0;
+    const autor = v.autor || 'Anônimo';
+    const local = v.cidade ? ` • ${v.cidade}` : '';
+
+    html += `
+      <div class="vela-card" id="card_${v.id}">
+        <div>
+          <div class="vela-top-bar">
+            <span class="vela-cat-tag" style="color: ${catInfo.color || 'var(--gold-400)'};">
+              <i class="fas ${catInfo.icon}"></i> ${catInfo.label}
+            </span>
+            <span class="vela-status-tag"><i class="far fa-clock"></i> ${statusTxt}</span>
+          </div>
+
+          <!-- Realistic Animated Candle Flame -->
+          <div class="candle-visual-wrapper">
+            <div class="candle-aura"></div>
+            <div class="candle-flame">
+              <div class="candle-flame-inner"></div>
+            </div>
+            <div class="candle-wick"></div>
+            <div class="candle-pillar">
+              <div class="candle-wax-melt"></div>
+            </div>
+          </div>
+
+          <div class="vela-intencao-box">
+            <p class="vela-intencao-text">“${v.intencao}”</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="vela-meta-info">
+            <span class="vela-autor"><i class="fas fa-user-circle"></i> ${autor}${local}</span>
+            <span id="count_txt_${v.id}" style="color: ${isRezado ? '#22c55e' : 'var(--text-muted)'}; font-weight: 600;">
+              <i class="fas fa-praying-hands"></i> ${count} ${count === 1 ? 'oração' : 'orações'}
+            </span>
+          </div>
+
+          <div class="vela-actions">
+            <button class="vela-btn-interceder ${isRezado ? 'rezado' : ''}" 
+                    id="btn_rezar_${v.id}"
+                    onclick="intercederPorVela(event, '${v.id}', ${count})">
+              <i class="fas fa-hands-praying"></i> <span>${isRezado ? 'Rezei 🙏' : 'Rezei por você 🙏'}</span>
+            </button>
+            <button class="vela-btn-share" 
+                    title="Compartilhar no WhatsApp" 
+                    onclick="shareVelaWhatsApp(event, '${v.id}')">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  grid.innerHTML = html;
+}
+
+window.filterVelasCategoria = function (cat, btn) {
+  currentVelasCategory = cat;
+  document.querySelectorAll('#velasCategoryTabs .velas-cat-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderVelasGrid();
+};
+
+window.openAcenderVelaModal = function () {
+  const modal = document.getElementById('acenderVelaModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      const input = document.getElementById('velaIntencaoInput');
+      if (input) input.focus();
+    }, 100);
+  }
+};
+
+window.closeAcenderVelaModal = function () {
+  const modal = document.getElementById('acenderVelaModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+window.handleAcenderVelaSubmit = async function (e) {
+  if (e) e.preventDefault();
+
+  const nome = document.getElementById('velaNomeInput')?.value || '';
+  const cidade = document.getElementById('velaCidadeInput')?.value || '';
+  const categoria = document.getElementById('velaCategoriaSelect')?.value || 'graca';
+  const intencao = document.getElementById('velaIntencaoInput')?.value || '';
+
+  if (!intencao.trim()) {
+    showToast('Por favor, escreva sua intenção de oração.');
+    return;
+  }
+
+  const submitBtn = document.getElementById('btnSubmitVela');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Acendendo Vela...';
+  }
+
+  try {
+    const nova = await acenderNovaVela({
+      autor: nome,
+      cidade: cidade,
+      categoria: categoria,
+      intencao: intencao
+    });
+
+    closeAcenderVelaModal();
+    // Clear form
+    const form = document.getElementById('acenderVelaForm');
+    if (form) form.reset();
+
+    showToast('🔥 Sua vela virtual foi acesa! Que Deus abençoe sua intenção.');
+    await loadVelasData(true);
+  } catch (err) {
+    console.error('[Velas] Erro ao acender vela:', err);
+    showToast('Erro ao acender vela. Tente novamente.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-fire"></i> Acender Vela Sagrada';
+    }
+  }
+};
+
+window.intercederPorVela = async function (e, id, currentCount) {
+  if (e) e.stopPropagation();
+
+  if (velasRezadasCache.includes(id)) {
+    showToast('Você já se uniu em oração por esta intenção 🙏');
+    return;
+  }
+
+  // Instant optimistic UI update
+  velasRezadasCache.push(id);
+  const newCount = currentCount + 1;
+
+  const btn = document.getElementById(`btn_rezar_${id}`);
+  if (btn) {
+    btn.classList.add('rezado');
+    btn.innerHTML = '<i class="fas fa-hands-praying"></i> <span>Rezei 🙏</span>';
+  }
+
+  const countTxt = document.getElementById(`count_txt_${id}`);
+  if (countTxt) {
+    countTxt.style.color = '#22c55e';
+    countTxt.innerHTML = `<i class="fas fa-praying-hands"></i> ${newCount} ${newCount === 1 ? 'oração' : 'orações'}`;
+  }
+
+  // Update total prayers stat
+  const statOracoesEl = document.getElementById('statTotalOracoes');
+  if (statOracoesEl) {
+    const curVal = parseInt(statOracoesEl.textContent.replace(/\./g, '')) || 0;
+    statOracoesEl.textContent = (curVal + 1).toLocaleString('pt-BR');
+  }
+
+  showToast('🙏 Oração registrada! Que Deus ouça esta intercessão.');
+
+  // Sync with cloud
+  try {
+    await rezarPorVela(id, currentCount);
+  } catch (err) {
+    console.warn('[Velas] Erro ao sincronizar prece:', err);
+  }
+};
+
+window.shareVelaWhatsApp = function (e, id) {
+  if (e) e.stopPropagation();
+  const vela = allVelasList.find(v => v.id === id);
+  if (!vela) return;
+
+  const catInfo = VELAS_CATEGORIAS[vela.categoria] || VELAS_CATEGORIAS.graca;
+  const autor = vela.autor || 'Anônimo';
+  const local = vela.cidade ? ` (${vela.cidade})` : '';
+
+  let msg = `🔥 *Vela Virtual Acesa no Mural de Intenções*\n`;
+  msg += `🙏 *Prece de:* ${autor}${local}\n`;
+  msg += `✨ *Intenção (${catInfo.label}):*\n“${vela.intencao}”\n\n`;
+  msg += `Una-se em oração e clique em "Rezei por você 🙏" no aplicativo da Bíblia Sagrada Católica:\n`;
+  msg += `https://bibliasagradaavemaria.com.br`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+
+// ==========================================================================
+// TRILHA SONORA SACRA AMBIENTE (WEB AUDIO API PROCEDURAL SYNTHESIS)
+// ==========================================================================
+function initSacredAudioUI() {
+  const tracksListContainer = document.getElementById('audioTracksList');
+  const trackTitle = document.getElementById('audioTrackTitle');
+  const trackSub = document.getElementById('audioTrackSub');
+  const volSlider = document.getElementById('audioVolumeSlider');
+
+  if (trackTitle && trackSub) {
+    const cur = sacredAudio.getCurrentTrack();
+    trackTitle.textContent = cur.nome;
+    trackSub.textContent = cur.subtitulo;
+  }
+
+  if (volSlider) {
+    volSlider.value = sacredAudio.getVolume();
+  }
+
+  if (tracksListContainer) {
+    let html = '';
+    SACRED_TRACKS.forEach(t => {
+      const isActive = t.id === sacredAudio.currentTrackId;
+      html += `
+        <button class="audio-track-item ${isActive ? 'active' : ''}" 
+                id="track_btn_${t.id}"
+                onclick="selectSacredAudioTrack('${t.id}')">
+          <div class="audio-track-icon-box" style="color: ${t.cor};">
+            <i class="fas ${t.icone}"></i>
+          </div>
+          <div class="audio-track-text">
+            <span class="audio-track-name">${t.nome}</span>
+            <span class="audio-track-desc">${t.subtitulo}</span>
+          </div>
+        </button>`;
+    });
+    tracksListContainer.innerHTML = html;
+  }
+}
+
+window.togglePlaySacredAudio = function () {
+  const isPlaying = sacredAudio.isPlaying();
+  const playIcon = document.getElementById('audioPlayIcon');
+  const playBtn = document.getElementById('btnPlaySacredAudio');
+  const soundwaves = document.getElementById('audioSoundwaves');
+
+  if (isPlaying) {
+    sacredAudio.stop();
+    if (playIcon) playIcon.className = 'fas fa-play';
+    if (playBtn) playBtn.classList.remove('playing');
+    if (soundwaves) soundwaves.classList.remove('playing');
+    showToast('Música ambiente pausada');
+  } else {
+    sacredAudio.play();
+    if (playIcon) playIcon.className = 'fas fa-pause';
+    if (playBtn) playBtn.classList.add('playing');
+    if (soundwaves) soundwaves.classList.add('playing');
+    const cur = sacredAudio.getCurrentTrack();
+    showToast(`🎶 Tocando: ${cur.nome}`);
+  }
+};
+
+window.selectSacredAudioTrack = function (trackId) {
+  sacredAudio.play(trackId);
+
+  const cur = sacredAudio.getCurrentTrack();
+  const trackTitle = document.getElementById('audioTrackTitle');
+  const trackSub = document.getElementById('audioTrackSub');
+  const playIcon = document.getElementById('audioPlayIcon');
+  const playBtn = document.getElementById('btnPlaySacredAudio');
+  const soundwaves = document.getElementById('audioSoundwaves');
+
+  if (trackTitle) trackTitle.textContent = cur.nome;
+  if (trackSub) trackSub.textContent = cur.subtitulo;
+  if (playIcon) playIcon.className = 'fas fa-pause';
+  if (playBtn) playBtn.classList.add('playing');
+  if (soundwaves) soundwaves.classList.add('playing');
+
+  // Update active state in track list
+  document.querySelectorAll('.audio-track-item').forEach(el => {
+    el.classList.toggle('active', el.id === `track_btn_${trackId}`);
+  });
+
+  showToast(`🎶 Tocando: ${cur.nome}`);
+};
+
+window.changeSacredAudioVolume = function (vol) {
+  sacredAudio.setVolume(parseFloat(vol));
+};
+
+window.toggleAudioBarDrawer = function () {
+  const drawer = document.getElementById('audioBarDrawer');
+  if (drawer) {
+    drawer.classList.toggle('hidden');
+  }
+};
+

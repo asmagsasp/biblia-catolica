@@ -3849,6 +3849,653 @@ mark,
   margin-top: 18px;
 }
 
+/* ==========================================================================
+   MURAL DE INTENÇÕES & VELAS VIRTUAIS COM CHAMA ANIMADA
+   ========================================================================== */
+
+.velas-view {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 60px;
+}
+
+.home-quick-card.velas-card {
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.home-quick-card.velas-card:hover {
+  border-color: var(--gold-400);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.25);
+}
+
+.velas-stats-banner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.velas-stat-box {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(20, 14, 22, 0.7) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 18px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .velas-stat-box {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, #ffffff 100%);
+  border-color: rgba(197, 155, 39, 0.3);
+  box-shadow: 0 4px 15px rgba(90, 60, 40, 0.08);
+}
+
+.velas-stat-box i {
+  font-size: 28px;
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+.velas-stat-num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gold-300);
+  line-height: 1.1;
+}
+
+[data-theme="light"] .velas-stat-num {
+  color: #92400e;
+}
+
+.velas-stat-lbl {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.velas-category-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 22px;
+  scrollbar-width: thin;
+}
+
+.velas-cat-btn {
+  white-space: nowrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 9px 16px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.velas-cat-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--gold-400);
+}
+
+.velas-cat-btn.active {
+  background: var(--gold-gradient);
+  color: #111827;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+}
+
+.velas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.vela-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.vela-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45), 0 0 20px rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.vela-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.vela-cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.vela-status-tag {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* REALISTIC ANIMATED VIRTUAL CANDLE */
+.candle-visual-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 90px;
+  margin: 6px 0 16px;
+  position: relative;
+}
+
+.candle-pillar {
+  width: 32px;
+  height: 52px;
+  background: linear-gradient(to right, #f5ecd7 0%, #ffffff 40%, #e2d1b5 100%);
+  border-radius: 6px 6px 4px 4px;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35), inset 0 -4px 8px rgba(184, 134, 11, 0.2);
+}
+
+[data-theme="light"] .candle-pillar {
+  background: linear-gradient(to right, #e8dbc4 0%, #fffbf2 40%, #d8c6a5 100%);
+}
+
+.candle-wax-melt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: #fdfaf3;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.candle-wick {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5px;
+  height: 9px;
+  background: #332211;
+  border-radius: 2px;
+}
+
+.candle-flame {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 24px;
+  background: linear-gradient(to bottom, #ffffff 0%, #ffe600 35%, #ff7700 70%, #ff2200 100%);
+  border-radius: 50% 50% 35% 35% / 80% 80% 25% 25%;
+  animation: candleFlicker 1.8s infinite ease-in-out alternate;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(0 0 10px #ffaa00) drop-shadow(0 0 20px rgba(255, 170, 0, 0.6));
+  z-index: 2;
+}
+
+.candle-flame-inner {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 10px;
+  background: #60a5fa;
+  border-radius: 50% 50% 35% 35%;
+  opacity: 0.85;
+}
+
+.candle-aura {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65px;
+  height: 65px;
+  background: radial-gradient(circle, rgba(255, 200, 50, 0.35) 0%, rgba(255, 120, 0, 0.15) 50%, transparent 75%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: candleAuraPulse 2.4s infinite ease-in-out;
+  z-index: 1;
+}
+
+@keyframes candleFlicker {
+  0% {
+    transform: translateX(-50%) rotate(-1deg) scale(1, 1);
+  }
+  25% {
+    transform: translateX(-51%) rotate(2deg) scale(0.96, 1.05);
+  }
+  50% {
+    transform: translateX(-49%) rotate(-2deg) scale(1.04, 0.95);
+  }
+  75% {
+    transform: translateX(-50%) rotate(1deg) scale(0.98, 1.02);
+  }
+  100% {
+    transform: translateX(-50%) rotate(-1.5deg) scale(1.02, 0.98);
+  }
+}
+
+@keyframes candleAuraPulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(0.95);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.15);
+    opacity: 0.95;
+  }
+}
+
+.vela-intencao-box {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+[data-theme="light"] .vela-intencao-box {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.vela-intencao-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vela-meta-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.vela-autor {
+  font-weight: 700;
+  color: var(--gold-300);
+}
+
+[data-theme="light"] .vela-autor {
+  color: #92400e;
+}
+
+.vela-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vela-btn-interceder {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.18) 0%, rgba(16, 185, 129, 0.28) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.vela-btn-interceder:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(16, 185, 129, 0.4) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}
+
+.vela-btn-interceder.rezado {
+  background: rgba(34, 197, 94, 0.85);
+  color: #ffffff;
+  border-color: #22c55e;
+}
+
+.vela-btn-share {
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vela-btn-share:hover {
+  color: #22c55e;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* ==========================================================================
+   TRILHA SONORA SACRA AMBIENTE (FLOATING PLAYER & DRAWER)
+   ========================================================================== */
+
+.sacred-audio-bar {
+  position: fixed;
+  bottom: 74px;
+  right: 18px;
+  z-index: 1200;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (min-width: 769px) {
+  .sacred-audio-bar {
+    bottom: 24px;
+    right: 24px;
+  }
+}
+
+.audio-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(28, 18, 28, 0.94) 0%, rgba(15, 9, 16, 0.98) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 40px;
+  padding: 6px 14px 6px 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 18px rgba(212, 175, 55, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+}
+
+[data-theme="light"] .audio-bar-inner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 246, 238, 0.98) 100%);
+  border-color: rgba(197, 155, 39, 0.5);
+  box-shadow: 0 10px 30px rgba(90, 60, 40, 0.15), 0 0 18px rgba(212, 175, 55, 0.15);
+}
+
+.audio-bar-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold-gradient);
+  border: none;
+  color: #111827;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
+}
+
+.audio-main-icon {
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+/* Soundwaves animation */
+.audio-soundwaves {
+  display: none;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.audio-soundwaves.playing {
+  display: flex;
+}
+
+.audio-soundwaves.playing + .audio-main-icon {
+  display: none;
+}
+
+.audio-soundwaves span {
+  width: 3px;
+  background: #111827;
+  border-radius: 2px;
+  animation: waveBar 1.2s infinite ease-in-out;
+}
+
+.audio-soundwaves span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.audio-soundwaves span:nth-child(2) { height: 14px; animation-delay: 0.3s; }
+.audio-soundwaves span:nth-child(3) { height: 9px; animation-delay: 0.2s; }
+.audio-soundwaves span:nth-child(4) { height: 12px; animation-delay: 0.4s; }
+
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+.audio-bar-info {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  user-select: none;
+  max-width: 140px;
+}
+
+.audio-bar-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+[data-theme="light"] .audio-bar-title {
+  color: #92400e;
+}
+
+.audio-bar-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audio-ctrl-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.audio-ctrl-btn:hover {
+  background: var(--gold-gradient);
+  color: #111827;
+  border-color: transparent;
+}
+
+.audio-ctrl-btn.play-btn.playing {
+  background: var(--gold-gradient);
+  color: #111827;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+}
+
+/* Audio Drawer Dropup / Panel */
+.audio-bar-drawer {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: 0;
+  width: 280px;
+  background: linear-gradient(145deg, rgba(28, 16, 28, 0.97) 0%, rgba(14, 8, 14, 0.99) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 175, 55, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: modalEnter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="light"] .audio-bar-drawer {
+  background: linear-gradient(145deg, #ffffff 0%, #faf6ee 100%);
+  border-color: rgba(197, 155, 39, 0.45);
+  box-shadow: 0 20px 50px rgba(90, 60, 40, 0.2);
+}
+
+.audio-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.audio-drawer-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.audio-tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.audio-track-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.audio-track-item:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.audio-track-item.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border-color: var(--gold-400);
+}
+
+.audio-track-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.audio-track-text {
+  flex: 1;
+  overflow: hidden;
+}
+
+.audio-track-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audio-track-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audio-volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.audio-vol-slider {
+  flex: 1;
+  accent-color: var(--gold-400);
+  height: 4px;
+  cursor: pointer;
+}
+
 .hidden {
   display: none !important;
 }

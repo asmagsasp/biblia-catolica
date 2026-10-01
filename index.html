@@ -48,6 +48,8 @@
           class="fas fa-calendar-day"></i></button>
       <button class="header-btn desktop-only" onclick="showRosario()" title="Santo Terço"><i
           class="fas fa-praying-hands"></i></button>
+      <button class="header-btn desktop-only" onclick="showVelas()" title="Mural de Velas & Intenções"><i
+          class="fas fa-fire"></i></button>
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
           class="fas fa-images"></i></button>
       <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
@@ -90,7 +92,7 @@
         </div>
       </section>
 
-      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA & SANTO ROSÁRIO -->
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO & VELAS -->
       <div class="home-quick-grid">
         <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
           <div class="quick-card-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
@@ -112,6 +114,18 @@
             <div class="quick-card-badge" id="homeRosarioBadge">Mistérios de Hoje</div>
             <h3 class="quick-card-title">Santo Rosário & Terço</h3>
             <p class="quick-card-desc">Rezar passo a passo com áudio e comunhão</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card velas-card" onclick="showVelas()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.18); color: var(--gold-400);">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
+            <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
+            <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -379,6 +393,58 @@
         <!-- Restart Footer -->
         <div class="rosario-footer-actions">
           <button class="upload-btn-secondary" onclick="restartRosary()"><i class="fas fa-redo"></i> Reiniciar Terço</button>
+        </div>
+    <!-- MURAL DE INTENÇÕES & VELAS VIRTUAIS -->
+    <div id="velasView" class="hidden">
+      <div class="velas-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Mural de Intenções</h2>
+              <p class="chapter-subtitle">Velas Virtuais & Comunhão de Oração</p>
+            </div>
+          </div>
+          <div class="velas-header-actions">
+            <button class="hero-donate-btn pulse-animation" onclick="openAcenderVelaModal()" style="padding: 9px 16px; font-size: 13px;">
+              <i class="fas fa-fire"></i> Acender Vela Virtual
+            </button>
+          </div>
+        </div>
+
+        <!-- Community Stats Banner -->
+        <div class="velas-stats-banner">
+          <div class="velas-stat-box">
+            <i class="fas fa-fire" style="color: var(--gold-400);"></i>
+            <div>
+              <span class="velas-stat-num" id="statVelasAcesas">0</span>
+              <span class="velas-stat-lbl">Velas Acesas</span>
+            </div>
+          </div>
+          <div class="velas-stat-box">
+            <i class="fas fa-praying-hands" style="color: #22c55e;"></i>
+            <div>
+              <span class="velas-stat-num" id="statTotalOracoes">0</span>
+              <span class="velas-stat-lbl">Orações Realizadas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Filters -->
+        <div class="velas-category-tabs" id="velasCategoryTabs">
+          <button class="velas-cat-btn active" data-cat="todos" onclick="filterVelasCategoria('todos', this)"><i class="fas fa-fire"></i> Todas</button>
+          <button class="velas-cat-btn" data-cat="saude" onclick="filterVelasCategoria('saude', this)"><i class="fas fa-heart-pulse" style="color:#22c55e;"></i> Saúde & Cura</button>
+          <button class="velas-cat-btn" data-cat="familia" onclick="filterVelasCategoria('familia', this)"><i class="fas fa-house-heart" style="color:#3b82f6;"></i> Paz na Família</button>
+          <button class="velas-cat-btn" data-cat="graca" onclick="filterVelasCategoria('graca', this)"><i class="fas fa-hands-praying" style="color:#eab308;"></i> Graça Impossível</button>
+          <button class="velas-cat-btn" data-cat="trabalho" onclick="filterVelasCategoria('trabalho', this)"><i class="fas fa-briefcase" style="color:#f97316;"></i> Trabalho</button>
+          <button class="velas-cat-btn" data-cat="conversao" onclick="filterVelasCategoria('conversao', this)"><i class="fas fa-cross" style="color:#a855f7;"></i> Conversão</button>
+          <button class="velas-cat-btn" data-cat="almas" onclick="filterVelasCategoria('almas', this)"><i class="fas fa-dove" style="color:#94a3b8;"></i> Pelos Falecidos</button>
+          <button class="velas-cat-btn" data-cat="agradecimento" onclick="filterVelasCategoria('agradecimento', this)"><i class="fas fa-sparkles" style="color:#ec4899;"></i> Ação de Graças</button>
+        </div>
+
+        <!-- Candles Grid -->
+        <div class="velas-grid" id="velasGrid">
+          <div class="loading"><div class="loading-spinner"></div></div>
         </div>
       </div>
     </div>
@@ -872,6 +938,96 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL ACENDER VELA VIRTUAL -->
+  <div id="acenderVelaModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="acenderVelaTitle" onclick="if(event.target===this) closeAcenderVelaModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeAcenderVelaModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+      
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,175,55,0.15);">
+          <i class="fas fa-fire donate-icon" style="color: var(--gold-400);"></i>
+        </div>
+        <h2 id="acenderVelaTitle" style="color: var(--text-primary); font-family: 'Cinzel', serif; font-size: 20px; margin-bottom: 6px;">Acender Vela Virtual</h2>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Sua vela arderá por 7 dias no Mural de Intenções para que toda a comunidade reze por você.</p>
+      </div>
+
+      <form id="acenderVelaForm" onsubmit="handleAcenderVelaSubmit(event)" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label for="velaNomeInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Seu Nome (ou deixe em branco para Anônimo):</label>
+          <input type="text" id="velaNomeInput" class="upload-input" placeholder="Ex: Maria de Fátima ou Família Santos" maxlength="50">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label for="velaCidadeInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Sua Cidade / UF (opcional):</label>
+            <input type="text" id="velaCidadeInput" class="upload-input" placeholder="Ex: São Paulo - SP" maxlength="50">
+          </div>
+          <div>
+            <label for="velaCategoriaSelect" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Categoria da Prece:</label>
+            <select id="velaCategoriaSelect" class="upload-select">
+              <option value="saude">🌿 Saúde & Cura</option>
+              <option value="familia">👨‍👩‍👧‍👦 Paz na Família</option>
+              <option value="graca" selected>🙏 Graça & Causa Difícil</option>
+              <option value="trabalho">💼 Trabalho & Pão</option>
+              <option value="conversao">📖 Conversão</option>
+              <option value="almas">🕊️ Pelos Falecidos</option>
+              <option value="agradecimento">✨ Ação de Graças</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="velaIntencaoInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Escreva sua Intenção de Oração: *</label>
+          <textarea id="velaIntencaoInput" class="upload-textarea" rows="4" placeholder="Escreva aqui a sua prece ou pedido de intercessão..." required maxlength="450"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeAcenderVelaModal()">Cancelar</button>
+          <button type="submit" id="btnSubmitVela" class="hero-donate-btn pulse-animation" style="padding: 10px 22px;">
+            <i class="fas fa-fire"></i> Acender Vela Sagrada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FLOATING SACRED AMBIENT AUDIO BAR -->
+  <aside id="sacredAudioBar" class="sacred-audio-bar" aria-label="Trilha Sonora Sacra Ambiente">
+    <div class="audio-bar-inner">
+      <button class="audio-bar-toggle-btn" onclick="toggleAudioBarDrawer()" id="btnAudioBarToggle" title="Trilha Sonora Sacra">
+        <div class="audio-soundwaves" id="audioSoundwaves">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <i class="fas fa-music audio-main-icon"></i>
+      </button>
+
+      <div class="audio-bar-info" onclick="toggleAudioBarDrawer()">
+        <span class="audio-bar-title" id="audioTrackTitle">Canto Gregoriano</span>
+        <span class="audio-bar-sub" id="audioTrackSub">Música Sacra Ambiente</span>
+      </div>
+
+      <div class="audio-bar-controls">
+        <button class="audio-ctrl-btn play-btn" onclick="togglePlaySacredAudio()" id="btnPlaySacredAudio" title="Tocar / Pausar">
+          <i class="fas fa-play" id="audioPlayIcon"></i>
+        </button>
+      </div>
+
+      <!-- Expandable Drawer with Track List & Volume -->
+      <div class="audio-bar-drawer hidden" id="audioBarDrawer">
+        <div class="audio-drawer-header">
+          <span><i class="fas fa-sliders" style="color: var(--gold-400);"></i> Trilha Sonora Sacra</span>
+          <button class="audio-drawer-close" onclick="toggleAudioBarDrawer()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="audio-tracks-list" id="audioTracksList"></div>
+        <div class="audio-volume-control">
+          <i class="fas fa-volume-down" style="color: var(--text-muted); font-size: 11px;"></i>
+          <input type="range" id="audioVolumeSlider" min="0" max="1" step="0.05" value="0.25" oninput="changeSacredAudioVolume(this.value)" class="audio-vol-slider" title="Volume da Música">
+          <i class="fas fa-volume-up" style="color: var(--text-muted); font-size: 13px;"></i>
+        </div>
+      </div>
+    </div>
+  </aside>
 
   <script type="module" src="src/main.js"></script>
 </body>
