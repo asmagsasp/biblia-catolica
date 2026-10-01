@@ -278,7 +278,7 @@ export async function buscar(termo) {
 
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout(getApiUrl(`/api/busca?q=${encodeURIComponent(termo)}`), {}, 1500);
+            const res = await fetchWithTimeout(getApiUrl(`/api/busca?q=${encodeURIComponent(termo)}`), {}, 2500);
             if (res.ok) {
                 const bRes = await res.json();
                 if (bRes && bRes.length > 0) {
@@ -294,17 +294,21 @@ export async function buscar(termo) {
     }
 
     if (!bibliaData) return [];
-    const words = termo.trim().split(/\s+/).map(w => removeAccents(w)).filter(w => w.length > 0);
-    const resultados = [];
+    const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+    if (cleanTerm.length < 2) return [];
 
+    const normCleanTerm = removeAccents(cleanTerm).toLowerCase();
+    const phraseResults = [];
+
+    // 1. Tentar busca pela frase exata contínua
     for (const livro of bibliaData.livros) {
         for (let cap = 1; cap <= livro.total_capitulos; cap++) {
             const key = `${livro.id_livro}_${cap}`;
             const vs = bibliaData.versiculos[key] || [];
             for (const v of vs) {
-                const normText = removeAccents(v.t);
-                if (words.every(w => normText.includes(w))) {
-                    resultados.push({
+                const normText = removeAccents(v.t).toLowerCase();
+                if (normText.includes(normCleanTerm)) {
+                    phraseResults.push({
                         id_livro: livro.id_livro,
                         nome_livro: livro.nome_livro,
                         id_capitulo: cap,
@@ -312,12 +316,44 @@ export async function buscar(termo) {
                         texto: v.t,
                         favorito: favoritos[`${livro.id_livro}_${cap}_${v.v}`] ? 1 : 0
                     });
-                    if (resultados.length >= 200) return resultados;
+                    if (phraseResults.length >= 200) return phraseResults;
                 }
             }
         }
     }
-    return resultados;
+
+    if (phraseResults.length > 0) return phraseResults;
+
+    // 2. Fallback para palavras significativas (>= 2 caracteres)
+    const words = cleanTerm
+        .split(/\s+/)
+        .map(w => removeAccents(w).replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase())
+        .filter(w => w.length >= 2);
+
+    if (words.length === 0) return [];
+    const wordResults = [];
+
+    for (const livro of bibliaData.livros) {
+        for (let cap = 1; cap <= livro.total_capitulos; cap++) {
+            const key = `${livro.id_livro}_${cap}`;
+            const vs = bibliaData.versiculos[key] || [];
+            for (const v of vs) {
+                const normText = removeAccents(v.t).toLowerCase();
+                if (words.every(w => normText.includes(w))) {
+                    wordResults.push({
+                        id_livro: livro.id_livro,
+                        nome_livro: livro.nome_livro,
+                        id_capitulo: cap,
+                        id_versiculo: v.v,
+                        texto: v.t,
+                        favorito: favoritos[`${livro.id_livro}_${cap}_${v.v}`] ? 1 : 0
+                    });
+                    if (wordResults.length >= 200) return wordResults;
+                }
+            }
+        }
+    }
+    return wordResults;
 }
 
 const VERSICULOS_INSPIRADORES = [

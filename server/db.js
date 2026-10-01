@@ -238,8 +238,11 @@ export async function buscar(termo) {
     await ensureDB();
     if (!termo || termo.trim().length < 2) return [];
     
-    const words = termo.trim().split(/\s+/).filter(w => w.length > 0);
-    let sql = `
+    const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+    if (cleanTerm.length < 2) return [];
+
+    // 1. Tentar busca de frase exata
+    const phraseSql = `
         SELECT 
             v.id_livro, 
             l.nome_livro, 
@@ -248,15 +251,36 @@ export async function buscar(termo) {
             v.texto
         FROM versiculos v
         JOIN livros l ON v.id_livro = l.id_livro
+        WHERE v.texto LIKE ?
+        LIMIT 200
     `;
-    const params = [];
-    if (words.length > 0) {
-        const conditions = words.map(() => `v.texto LIKE ?`);
-        sql += ` WHERE ` + conditions.join(' AND ');
-        params.push(...words.map(w => `%${w}%`));
+    const phraseResults = await getAll(phraseSql, [`%${cleanTerm}%`]);
+    if (phraseResults && phraseResults.length > 0) {
+        return phraseResults;
     }
-    sql += ` LIMIT 200`;
-    return await getAll(sql, params);
+
+    // 2. Se não encontrar a frase contínua, buscar por palavras significativas (>= 2 caracteres)
+    const words = cleanTerm
+        .split(/\s+/)
+        .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
+        .filter(w => w.length >= 2);
+
+    if (words.length === 0) return [];
+
+    const conditions = words.map(() => `v.texto LIKE ?`);
+    const wordsSql = `
+        SELECT 
+            v.id_livro, 
+            l.nome_livro, 
+            v.id_capitulo, 
+            v.id_versiculo, 
+            v.texto
+        FROM versiculos v
+        JOIN livros l ON v.id_livro = l.id_livro
+        WHERE ${conditions.join(' AND ')}
+        LIMIT 200
+    `;
+    return await getAll(wordsSql, words.map(w => `%${w}%`));
 }
 
 const VERSICULOS_INSPIRADORES = [

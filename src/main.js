@@ -607,29 +607,43 @@ export function highlightSearchTerms(text, query) {
 
   const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const makePattern = (term) => {
-    return term
+  const makeFlexPattern = (phrase) => {
+    const cleaned = phrase.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+    return cleaned
       .split('')
       .map(ch => {
-        if (/\s+/.test(ch)) return '\\s+';
+        if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”]+';
         const lower = ch.toLowerCase();
         return accentMap[lower] || escapeRegex(ch);
       })
       .join('');
   };
 
-  const trimmed = query.trim();
-  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+  const cleanQuery = query.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+  if (cleanQuery.length === 0) return text;
+
+  // 1. Tentar casar a frase inteira primeiro como um único bloco contínuo
+  const phrasePattern = makeFlexPattern(cleanQuery);
+  const phraseRegex = new RegExp('(' + phrasePattern + ')', 'gi');
+
+  if (phraseRegex.test(text)) {
+    return text.replace(phraseRegex, '<mark class="search-highlight">$1</mark>');
+  }
+
+  // 2. Se a frase completa contínua não casar, casar palavras significativas (>= 2 caracteres) com limites de palavra
+  const words = cleanQuery
+    .split(/\s+/)
+    .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
+    .filter(w => w.length >= 2);
+
   if (words.length === 0) return text;
 
-  // Include full phrase first so multi-word matches are highlighted as a single block
-  const termList = words.length > 1 ? [trimmed, ...words] : words;
-  const sortedTerms = termList.sort((a, b) => b.length - a.length);
+  const wordPatterns = words
+    .sort((a, b) => b.length - a.length)
+    .map(w => makeFlexPattern(w));
 
-  const pattern = sortedTerms.map(makePattern).join('|');
-  const regex = new RegExp(`(${pattern})`, 'gi');
-
-  return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+  const wordsRegex = new RegExp('(\\b(?:' + wordPatterns.join('|') + ')\\b)', 'gi');
+  return text.replace(wordsRegex, '<mark class="search-highlight">$1</mark>');
 }
 
 // ===== SEARCH =====
