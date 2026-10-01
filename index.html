@@ -169,6 +169,9 @@
               <button class="gallery-chip" data-category="uploads" onclick="filterGalleryCategory('uploads', this)">
                 <i class="fas fa-cloud-upload-alt" style="color: var(--gold-400);"></i> Meus Uploads
               </button>
+              <button class="gallery-chip" data-category="videos" onclick="filterGalleryCategory('videos', this)">
+                <i class="fab fa-youtube" style="color: #ff0000;"></i> Com Vídeo
+              </button>
               <button class="gallery-chip" data-category="salmos" onclick="filterGalleryCategory('salmos', this)">
                 <i class="fas fa-music"></i> Salmos
               </button>
@@ -357,6 +360,9 @@
             <i class="fas fa-quote-right quote-icon quote-end"></i>
           </div>
           <div class="lightbox-actions-bar">
+            <button id="lightboxBtnYouTube" class="lightbox-btn btn-yt hidden" onclick="openLightboxYouTube()">
+              <i class="fab fa-youtube"></i> <span>Assistir Vídeo</span>
+            </button>
             <button id="lightboxBtnWhatsApp" class="lightbox-btn btn-wa" onclick="shareLightboxWhatsApp()">
               <i class="fab fa-whatsapp"></i> <span>WhatsApp</span>
             </button>
@@ -466,6 +472,17 @@
             <input type="text" id="uploadOracaoInput" class="upload-input" placeholder="Ex: Senhor, sois meu pastor e nada me faltará...">
           </div>
 
+          <div class="upload-field" style="margin-top: 4px;">
+            <label class="upload-label"><i class="fab fa-youtube" style="color: #ff0000;"></i> Link do YouTube (Opcional — Louvor, Canto, Homilia ou Oração):</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="url" id="uploadYoutubeUrl" class="upload-input" placeholder="Ex: https://youtu.be/... ou https://www.youtube.com/watch?v=..." oninput="handleStudioYtInput(this.value)" style="flex: 1;">
+              <button type="button" class="upload-btn-fetch" onclick="testStudioYtVideo(document.getElementById('uploadYoutubeUrl').value)" style="white-space: nowrap; padding: 10px 14px; background: rgba(255,0,0,0.15); border-color: rgba(255,0,0,0.4); color: #ff6b6b;">
+                <i class="fab fa-youtube"></i> Testar Vídeo
+              </button>
+            </div>
+            <div id="studioYtPreviewBox" class="studio-yt-preview-box hidden" style="margin-top: 8px;"></div>
+          </div>
+
           <div class="upload-actions">
             <button type="button" id="uploadSubmitBtn" class="hero-donate-btn" onclick="saveUploadedImage()" style="width: 100%;">
               <i class="fas fa-save"></i> Adicionar à Minha Galeria
@@ -566,6 +583,11 @@
               <canvas id="studioCanvas" width="1080" height="1080" class="studio-canvas-preview"></canvas>
             </div>
 
+            <div class="upload-field" style="margin-top: 10px; margin-bottom: 12px;">
+              <label class="upload-label"><i class="fab fa-youtube" style="color: #ff0000;"></i> Link do YouTube para vincular ao Card (Opcional):</label>
+              <input type="url" id="aiYoutubeUrl" class="upload-input" placeholder="Ex: https://youtu.be/... ou https://www.youtube.com/watch?v=...">
+            </div>
+
             <div class="studio-actions-row">
               <button type="button" class="upload-btn-secondary" onclick="generateAiArt(true)" title="Gerar outra variação com IA">
                 <i class="fas fa-redo"></i> Regerar IA
@@ -580,6 +602,28 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- IN-APP YOUTUBE THEATER PLAYER MODAL -->
+  <div id="youtubePlayerModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ytPlayerTitle" onclick="if(event.target===this) closeYouTubePlayer()">
+    <div class="donate-modal-content youtube-player-modal-content">
+      <button class="donate-close-btn" onclick="closeYouTubePlayer()" aria-label="Fechar reprodutor de vídeo"><i class="fas fa-times"></i></button>
+      
+      <div class="youtube-player-header">
+        <div class="youtube-badge-tag"><i class="fab fa-youtube"></i> Louvor & Reflexão Católica</div>
+        <h3 id="ytPlayerTitle" class="youtube-player-title">Vídeo Sagrado</h3>
+        <p id="ytPlayerRef" class="youtube-player-ref"></p>
+      </div>
+
+      <div class="youtube-iframe-container">
+        <iframe id="youtubeIframe" src="" title="Vídeo Bíblico" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+
+      <div id="ytPlayerVerseBox" class="youtube-player-verse-box hidden">
+        <p id="ytPlayerVerseText" class="youtube-player-verse-text"></p>
+        <p id="ytPlayerOracao" class="youtube-player-oracao"></p>
       </div>
     </div>
   </div>

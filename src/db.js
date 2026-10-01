@@ -658,6 +658,8 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
 
     if (filterCategory === 'uploads') {
         allImgs = allImgs.filter(img => img.is_user_upload);
+    } else if (filterCategory === 'videos') {
+        allImgs = allImgs.filter(img => img.youtube_url && img.youtube_url.trim().length > 0);
     } else if (filterCategory === 'salmos') {
         allImgs = allImgs.filter(img => img.id_livro === 21 || (img.nome_livro && img.nome_livro.toLowerCase().includes('salmo')));
     } else if (filterCategory === 'evangelhos') {
@@ -690,6 +692,7 @@ export async function addImgVersiculo(imgData) {
         texto: imgData.texto || '',
         address: imgData.address || imgData.url || '',
         oracao: imgData.oracao || '',
+        youtube_url: (imgData.youtube_url || '').trim(),
         is_user_upload: true,
         created_at: new Date().toISOString()
     };

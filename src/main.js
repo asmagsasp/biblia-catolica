@@ -1020,13 +1020,16 @@ function renderGalleryGrid() {
   list.forEach((img, idx) => {
     const isFav = img.is_favorite;
     const isUpload = img.is_user_upload;
+    const hasYt = img.youtube_url && img.youtube_url.trim().length > 0;
     const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
     const ref = hasBook 
       ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
       : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
     const txt = (img.texto || '').trim();
     const oracao = (img.oracao || '').trim();
-    const imgSrc = img.address || img.url || '';
+    const ytUrl = (img.youtube_url || '').trim();
+    const ytId = hasYt ? getYouTubeVideoId(ytUrl) : null;
+    const imgSrc = img.address || img.url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '');
 
     h += `
       <div class="gallery-card" onclick="openGalleryLightbox(${idx})">
@@ -1034,8 +1037,14 @@ function renderGalleryGrid() {
                onerror="this.parentElement.style.background='linear-gradient(135deg, #2D1018 0%, #1A0A0E 100%)';this.style.opacity='0.2'">
           
           <div class="gallery-card-badge">${ref}</div>
+          ${hasYt ? `<div class="gallery-card-yt-badge"><i class="fab fa-youtube"></i> Vídeo</div>` : ''}
           
           <div class="gallery-card-actions" onclick="event.stopPropagation()">
+              ${hasYt ? `
+              <button class="gallery-action-btn btn-youtube" title="Assistir Vídeo no App"
+                      onclick="openYouTubePlayer(event, '${escapeHtml(ytUrl)}', '${escapeHtml(ref)}', '${escapeHtml(txt)}', '${escapeHtml(oracao)}')">
+                  <i class="fab fa-youtube" style="color:#ff0000;"></i>
+              </button>` : ''}
               <button class="gallery-action-btn btn-heart ${isFav ? 'active' : ''}" 
                       title="${isFav ? 'Remover dos favoritos' : 'Favoritar imagem'}" 
                       onclick="toggleCardFavorite(event, '${img.id}', '${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}')">
@@ -1219,6 +1228,11 @@ function updateLightboxContent() {
   if (delBtn) {
     delBtn.classList.toggle('hidden', !img.is_user_upload);
   }
+
+  const ytBtn = document.getElementById('lightboxBtnYouTube');
+  if (ytBtn) {
+    ytBtn.classList.toggle('hidden', !img.youtube_url);
+  }
 }
 
 window.closeGalleryLightbox = function () {
@@ -1361,8 +1375,98 @@ document.addEventListener('keydown', (e) => {
     navigateLightbox(1);
   } else if (e.key === 'Escape') {
     closeGalleryLightbox();
+    closeYouTubePlayer();
   }
 });
+
+// ===== IN-APP YOUTUBE THEATER PLAYER =====
+export function getYouTubeVideoId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const str = url.trim();
+  const regExp = /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/;
+  const match = str.match(regExp);
+  return (match && match[1].length === 11) ? match[1] : null;
+}
+
+window.handleStudioYtInput = function (val) {
+  const previewBox = document.getElementById('studioYtPreviewBox');
+  if (!val || !val.trim()) {
+    if (previewBox) {
+      previewBox.innerHTML = '';
+      previewBox.classList.add('hidden');
+    }
+  }
+};
+
+window.testStudioYtVideo = function (url) {
+  const previewBox = document.getElementById('studioYtPreviewBox');
+  if (!url || !url.trim()) {
+    showToast('Insira um link do YouTube para testar');
+    return;
+  }
+  const videoId = getYouTubeVideoId(url);
+  if (!videoId) {
+    showToast('Link do YouTube inválido ou não reconhecido');
+    return;
+  }
+  if (previewBox) {
+    previewBox.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0" title="Prévia YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    previewBox.classList.remove('hidden');
+    showToast('▶ Vídeo do YouTube carregado com sucesso!');
+  }
+};
+
+window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao = '') {
+  if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+  if (!youtubeUrl) return;
+
+  const videoId = getYouTubeVideoId(youtubeUrl);
+  if (!videoId) {
+    showToast('Link do YouTube inválido');
+    return;
+  }
+
+  const modal = document.getElementById('youtubePlayerModal');
+  const iframe = document.getElementById('youtubeIframe');
+  const titleEl = document.getElementById('ytPlayerTitle');
+  const refEl = document.getElementById('ytPlayerRef');
+  const verseBox = document.getElementById('ytPlayerVerseBox');
+  const verseTextEl = document.getElementById('ytPlayerVerseText');
+  const oracaoEl = document.getElementById('ytPlayerOracao');
+
+  if (titleEl) titleEl.textContent = ref || 'Vídeo Sagrado';
+  if (refEl) refEl.textContent = ref ? `Passagem: ${ref}` : 'Louvor & Meditação Católica';
+  if (verseTextEl) verseTextEl.textContent = txt ? `“${txt}”` : '';
+  if (oracaoEl) oracaoEl.textContent = oracao ? `Oração: ${oracao}` : '';
+  if (verseBox) verseBox.classList.toggle('hidden', !txt && !oracao);
+
+  if (iframe) {
+    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`;
+  }
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeYouTubePlayer = function () {
+  const modal = document.getElementById('youtubePlayerModal');
+  const iframe = document.getElementById('youtubeIframe');
+  if (iframe) iframe.src = '';
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+};
+
+window.openLightboxYouTube = function () {
+  const img = currentLightboxList[activeLightboxIndex];
+  if (!img || !img.youtube_url) return;
+  const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+  const ref = hasBook 
+    ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
+    : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
+  openYouTubePlayer(null, img.youtube_url, ref, img.texto, img.oracao);
+};
 
 // Canonical list of all 73 Catholic Books for instant synchronous dropdowns
 const CATHOLIC_BOOKS = [
@@ -1720,15 +1824,20 @@ window.saveUploadedImage = async function () {
   const ver = (bookId && verInput && verInput.value) ? parseInt(verInput.value) : null;
   const txt = verseTextArea ? verseTextArea.value.trim() : '';
   const oracao = oracaoInput ? oracaoInput.value.trim() : '';
+  const ytInput = document.getElementById('uploadYoutubeUrl');
+  const ytUrl = ytInput ? ytInput.value.trim() : '';
+  const ytId = getYouTubeVideoId(ytUrl);
 
-  if (!uploadedImageData && !txt) {
-    showToast('Por favor, adicione uma foto ou link de imagem para salvar.');
+  if (!uploadedImageData && !txt && !ytId) {
+    showToast('Por favor, adicione uma foto, versículo ou link do YouTube para salvar.');
     return;
   }
 
-  // If no image uploaded, generate a studio canvas card automatically
+  // If no image uploaded, use YouTube thumbnail or generate a studio canvas card automatically
   let finalImgAddress = uploadedImageData;
-  if (!finalImgAddress) {
+  if (!finalImgAddress && ytId) {
+    finalImgAddress = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  } else if (!finalImgAddress) {
     updateStudioCard();
     const canvas = document.getElementById('studioCanvas');
     finalImgAddress = canvas ? canvas.toDataURL('image/jpeg', 0.9) : '';
@@ -1743,14 +1852,17 @@ window.saveUploadedImage = async function () {
       id_versiculo: ver,
       texto: txt,
       address: finalImgAddress,
-      oracao: oracao
+      oracao: oracao,
+      youtube_url: ytUrl
     });
 
     closeGalleryUploadModal();
     showToast('✨ Imagem adicionada com sucesso à Galeria!');
     
-    // Switch to "Meus Uploads" to immediately show what was added
-    filterGalleryCategory('uploads', document.querySelector('.gallery-chip[data-category="uploads"]'));
+    // Switch to "Meus Uploads" or "Com Vídeo" to immediately show what was added
+    const targetCategory = ytUrl ? 'videos' : 'uploads';
+    const chipSelector = `.gallery-chip[data-category="${targetCategory}"]`;
+    filterGalleryCategory(targetCategory, document.querySelector(chipSelector));
   } catch (err) {
     console.error("Save image error:", err);
     showToast('Erro ao salvar imagem');
@@ -2251,6 +2363,8 @@ window.saveStudioCardToGallery = async function () {
   const txt = verseTextArea ? verseTextArea.value.trim() : '';
   const finalTxt = narrativa || txt;
   const oracao = oracaoInput ? oracaoInput.value.trim() : '';
+  const aiYtInput = document.getElementById('aiYoutubeUrl');
+  const aiYtUrl = aiYtInput ? aiYtInput.value.trim() : '';
 
   // Use canvas dataUrl (which contains the composed artwork with or without overlay)
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
@@ -2264,12 +2378,14 @@ window.saveStudioCardToGallery = async function () {
       id_versiculo: ver,
       texto: finalTxt,
       address: dataUrl,
-      oracao: oracao
+      oracao: oracao,
+      youtube_url: aiYtUrl
     });
 
     closeGalleryUploadModal();
     showToast('✨ Arte Sacra salva com sucesso na sua Galeria!');
-    filterGalleryCategory('uploads', document.querySelector('.gallery-chip[data-category="uploads"]'));
+    const targetCategory = aiYtUrl ? 'videos' : 'uploads';
+    filterGalleryCategory(targetCategory, document.querySelector(`.gallery-chip[data-category="${targetCategory}"]`));
   } catch (err) {
     showToast('Erro ao salvar arte na galeria');
   }

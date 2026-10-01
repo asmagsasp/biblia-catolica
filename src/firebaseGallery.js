@@ -20,7 +20,7 @@ export async function getFirebaseGalleryImages() {
 
         const items = [];
         for (const [key, val] of Object.entries(data)) {
-            if (val && (val.address || val.texto)) {
+            if (val && (val.address || val.texto || val.youtube_url)) {
                 items.push({
                     id: key,
                     firebase_key: key,
@@ -31,6 +31,7 @@ export async function getFirebaseGalleryImages() {
                     texto: val.texto || '',
                     address: val.address || val.url || '',
                     oracao: val.oracao || '',
+                    youtube_url: val.youtube_url || '',
                     is_user_upload: true,
                     created_at: val.created_at || new Date().toISOString()
                 });
@@ -81,6 +82,7 @@ export async function saveImageToFirebase(imgData) {
             texto: imgData.texto || '',
             address: imgData.address || imgData.url || '',
             oracao: imgData.oracao || '',
+            youtube_url: imgData.youtube_url || '',
             is_user_upload: true,
             created_at: imgData.created_at || new Date().toISOString()
         };
