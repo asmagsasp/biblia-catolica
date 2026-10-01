@@ -1005,7 +1005,6 @@ function renderGalleryGrid() {
                onerror="this.parentElement.style.background='linear-gradient(135deg, #2D1018 0%, #1A0A0E 100%)';this.style.opacity='0.2'">
           
           <div class="gallery-card-badge">${ref}</div>
-          ${isUpload ? '<div class="gallery-card-user-tag"><i class="fas fa-sparkles"></i> Minha Imagem</div>' : ''}
           
           <div class="gallery-card-actions" onclick="event.stopPropagation()">
               <button class="gallery-action-btn btn-heart ${isFav ? 'active' : ''}" 
@@ -1158,7 +1157,6 @@ function updateLightboxContent() {
     modalImg.alt = ref;
   }
   if (refBadge) refBadge.textContent = ref;
-  if (uploadBadge) uploadBadge.classList.toggle('hidden', !img.is_user_upload);
   if (title) title.textContent = ref;
   if (oracao) {
     oracao.textContent = oracaoTxt ? `Oração: “${oracaoTxt}”` : '';
