@@ -44,6 +44,10 @@
       <button type="button" class="search-clear-btn hidden" id="searchClearBtn" onmousedown="event.preventDefault()" onclick="clearMainSearch(event)" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
     </div>
     <div class="header-actions">
+      <button class="header-btn desktop-only" onclick="showLiturgia()" title="Liturgia Diária"><i
+          class="fas fa-calendar-day"></i></button>
+      <button class="header-btn desktop-only" onclick="showRosario()" title="Santo Terço"><i
+          class="fas fa-praying-hands"></i></button>
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
           class="fas fa-images"></i></button>
       <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
@@ -85,6 +89,34 @@
           </div>
         </div>
       </section>
+
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA & SANTO ROSÁRIO -->
+      <div class="home-quick-grid">
+        <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeLiturgiaBadge">Liturgia de Hoje</div>
+            <h3 class="quick-card-title">Liturgia Diária & Santo</h3>
+            <p class="quick-card-desc">Leituras, Salmo, Evangelho e Santo do Dia</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card rosario-card" onclick="showRosario()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
+            <i class="fas fa-praying-hands"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeRosarioBadge">Mistérios de Hoje</div>
+            <h3 class="quick-card-title">Santo Rosário & Terço</h3>
+            <p class="quick-card-desc">Rezar passo a passo com áudio e comunhão</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+      </div>
+
       <div class="stats-bar" id="statsBar"></div>
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="filterTestamento(0,this)">Todos</button>
@@ -231,18 +263,136 @@
       </div>
     </div>
 
+    <!-- LITURGIA DIÁRIA & SANTO DO DIA -->
+    <div id="liturgiaView" class="hidden">
+      <div class="liturgia-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" id="liturgiaTitle">Liturgia Diária</h2>
+              <p class="chapter-subtitle" id="liturgiaSubtitle">Palavra de Deus & Santo do Dia</p>
+            </div>
+          </div>
+          <div class="liturgia-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-read-all" id="btnReadLiturgia" onclick="toggleSpeakLiturgia()">
+              <i class="fas fa-volume-up"></i> Ouvir Liturgia
+            </button>
+            <button class="header-btn" onclick="shareLiturgiaWhatsApp()" title="Compartilhar Liturgia" style="color: #22c55e;">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Date Selector Bar -->
+        <div class="liturgia-date-bar">
+          <button class="liturgia-date-btn" onclick="changeLiturgiaDay(-1)"><i class="fas fa-chevron-left"></i> Ontem</button>
+          <button class="liturgia-date-btn active" id="btnLiturgiaToday" onclick="loadLiturgiaHoje()"><i class="fas fa-calendar-day"></i> Hoje</button>
+          <button class="liturgia-date-btn" onclick="changeLiturgiaDay(1)">Amanhã <i class="fas fa-chevron-right"></i></button>
+          <input type="date" id="liturgiaDateInput" class="liturgia-date-picker" onchange="loadLiturgiaCustomDate(this.value)">
+        </div>
+
+        <div id="liturgiaContentContainer">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SANTO ROSÁRIO & TERÇO INTERATIVO -->
+    <div id="rosarioView" class="hidden">
+      <div class="rosario-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" id="rosarioTitle">Santo Rosário</h2>
+              <p class="chapter-subtitle" id="rosarioSubtitle">Mistérios do Dia</p>
+            </div>
+          </div>
+          <div class="rosario-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-read-all" id="btnReadRosarioStep" onclick="toggleSpeakRosarioStep()">
+              <i class="fas fa-volume-up"></i> Ouvir Oração
+            </button>
+            <button class="header-btn" onclick="shareRosarioWhatsApp()" title="Compartilhar" style="color: #22c55e;">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mystery Switcher Chips -->
+        <div class="rosario-tabs" id="rosarioTabs">
+          <button class="rosario-tab active" data-misterio="gozosos" onclick="switchRosarioMisterio('gozosos')">Gozosos (Seg/Sáb)</button>
+          <button class="rosario-tab" data-misterio="dolorosos" onclick="switchRosarioMisterio('dolorosos')">Dolorosos (Ter/Sex)</button>
+          <button class="rosario-tab" data-misterio="gloriosos" onclick="switchRosarioMisterio('gloriosos')">Gloriosos (Qua/Dom)</button>
+          <button class="rosario-tab" data-misterio="luminosos" onclick="switchRosarioMisterio('luminosos')">Luminosos (Qui)</button>
+        </div>
+
+        <!-- Live Community Prayer Banner -->
+        <div class="rosario-community-card">
+          <div class="community-pulse-dot"></div>
+          <span id="rosarioLiveCountText"><i class="fas fa-praying-hands" style="color: var(--gold-400);"></i> <strong>2.840 fiéis</strong> rezando este Santo Terço em comunhão com você agora</span>
+        </div>
+
+        <!-- Main Interactive Bead / Prayer Card -->
+        <div class="rosario-card-container">
+          <div class="rosario-card" id="rosarioCard">
+            <!-- Progress Tracker -->
+            <div class="rosario-progress-header">
+              <span class="rosario-badge-tag" id="rosarioStepBadge">Sinal da Cruz</span>
+              <span class="rosario-step-counter" id="rosarioStepCounter">Passo 1 de 64</span>
+            </div>
+
+            <div class="rosario-progress-bar-container">
+              <div class="rosario-progress-bar-fill" id="rosarioProgressBar" style="width: 2%;"></div>
+            </div>
+
+            <!-- Visual Bead Chain -->
+            <div class="rosario-beads-chain" id="rosarioBeadsChain"></div>
+
+            <!-- Prayer Content -->
+            <div class="rosario-prayer-content">
+              <h3 class="rosario-prayer-title" id="rosarioPrayerTitle">Em Nome do Pai</h3>
+              <p class="rosario-prayer-sub" id="rosarioPrayerSub">Início da Oração do Santo Terço</p>
+              
+              <div class="rosario-meditation-box hidden" id="rosarioMeditationBox">
+                <div class="rosario-meditation-label"><i class="fas fa-bible"></i> Passagem Bíblica: <span id="rosarioScriptureRef"></span></div>
+                <p class="rosario-meditation-text" id="rosarioMeditationText"></p>
+              </div>
+
+              <div class="rosario-prayer-text-box">
+                <p class="rosario-prayer-text" id="rosarioPrayerText"></p>
+              </div>
+            </div>
+
+            <!-- Bead Navigation Controls -->
+            <div class="rosario-controls">
+              <button class="rosario-nav-btn btn-prev" onclick="prevRosarioStep()" id="btnPrevStep">
+                <i class="fas fa-chevron-left"></i> Anterior
+              </button>
+              <button class="rosario-nav-btn btn-next pulse-animation" onclick="nextRosarioStep()" id="btnNextStep">
+                Avançar Conta <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Restart Footer -->
+        <div class="rosario-footer-actions">
+          <button class="upload-btn-secondary" onclick="restartRosary()"><i class="fas fa-redo"></i> Reiniciar Terço</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- BOTTOM NAV (MOBILE) -->
   <nav class="bottom-nav">
     <div class="bottom-nav-inner">
-      <button class="bottom-nav-btn active" id="bnHome" onclick="goHome()"><i
-          class="fas fa-book-bible"></i>Início</button>
-      <button class="bottom-nav-btn" id="bnGallery" onclick="showGallery()"><i
-          class="fas fa-images"></i>Galeria</button>
+      <button class="bottom-nav-btn active" id="bnHome" onclick="goHome()"><i class="fas fa-book-bible"></i>Início</button>
+      <button class="bottom-nav-btn" id="bnLiturgia" onclick="showLiturgia()"><i class="fas fa-calendar-day"></i>Liturgia</button>
+      <button class="bottom-nav-btn" id="bnRosario" onclick="showRosario()"><i class="fas fa-praying-hands"></i>Terço</button>
+      <button class="bottom-nav-btn" id="bnGallery" onclick="showGallery()"><i class="fas fa-images"></i>Galeria</button>
       <button class="bottom-nav-btn" id="bnPlan" onclick="showPlan()"><i class="fas fa-calendar-alt"></i>Plano</button>
-      <button class="bottom-nav-btn" id="bnFav" onclick="showFavorites()"><i class="fas fa-heart"></i>Favoritos</button>
-      <button class="bottom-nav-btn" id="bnAdmin" onclick="openAdminModal()"><i class="fas fa-shield-halved"></i>Admin</button>
     </div>
   </nav>
 

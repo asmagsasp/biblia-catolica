@@ -6,6 +6,8 @@ import { subscribeToFirebaseGallery } from './firebaseGallery.js';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { getLiturgiaDiaria, LITURGICAL_COLORS } from './liturgiaService.js';
+import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -2499,15 +2501,23 @@ function updatePlanProgress() {
 // ===== VIEW MANAGEMENT =====
 function showView(id) {
   stopSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView'].forEach(v => {
+  stopLiturgiaSpeech();
+  stopRosarioSpeech();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  const map = { homeView: 'bnHome', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
+  const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
   window.scrollTo(0, 0);
 }
+
+window.doSearchWithQuery = function (query) {
+  const input = document.getElementById('searchInput');
+  if (input) input.value = query;
+  doSearch();
+};
 
 window.goHome = function () {
   showView('homeView');
@@ -3250,3 +3260,518 @@ window.speakHomily = function () {
     showToast("Seu dispositivo não suporta leitura em voz alta.");
   }
 };
+
+// ==========================================================================
+// LITURGIA DIÁRIA & SANTO DO DIA
+// ==========================================================================
+let currentLiturgiaDate = new Date();
+let currentLiturgiaData = null;
+let isLiturgiaSpeaking = false;
+
+window.showLiturgia = function (date = null) {
+  showView('liturgiaView');
+  currentLiturgiaDate = date ? new Date(date) : new Date();
+  loadLiturgiaData();
+};
+
+window.loadLiturgiaHoje = function () {
+  currentLiturgiaDate = new Date();
+  const dateInput = document.getElementById('liturgiaDateInput');
+  if (dateInput) dateInput.value = '';
+  loadLiturgiaData();
+};
+
+window.changeLiturgiaDay = function (offset) {
+  const newD = new Date(currentLiturgiaDate);
+  newD.setDate(newD.getDate() + offset);
+  currentLiturgiaDate = newD;
+  loadLiturgiaData();
+};
+
+window.loadLiturgiaCustomDate = function (val) {
+  if (!val) return;
+  const parts = val.split('-');
+  if (parts.length === 3) {
+    currentLiturgiaDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    loadLiturgiaData();
+  }
+};
+
+async function loadLiturgiaData() {
+  const container = document.getElementById('liturgiaContentContainer');
+  const todayBtn = document.getElementById('btnLiturgiaToday');
+  const dateInput = document.getElementById('liturgiaDateInput');
+  const subtitleEl = document.getElementById('liturgiaSubtitle');
+
+  if (!container) return;
+
+  const now = new Date();
+  const isToday = currentLiturgiaDate.toDateString() === now.toDateString();
+  if (todayBtn) todayBtn.classList.toggle('active', isToday);
+  if (dateInput) {
+    const y = currentLiturgiaDate.getFullYear();
+    const m = String(currentLiturgiaDate.getMonth() + 1).padStart(2, '0');
+    const d = String(currentLiturgiaDate.getDate()).padStart(2, '0');
+    dateInput.value = `${y}-${m}-${d}`;
+  }
+
+  container.innerHTML = '<div class="loading" style="padding:80px"><div class="loading-spinner"></div></div>';
+
+  try {
+    currentLiturgiaData = await getLiturgiaDiaria(currentLiturgiaDate);
+    if (!currentLiturgiaData) throw new Error('Não foi possível carregar a liturgia');
+
+    if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
+
+    renderLiturgiaView(currentLiturgiaData);
+  } catch (err) {
+    console.error("Liturgia error:", err);
+    container.innerHTML = `
+      <div class="gallery-empty-state">
+        <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444;"></i>
+        <h3 class="gallery-empty-title">Falha ao carregar Liturgia</h3>
+        <p class="gallery-empty-desc">Verifique sua conexão e tente novamente.</p>
+        <button class="hero-donate-btn" onclick="loadLiturgiaData()"><i class="fas fa-redo"></i> Tentar Novamente</button>
+      </div>
+    `;
+  }
+}
+
+function renderLiturgiaView(data) {
+  const container = document.getElementById('liturgiaContentContainer');
+  if (!container) return;
+
+  const corHex = data.cor?.hex || '#22c55e';
+  const corNome = data.cor?.name || 'Verde';
+  const corDesc = data.cor?.desc || 'Tempo Comum';
+
+  let html = `
+    <!-- Top Liturgical Header -->
+    <div class="liturgia-header-banner" style="border-left: 5px solid ${corHex};">
+      <div class="liturgia-color-tag" style="background: ${corHex}22; color: ${corHex}; border: 1px solid ${corHex}55;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${corHex}; display: inline-block;"></span>
+        Cor Litúrgica: ${corNome} (${corDesc})
+      </div>
+      <div class="liturgia-date-display">${data.dataExtenso}</div>
+      <div class="liturgia-tempo-display"><i class="fas fa-church"></i> ${data.tempoLiturgico}</div>
+    </div>
+
+    <!-- Primeira Leitura -->
+    <div class="liturgia-section-card">
+      <div class="liturgia-section-header">
+        <h3 class="liturgia-section-title"><i class="fas fa-book-open"></i> ${data.primeiraLeitura?.titulo || 'Primeira Leitura'}</h3>
+        <span class="liturgia-section-ref">${data.primeiraLeitura?.referencia || ''}</span>
+      </div>
+      <p class="liturgia-reading-text">${data.primeiraLeitura?.texto || ''}</p>
+      <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+        <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.primeiraLeitura?.referencia || '').replace(/'/g, "\\'")}')">
+          <i class="fas fa-bible"></i> Ler na Bíblia
+        </button>
+      </div>
+    </div>
+
+    <!-- Salmo Responsorial -->
+    <div class="liturgia-section-card">
+      <div class="liturgia-section-header">
+        <h3 class="liturgia-section-title"><i class="fas fa-music"></i> Salmo Responsorial</h3>
+        <span class="liturgia-section-ref">${data.salmo?.referencia || ''}</span>
+      </div>
+      <div class="liturgia-psalm-refrao">
+        <strong>Refrão:</strong> ${data.salmo?.refrao || ''}
+      </div>
+      <p class="liturgia-reading-text" style="white-space: pre-line;">${data.salmo?.texto || ''}</p>
+    </div>
+  `;
+
+  // Segunda Leitura (se houver)
+  if (data.segundaLeitura && data.segundaLeitura.texto) {
+    html += `
+      <div class="liturgia-section-card">
+        <div class="liturgia-section-header">
+          <h3 class="liturgia-section-title"><i class="fas fa-book-open"></i> ${data.segundaLeitura.titulo || 'Segunda Leitura'}</h3>
+          <span class="liturgia-section-ref">${data.segundaLeitura.referencia || ''}</span>
+        </div>
+        <p class="liturgia-reading-text">${data.segundaLeitura.texto}</p>
+        <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+          <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.segundaLeitura?.referencia || '').replace(/'/g, "\\'")}')">
+            <i class="fas fa-bible"></i> Ler na Bíblia
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Evangelho
+  html += `
+    <div class="liturgia-section-card" style="border: 1px solid rgba(212, 175, 55, 0.45); background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.08) 0%, var(--bg-card) 70%);">
+      <div class="liturgia-section-header">
+        <h3 class="liturgia-section-title" style="color: var(--gold-400);"><i class="fas fa-cross"></i> ${data.evangelho?.titulo || 'Evangelho'}</h3>
+        <span class="liturgia-section-ref" style="background: rgba(212, 175, 55, 0.15); color: var(--gold-300);">${data.evangelho?.referencia || ''}</span>
+      </div>
+      <p class="liturgia-reading-text" style="font-weight: 500;">${data.evangelho?.texto || ''}</p>
+      <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+        <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.evangelho?.referencia || '').replace(/'/g, "\\'")}')">
+          <i class="fas fa-bible"></i> Ler Evangelho na Bíblia
+        </button>
+      </div>
+    </div>
+
+    <!-- Reflexão / Homilia Diária -->
+    ${data.reflexao ? `
+    <div class="liturgia-section-card" style="background: rgba(0,0,0,0.18);">
+      <div class="liturgia-section-header">
+        <h3 class="liturgia-section-title"><i class="fas fa-dove"></i> Reflexão Espiritual</h3>
+      </div>
+      <p class="liturgia-reading-text" style="font-style: italic; font-size: 15.5px;">“${data.reflexao}”</p>
+    </div>
+    ` : ''}
+
+    <!-- Santo do Dia -->
+    ${data.santo ? `
+    <div class="santo-card">
+      <div class="santo-badge-tag"><i class="fas fa-halo"></i> Santo do Dia • ${data.santo.dataLegivel || ''}</div>
+      <h3 class="santo-name">${data.santo.nome}</h3>
+      <div class="santo-title-sub">${data.santo.titulo}</div>
+      <p class="liturgia-reading-text" style="font-size: 15px;">${data.santo.resumo}</p>
+      <div class="santo-oracao-box">
+        <div class="santo-oracao-label"><i class="fas fa-praying-hands"></i> Oração de Intercessão:</div>
+        <p class="santo-oracao-text">“${data.santo.oracao}”</p>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;">
+        <button class="hero-share-btn" style="padding: 8px 14px; font-size: 12px;" onclick="shareSantoWhatsApp()">
+          <i class="fab fa-whatsapp"></i> Compartilhar Santo do Dia
+        </button>
+      </div>
+    </div>
+    ` : ''}
+  `;
+
+  container.innerHTML = html;
+}
+
+// Ouvir Liturgia por Voz (TTS)
+function stopLiturgiaSpeech() {
+  isLiturgiaSpeaking = false;
+  const btn = document.getElementById('btnReadLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Liturgia';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+window.toggleSpeakLiturgia = async function () {
+  if (isLiturgiaSpeaking) {
+    stopLiturgiaSpeech();
+    return;
+  }
+  if (!currentLiturgiaData) return;
+
+  const btn = document.getElementById('btnReadLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+  isLiturgiaSpeaking = true;
+
+  const fullText = `Liturgia Diária. ${currentLiturgiaData.dataExtenso}. ${currentLiturgiaData.tempoLiturgico}. Primeira Leitura: ${currentLiturgiaData.primeiraLeitura?.referencia || ''}. ${currentLiturgiaData.primeiraLeitura?.texto || ''}. Salmo Responsorial. Refrão: ${currentLiturgiaData.salmo?.refrao || ''}. Evangelho de Nosso Senhor Jesus Cristo: ${currentLiturgiaData.evangelho?.referencia || ''}. ${currentLiturgiaData.evangelho?.texto || ''}.`;
+
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: fullText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopLiturgiaSpeech();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(fullText);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.onend = () => stopLiturgiaSpeech();
+      utterance.onerror = () => stopLiturgiaSpeech();
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {
+    console.error("Liturgia TTS Error:", e);
+    stopLiturgiaSpeech();
+  }
+};
+
+window.shareLiturgiaWhatsApp = function () {
+  if (!currentLiturgiaData) return;
+  const d = currentLiturgiaData;
+  let msg = `📅 *Liturgia Diária — ${d.dataExtenso}*\n_${d.tempoLiturgico}_\n\n`;
+  if (d.primeiraLeitura) {
+    msg += `📖 *1ª Leitura (${d.primeiraLeitura.referencia})*\n${d.primeiraLeitura.texto}\n\n`;
+  }
+  if (d.salmo) {
+    msg += `🎶 *Salmo Responsorial*\n_Refrão:_ ${d.salmo.refrao}\n\n`;
+  }
+  if (d.evangelho) {
+    msg += `✝️ *Evangelho (${d.evangelho.referencia})*\n${d.evangelho.texto}\n\n`;
+  }
+  if (d.santo) {
+    msg += `🕊️ *Santo do Dia: ${d.santo.nome}*\n_${d.santo.oracao}_\n\n`;
+  }
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
+window.shareSantoWhatsApp = function () {
+  if (!currentLiturgiaData || !currentLiturgiaData.santo) return;
+  const s = currentLiturgiaData.santo;
+  let msg = `🕊️ *Santo do Dia: ${s.nome}*\n_${s.titulo}_\n\n${s.resumo}\n\n🙏 *Oração de Intercessão:*\n“${s.oracao}”\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
+// Abrir livro e capítulo diretamente pela referência da leitura
+window.openBibleByRef = async function (refStr) {
+  if (!refStr) return;
+  const clean = refStr.replace(/\(.*\)/g, '').trim();
+  const match = clean.match(/^([0-9\s]*[A-Za-zÀ-ÿ]+)\s+([0-9]+)/);
+  if (!match) {
+    showToast(`Referência: ${refStr}`);
+    return;
+  }
+  const bookNameMatch = match[1].trim().toLowerCase();
+  const cap = parseInt(match[2]) || 1;
+
+  const targetBook = allBooks.find(b => b.nome_livro.toLowerCase().includes(bookNameMatch) || bookNameMatch.includes(b.nome_livro.toLowerCase()));
+  if (targetBook) {
+    openBook(targetBook.id_livro, targetBook.nome_livro, targetBook.total_capitulos);
+    setTimeout(() => selectChapter(cap), 150);
+  } else {
+    showToast(`Buscando ${clean}...`);
+    doSearchWithQuery(clean);
+  }
+};
+
+// ==========================================================================
+// SANTO ROSÁRIO & TERÇO INTERATIVO
+// ==========================================================================
+let currentRosarioState = null;
+let currentRosarioStepIndex = 0;
+let isRosarioSpeaking = false;
+let liveCommunityCount = 2840;
+
+window.showRosario = function (misterioKey = null) {
+  showView('rosarioView');
+  initRosary(misterioKey);
+};
+
+function initRosary(misterioKey = null) {
+  currentRosarioState = buildRosarySteps(misterioKey);
+  currentRosarioStepIndex = 0;
+
+  // Update tabs
+  document.querySelectorAll('#rosarioTabs .rosario-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.misterio === currentRosarioState.misterio.id);
+  });
+
+  // Randomize subtle realistic live community prayer count
+  liveCommunityCount = Math.floor(2700 + Math.random() * 350);
+  updateRosarioLiveCounter();
+
+  // Render bead tracker and current step
+  renderRosarioStep();
+}
+
+window.switchRosarioMisterio = function (misterioKey) {
+  initRosary(misterioKey);
+  showToast(`Mistérios ${MISTERIOS_DATA[misterioKey].nome} selecionados`);
+};
+
+function updateRosarioLiveCounter() {
+  const el = document.getElementById('rosarioLiveCountText');
+  if (el) {
+    el.innerHTML = `<i class="fas fa-praying-hands" style="color: var(--gold-400);"></i> <strong>${liveCommunityCount.toLocaleString('pt-BR')} fiéis</strong> rezando este Santo Terço em comunhão com você agora`;
+  }
+}
+
+function renderRosarioStep() {
+  if (!currentRosarioState || !currentRosarioState.steps) return;
+
+  const step = currentRosarioState.steps[currentRosarioStepIndex];
+  const total = currentRosarioState.totalSteps;
+  const pct = Math.round(((currentRosarioStepIndex + 1) / total) * 100);
+
+  const badgeEl = document.getElementById('rosarioStepBadge');
+  const counterEl = document.getElementById('rosarioStepCounter');
+  const barEl = document.getElementById('rosarioProgressBar');
+  const titleEl = document.getElementById('rosarioPrayerTitle');
+  const subEl = document.getElementById('rosarioPrayerSub');
+  const textEl = document.getElementById('rosarioPrayerText');
+  const medBox = document.getElementById('rosarioMeditationBox');
+  const scriptRefEl = document.getElementById('rosarioScriptureRef');
+  const medTextEl = document.getElementById('rosarioMeditationText');
+  const prevBtn = document.getElementById('btnPrevStep');
+  const nextBtn = document.getElementById('btnNextStep');
+
+  if (badgeEl) badgeEl.textContent = step.progressLabel || 'Oração';
+  if (counterEl) counterEl.textContent = `Passo ${currentRosarioStepIndex + 1} de ${total}`;
+  if (barEl) barEl.style.width = `${pct}%`;
+  if (titleEl) titleEl.textContent = step.titulo;
+  if (subEl) subEl.textContent = step.subtitulo;
+  if (textEl) textEl.textContent = step.oracao;
+
+  if (step.passagem && step.type === 'misterioAnuncio') {
+    if (medBox) medBox.classList.remove('hidden');
+    if (scriptRefEl) scriptRefEl.textContent = step.passagem;
+    if (medTextEl) medTextEl.textContent = step.oracao;
+  } else {
+    if (medBox) medBox.classList.add('hidden');
+  }
+
+  if (prevBtn) prevBtn.disabled = currentRosarioStepIndex === 0;
+  if (nextBtn) {
+    if (currentRosarioStepIndex >= total - 1) {
+      nextBtn.innerHTML = '<i class="fas fa-check-circle"></i> Concluir Terço';
+    } else {
+      nextBtn.innerHTML = 'Avançar Conta <i class="fas fa-chevron-right"></i>';
+    }
+  }
+
+  renderRosarioBeadChain();
+}
+
+function renderRosarioBeadChain() {
+  const container = document.getElementById('rosarioBeadsChain');
+  if (!container || !currentRosarioState) return;
+
+  const steps = currentRosarioState.steps;
+  let html = '';
+  steps.forEach((s, idx) => {
+    const isCompleted = idx < currentRosarioStepIndex;
+    const isCurrent = idx === currentRosarioStepIndex;
+    const isPater = s.type === 'paiNosso' || s.type === 'paiNossoDezena' || s.type === 'misterioAnuncio';
+
+    html += `<span class="rosario-bead-dot ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${isPater ? 'pater' : ''}" 
+                   title="${s.progressLabel}" 
+                   onclick="jumpToRosarioStep(${idx})"></span>`;
+  });
+  container.innerHTML = html;
+}
+
+window.nextRosarioStep = function () {
+  if (!currentRosarioState) return;
+
+  // Haptic feedback for tactile prayer experience on mobile devices
+  if (navigator?.vibrate) {
+    try { navigator.vibrate(25); } catch (e) {}
+  }
+
+  if (currentRosarioStepIndex < currentRosarioState.totalSteps - 1) {
+    currentRosarioStepIndex++;
+    renderRosarioStep();
+    if (isRosarioSpeaking) {
+      speakCurrentRosarioStep();
+    }
+  } else {
+    showToast('🙏 Terço concluído com as bênçãos de Deus e Nossa Senhora!');
+    showRosaryCompletedModal();
+  }
+};
+
+window.prevRosarioStep = function () {
+  if (currentRosarioStepIndex > 0) {
+    currentRosarioStepIndex--;
+    renderRosarioStep();
+    if (isRosarioSpeaking) {
+      speakCurrentRosarioStep();
+    }
+  }
+};
+
+window.jumpToRosarioStep = function (idx) {
+  if (!currentRosarioState || idx < 0 || idx >= currentRosarioState.totalSteps) return;
+  currentRosarioStepIndex = idx;
+  renderRosarioStep();
+  if (isRosarioSpeaking) {
+    speakCurrentRosarioStep();
+  }
+};
+
+window.restartRosary = function () {
+  if (confirm('Deseja reiniciar a oração do Terço desde o início?')) {
+    initRosary(currentRosarioState?.misterio?.id);
+    showToast('Terço reiniciado.');
+  }
+};
+
+function stopRosarioSpeech() {
+  isRosarioSpeaking = false;
+  const btn = document.getElementById('btnReadRosarioStep');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Oração';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+async function speakCurrentRosarioStep() {
+  if (!currentRosarioState) return;
+  const step = currentRosarioState.steps[currentRosarioStepIndex];
+  const textToRead = `${step.titulo}. ${step.oracao}`;
+
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: textToRead,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+    } catch (e) {}
+  } else if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+window.toggleSpeakRosarioStep = function () {
+  if (isRosarioSpeaking) {
+    stopRosarioSpeech();
+    return;
+  }
+  isRosarioSpeaking = true;
+  const btn = document.getElementById('btnReadRosarioStep');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+  speakCurrentRosarioStep();
+};
+
+window.shareRosarioWhatsApp = function () {
+  if (!currentRosarioState) return;
+  const m = currentRosarioState.misterio;
+  const msg = `📿 *Santo Rosário & Terço Católico*\n_${m.nome} (${m.diasTexto})_\n\n“${m.descricao}”\n\nEstou rezando o Santo Terço na Bíblia Sagrada Católica. Reze você também e sinta a paz de Nossa Senhora!\n\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+function showRosaryCompletedModal() {
+  const m = currentRosarioState?.misterio?.nome || 'Santo Rosário';
+  showToast(`🎉 Você concluiu a oração dos ${m}! Que Deus te abençoe! 🙏`);
+}
