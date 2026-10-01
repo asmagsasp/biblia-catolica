@@ -138,8 +138,8 @@ async function init() {
   await loadVersiculoDoDia();
   await loadStats();
 
-  // Remove splash com no mínimo 1.2 segundos de exibição suave para destacar o ícone
-  const MIN_SPLASH_TIME_MS = 1200;
+  // Remove splash com no mínimo 1.8 segundos de exibição suave para destacar o ícone
+  const MIN_SPLASH_TIME_MS = 1800;
   const elapsed = performance.now() - splashStartTime;
   const remainingTime = Math.max(0, MIN_SPLASH_TIME_MS - elapsed);
 

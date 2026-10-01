@@ -176,8 +176,8 @@ body::before {
 
 .splash-logo-container {
   position: relative;
-  width: 90px;
-  height: 90px;
+  width: 110px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,18 +186,20 @@ body::before {
 
 .splash-ring {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
+  inset: -8px;
+  border-radius: 28px;
   border: 2px dashed rgba(212, 175, 55, 0.4);
-  animation: spinSlow 18s linear infinite;
+  animation: pulseSacred 2.5s ease-in-out infinite;
 }
 
-.splash-ring::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+.splash-app-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px var(--gold-glow);
+  animation: pulseSacred 2.5s ease-in-out infinite;
+  z-index: 2;
 }
 
 .splash-cross {
