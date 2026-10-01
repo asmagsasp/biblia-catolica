@@ -2308,7 +2308,7 @@ function showToast(msg) {
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
 let donateInterval = null;
-const DONATE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos
+const DONATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 const DONATE_AUDIO_TEXT = "Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde Já fiz minha doação e o banner deixará de aparecer. Seja um evangelizador você também!";
 let isDonateAudioSpeaking = false;
 
@@ -2396,7 +2396,7 @@ async function checkAndStartDonateTimer() {
     }
 
     if (donateInterval) clearInterval(donateInterval);
-    console.log('[Donate] Timer de apoio ativado: abrirá a cada 2 minutos.');
+    console.log('[Donate] Timer de apoio ativado: abrirá a cada 5 minutos.');
 
     donateInterval = setInterval(async () => {
       try {
@@ -2411,7 +2411,7 @@ async function checkAndStartDonateTimer() {
         const homilyVisible = homilyModal && !homilyModal.classList.contains('hidden');
 
         if (modal && modal.classList.contains('hidden') && !homilyVisible) {
-          console.log('[Donate] 2 minutos decorridos. Exibindo modal de apoio.');
+          console.log('[Donate] 5 minutos decorridos. Exibindo modal de apoio.');
           showDonateModal();
         }
       } catch (err) {
