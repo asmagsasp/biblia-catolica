@@ -890,7 +890,7 @@ let gallerySearchDebounceTimer = null;
 
 window.showGallery = function () {
   showView('galleryView');
-  loadGalleryData();
+  loadGalleryData(true);
 };
 
 async function loadGalleryData(forceRefresh = false) {

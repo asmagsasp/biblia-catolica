@@ -1,4 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
+import { getFirebaseGalleryImages, saveImageToFirebase, deleteImageFromFirebase } from './firebaseGallery.js';
 
 export let isDBReady = false;
 let useBackend = false;
@@ -488,16 +489,35 @@ export async function getFavoritos() {
 export async function getImgVersiculos(searchQuery = '', filterCategory = 'all') {
     let allImgs = [];
 
-    if (useBackend) {
+    // 1. Base canonical images (150 Holy Verses)
+    const baseImgs = (bibliaData && bibliaData.img_versiculos) ? bibliaData.img_versiculos.map((img, idx) => ({
+        id: `base_${idx + 1}`,
+        id_livro: img.id_livro,
+        nome_livro: img.nome_livro,
+        id_capitulo: img.id_capitulo,
+        id_versiculo: img.id_versiculo,
+        texto: img.texto,
+        address: img.address || img.url,
+        oracao: img.oracao || '',
+        is_user_upload: false,
+        created_at: null
+    })) : [];
+
+    // 2. Fetch shared cloud images from Firebase Realtime Database
+    let cloudImgs = [];
+    try {
+        cloudImgs = await getFirebaseGalleryImages();
+    } catch (e) {
+        console.warn('[BibliaDB] Falha ao consultar Firebase, usando cache local:', e);
+    }
+
+    // 3. Fallback backend if Firebase returned empty
+    if (!cloudImgs.length && useBackend) {
         try {
-            const params = new URLSearchParams();
-            if (searchQuery) params.set('q', searchQuery);
-            if (filterCategory && filterCategory !== 'all' && filterCategory !== 'favorites') params.set('categoria', filterCategory);
-            
-            const res = await fetchWithTimeout(getApiUrl(`/api/img-versiculos?${params.toString()}`), {}, 5000);
+            const res = await fetchWithTimeout(getApiUrl('/api/img-versiculos'), {}, 3000);
             if (res.ok) {
                 const backendImgs = await res.json();
-                allImgs = backendImgs.map(img => ({
+                cloudImgs = backendImgs.filter(b => b.is_user_upload).map(img => ({
                     id: img.id,
                     id_livro: img.id_livro,
                     nome_livro: img.nome_livro,
@@ -506,70 +526,66 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
                     texto: img.texto,
                     address: img.address || img.url,
                     oracao: img.oracao || '',
-                    is_user_upload: !!img.is_user_upload,
+                    is_user_upload: true,
                     created_at: img.created_at
                 }));
-
-                // Mesclar imagens criadas localmente que ainda não foram sincronizadas
-                const backendIds = new Set(allImgs.map(x => String(x.id)));
-                for (const u of userImages) {
-                    if (typeof u.id === 'string' && u.id.startsWith('usr_') && !backendIds.has(String(u.id))) {
-                        allImgs.unshift({
-                            ...u,
-                            is_user_upload: true
-                        });
-                    }
-                }
-
-                // Disparar sincronização em segundo plano de imagens pendentes
-                syncPendingUserImagesToBackend().catch(() => {});
             }
         } catch (err) {
-            console.warn('[BibliaDB] Falha getImgVersiculos backend, usando local:', err);
+            console.warn('[BibliaDB] Backend fallback error:', err);
         }
     }
 
-    if (!allImgs.length) {
-        const baseImgs = (bibliaData && bibliaData.img_versiculos) ? bibliaData.img_versiculos.map((img, idx) => ({
-            id: `base_${idx + 1}`,
-            id_livro: img.id_livro,
-            nome_livro: img.nome_livro,
-            id_capitulo: img.id_capitulo,
-            id_versiculo: img.id_versiculo,
-            texto: img.texto,
-            address: img.address || img.url,
-            oracao: img.oracao || '',
-            is_user_upload: false,
-            created_at: null
-        })) : [];
+    // 4. Merge: Cloud uploaded images + local user images + base 150 canonical images
+    const seenKeys = new Set();
+    const mergedUploads = [];
 
-        allImgs = [...userImages, ...baseImgs];
-
-        // Apply local filtering
-        if (searchQuery && searchQuery.trim()) {
-            const q = searchQuery.toLowerCase().trim();
-            allImgs = allImgs.filter(img => {
-                const ref = `${img.nome_livro || ''} ${img.id_capitulo || ''},${img.id_versiculo || ''}`.toLowerCase();
-                return (
-                    (img.nome_livro && img.nome_livro.toLowerCase().includes(q)) ||
-                    (img.texto && img.texto.toLowerCase().includes(q)) ||
-                    (img.oracao && img.oracao.toLowerCase().includes(q)) ||
-                    ref.includes(q)
-                );
-            });
+    // Cloud images first
+    for (const img of cloudImgs) {
+        const key = `${img.nome_livro || ''}_${img.id_capitulo || ''}_${img.id_versiculo || ''}_${img.texto || ''}_${img.address || ''}`;
+        if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            seenKeys.add(String(img.id));
+            mergedUploads.push({ ...img, is_user_upload: true });
         }
+    }
 
-        if (filterCategory === 'uploads') {
-            allImgs = allImgs.filter(img => img.is_user_upload);
-        } else if (filterCategory === 'salmos') {
-            allImgs = allImgs.filter(img => img.id_livro === 21 || (img.nome_livro && img.nome_livro.toLowerCase().includes('salmo')));
-        } else if (filterCategory === 'evangelhos') {
-            allImgs = allImgs.filter(img => [47, 48, 49, 50].includes(img.id_livro));
-        } else if (filterCategory === 'at') {
-            allImgs = allImgs.filter(img => img.id_livro && img.id_livro <= 46);
-        } else if (filterCategory === 'nt') {
-            allImgs = allImgs.filter(img => img.id_livro && img.id_livro >= 47);
+    // Local user images (offline created)
+    for (const img of userImages) {
+        const key = `${img.nome_livro || ''}_${img.id_capitulo || ''}_${img.id_versiculo || ''}_${img.texto || ''}_${img.address || ''}`;
+        if (!seenKeys.has(key) && !seenKeys.has(String(img.id))) {
+            seenKeys.add(key);
+            mergedUploads.push({ ...img, is_user_upload: true });
+            // Auto sync to Firebase in background
+            saveImageToFirebase(img).catch(() => {});
         }
+    }
+
+    allImgs = [...mergedUploads, ...baseImgs];
+
+    // 5. Apply local filtering
+    if (searchQuery && searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        allImgs = allImgs.filter(img => {
+            const ref = `${img.nome_livro || ''} ${img.id_capitulo || ''},${img.id_versiculo || ''}`.toLowerCase();
+            return (
+                (img.nome_livro && img.nome_livro.toLowerCase().includes(q)) ||
+                (img.texto && img.texto.toLowerCase().includes(q)) ||
+                (img.oracao && img.oracao.toLowerCase().includes(q)) ||
+                ref.includes(q)
+            );
+        });
+    }
+
+    if (filterCategory === 'uploads') {
+        allImgs = allImgs.filter(img => img.is_user_upload);
+    } else if (filterCategory === 'salmos') {
+        allImgs = allImgs.filter(img => img.id_livro === 21 || (img.nome_livro && img.nome_livro.toLowerCase().includes('salmo')));
+    } else if (filterCategory === 'evangelhos') {
+        allImgs = allImgs.filter(img => [47, 48, 49, 50].includes(img.id_livro));
+    } else if (filterCategory === 'at') {
+        allImgs = allImgs.filter(img => img.id_livro && img.id_livro <= 46);
+    } else if (filterCategory === 'nt') {
+        allImgs = allImgs.filter(img => img.id_livro && img.id_livro >= 47);
     }
 
     // Attach favorites flag
@@ -592,42 +608,51 @@ export async function addImgVersiculo(imgData) {
         id_capitulo: imgData.id_capitulo ? parseInt(imgData.id_capitulo) : null,
         id_versiculo: imgData.id_versiculo ? parseInt(imgData.id_versiculo) : null,
         texto: imgData.texto || '',
-        address: imgData.address || '',
+        address: imgData.address || imgData.url || '',
         oracao: imgData.oracao || '',
         is_user_upload: true,
         created_at: new Date().toISOString()
     };
 
+    // 1. Save directly to Firebase Realtime Database (Global across all devices)
+    try {
+        const cloudSaved = await saveImageToFirebase(newImg);
+        if (cloudSaved && cloudSaved.id) {
+            newImg.id = cloudSaved.id;
+            newImg.firebase_key = cloudSaved.id;
+        } else {
+            newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        }
+    } catch (e) {
+        newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    }
+
+    // 2. Save locally for instant offline availability
+    userImages.unshift(newImg);
+    saveUserImagesLocal();
+
+    // 3. Backup to backend SQLite if available
     if (useBackend) {
         try {
-            const res = await fetchWithTimeout(getApiUrl('/api/img-versiculos'), {
+            fetchWithTimeout(getApiUrl('/api/img-versiculos'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newImg)
-            }, 15000);
-            if (res.ok) {
-                const created = await res.json();
-                newImg.id = created.id;
-                newImg.is_user_upload = true;
-                if (created.created_at) newImg.created_at = created.created_at;
-                userImages.unshift(newImg);
-                saveUserImagesLocal();
-                return newImg;
-            }
-        } catch (err) {
-            console.warn('[BibliaDB] Falha ao sincronizar nova imagem com backend:', err);
-        }
+            }, 10000).catch(() => {});
+        } catch (err) { }
     }
 
-    // Local fallback
-    newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    userImages.unshift(newImg);
-    saveUserImagesLocal();
     return newImg;
 }
 
 export async function deleteImgVersiculo(id) {
     const idStr = String(id);
+    const targetImg = userImages.find(img => String(img.id) === idStr);
+
+    // 1. Delete from Firebase Cloud
+    deleteImageFromFirebase(idStr, targetImg).catch(e => console.warn('[Firebase] Delete error:', e));
+
+    // 2. Delete from local cache
     userImages = userImages.filter(img => String(img.id) !== idStr);
     saveUserImagesLocal();
 
@@ -636,12 +661,11 @@ export async function deleteImgVersiculo(id) {
         saveFavoriteImagesLocal();
     }
 
-    if (useBackend) {
+    // 3. Delete from backend if available
+    if (useBackend && !idStr.startsWith('usr_')) {
         try {
-            await fetchWithTimeout(getApiUrl(`/api/img-versiculos/${id}`), { method: 'DELETE' }, 5000);
-        } catch (err) {
-            console.warn('[BibliaDB] Falha ao deletar imagem no backend:', err);
-        }
+            fetchWithTimeout(getApiUrl(`/api/img-versiculos/${id}`), { method: 'DELETE' }, 5000).catch(() => {});
+        } catch (err) { }
     }
 
     return true;
