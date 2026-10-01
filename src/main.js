@@ -2511,7 +2511,7 @@ function showView(id) {
     if (el) el.classList.toggle('hidden', v !== id);
   });
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
+  const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', velasView: 'bnVelas', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
   window.scrollTo(0, 0);
 }
