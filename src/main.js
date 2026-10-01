@@ -11,7 +11,6 @@ import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } fr
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
 import { sacredAudio, SACRED_TRACKS } from './audioAmbienteService.js';
 import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
-import { STORY_THEMES, renderStoryCanvas } from './storiesGeneratorService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -412,9 +411,6 @@ async function loadVerses() {
         <button class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
           <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
         </button>
-        <button class="btn-read-all" onclick="openStoriesModalWithCurrentChapter()" style="background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.4); color: #f472b6;" title="Criar Story 9:16">
-          <i class="fas fa-mobile-screen-button"></i> Story 9:16
-        </button>
         <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
           <i class="fas fa-church"></i> Homilia do Capítulo
         </button>
@@ -428,7 +424,6 @@ async function loadVerses() {
                 <div class="verse-actions">
                     <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Ouvir"><i class="fas fa-volume-up"></i></button>
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
-                    <button class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Story 9:16 (Status / Insta)" style="color: #f472b6;"><i class="fas fa-mobile-screen-button"></i></button>
                     <button class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
@@ -471,12 +466,6 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
     } catch (err) {
       console.error("Erro no Favorito:", err);
     }
-    return;
-  }
-  const storyBtn = e.target.closest('.story-btn');
-  if (storyBtn) {
-    e.stopPropagation();
-    openStoriesModalWithVerse(storyBtn.dataset.livro, storyBtn.dataset.cap, storyBtn.dataset.ver, storyBtn.dataset.txt);
     return;
   }
   const teologiaBtn = e.target.closest('.teologia-btn');
@@ -4311,9 +4300,6 @@ window.handleTeologiaSubmit = async function (e) {
           <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('${pergunta.replace(/'/g, "\\'")}')" style="font-size: 12.5px; padding: 8px 14px;">
             <i class="fab fa-whatsapp" style="color: #22c55e;"></i> Compartilhar no WhatsApp
           </button>
-          <button class="upload-btn-secondary" onclick="openStoriesModalWithText('${pergunta.replace(/'/g, "\\'")}')" style="font-size: 12.5px; padding: 8px 14px;">
-            <i class="fas fa-mobile-screen-button" style="color: #f472b6;"></i> Criar Story 9:16
-          </button>
         </div>`;
     }
 
@@ -4511,193 +4497,6 @@ window.shareTeologiaWhatsApp = function (titulo) {
 };
 
 
-// ==========================================================================
-// GERADOR DE STORIES & STATUS (FORMATO VERTICAL 9:16)
-// ==========================================================================
-let currentStoryTheme = 'ouro_imperial';
-let currentStoryBgImage = null;
 
-function initStoriesUI() {
-  const themeTabs = document.getElementById('storiesThemeTabs');
-  if (themeTabs && themeTabs.children.length === 0) {
-    let html = '';
-    STORY_THEMES.forEach(t => {
-      const isActive = t.id === currentStoryTheme;
-      html += `
-        <button class="stories-theme-chip ${isActive ? 'active' : ''}" 
-                id="theme_chip_${t.id}"
-                onclick="switchStoryTheme('${t.id}')">
-          ${t.nome}
-        </button>`;
-    });
-    themeTabs.innerHTML = html;
-  }
-}
-
-window.openStoriesModal = function (initialData = null) {
-  initStoriesUI();
-
-  const verseInput = document.getElementById('storyVerseText');
-  const refInput = document.getElementById('storyBookRef');
-  const oracaoInput = document.getElementById('storyOracaoInput');
-
-  if (initialData) {
-    if (verseInput && initialData.texto) verseInput.value = initialData.texto;
-    if (refInput && initialData.ref) refInput.value = initialData.ref;
-    if (oracaoInput && initialData.oracao) oracaoInput.value = initialData.oracao;
-    if (initialData.bgImage) currentStoryBgImage = initialData.bgImage;
-  } else if (!verseInput?.value) {
-    // Default fallback
-    if (heroData && heroData.texto) {
-      if (verseInput) verseInput.value = heroData.texto;
-      if (refInput) refInput.value = heroData.referencia || `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`;
-      if (oracaoInput) oracaoInput.value = heroData.oracao || '';
-    } else {
-      if (verseInput) verseInput.value = 'O Senhor é o meu pastor; nada me faltará.';
-      if (refInput) refInput.value = 'Salmos 23,1';
-      if (oracaoInput) oracaoInput.value = 'Senhor, conduzi os meus passos em Tua paz.';
-    }
-  }
-
-  const modal = document.getElementById('storiesModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    updateStoryPreview();
-  }
-};
-
-window.closeStoriesModal = function () {
-  const modal = document.getElementById('storiesModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-};
-
-window.openStoriesModalWithHero = function () {
-  if (heroData && heroData.texto) {
-    openStoriesModal({
-      texto: heroData.texto,
-      ref: heroData.referencia || `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`,
-      oracao: heroData.oracao || ''
-    });
-  } else {
-    openStoriesModal();
-  }
-};
-
-window.openStoriesModalWithVerse = function (livro, cap, ver, txt) {
-  openStoriesModal({
-    texto: txt,
-    ref: `${livro} ${cap},${ver}`,
-    oracao: ''
-  });
-};
-
-window.openStoriesModalWithCurrentChapter = async function () {
-  if (!currentBook) return;
-  const verses = await db.getVersiculos(currentBook.id, currentChapter);
-  const firstVerse = verses && verses.length > 0 ? verses[0].texto : 'A Palavra do Senhor permanece para sempre.';
-  openStoriesModal({
-    texto: firstVerse,
-    ref: `${currentBook.nome} ${currentChapter}`,
-    oracao: ''
-  });
-};
-
-window.openStoriesModalWithText = function (txt) {
-  openStoriesModal({
-    texto: txt,
-    ref: 'Doutores da Igreja & Fé Católica',
-    oracao: ''
-  });
-};
-
-window.switchStoryTheme = function (themeId) {
-  currentStoryTheme = themeId;
-  document.querySelectorAll('.stories-theme-chip').forEach(c => {
-    c.classList.toggle('active', c.id === `theme_chip_${themeId}`);
-  });
-  updateStoryPreview();
-};
-
-window.updateStoryPreview = function () {
-  const canvas = document.getElementById('storiesCanvas');
-  const verseInput = document.getElementById('storyVerseText');
-  const refInput = document.getElementById('storyBookRef');
-  const oracaoInput = document.getElementById('storyOracaoInput');
-
-  if (!canvas) return;
-
-  renderStoryCanvas(canvas, {
-    themeId: currentStoryTheme,
-    bgImage: currentStoryBgImage,
-    verseText: verseInput ? verseInput.value : '',
-    bookRef: refInput ? refInput.value : '',
-    oracaoText: oracaoInput ? oracaoInput.value : ''
-  });
-};
-
-window.downloadStoryImage = function () {
-  const canvas = document.getElementById('storiesCanvas');
-  if (!canvas) return;
-
-  const dataUrl = canvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = `story_biblia_${Date.now()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showToast('✨ Story HD (9:16) baixado com sucesso!');
-};
-
-window.shareStoryWhatsAppStatus = function () {
-  const refInput = document.getElementById('storyBookRef');
-  const verseInput = document.getElementById('storyVerseText');
-  const ref = refInput ? refInput.value : 'Bíblia Sagrada';
-  const txt = verseInput ? verseInput.value : '';
-
-  // Download image for user to post on status and open WhatsApp
-  downloadStoryImage();
-
-  setTimeout(() => {
-    let msg = `“${txt}”\n— ${ref}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-  }, 400);
-};
-
-window.shareStoryNative = async function () {
-  const canvas = document.getElementById('storiesCanvas');
-  if (!canvas) return;
-
-  const refInput = document.getElementById('storyBookRef');
-  const ref = refInput ? refInput.value : 'Bíblia Sagrada Católica';
-
-  try {
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        downloadStoryImage();
-        return;
-      }
-      const file = new File([blob], `story_${Date.now()}.png`, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: ref,
-            text: `Palavra de Deus: ${ref} • Bíblia Sagrada Católica`
-          });
-          showToast('Story compartilhado com sucesso!');
-          return;
-        } catch (e) {}
-      }
-      downloadStoryImage();
-    }, 'image/png');
-  } catch (err) {
-    downloadStoryImage();
-  }
-};
 
 
