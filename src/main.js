@@ -94,6 +94,8 @@ function updateChapterReadBtnState(reading) {
 
 // ===== INIT =====
 async function init() {
+  const splashStartTime = performance.now();
+
   // Inicia timer de doação
   checkAndStartDonateTimer();
 
@@ -130,18 +132,24 @@ async function init() {
     console.warn('[RealtimeSync] Falha ao iniciar listener:', e);
   }
 
-  // Remove splash
-  const splash = document.getElementById('splash');
-  if (splash) {
-    splash.classList.add('fade-out');
-    setTimeout(() => splash.remove(), 600);
-  }
-
   // Load UI
   allBooks = await db.getLivros() || [];
   renderBooks(allBooks);
   await loadVersiculoDoDia();
   await loadStats();
+
+  // Remove splash com no mínimo 1.2 segundos de exibição suave para destacar o ícone
+  const MIN_SPLASH_TIME_MS = 1200;
+  const elapsed = performance.now() - splashStartTime;
+  const remainingTime = Math.max(0, MIN_SPLASH_TIME_MS - elapsed);
+
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 700);
+    }
+  }, remainingTime);
 
   // Events & Search Input Handling
   const mainSearchInput = document.getElementById('searchInput');
