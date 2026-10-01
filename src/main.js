@@ -348,7 +348,7 @@ window.shareHeroWhatsApp = function () {
   if (heroData.oracao) {
     txt += `\n\n_${heroData.oracao}_`;
   }
-  txt += `\n\n*Bíblia Sagrada Católica*`;
+  txt += `\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 };
 
@@ -462,7 +462,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   const waBtn = e.target.closest('.wa-btn');
   if (waBtn) {
     e.stopPropagation();
-    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
+    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     return;
   }
@@ -779,7 +779,7 @@ document.getElementById('searchResults').addEventListener('click', async e => {
   if (waBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
+    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     return;
   }
@@ -900,7 +900,7 @@ document.getElementById('favoritesContainer').addEventListener('click', async e 
   if (waBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_`;
+    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     return;
   }
@@ -1059,7 +1059,7 @@ function renderGalleryGrid() {
                   <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}" style="${isFav ? 'color:#ef4444;' : ''}"></i>
               </button>
               <button class="gallery-action-btn" title="Compartilhar no WhatsApp"
-                      onclick="shareCardWhatsApp(event, '${escapeHtml(ref)}', '${escapeHtml(txt)}')">
+                      onclick="shareCardWhatsApp(event, '${escapeHtml(ref)}', '${escapeHtml(txt)}', '${escapeHtml(ytUrl)}')">
                   <i class="fab fa-whatsapp" style="color:#22c55e;"></i>
               </button>
               ${isUpload ? `
@@ -1140,10 +1140,16 @@ window.toggleCardFavorite = function (e, id, refKey) {
   }
 };
 
-window.shareCardWhatsApp = function (e, ref, txt) {
-  e.stopPropagation();
-  const msg = `\u201C${txt}\u201D\n\n\u2014 ${ref}\n\n_B\u00EDblia Sagrada Cat\u00F3lica_\nhttps://minhabibliacatolica.com`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+window.shareCardWhatsApp = function (e, ref, txt, youtubeUrl = '') {
+  if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+  let msg = '';
+  if (txt) msg += `“${txt}”\n\n`;
+  if (ref) msg += `— ${ref}\n\n`;
+  if (youtubeUrl && youtubeUrl.trim()) {
+    msg += `▶ Assista ao vídeo de reflexão: ${youtubeUrl.trim()}\n\n`;
+  }
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.deleteCardImage = async function (e, id) {
@@ -1260,10 +1266,20 @@ window.navigateLightbox = function (direction) {
 window.shareLightboxWhatsApp = function () {
   const img = currentLightboxList[activeLightboxIndex];
   if (!img) return;
-  const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+  const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+  const ref = hasBook 
+    ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
+    : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
   const txt = (img.texto || '').trim();
-  const msg = `\u201C${txt}\u201D\n\n\u2014 ${ref}\n\n_B\u00EDblia Sagrada Cat\u00F3lica_\nhttps://minhabibliacatolica.com`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  let msg = '';
+  if (txt) msg += `“${txt}”\n\n`;
+  if (ref) msg += `— ${ref}\n\n`;
+  if (img.oracao && img.oracao.trim()) msg += `_${img.oracao.trim()}_\n\n`;
+  if (img.youtube_url && img.youtube_url.trim()) {
+    msg += `▶ Assista ao vídeo de reflexão: ${img.youtube_url.trim()}\n\n`;
+  }
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.downloadLightboxImage = async function () {
@@ -1424,6 +1440,8 @@ window.testStudioYtVideo = function (url) {
   }
 };
 
+let currentPlayingVideoData = null;
+
 window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao = '') {
   if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
   if (!youtubeUrl) return;
@@ -1433,6 +1451,8 @@ window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao =
     showToast('Link do YouTube inválido');
     return;
   }
+
+  currentPlayingVideoData = { youtubeUrl, ref, txt, oracao };
 
   const modal = document.getElementById('youtubePlayerModal');
   const iframe = document.getElementById('youtubeIframe');
@@ -1459,11 +1479,24 @@ window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao =
 };
 
 window.closeYouTubePlayer = function () {
+  currentPlayingVideoData = null;
   const modal = document.getElementById('youtubePlayerModal');
   const iframe = document.getElementById('youtubeIframe');
   if (iframe) iframe.src = '';
   if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
+};
+
+window.shareCurrentYouTubeVideo = function () {
+  if (!currentPlayingVideoData) return;
+  const { youtubeUrl, ref, txt, oracao } = currentPlayingVideoData;
+  let msg = '';
+  if (txt) msg += `“${txt}”\n\n`;
+  if (ref) msg += `— ${ref}\n\n`;
+  if (oracao) msg += `_${oracao}_\n\n`;
+  if (youtubeUrl) msg += `▶ Assista ao vídeo de reflexão: ${youtubeUrl}\n\n`;
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.openLightboxYouTube = function () {
