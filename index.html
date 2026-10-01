@@ -50,6 +50,10 @@
           class="fas fa-praying-hands"></i></button>
       <button class="header-btn desktop-only" onclick="showVelas()" title="Mural de Velas & Intenções"><i
           class="fas fa-fire"></i></button>
+      <button class="header-btn desktop-only" onclick="showTeologia()" title="Doutores da Igreja & Teologia"><i
+          class="fas fa-feather-pointed"></i></button>
+      <button class="header-btn desktop-only" onclick="openStoriesModal()" title="Gerador de Stories 9:16"><i
+          class="fas fa-mobile-screen-button"></i></button>
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
           class="fas fa-images"></i></button>
       <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
@@ -85,6 +89,9 @@
             <button class="hero-share-btn" onclick="shareHeroWhatsApp()">
               <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
             </button>
+            <button class="hero-share-btn" onclick="openStoriesModalWithHero()" style="background: rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.4); color: var(--gold-300);" title="Criar Story para Instagram / Status">
+              <i class="fas fa-mobile-screen-button"></i> Criar Story 9:16
+            </button>
             <button class="hero-donate-btn pulse-animation" onclick="showDonateModal()">
               <i class="fas fa-hand-holding-heart"></i> Apoiar o Projeto
             </button>
@@ -92,7 +99,7 @@
         </div>
       </section>
 
-      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO & VELAS -->
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, VELAS, TEOLOGIA, STORIES -->
       <div class="home-quick-grid">
         <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
           <div class="quick-card-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
@@ -126,6 +133,30 @@
             <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
             <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
             <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card teologia-card" onclick="showTeologia()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.18); color: #c084fc;">
+            <i class="fas fa-feather-pointed"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Doutores da Igreja</div>
+            <h3 class="quick-card-title">IA Teológica Católica</h3>
+            <p class="quick-card-desc">São Tomás de Aquino, Santo Agostinho & CIC</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card stories-card" onclick="openStoriesModal()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(236, 72, 153, 0.18); color: #f472b6;">
+            <i class="fas fa-mobile-screen-button"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">Status & Reels (9:16)</div>
+            <h3 class="quick-card-title">Gerador de Stories</h3>
+            <p class="quick-card-desc">Cards verticais para WhatsApp & Instagram</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -449,6 +480,73 @@
         <div class="velas-grid" id="velasGrid">
           <div class="loading"><div class="loading-spinner"></div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- IA TEOLÓGICA CATÓLICA: PERGUNTE AOS DOUTORES DA IGREJA -->
+    <div id="teologiaView" class="hidden">
+      <div class="teologia-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">IA Teológica Católica</h2>
+              <p class="chapter-subtitle">Doutores da Igreja, Sagrada Tradição & CIC</p>
+            </div>
+          </div>
+          <div class="teologia-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-read-all" id="btnSpeakTeologia" onclick="toggleSpeakTeologiaResponse()">
+              <i class="fas fa-volume-up"></i> Ouvir Resposta
+            </button>
+          </div>
+        </div>
+
+        <!-- Persona Switcher Tabs -->
+        <div class="teologia-persona-tabs" id="teologiaPersonaTabs"></div>
+
+        <!-- Selected Persona Welcome Banner -->
+        <div class="teologia-persona-banner" id="teologiaPersonaBanner">
+          <div class="persona-avatar-box">
+            <i class="fas fa-feather-pointed" id="personaAvatarIcon"></i>
+          </div>
+          <div class="persona-banner-info">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+              <h3 class="persona-banner-name" id="personaBannerName">São Tomás de Aquino</h3>
+              <span class="persona-badge-tag" id="personaBannerBadge">Doutor Angélico</span>
+            </div>
+            <span class="persona-banner-title" id="personaBannerTitle">Suma Teológica • Mestre da Razão e da Fé</span>
+            <p class="persona-banner-saudacao" id="personaBannerSaudacao">“A graça não destrói a natureza, mas a aperfeiçoa. Qual verdade divina procuras compreender à luz da fé e da razão, meu irmão?”</p>
+          </div>
+        </div>
+
+        <!-- Quick Question Inspiration Chips -->
+        <div class="teologia-chips-container">
+          <span class="teologia-chips-label"><i class="fas fa-lightbulb" style="color: var(--gold-400);"></i> Sugestões de Perguntas Rápidas:</span>
+          <div class="teologia-chips-scroll" id="teologiaPromptChips"></div>
+        </div>
+
+        <!-- Conversation Output Area -->
+        <div class="teologia-chat-box" id="teologiaChatBox">
+          <div class="teologia-response-container" id="teologiaResponseContainer">
+            <div class="teologia-placeholder">
+              <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,175,55,0.12); margin: 0 auto 12px;">
+                <i class="fas fa-book-bible donate-icon" style="color: var(--gold-400);"></i>
+              </div>
+              <h4 style="font-family: var(--font-display); font-size: 17px; margin-bottom: 6px; color: var(--gold-300);">Pergunte aos Doutores da Igreja</h4>
+              <p style="font-size: 13px; color: var(--text-muted); max-width: 500px; margin: 0 auto 16px; line-height: 1.5;">Tire suas dúvidas sobre passagens da Bíblia, Sacramentos, a Virgem Maria, a Eucaristia ou a Moral Católica fundamentadas na Sagrada Tradição e no Catecismo da Igreja Católica.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Input Bar -->
+        <form class="teologia-input-form" id="teologiaInputForm" onsubmit="handleTeologiaSubmit(event)">
+          <div class="teologia-input-wrapper">
+            <textarea id="teologiaInput" class="teologia-textarea" placeholder="Faça uma pergunta sobre a fé católica ou peça para explicar uma passagem bíblica..." rows="2" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); handleTeologiaSubmit(event); }"></textarea>
+            <button type="submit" id="btnSubmitTeologia" class="teologia-send-btn pulse-animation" title="Enviar pergunta">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -993,6 +1091,63 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- STORIES & STATUS (9:16) CREATOR MODAL -->
+  <div id="storiesModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="storiesModalTitle" onclick="if(event.target===this) closeStoriesModal()">
+    <div class="donate-modal-content stories-modal-content" style="max-width: 580px;">
+      <button class="donate-close-btn" onclick="closeStoriesModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+
+      <div class="donate-header" style="padding-bottom: 8px;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,175,55,0.12);">
+          <i class="fas fa-mobile-screen-button donate-icon" style="color: var(--gold-300);"></i>
+        </div>
+        <h2 id="storiesModalTitle">Gerador de Stories & Status (9:16)</h2>
+        <p>Crie cards verticais com arte sacra prontos para WhatsApp Status e Instagram Stories</p>
+      </div>
+
+      <!-- Theme Switcher Chips -->
+      <div class="stories-theme-tabs" id="storiesThemeTabs"></div>
+
+      <div class="donate-body" style="max-height: 60vh; overflow-y: auto; padding-right: 4px;">
+        <!-- Live Vertical 9:16 Canvas Preview -->
+        <div class="stories-canvas-container">
+          <canvas id="storiesCanvas" width="1080" height="1920" class="stories-canvas-preview"></canvas>
+        </div>
+
+        <!-- Customization Fields -->
+        <div class="upload-form-grid" style="margin-top: 14px;">
+          <div class="upload-field">
+            <label class="upload-label"><i class="fas fa-quote-left"></i> Versículo / Texto Sagrado:</label>
+            <textarea id="storyVerseText" class="upload-textarea" rows="3" placeholder="Digite o versículo ou citação para o Story..." oninput="updateStoryPreview()"></textarea>
+          </div>
+
+          <div class="upload-field-row-split">
+            <div class="upload-field">
+              <label class="upload-label"><i class="fas fa-book-bible"></i> Referência:</label>
+              <input type="text" id="storyBookRef" class="upload-input" placeholder="Ex: Salmos 23,1" oninput="updateStoryPreview()">
+            </div>
+            <div class="upload-field">
+              <label class="upload-label"><i class="fas fa-praying-hands"></i> Oração (Opcional):</label>
+              <input type="text" id="storyOracaoInput" class="upload-input" placeholder="Ex: Senhor, dai-me Tua paz..." oninput="updateStoryPreview()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="stories-actions-row" style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="upload-btn-secondary" onclick="downloadStoryImage()" style="flex: 1; padding: 12px;" title="Baixar imagem HD">
+            <i class="fas fa-download"></i> <span>Baixar HD</span>
+          </button>
+          <button type="button" class="hero-donate-btn" onclick="shareStoryWhatsAppStatus()" style="flex: 1.2; padding: 12px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff;" title="Compartilhar no WhatsApp">
+            <i class="fab fa-whatsapp"></i> <span>WhatsApp Status</span>
+          </button>
+          <button type="button" class="hero-donate-btn" onclick="shareStoryNative()" style="flex: 1; padding: 12px;" title="Instagram Stories e outros">
+            <i class="fas fa-share-nodes"></i> <span>Instagram Stories</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

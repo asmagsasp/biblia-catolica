@@ -10,6 +10,8 @@ import { getLiturgiaDiaria, LITURGICAL_COLORS } from './liturgiaService.js';
 import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
 import { sacredAudio, SACRED_TRACKS } from './audioAmbienteService.js';
+import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
+import { STORY_THEMES, renderStoryCanvas } from './storiesGeneratorService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -403,9 +405,15 @@ async function loadVerses() {
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
     c.innerHTML = `
-      <div class="chapter-actions-top" style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <div class="chapter-actions-top" style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
+        </button>
+        <button class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
+          <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
+        </button>
+        <button class="btn-read-all" onclick="openStoriesModalWithCurrentChapter()" style="background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.4); color: #f472b6;" title="Criar Story 9:16">
+          <i class="fas fa-mobile-screen-button"></i> Story 9:16
         </button>
         <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
           <i class="fas fa-church"></i> Homilia do Capítulo
@@ -420,6 +428,8 @@ async function loadVerses() {
                 <div class="verse-actions">
                     <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Ouvir"><i class="fas fa-volume-up"></i></button>
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
+                    <button class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Story 9:16 (Status / Insta)" style="color: #f472b6;"><i class="fas fa-mobile-screen-button"></i></button>
+                    <button class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
                     <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
@@ -452,7 +462,6 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
       );
       favBtn.classList.toggle('favorited', result === 1);
 
-      // Feedback mínimo e assíncrono para não travar a UI
       requestAnimationFrame(async () => {
         showToast(result ? '❤ Favoritado' : 'Removido');
         const favContainer = document.getElementById('favoritesContainer');
@@ -462,6 +471,18 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
     } catch (err) {
       console.error("Erro no Favorito:", err);
     }
+    return;
+  }
+  const storyBtn = e.target.closest('.story-btn');
+  if (storyBtn) {
+    e.stopPropagation();
+    openStoriesModalWithVerse(storyBtn.dataset.livro, storyBtn.dataset.cap, storyBtn.dataset.ver, storyBtn.dataset.txt);
+    return;
+  }
+  const teologiaBtn = e.target.closest('.teologia-btn');
+  if (teologiaBtn) {
+    e.stopPropagation();
+    explicarVersiculoTeologia(teologiaBtn.dataset.livro, teologiaBtn.dataset.cap, teologiaBtn.dataset.ver, teologiaBtn.dataset.txt);
     return;
   }
   const waBtn = e.target.closest('.wa-btn');
@@ -2506,7 +2527,8 @@ function showView(id) {
   stopSpeech();
   stopLiturgiaSpeech();
   stopRosarioSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView'].forEach(v => {
+  stopTeologiaSpeech();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -4144,4 +4166,538 @@ window.toggleAudioBarDrawer = function () {
     drawer.classList.toggle('hidden');
   }
 };
+
+
+// ==========================================================================
+// IA TEOLÓGICA CATÓLICA: DOUTORES DA IGREJA & MAGISTÉRIO
+// ==========================================================================
+let currentTeologiaPersona = 'santo_tomas';
+let lastTeologiaResponseText = '';
+let isTeologiaSpeaking = false;
+
+window.showTeologia = function () {
+  showView('teologiaView');
+  initTeologiaUI();
+};
+
+function initTeologiaUI() {
+  const tabsContainer = document.getElementById('teologiaPersonaTabs');
+  const chipsContainer = document.getElementById('teologiaPromptChips');
+
+  if (tabsContainer && tabsContainer.children.length === 0) {
+    let tabsHtml = '';
+    DOUTORES_PERSONAS.forEach(p => {
+      const isActive = p.id === currentTeologiaPersona;
+      tabsHtml += `
+        <button class="teologia-persona-btn ${isActive ? 'active' : ''}" 
+                id="persona_tab_${p.id}"
+                onclick="selectTeologiaPersona('${p.id}')">
+          <i class="fas ${p.icone}" style="color: ${p.cor};"></i>
+          <span>${p.nome}</span>
+        </button>`;
+    });
+    tabsContainer.innerHTML = tabsHtml;
+  }
+
+  if (chipsContainer && chipsContainer.children.length === 0) {
+    let chipsHtml = '';
+    TEOLOGIA_PROMPT_SUGESTOES.forEach(s => {
+      chipsHtml += `
+        <button class="teologia-chip" onclick="askTeologiaQuickPrompt('${s.pergunta.replace(/'/g, "\\'")}')">
+          ${s.titulo}
+        </button>`;
+    });
+    chipsContainer.innerHTML = chipsHtml;
+  }
+
+  updateTeologiaPersonaBanner();
+}
+
+function updateTeologiaPersonaBanner() {
+  const p = DOUTORES_PERSONAS.find(item => item.id === currentTeologiaPersona) || DOUTORES_PERSONAS[0];
+
+  const iconEl = document.getElementById('personaAvatarIcon');
+  const nameEl = document.getElementById('personaBannerName');
+  const titleEl = document.getElementById('personaBannerTitle');
+  const badgeEl = document.getElementById('personaBannerBadge');
+  const saudacaoEl = document.getElementById('personaBannerSaudacao');
+
+  if (iconEl) iconEl.className = `fas ${p.icone}`;
+  if (nameEl) nameEl.textContent = p.nome;
+  if (titleEl) titleEl.textContent = p.avatarDesc;
+  if (badgeEl) badgeEl.textContent = p.titulo;
+  if (saudacaoEl) saudacaoEl.textContent = `“${p.saudacao}”`;
+
+  // Update tabs
+  document.querySelectorAll('.teologia-persona-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `persona_tab_${p.id}`);
+  });
+}
+
+window.selectTeologiaPersona = function (personaId) {
+  currentTeologiaPersona = personaId;
+  updateTeologiaPersonaBanner();
+  const p = DOUTORES_PERSONAS.find(item => item.id === personaId);
+  if (p) {
+    showToast(`Doutor selecionado: ${p.nome}`);
+  }
+};
+
+window.askTeologiaQuickPrompt = function (pergunta) {
+  const input = document.getElementById('teologiaInput');
+  if (input) {
+    input.value = pergunta;
+    handleTeologiaSubmit();
+  }
+};
+
+window.handleTeologiaSubmit = async function (e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('teologiaInput');
+  const pergunta = input ? input.value.trim() : '';
+
+  if (!pergunta) {
+    showToast('Por favor, digite sua pergunta teológica.');
+    return;
+  }
+
+  const container = document.getElementById('teologiaResponseContainer');
+  const submitBtn = document.getElementById('btnSubmitTeologia');
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  }
+
+  // Render question and loading indicator
+  if (container) {
+    container.innerHTML = `
+      <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
+        <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-question-circle"></i> Sua Pergunta:</span>
+        <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">“${pergunta}”</p>
+      </div>
+
+      <div style="text-align: center; padding: 30px 20px;">
+        <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
+        <p style="font-family: var(--font-display); font-size: 15px; color: var(--gold-300); margin-bottom: 4px;">Consultando a Tradição Católica & Doutores da Igreja...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">Buscando ensinamentos na Sagrada Escritura, no Magistério e no CIC</span>
+      </div>`;
+  }
+
+  try {
+    const res = await consultarIaTeologica({
+      pergunta: pergunta,
+      personaId: currentTeologiaPersona
+    });
+
+    const markdownText = res.resposta;
+    lastTeologiaResponseText = markdownText;
+
+    // Convert basic markdown to rich HTML
+    const formattedHtml = formatTeologiaMarkdown(markdownText);
+
+    if (container) {
+      container.innerHTML = `
+        <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
+          <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-question-circle"></i> Sua Pergunta:</span>
+          <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">“${pergunta}”</p>
+        </div>
+
+        <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
+          ${formattedHtml}
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+          <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('${pergunta.replace(/'/g, "\\'")}')" style="font-size: 12.5px; padding: 8px 14px;">
+            <i class="fab fa-whatsapp" style="color: #22c55e;"></i> Compartilhar no WhatsApp
+          </button>
+          <button class="upload-btn-secondary" onclick="openStoriesModalWithText('${pergunta.replace(/'/g, "\\'")}')" style="font-size: 12.5px; padding: 8px 14px;">
+            <i class="fas fa-mobile-screen-button" style="color: #f472b6;"></i> Criar Story 9:16
+          </button>
+        </div>`;
+    }
+
+    if (input) input.value = '';
+  } catch (err) {
+    console.error('[Teologia] Erro:', err);
+    if (container) {
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Não foi possível obter a resposta teológica no momento. Tente novamente.</p>`;
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    }
+  }
+};
+
+function formatTeologiaMarkdown(md) {
+  if (!md) return '';
+  let html = md
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+    .replace(/^\s*\-\s(.*$)/gim, '<li>$1</li>')
+    .replace(/^\s*\d\.\s(.*$)/gim, '<li>$1</li>')
+    .replace(/\n\n/g, '<br><br>');
+
+  return html;
+}
+
+window.explicarCapituloTeologia = async function () {
+  if (!currentBook) return;
+  showTeologia();
+
+  const container = document.getElementById('teologiaResponseContainer');
+  const nome = currentBook.nome;
+  const cap = currentChapter;
+
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px;">
+        <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
+        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${nome} Capítulo ${cap} segundo a Tradição Católica...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">Consultando Doutores da Igreja, Sentido Espiritual e Magistério</span>
+      </div>`;
+  }
+
+  try {
+    const res = await consultarIaTeologica({
+      livro: nome,
+      capitulo: cap,
+      personaId: currentTeologiaPersona
+    });
+
+    lastTeologiaResponseText = res.resposta;
+    const formattedHtml = formatTeologiaMarkdown(res.resposta);
+
+    if (container) {
+      container.innerHTML = `
+        <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
+          <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-book-bible"></i> Estudo Bíblico Católico:</span>
+          <h3 style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: var(--gold-300);">${nome} — Capítulo ${cap}</h3>
+        </div>
+        <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
+          ${formattedHtml}
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+          <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('Explicação de ${nome} ${cap}')" style="font-size: 12.5px; padding: 8px 14px;">
+            <i class="fab fa-whatsapp" style="color: #22c55e;"></i> WhatsApp
+          </button>
+        </div>`;
+    }
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar estudo teológico.</p>`;
+    }
+  }
+};
+
+window.explicarVersiculoTeologia = async function (livro, cap, ver, txt) {
+  showTeologia();
+
+  const container = document.getElementById('teologiaResponseContainer');
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px;">
+        <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
+        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${livro} ${cap},${ver} segundo a Tradição Católica...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">“${txt}”</span>
+      </div>`;
+  }
+
+  try {
+    const res = await consultarIaTeologica({
+      livro: livro,
+      capitulo: cap,
+      versiculo: ver,
+      textoPassagem: txt,
+      personaId: currentTeologiaPersona
+    });
+
+    lastTeologiaResponseText = res.resposta;
+    const formattedHtml = formatTeologiaMarkdown(res.resposta);
+
+    if (container) {
+      container.innerHTML = `
+        <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
+          <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-bible"></i> Passagem Explicada:</span>
+          <h3 style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: var(--gold-300);">${livro} ${cap},${ver}</h3>
+          <p style="margin: 4px 0 0; font-size: 13.5px; font-style: italic; color: var(--text-secondary);">“${txt}”</p>
+        </div>
+        <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
+          ${formattedHtml}
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+          <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('${livro} ${cap},${ver}')" style="font-size: 12.5px; padding: 8px 14px;">
+            <i class="fab fa-whatsapp" style="color: #22c55e;"></i> WhatsApp
+          </button>
+        </div>`;
+    }
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar explicação do versículo.</p>`;
+    }
+  }
+};
+
+window.stopTeologiaSpeech = function () {
+  isTeologiaSpeaking = false;
+  const btn = document.getElementById('btnSpeakTeologia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Resposta';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+window.toggleSpeakTeologiaResponse = async function () {
+  if (isTeologiaSpeaking) {
+    stopTeologiaSpeech();
+    return;
+  }
+  if (!lastTeologiaResponseText) {
+    showToast('Nenhuma resposta para ouvir no momento.');
+    return;
+  }
+
+  isTeologiaSpeaking = true;
+  const btn = document.getElementById('btnSpeakTeologia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+
+  const cleanText = lastTeologiaResponseText.replace(/[#*`_>]/g, '').replace(/\n+/g, ' ');
+
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: cleanText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopTeologiaSpeech();
+    } catch (e) {
+      stopTeologiaSpeech();
+    }
+  } else if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.95;
+    utterance.onend = () => stopTeologiaSpeech();
+    utterance.onerror = () => stopTeologiaSpeech();
+    window.speechSynthesis.speak(utterance);
+  }
+};
+
+window.shareTeologiaWhatsApp = function (titulo) {
+  if (!lastTeologiaResponseText) return;
+  const clean = lastTeologiaResponseText.replace(/[#*`_>]/g, '').slice(0, 700);
+  let msg = `🕊️ *Reflexão & Teologia Católica — ${titulo}*\n\n${clean}...\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
+
+// ==========================================================================
+// GERADOR DE STORIES & STATUS (FORMATO VERTICAL 9:16)
+// ==========================================================================
+let currentStoryTheme = 'ouro_imperial';
+let currentStoryBgImage = null;
+
+function initStoriesUI() {
+  const themeTabs = document.getElementById('storiesThemeTabs');
+  if (themeTabs && themeTabs.children.length === 0) {
+    let html = '';
+    STORY_THEMES.forEach(t => {
+      const isActive = t.id === currentStoryTheme;
+      html += `
+        <button class="stories-theme-chip ${isActive ? 'active' : ''}" 
+                id="theme_chip_${t.id}"
+                onclick="switchStoryTheme('${t.id}')">
+          ${t.nome}
+        </button>`;
+    });
+    themeTabs.innerHTML = html;
+  }
+}
+
+window.openStoriesModal = function (initialData = null) {
+  initStoriesUI();
+
+  const verseInput = document.getElementById('storyVerseText');
+  const refInput = document.getElementById('storyBookRef');
+  const oracaoInput = document.getElementById('storyOracaoInput');
+
+  if (initialData) {
+    if (verseInput && initialData.texto) verseInput.value = initialData.texto;
+    if (refInput && initialData.ref) refInput.value = initialData.ref;
+    if (oracaoInput && initialData.oracao) oracaoInput.value = initialData.oracao;
+    if (initialData.bgImage) currentStoryBgImage = initialData.bgImage;
+  } else if (!verseInput?.value) {
+    // Default fallback
+    if (heroData && heroData.texto) {
+      if (verseInput) verseInput.value = heroData.texto;
+      if (refInput) refInput.value = heroData.referencia || `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`;
+      if (oracaoInput) oracaoInput.value = heroData.oracao || '';
+    } else {
+      if (verseInput) verseInput.value = 'O Senhor é o meu pastor; nada me faltará.';
+      if (refInput) refInput.value = 'Salmos 23,1';
+      if (oracaoInput) oracaoInput.value = 'Senhor, conduzi os meus passos em Tua paz.';
+    }
+  }
+
+  const modal = document.getElementById('storiesModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    updateStoryPreview();
+  }
+};
+
+window.closeStoriesModal = function () {
+  const modal = document.getElementById('storiesModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+window.openStoriesModalWithHero = function () {
+  if (heroData && heroData.texto) {
+    openStoriesModal({
+      texto: heroData.texto,
+      ref: heroData.referencia || `${heroData.nome_livro} ${heroData.id_capitulo},${heroData.id_versiculo}`,
+      oracao: heroData.oracao || ''
+    });
+  } else {
+    openStoriesModal();
+  }
+};
+
+window.openStoriesModalWithVerse = function (livro, cap, ver, txt) {
+  openStoriesModal({
+    texto: txt,
+    ref: `${livro} ${cap},${ver}`,
+    oracao: ''
+  });
+};
+
+window.openStoriesModalWithCurrentChapter = async function () {
+  if (!currentBook) return;
+  const verses = await db.getVersiculos(currentBook.id, currentChapter);
+  const firstVerse = verses && verses.length > 0 ? verses[0].texto : 'A Palavra do Senhor permanece para sempre.';
+  openStoriesModal({
+    texto: firstVerse,
+    ref: `${currentBook.nome} ${currentChapter}`,
+    oracao: ''
+  });
+};
+
+window.openStoriesModalWithText = function (txt) {
+  openStoriesModal({
+    texto: txt,
+    ref: 'Doutores da Igreja & Fé Católica',
+    oracao: ''
+  });
+};
+
+window.switchStoryTheme = function (themeId) {
+  currentStoryTheme = themeId;
+  document.querySelectorAll('.stories-theme-chip').forEach(c => {
+    c.classList.toggle('active', c.id === `theme_chip_${themeId}`);
+  });
+  updateStoryPreview();
+};
+
+window.updateStoryPreview = function () {
+  const canvas = document.getElementById('storiesCanvas');
+  const verseInput = document.getElementById('storyVerseText');
+  const refInput = document.getElementById('storyBookRef');
+  const oracaoInput = document.getElementById('storyOracaoInput');
+
+  if (!canvas) return;
+
+  renderStoryCanvas(canvas, {
+    themeId: currentStoryTheme,
+    bgImage: currentStoryBgImage,
+    verseText: verseInput ? verseInput.value : '',
+    bookRef: refInput ? refInput.value : '',
+    oracaoText: oracaoInput ? oracaoInput.value : ''
+  });
+};
+
+window.downloadStoryImage = function () {
+  const canvas = document.getElementById('storiesCanvas');
+  if (!canvas) return;
+
+  const dataUrl = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `story_biblia_${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('✨ Story HD (9:16) baixado com sucesso!');
+};
+
+window.shareStoryWhatsAppStatus = function () {
+  const refInput = document.getElementById('storyBookRef');
+  const verseInput = document.getElementById('storyVerseText');
+  const ref = refInput ? refInput.value : 'Bíblia Sagrada';
+  const txt = verseInput ? verseInput.value : '';
+
+  // Download image for user to post on status and open WhatsApp
+  downloadStoryImage();
+
+  setTimeout(() => {
+    let msg = `“${txt}”\n— ${ref}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  }, 400);
+};
+
+window.shareStoryNative = async function () {
+  const canvas = document.getElementById('storiesCanvas');
+  if (!canvas) return;
+
+  const refInput = document.getElementById('storyBookRef');
+  const ref = refInput ? refInput.value : 'Bíblia Sagrada Católica';
+
+  try {
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        downloadStoryImage();
+        return;
+      }
+      const file = new File([blob], `story_${Date.now()}.png`, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: ref,
+            text: `Palavra de Deus: ${ref} • Bíblia Sagrada Católica`
+          });
+          showToast('Story compartilhado com sucesso!');
+          return;
+        } catch (e) {}
+      }
+      downloadStoryImage();
+    }, 'image/png');
+  } catch (err) {
+    downloadStoryImage();
+  }
+};
+
 
