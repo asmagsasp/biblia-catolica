@@ -1,5 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
-import { getFirebaseGalleryImages, saveImageToFirebase, deleteImageFromFirebase } from './firebaseGallery.js';
+import { getFirebaseGalleryImages, getFirebaseDeletedImages, saveImageToFirebase, deleteImageFromFirebase } from './firebaseGallery.js';
 
 export let isDBReady = false;
 let useBackend = false;
@@ -539,10 +539,14 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
         created_at: null
     })) : [];
 
-    // 2. Fetch shared cloud images from Firebase Realtime Database
+    // 2. Fetch shared cloud images and deletion tombstones from Firebase Realtime Database
     let cloudImgs = [];
+    let deletedMap = {};
     try {
-        cloudImgs = await getFirebaseGalleryImages();
+        [cloudImgs, deletedMap] = await Promise.all([
+            getFirebaseGalleryImages(),
+            getFirebaseDeletedImages()
+        ]);
     } catch (e) {
         console.warn('[BibliaDB] Falha ao consultar Firebase, usando cache local:', e);
     }
@@ -571,7 +575,39 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
         }
     }
 
-    // 4. Merge: Cloud uploaded images + local user images + base 150 canonical images
+    // 4. Purge deleted or stale images from local userImages cache so other devices don't resurrect them
+    const cloudIds = new Set(cloudImgs.map(img => String(img.id)));
+    const deletedKeys = new Set(Object.keys(deletedMap || {}));
+    const deletedAddresses = new Set(Object.values(deletedMap || {}).map(v => v?.address).filter(Boolean));
+
+    let userImagesChanged = false;
+    userImages = userImages.filter(img => {
+        const imgId = String(img.id);
+        if (deletedKeys.has(imgId) || (img.firebase_key && deletedKeys.has(String(img.firebase_key)))) {
+            userImagesChanged = true;
+            return false;
+        }
+        if (img.address && deletedAddresses.has(img.address)) {
+            userImagesChanged = true;
+            return false;
+        }
+        // If it was already a synced cloud image, but no longer in Firebase, it was deleted on another device
+        if (img.firebase_key && !cloudIds.has(String(img.firebase_key))) {
+            userImagesChanged = true;
+            return false;
+        }
+        if (!img.is_offline_pending && !cloudIds.has(imgId)) {
+            userImagesChanged = true;
+            return false;
+        }
+        return true;
+    });
+
+    if (userImagesChanged) {
+        saveUserImagesLocal();
+    }
+
+    // 5. Merge: Cloud uploaded images (single source of truth) + truly offline pending images
     const seenKeys = new Set();
     const mergedUploads = [];
 
@@ -585,20 +621,28 @@ export async function getImgVersiculos(searchQuery = '', filterCategory = 'all')
         }
     }
 
-    // Local user images (offline created)
+    // Only merge local user images that are truly offline drafts created without connection
     for (const img of userImages) {
-        const key = `${img.nome_livro || ''}_${img.id_capitulo || ''}_${img.id_versiculo || ''}_${img.texto || ''}_${img.address || ''}`;
-        if (!seenKeys.has(key) && !seenKeys.has(String(img.id))) {
-            seenKeys.add(key);
-            mergedUploads.push({ ...img, is_user_upload: true });
-            // Auto sync to Firebase in background
-            saveImageToFirebase(img).catch(() => {});
+        if (img.is_offline_pending) {
+            const key = `${img.nome_livro || ''}_${img.id_capitulo || ''}_${img.id_versiculo || ''}_${img.texto || ''}_${img.address || ''}`;
+            if (!seenKeys.has(key) && !seenKeys.has(String(img.id))) {
+                seenKeys.add(key);
+                mergedUploads.push({ ...img, is_user_upload: true });
+                // Attempt to sync offline draft to cloud
+                saveImageToFirebase(img).then(saved => {
+                    if (saved && saved.id) {
+                        img.firebase_key = saved.id;
+                        img.is_offline_pending = false;
+                        saveUserImagesLocal();
+                    }
+                }).catch(() => {});
+            }
         }
     }
 
     allImgs = [...mergedUploads, ...baseImgs];
 
-    // 5. Apply local filtering
+    // 6. Apply local filtering
     if (searchQuery && searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         allImgs = allImgs.filter(img => {
@@ -656,11 +700,14 @@ export async function addImgVersiculo(imgData) {
         if (cloudSaved && cloudSaved.id) {
             newImg.id = cloudSaved.id;
             newImg.firebase_key = cloudSaved.id;
+            newImg.is_offline_pending = false;
         } else {
             newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            newImg.is_offline_pending = true;
         }
     } catch (e) {
         newImg.id = `usr_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        newImg.is_offline_pending = true;
     }
 
     // 2. Save locally for instant offline availability

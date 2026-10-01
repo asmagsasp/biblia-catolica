@@ -47,6 +47,28 @@ export async function getFirebaseGalleryImages() {
 }
 
 /**
+ * Fetch list of deletion tombstones from Firebase to purge deleted items across devices
+ */
+export async function getFirebaseDeletedImages() {
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(`${FIREBASE_DB_URL}/deleted_gallery.json`, {
+            signal: controller.signal,
+            cache: 'no-cache'
+        });
+        clearTimeout(timeout);
+        if (res.ok) {
+            const data = await res.json();
+            return data && typeof data === 'object' ? data : {};
+        }
+    } catch (e) {
+        // quiet fallback
+    }
+    return {};
+}
+
+/**
  * Save a new gallery image directly to Firebase Realtime Database
  */
 export async function saveImageToFirebase(imgData) {
@@ -89,7 +111,7 @@ export async function saveImageToFirebase(imgData) {
 }
 
 /**
- * Delete an image from Firebase Realtime Database
+ * Delete an image from Firebase Realtime Database and record tombstone
  */
 export async function deleteImageFromFirebase(id, fallbackImg = null) {
     if (!id) return false;
@@ -133,12 +155,28 @@ export async function deleteImageFromFirebase(id, fallbackImg = null) {
 
         const deletePromises = [];
         for (const key of deleteKeys) {
+            // 1. Delete from active gallery
             deletePromises.push(
                 fetch(`${FIREBASE_DB_URL}/gallery/${encodeURIComponent(key)}.json`, { 
                     method: 'DELETE' 
                 }).then(() => {
                     console.log('[FirebaseGallery] Imagem removida com sucesso do Firebase:', key);
                 }).catch(e => console.warn('[FirebaseGallery] Erro ao deletar chave:', key, e))
+            );
+
+            // 2. Record tombstone in deleted_gallery so all other devices purge it permanently from local storage
+            const tombstone = {
+                key,
+                address: fallbackImg?.address || (idStr.startsWith('http') ? idStr : ''),
+                texto: fallbackImg?.texto || '',
+                deleted_at: new Date().toISOString()
+            };
+            deletePromises.push(
+                fetch(`${FIREBASE_DB_URL}/deleted_gallery/${encodeURIComponent(key)}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tombstone)
+                }).catch(() => {})
             );
         }
 
@@ -152,3 +190,41 @@ export async function deleteImageFromFirebase(id, fallbackImg = null) {
     }
 }
 
+/**
+ * Listen for real-time changes in Firebase Gallery so other devices update live
+ */
+export function subscribeToFirebaseGallery(onUpdate) {
+    if (typeof window === 'undefined') return () => {};
+
+    let eventSource = null;
+    let pollInterval = null;
+
+    try {
+        if (typeof EventSource !== 'undefined') {
+            eventSource = new EventSource(`${FIREBASE_DB_URL}/gallery.json`);
+            eventSource.addEventListener('put', () => {
+                if (typeof onUpdate === 'function') onUpdate();
+            });
+            eventSource.addEventListener('patch', () => {
+                if (typeof onUpdate === 'function') onUpdate();
+            });
+            eventSource.onerror = () => {
+                // fallback handled
+            };
+        }
+    } catch (err) {
+        console.warn('[FirebaseGallery] EventSource não disponível, usando polling:', err);
+    }
+
+    // Polling every 12 seconds as a secondary heartbeat when window is active
+    pollInterval = setInterval(() => {
+        if (document.visibilityState === 'visible' && typeof onUpdate === 'function') {
+            onUpdate();
+        }
+    }, 12000);
+
+    return () => {
+        if (eventSource) eventSource.close();
+        if (pollInterval) clearInterval(pollInterval);
+    };
+}

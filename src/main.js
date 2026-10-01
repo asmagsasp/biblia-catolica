@@ -2,6 +2,7 @@ import './style.css';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
 import { generateSacredAIImage, composeCardOnCanvas, SACRED_AI_INSPIRATIONS, SACRED_AI_STYLES } from './aiImageService.js';
+import { subscribeToFirebaseGallery } from './firebaseGallery.js';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -113,6 +114,20 @@ async function init() {
     await db.initDB();
   } catch (e) {
     console.error("Erro na inicialização do DB:", e);
+  }
+
+  // Subscribe to real-time Firebase gallery sync across all devices
+  try {
+    subscribeToFirebaseGallery(async () => {
+      const galleryView = document.getElementById('galleryView');
+      if (galleryView && !galleryView.classList.contains('hidden')) {
+        const fresh = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
+        allGalleryItems = fresh || [];
+        renderGalleryGrid();
+      }
+    });
+  } catch (e) {
+    console.warn('[RealtimeSync] Falha ao iniciar listener:', e);
   }
 
   // Remove splash
