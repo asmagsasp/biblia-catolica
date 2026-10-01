@@ -11,6 +11,9 @@ import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } fr
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
 import { sacredAudio, SACRED_TRACKS } from './audioAmbienteService.js';
 import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
+import { LECTIO_STEPS, LECTIO_SUGESTOES, getLectioHistorico, salvarSessaoLectio, excluirSessaoLectio } from './lectioService.js';
+import { MANDAMENTOS_DEUS, PECADOS_CAPITAIS, ORACOES_CONFISSAO, getPecadosMarcados, togglePecadoMarcado, registrarConfissaoRealizada, getUltimaConfissaoData } from './confissaoService.js';
+import { DIARIO_CATEGORIAS, getDiarioItens, salvarNovoItemDiario, marcarGracaAlcancada, reabrirEmOracao, excluirItemDiario, getEstatisticasDiario, formatarTestemunhoWhatsApp } from './diarioService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -410,6 +413,9 @@ async function loadVerses() {
         </button>
         <button class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
           <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
+        </button>
+        <button class="btn-read-all" onclick="startLectioDivinaCurrentChapter()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Rezar este Capítulo com Lectio Divina">
+          <i class="fas fa-dove"></i> Lectio Divina
         </button>
         <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
           <i class="fas fa-church"></i> Homilia do Capítulo
@@ -2517,7 +2523,7 @@ function showView(id) {
   stopLiturgiaSpeech();
   stopRosarioSpeech();
   stopTeologiaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView'].forEach(v => {
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -4495,6 +4501,621 @@ window.shareTeologiaWhatsApp = function (titulo) {
   let msg = `🕊️ *Reflexão & Teologia Católica — ${titulo}*\n\n${clean}...\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
+
+
+// ==========================================================================
+// 1. MODO LECTIO DIVINA GUIADA (ORAÇÃO DOS MONGES EM 4 PASSOS)
+// ==========================================================================
+let currentLectioStep = 1;
+let currentLectioPassagem = LECTIO_SUGESTOES[0];
+let lectioSessionNotes = { 1: '', 2: '', 3: '', 4: '' };
+let lectioTimerSeconds = 180;
+let lectioTimerInterval = null;
+let isLectioTimerRunning = false;
+
+window.showLectio = function (customPassagem = null) {
+  showView('lectioView');
+  initLectioPassagensChips();
+
+  if (customPassagem) {
+    loadLectioPassagem(customPassagem);
+  } else if (!currentLectioPassagem) {
+    loadLectioPassagem(LECTIO_SUGESTOES[0]);
+  } else {
+    loadLectioPassagem(currentLectioPassagem);
+  }
+};
+
+function initLectioPassagensChips() {
+  const container = document.getElementById('lectioPassagensChips');
+  if (!container) return;
+
+  let html = '';
+  LECTIO_SUGESTOES.forEach((sug, idx) => {
+    const isAct = currentLectioPassagem && currentLectioPassagem.ref === sug.ref;
+    html += `
+      <button class="lectio-passage-chip ${isAct ? 'active' : ''}" onclick="selectLectioSugestao(${idx})">
+        ${sug.titulo} (${sug.ref})
+      </button>
+    `;
+  });
+
+  // Se tivermos capítulo bíblico aberto, adiciona chip rápido
+  if (currentBook) {
+    html = `<button class="lectio-passage-chip" onclick="startLectioDivinaCurrentChapter()" style="border-color: #38bdf8; color: #38bdf8;">
+      📖 ${currentBook.nome} ${currentChapter}
+    </button>` + html;
+  }
+
+  container.innerHTML = html;
+}
+
+window.selectLectioSugestao = function (index) {
+  if (LECTIO_SUGESTOES[index]) {
+    loadLectioPassagem(LECTIO_SUGESTOES[index]);
+    initLectioPassagensChips();
+  }
+};
+
+window.loadLectioPassagem = function (passagem) {
+  currentLectioPassagem = passagem;
+  const refEl = document.getElementById('lectioScriptureRef');
+  const txtEl = document.getElementById('lectioScriptureText');
+  if (refEl) refEl.textContent = passagem.ref || passagem.titulo || 'Palavra de Deus';
+  if (txtEl) txtEl.textContent = passagem.texto || '';
+
+  // Reseta para o passo 1
+  lectioSessionNotes = { 1: '', 2: '', 3: '', 4: '' };
+  goToLectioStep(1);
+};
+
+window.goToLectioStep = function (stepNum) {
+  // Salva texto digitado no passo anterior
+  const input = document.getElementById('lectioStepInput');
+  if (input) {
+    lectioSessionNotes[currentLectioStep] = input.value;
+  }
+
+  currentLectioStep = stepNum;
+  const step = LECTIO_STEPS.find(s => s.id === stepNum) || LECTIO_STEPS[0];
+
+  // Atualiza botões de passos
+  document.querySelectorAll('.lectio-step-tab').forEach(tab => {
+    tab.classList.toggle('active', parseInt(tab.dataset.step) === stepNum);
+  });
+
+  // Atualiza cabeçalho do passo
+  const iconWrap = document.getElementById('lectioStepIconWrap');
+  const icon = document.getElementById('lectioStepIcon');
+  const title = document.getElementById('lectioStepTitle');
+  const latin = document.getElementById('lectioStepLatin');
+  const desc = document.getElementById('lectioStepDesc');
+  const instr = document.getElementById('lectioStepInstr');
+  const promptLabel = document.getElementById('lectioPromptLabel');
+
+  if (iconWrap) {
+    iconWrap.style.background = step.fundo;
+    iconWrap.style.color = step.cor;
+  }
+  if (icon) icon.className = `fas ${step.icone}`;
+  if (title) title.textContent = `${step.id}. ${step.nome} — ${step.subtitulo}`;
+  if (latin) latin.textContent = step.latin;
+  if (desc) desc.textContent = step.descricao;
+  if (instr) instr.textContent = step.instrucao;
+  if (promptLabel) promptLabel.textContent = step.perguntaGuia;
+
+  if (input) {
+    input.value = lectioSessionNotes[stepNum] || '';
+    input.placeholder = stepNum === 4 ? "Ex: Hoje serei paciente com minha família e rezarei pelas pessoas necessitadas..." : "Escreva suas impressões espirituais aqui...";
+  }
+
+  // Atualiza botões Anterior / Próximo
+  const btnPrev = document.getElementById('btnLectioPrev');
+  const btnNext = document.getElementById('btnLectioNext');
+  const btnFinish = document.getElementById('btnLectioFinish');
+
+  if (btnPrev) {
+    btnPrev.disabled = stepNum === 1;
+    btnPrev.style.opacity = stepNum === 1 ? '0.5' : '1';
+  }
+
+  if (stepNum === 4) {
+    if (btnNext) btnNext.classList.add('hidden');
+    if (btnFinish) btnFinish.classList.remove('hidden');
+  } else {
+    if (btnNext) {
+      btnNext.classList.remove('hidden');
+      const nextStep = LECTIO_STEPS.find(s => s.id === stepNum + 1);
+      btnNext.innerHTML = `<span>Avançar para ${nextStep ? nextStep.nome : 'Próximo'}</span> <i class="fas fa-chevron-right"></i>`;
+    }
+    if (btnFinish) btnFinish.classList.add('hidden');
+  }
+};
+
+window.nextLectioStep = function () {
+  if (currentLectioStep < 4) {
+    goToLectioStep(currentLectioStep + 1);
+  }
+};
+
+window.prevLectioStep = function () {
+  if (currentLectioStep > 1) {
+    goToLectioStep(currentLectioStep - 1);
+  }
+};
+
+window.setLectioTimerDuration = function (seconds) {
+  resetLectioTimer(seconds);
+};
+
+function resetLectioTimer(seconds) {
+  if (lectioTimerInterval) {
+    clearInterval(lectioTimerInterval);
+    lectioTimerInterval = null;
+  }
+  isLectioTimerRunning = false;
+  lectioTimerSeconds = seconds;
+  updateLectioTimerDisplay();
+  const icon = document.getElementById('lectioTimerIcon');
+  if (icon) icon.className = 'fas fa-play';
+}
+
+window.toggleLectioTimer = function () {
+  const icon = document.getElementById('lectioTimerIcon');
+  if (isLectioTimerRunning) {
+    clearInterval(lectioTimerInterval);
+    lectioTimerInterval = null;
+    isLectioTimerRunning = false;
+    if (icon) icon.className = 'fas fa-play';
+  } else {
+    if (lectioTimerSeconds <= 0) lectioTimerSeconds = 180;
+    isLectioTimerRunning = true;
+    if (icon) icon.className = 'fas fa-pause';
+    lectioTimerInterval = setInterval(() => {
+      lectioTimerSeconds--;
+      updateLectioTimerDisplay();
+      if (lectioTimerSeconds <= 0) {
+        clearInterval(lectioTimerInterval);
+        lectioTimerInterval = null;
+        isLectioTimerRunning = false;
+        if (icon) icon.className = 'fas fa-play';
+        showToast('🕊️ Tempo de Silêncio concluído. Em nome do Pai, do Filho e do Espírito Santo.');
+      }
+    }, 1000);
+  }
+};
+
+function updateLectioTimerDisplay() {
+  const textEl = document.getElementById('lectioTimerText');
+  if (!textEl) return;
+  const m = Math.floor(lectioTimerSeconds / 60);
+  const s = lectioTimerSeconds % 60;
+  textEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+window.concluirLectioDivina = async function () {
+  const input = document.getElementById('lectioStepInput');
+  if (input) lectioSessionNotes[4] = input.value;
+
+  try {
+    await salvarSessaoLectio({
+      passagemRef: currentLectioPassagem.ref || currentLectioPassagem.titulo || 'Passagem Bíblica',
+      passagemTexto: currentLectioPassagem.texto || '',
+      meditacao: lectioSessionNotes[2] || lectioSessionNotes[1] || '',
+      oracao: lectioSessionNotes[3] || '',
+      proposito: lectioSessionNotes[4] || ''
+    });
+
+    showToast('✨ Lectio Divina concluída e salva no seu histórico com as bênçãos de Deus!');
+    setTimeout(() => {
+      goHome();
+    }, 1200);
+  } catch (e) {
+    showToast('✨ Lectio Divina concluída com sucesso!');
+    goHome();
+  }
+};
+
+window.openLectioHistoricoModal = async function () {
+  const listEl = document.getElementById('lectioHistoricoList');
+  const modal = document.getElementById('lectioHistoricoModal');
+  if (modal) modal.classList.remove('hidden');
+
+  if (listEl) {
+    const historico = await getLectioHistorico();
+    if (historico && historico.length > 0) {
+      listEl.innerHTML = historico.map(item => `
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-left: 3px solid #38bdf8; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="color: var(--gold-300); font-size: 14.5px;">${item.passagemRef}</strong>
+            <span style="font-size: 11px; color: var(--text-muted);">${item.dataFormatada || ''}</span>
+          </div>
+          ${item.meditacao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Meditação:</strong> “${item.meditacao}”</p>` : ''}
+          ${item.oracao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Oração:</strong> “${item.oracao}”</p>` : ''}
+          ${item.proposito ? `<p style="font-size: 13px; color: #22c55e; margin: 4px 0;"><strong>Propósito do Dia:</strong> “${item.proposito}”</p>` : ''}
+          <div style="text-align: right; margin-top: 8px;">
+            <button onclick="deletarLectioHistorico('${item.id}')" style="background: none; border: none; color: #ef4444; font-size: 11.5px; cursor: pointer;">
+              <i class="fas fa-trash-alt"></i> Excluir
+            </button>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      listEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma sessão de Lectio Divina registrada ainda.</p>';
+    }
+  }
+};
+
+window.closeLectioHistoricoModal = function () {
+  const modal = document.getElementById('lectioHistoricoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.deletarLectioHistorico = async function (id) {
+  await excluirSessaoLectio(id);
+  openLectioHistoricoModal();
+  showToast('Sessão removida do histórico.');
+};
+
+window.startLectioDivinaCurrentChapter = async function () {
+  if (!currentBook) {
+    showLectio();
+    return;
+  }
+  const verses = await db.getVersiculos(currentBook.id, currentChapter);
+  const texto = verses && verses.length > 0 ? verses.slice(0, 10).map(v => `${v.id_versiculo}. ${v.texto}`).join(' ') : 'Palavra do Senhor.';
+  showLectio({
+    titulo: `${currentBook.nome} ${currentChapter}`,
+    ref: `${currentBook.nome} ${currentChapter}`,
+    texto: texto
+  });
+};
+
+
+// ==========================================================================
+// 2. EXAME DE CONSCIÊNCIA & SANTA CONFISSÃO
+// ==========================================================================
+let pecadosMarcadosCache = [];
+
+window.showConfissao = async function () {
+  showView('confissaoView');
+  pecadosMarcadosCache = await getPecadosMarcados();
+  renderMandamentosList();
+  renderPecadosCapitais();
+  renderConfissaoOracoes();
+  updateConfissaoStatusBanner();
+};
+
+async function updateConfissaoStatusBanner() {
+  const badgeContador = document.getElementById('confissaoBadgeContador');
+  const ultimaDataTexto = document.getElementById('confissaoUltimaDataTexto');
+
+  pecadosMarcadosCache = await getPecadosMarcados();
+  const count = pecadosMarcadosCache.length;
+
+  if (badgeContador) {
+    badgeContador.textContent = `${count} ${count === 1 ? 'falta anotada' : 'faltas anotadas'}`;
+  }
+
+  const ultimaData = await getUltimaConfissaoData();
+  if (ultimaDataTexto) {
+    if (ultimaData) {
+      const dataFormatada = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ultimaData));
+      ultimaDataTexto.innerHTML = `<strong>Última confissão:</strong> ${dataFormatada}. Que a misericórdia de Deus renove seu coração!`;
+    } else {
+      ultimaDataTexto.textContent = "“Ainda que os vossos pecados sejam como o escarlate, eles se tornarão brancos como a neve.” (Is 1,18)";
+    }
+  }
+}
+
+function renderMandamentosList() {
+  const container = document.getElementById('mandamentosAccordionList');
+  if (!container) return;
+
+  container.innerHTML = MANDAMENTOS_DEUS.map(m => `
+    <div class="mandamento-card">
+      <div class="mandamento-card-header">
+        <span class="mandamento-num-badge">${m.numero}</span>
+        <h4 class="mandamento-titulo">${m.titulo}</h4>
+      </div>
+      <div class="mandamento-perguntas-list">
+        ${m.perguntas.map(p => {
+    const isChecked = pecadosMarcadosCache.includes(p.id);
+    return `
+            <div class="confissao-check-row ${isChecked ? 'checked' : ''}" onclick="togglePecadoCheck('${p.id}')">
+              <div class="confissao-check-box">
+                ${isChecked ? '<i class="fas fa-check" style="font-size: 11px;"></i>' : ''}
+              </div>
+              <span class="confissao-check-txt">${p.texto}</span>
+            </div>
+          `;
+  }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPecadosCapitais() {
+  const container = document.getElementById('pecadosCapitaisGrid');
+  if (!container) return;
+
+  container.innerHTML = PECADOS_CAPITAIS.map(p => `
+    <div class="pecado-card">
+      <div class="pecado-card-header">
+        <span class="pecado-badge">${p.pecado}</span>
+        <span class="virtude-badge">Virtude: ${p.virtude}</span>
+      </div>
+      <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin: 0;">${p.descricao}</p>
+    </div>
+  `).join('');
+}
+
+function renderConfissaoOracoes() {
+  const tTrad = document.getElementById('txtAtoContricaoTradicional');
+  const tBrev = document.getElementById('txtAtoContricaoBreve');
+  const tLat = document.getElementById('txtAtoContricaoLatim');
+
+  if (tTrad) tTrad.textContent = ORACOES_CONFISSAO.atoContricaoTradicional;
+  if (tBrev) tBrev.textContent = ORACOES_CONFISSAO.atoContricaoBreve;
+  if (tLat) tLat.textContent = ORACOES_CONFISSAO.atoContricaoLatim;
+}
+
+window.switchConfissaoTab = function (tabName, btn) {
+  document.querySelectorAll('.confissao-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  document.getElementById('confTabMandamentos').classList.toggle('hidden', tabName !== 'mandamentos');
+  document.getElementById('confTabPecados').classList.toggle('hidden', tabName !== 'pecados');
+  document.getElementById('confTabRoteiro').classList.toggle('hidden', tabName !== 'roteiro');
+  document.getElementById('confTabOracoes').classList.toggle('hidden', tabName !== 'oracoes');
+};
+
+window.togglePecadoCheck = async function (id) {
+  pecadosMarcadosCache = await togglePecadoMarcado(id);
+  renderMandamentosList();
+  updateConfissaoStatusBanner();
+};
+
+window.abrirResumoConfissao = async function () {
+  pecadosMarcadosCache = await getPecadosMarcados();
+  const listEl = document.getElementById('confissaoResumoList');
+  const modal = document.getElementById('confissaoResumoModal');
+
+  if (modal) modal.classList.remove('hidden');
+
+  if (listEl) {
+    if (pecadosMarcadosCache.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+          <i class="fas fa-dove" style="font-size: 32px; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
+          <p>Nenhum item marcado no exame de consciência.</p>
+          <p style="font-size: 12.5px;">Se você já realizou seu exame mentalmente, vá com confiança e paz ao confessionário!</p>
+        </div>
+      `;
+    } else {
+      let html = '<ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">';
+      MANDAMENTOS_DEUS.forEach(m => {
+        const itensDesteMandamento = m.perguntas.filter(p => pecadosMarcadosCache.includes(p.id));
+        if (itensDesteMandamento.length > 0) {
+          html += `
+            <li style="margin-top: 8px;">
+              <span style="font-size: 12px; font-weight: 800; color: var(--gold-400); text-transform: uppercase;">${m.numero} — ${m.titulo}</span>
+              ${itensDesteMandamento.map(item => `
+                <div style="background: rgba(244, 63, 94, 0.08); border-left: 2px solid #f43f5e; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-top: 4px; font-size: 13.5px; color: var(--text-primary);">
+                  • ${item.texto}
+                </div>
+              `).join('')}
+            </li>
+          `;
+        }
+      });
+      html += '</ul>';
+      listEl.innerHTML = html;
+    }
+  }
+};
+
+window.closeConfissaoResumoModal = function () {
+  const modal = document.getElementById('confissaoResumoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.marcarConfissaoConcluida = async function () {
+  await registrarConfissaoRealizada();
+  pecadosMarcadosCache = [];
+  closeConfissaoResumoModal();
+  renderMandamentosList();
+  updateConfissaoStatusBanner();
+  showToast('🕊️ Louvado seja Nosso Senhor Jesus Cristo! Sua confissão foi registrada.');
+};
+
+
+// ==========================================================================
+// 3. DIÁRIO ESPIRITUAL & MURAL DE GRAÇAS ALCANÇADAS ("LIVRO DA GRATIDÃO")
+// ==========================================================================
+let diarioFilterActive = 'todos';
+
+window.showDiario = async function () {
+  showView('diarioView');
+  await renderDiarioItens();
+};
+
+window.filterDiario = function (filter, btn) {
+  diarioFilterActive = filter;
+  document.querySelectorAll('.diario-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderDiarioItens();
+};
+
+async function renderDiarioItens() {
+  const container = document.getElementById('diarioItensList');
+  const metricTotal = document.getElementById('metricDiarioTotal');
+  const metricEmOracao = document.getElementById('metricDiarioEmOracao');
+  const metricGracas = document.getElementById('metricDiarioGracas');
+
+  const stats = await getEstatisticasDiario();
+  if (metricTotal) metricTotal.textContent = stats.total;
+  if (metricEmOracao) metricEmOracao.textContent = stats.emOracao;
+  if (metricGracas) metricGracas.textContent = stats.alcancadas;
+
+  const itens = await getDiarioItens();
+  const filtrados = itens.filter(i => {
+    if (diarioFilterActive === 'em_oracao') return i.status === 'em_oracao';
+    if (diarioFilterActive === 'graca_alcancada') return i.status === 'graca_alcancada';
+    return true;
+  });
+
+  if (!container) return;
+
+  if (filtrados.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <i class="fas fa-book-bookmark" style="font-size: 32px; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
+        <p>Nenhuma oração encontrada nesta categoria.</p>
+        <button class="hero-donate-btn pulse-animation" onclick="abrirModalNovaOracao()" style="margin-top: 10px; padding: 8px 18px; font-size: 13px;">
+          <i class="fas fa-plus-circle"></i> Adicionar Nova Prece
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtrados.map(item => {
+    const isGraca = item.status === 'graca_alcancada';
+    const cat = DIARIO_CATEGORIAS.find(c => c.id === item.categoria) || DIARIO_CATEGORIAS[0];
+    const dataInicioFmt = item.dataInicio ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(item.dataInicio)) : '';
+    const dataGracaFmt = item.dataGraca ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(new Date(item.dataGraca)) : '';
+
+    return `
+      <div class="diario-item-card ${isGraca ? 'graca' : ''}">
+        <div class="diario-card-top">
+          <div class="diario-badges-wrap">
+            <span style="background: rgba(255, 255, 255, 0.06); color: ${cat.cor}; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px;">
+              <i class="fas ${cat.icone}"></i> ${cat.nome}
+            </span>
+            <span class="diario-status-badge ${isGraca ? 'alcancada' : 'em-oracao'}">
+              ${isGraca ? '✨ Graça Alcançada!' : '⏳ Em Oração'}
+            </span>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-calendar-alt"></i> Desde ${dataInicioFmt}</span>
+        </div>
+
+        <h4 class="diario-card-title">${item.titulo}</h4>
+        <p class="diario-card-pedido">${item.pedido}</p>
+
+        ${isGraca ? `
+          <div class="diario-graca-box">
+            <strong><i class="fas fa-sparkles"></i> Testemunho da Graça (${dataGracaFmt}):</strong>
+            <p style="font-size: 13.5px; color: var(--text-primary); margin: 2px 0 6px; font-style: italic;">“${item.testemunho}”</p>
+            ${item.versiculo ? `<span style="font-size: 12px; color: var(--gold-300); font-weight: 600;"><i class="fas fa-book-bible"></i> ${item.versiculo}</span>` : ''}
+          </div>
+        ` : ''}
+
+        <div class="diario-card-actions">
+          ${!isGraca ? `
+            <button class="hero-donate-btn" onclick="abrirModalGracaAlcancada('${item.id}', '${item.titulo.replace(/'/g, "\\'")}')" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 6px 14px; font-size: 12px;">
+              <i class="fas fa-sparkles"></i> Graça Alcançada!
+            </button>
+          ` : `
+            <button class="upload-btn-secondary" onclick="compartilharTestemunhoWhatsApp('${item.id}')" style="font-size: 12px; padding: 6px 14px;">
+              <i class="fab fa-whatsapp" style="color: #22c55e;"></i> Compartilhar
+            </button>
+            <button class="upload-btn-secondary" onclick="toggleReabrirOracao('${item.id}')" style="font-size: 11.5px; padding: 6px 10px;">
+              <i class="fas fa-rotate-left"></i> Reabrir
+            </button>
+          `}
+          <button onclick="deletarItemDiario('${item.id}')" style="background: none; border: none; color: #ef4444; font-size: 12px; cursor: pointer; padding: 6px 8px;" title="Excluir">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.abrirModalNovaOracao = function () {
+  const modal = document.getElementById('diarioNovoModal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeDiarioNovoModal = function () {
+  const modal = document.getElementById('diarioNovoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.handleSalvarNovaOracao = async function (e) {
+  e.preventDefault();
+  const titulo = document.getElementById('diarioTituloInput')?.value;
+  const categoria = document.getElementById('diarioCategoriaSelect')?.value;
+  const versiculo = document.getElementById('diarioVersiculoInput')?.value;
+  const pedido = document.getElementById('diarioPedidoTextarea')?.value;
+
+  if (!titulo || !pedido) return;
+
+  await salvarNovoItemDiario({
+    titulo,
+    categoria,
+    versiculo,
+    pedido
+  });
+
+  closeDiarioNovoModal();
+  document.getElementById('diarioNovoForm')?.reset();
+  await renderDiarioItens();
+  showToast('🙏 Intenção guardada no seu Diário Espiritual.');
+};
+
+window.abrirModalGracaAlcancada = function (id, titulo) {
+  const modal = document.getElementById('diarioGracaModal');
+  const idInput = document.getElementById('diarioGracaItemId');
+  const preview = document.getElementById('diarioGracaTituloPreview');
+
+  if (idInput) idInput.value = id;
+  if (preview) preview.textContent = titulo;
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeDiarioGracaModal = function () {
+  const modal = document.getElementById('diarioGracaModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.handleSalvarGracaAlcancada = async function (e) {
+  e.preventDefault();
+  const id = document.getElementById('diarioGracaItemId')?.value;
+  const testemunho = document.getElementById('diarioTestemunhoInput')?.value;
+  const versiculo = document.getElementById('diarioGracaVersiculoInput')?.value;
+
+  if (!id || !testemunho) return;
+
+  await marcarGracaAlcancada(id, testemunho, versiculo);
+  closeDiarioGracaModal();
+  document.getElementById('diarioGracaForm')?.reset();
+  await renderDiarioItens();
+  showToast('🎉 Glória a Deus! Graça alcançada registrada com sucesso!');
+};
+
+window.toggleReabrirOracao = async function (id) {
+  await reabrirEmOracao(id);
+  await renderDiarioItens();
+  showToast('Intenção reaberta em oração.');
+};
+
+window.deletarItemDiario = async function (id) {
+  await excluirItemDiario(id);
+  await renderDiarioItens();
+  showToast('Registro removido do diário.');
+};
+
+window.compartilharTestemunhoWhatsApp = async function (id) {
+  const itens = await getDiarioItens();
+  const item = itens.find(i => i.id === id);
+  if (!item) return;
+
+  const msg = formatarTestemunhoWhatsApp(item);
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
 
 
 

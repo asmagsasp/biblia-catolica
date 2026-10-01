@@ -52,6 +52,12 @@
           class="fas fa-fire"></i></button>
       <button class="header-btn desktop-only" onclick="showTeologia()" title="Doutores da Igreja & Teologia"><i
           class="fas fa-feather-pointed"></i></button>
+      <button class="header-btn desktop-only" onclick="showLectio()" title="Lectio Divina (Oração Guiada)"><i
+          class="fas fa-dove"></i></button>
+      <button class="header-btn desktop-only" onclick="showConfissao()" title="Exame de Consciência & Confissão"><i
+          class="fas fa-cross"></i></button>
+      <button class="header-btn desktop-only" onclick="showDiario()" title="Diário Espiritual & Graças"><i
+          class="fas fa-book-bookmark"></i></button>
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
           class="fas fa-images"></i></button>
       <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
@@ -94,7 +100,7 @@
         </div>
       </section>
 
-      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, VELAS, TEOLOGIA -->
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, VELAS, TEOLOGIA, LECTIO, CONFISSÃO, DIÁRIO -->
       <div class="home-quick-grid">
         <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
           <div class="quick-card-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
@@ -140,6 +146,42 @@
             <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Doutores da Igreja</div>
             <h3 class="quick-card-title">IA Teológica Católica</h3>
             <p class="quick-card-desc">São Tomás de Aquino, Santo Agostinho & CIC</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card lectio-card" onclick="showLectio()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
+            <i class="fas fa-dove"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Oração dos Monges</div>
+            <h3 class="quick-card-title">Lectio Divina Guiada</h3>
+            <p class="quick-card-desc">Leitura, Meditação, Oração & Contemplação</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card confissao-card" onclick="showConfissao()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(244, 63, 94, 0.18); color: #f43f5e;">
+            <i class="fas fa-cross"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;">Guia Penitencial</div>
+            <h3 class="quick-card-title">Exame de Consciência</h3>
+            <p class="quick-card-desc">Preparação completa para a Santa Confissão</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card diario-card" onclick="showDiario()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(16, 185, 129, 0.18); color: #10b981;">
+            <i class="fas fa-book-bookmark"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Livro da Gratidão</div>
+            <h3 class="quick-card-title">Diário Espiritual</h3>
+            <p class="quick-card-desc">Minhas Orações & Graças Alcançadas</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -530,6 +572,269 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- LECTIO DIVINA GUIADA (ORAÇÃO DOS MONGES EM 4 PASSOS) -->
+    <div id="lectioView" class="hidden">
+      <div class="lectio-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Lectio Divina</h2>
+              <p class="chapter-subtitle">Oração Contemplativa Católica em 4 Passos</p>
+            </div>
+          </div>
+          <div class="teologia-header-actions">
+            <button class="btn-read-all" onclick="openLectioHistoricoModal()" title="Histórico de Orações">
+              <i class="fas fa-clock-rotate-left"></i> Histórico
+            </button>
+          </div>
+        </div>
+
+        <!-- Seletor de Passagem Bíblica -->
+        <div class="lectio-passagens-bar">
+          <span class="lectio-bar-label"><i class="fas fa-sparkles" style="color: var(--gold-400);"></i> Sugestões de Passagens:</span>
+          <div class="lectio-chips-scroll" id="lectioPassagensChips"></div>
+        </div>
+
+        <!-- Caixa da Palavra de Deus -->
+        <div class="lectio-scripture-box" id="lectioScriptureBox">
+          <div class="lectio-scripture-header">
+            <span class="lectio-scripture-ref" id="lectioScriptureRef">Salmos 23,1-6</span>
+            <span class="lectio-scripture-badge" id="lectioScriptureBadge">Palavra de Deus</span>
+          </div>
+          <p class="lectio-scripture-text" id="lectioScriptureText">Carregando passagem sagrada...</p>
+        </div>
+
+        <!-- 4 Step Tabs -->
+        <div class="lectio-steps-nav" id="lectioStepsNav">
+          <button class="lectio-step-tab active" data-step="1" onclick="goToLectioStep(1)">
+            <span class="step-num">1</span> <span class="step-txt">Lectio (Leitura)</span>
+          </button>
+          <button class="lectio-step-tab" data-step="2" onclick="goToLectioStep(2)">
+            <span class="step-num">2</span> <span class="step-txt">Meditatio (Meditação)</span>
+          </button>
+          <button class="lectio-step-tab" data-step="3" onclick="goToLectioStep(3)">
+            <span class="step-num">3</span> <span class="step-txt">Oratio (Oração)</span>
+          </button>
+          <button class="lectio-step-tab" data-step="4" onclick="goToLectioStep(4)">
+            <span class="step-num">4</span> <span class="step-txt">Contemplatio (Ação)</span>
+          </button>
+        </div>
+
+        <!-- Card Ativo do Passo da Lectio -->
+        <div class="lectio-card-step" id="lectioCardStep">
+          <div class="lectio-card-header" id="lectioStepHeader">
+            <div class="lectio-step-icon-wrap" id="lectioStepIconWrap">
+              <i class="fas fa-book-open-reader" id="lectioStepIcon"></i>
+            </div>
+            <div>
+              <h3 class="lectio-step-title" id="lectioStepTitle">1. Lectio — Leitura Sagrada</h3>
+              <p class="lectio-step-latin" id="lectioStepLatin">O que o texto diz em si mesmo?</p>
+            </div>
+          </div>
+          <p class="lectio-step-desc" id="lectioStepDesc"></p>
+          <div class="lectio-step-instr-box" id="lectioStepInstrBox">
+            <i class="fas fa-info-circle"></i> <span id="lectioStepInstr"></span>
+          </div>
+          
+          <div class="lectio-interactive-area" id="lectioInteractiveArea">
+            <label class="lectio-prompt-label" id="lectioPromptLabel">Qual palavra ou versículo mais tocou seu coração?</label>
+            <textarea class="lectio-reflection-input" id="lectioStepInput" rows="3" placeholder="Escreva suas impressões, oração ou propósito aqui..."></textarea>
+          </div>
+
+          <!-- Timer de Silêncio Contemplativo -->
+          <div class="lectio-timer-box" id="lectioTimerBox">
+            <div class="timer-display">
+              <i class="fas fa-stopwatch" style="color: var(--gold-400);"></i>
+              <span id="lectioTimerText">03:00</span>
+              <span style="font-size: 11.5px; color: var(--text-muted);">(Silêncio de Adoração)</span>
+            </div>
+            <div class="timer-controls">
+              <button class="timer-btn" onclick="toggleLectioTimer()"><i class="fas fa-play" id="lectioTimerIcon"></i> Iniciar Timer</button>
+              <button class="timer-btn-subtle" onclick="setLectioTimerDuration(60)">1 min</button>
+              <button class="timer-btn-subtle" onclick="setLectioTimerDuration(180)">3 min</button>
+              <button class="timer-btn-subtle" onclick="setLectioTimerDuration(300)">5 min</button>
+            </div>
+          </div>
+
+          <!-- Controles de Navegação -->
+          <div class="lectio-actions-row">
+            <button class="btn-read-all" id="btnLectioPrev" onclick="prevLectioStep()" disabled style="opacity: 0.5;">
+              <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <button class="hero-donate-btn pulse-animation" id="btnLectioNext" onclick="nextLectioStep()" style="padding: 12px 24px; font-weight: 700;">
+              <span>Avançar</span> <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="hero-donate-btn hidden" id="btnLectioFinish" onclick="concluirLectioDivina()" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 12px 24px; font-weight: 700;">
+              <i class="fas fa-check-circle"></i> Concluir & Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXAME DE CONSCIÊNCIA & GUIA DA SANTA CONFISSÃO -->
+    <div id="confissaoView" class="hidden">
+      <div class="confissao-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Exame de Consciência</h2>
+              <p class="chapter-subtitle">Guia para uma Santa e Frutuosa Confissão</p>
+            </div>
+          </div>
+          <div class="teologia-header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-read-all" onclick="abrirResumoConfissao()" style="border-color: rgba(244, 63, 94, 0.4); color: #f43f5e;" title="Ver resumo para o confessionário">
+              <i class="fas fa-list-check"></i> <span id="confissaoBadgeContador">0 faltas</span>
+            </button>
+            <button class="btn-read-all" onclick="marcarConfissaoConcluida()" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #22c55e;" title="Marcar como confessado">
+              <i class="fas fa-check-double"></i> Fui Absolvido
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de Status da Confissão -->
+        <div class="confissao-status-banner">
+          <div class="confissao-banner-icon"><i class="fas fa-key"></i></div>
+          <div class="confissao-banner-text">
+            <h4>Sacramento da Reconciliação & Misericórdia</h4>
+            <p id="confissaoUltimaDataTexto">“Ainda que os vossos pecados sejam como o escarlate, eles se tornarão brancos como a neve.” (Is 1,18)</p>
+          </div>
+        </div>
+
+        <!-- Subtabs da Confissão -->
+        <div class="confissao-subtabs">
+          <button class="confissao-tab-btn active" data-tab="mandamentos" onclick="switchConfissaoTab('mandamentos', this)">
+            <i class="fas fa-scroll"></i> 10 Mandamentos
+          </button>
+          <button class="confissao-tab-btn" data-tab="pecados" onclick="switchConfissaoTab('pecados', this)">
+            <i class="fas fa-shield-heart"></i> Pecados Capitais
+          </button>
+          <button class="confissao-tab-btn" data-tab="roteiro" onclick="switchConfissaoTab('roteiro', this)">
+            <i class="fas fa-church"></i> No Confessionário
+          </button>
+          <button class="confissao-tab-btn" data-tab="oracoes" onclick="switchConfissaoTab('oracoes', this)">
+            <i class="fas fa-hands-praying"></i> Ato de Contrição
+          </button>
+        </div>
+
+        <!-- Tab 1: 10 Mandamentos da Lei de Deus -->
+        <div class="confissao-tab-content" id="confTabMandamentos">
+          <div class="mandamentos-accordion-list" id="mandamentosAccordionList"></div>
+        </div>
+
+        <!-- Tab 2: 7 Pecados Capitais & Virtudes -->
+        <div class="confissao-tab-content hidden" id="confTabPecados">
+          <div class="pecados-capitais-grid" id="pecadosCapitaisGrid"></div>
+        </div>
+
+        <!-- Tab 3: Roteiro do Confessionário Passo a Passo -->
+        <div class="confissao-tab-content hidden" id="confTabRoteiro">
+          <div class="roteiro-passo-list">
+            <div class="roteiro-card">
+              <div class="roteiro-step-badge">Passo 1</div>
+              <h4>Antes de entrar: Arrependimento sincero</h4>
+              <p>Peça a luz do Espírito Santo, faça o exame de consciência e tome a firme decisão de evitar o pecado (propósito de emenda).</p>
+            </div>
+            <div class="roteiro-card">
+              <div class="roteiro-step-badge">Passo 2</div>
+              <h4>Ao entrar no Confessionário</h4>
+              <p>Ajoelhe-se ou sente-se diante do Padre e diga com reverência:</p>
+              <div class="roteiro-fala-box">
+                <strong>“Abençoai-me, Padre, porque pequei. Minha última confissão foi há [tempo aproximado: dias, meses ou anos].”</strong>
+              </div>
+            </div>
+            <div class="roteiro-card">
+              <div class="roteiro-step-badge">Passo 3</div>
+              <h4>A Acusação dos Pecados</h4>
+              <p>Diga com clareza e sinceridade os pecados graves em número e espécie. Depois dos pecados graves, pode citar faltas veniais.</p>
+              <div class="roteiro-fala-box">
+                <strong>“Acuso-me de ter cometido...” (conte os itens que você examinou).</strong>
+              </div>
+            </div>
+            <div class="roteiro-card">
+              <div class="roteiro-step-badge">Passo 4</div>
+              <h4>Acolher a Penitência e Rezar o Ato de Contrição</h4>
+              <p>O Padre lhe dará conselhos santos e uma penitência. Em seguida, ele pedirá que você reze o Ato de Contrição:</p>
+              <div class="roteiro-fala-box">
+                <em>“Meu Deus, eu me arrependo de todo o coração de Vos ter ofendido, porque sois infinitamente bom... prometo, com a Vossa graça, nunca mais pecar.”</em>
+              </div>
+            </div>
+            <div class="roteiro-card">
+              <div class="roteiro-step-badge">Passo 5</div>
+              <h4>A Absolvição Sacramental</h4>
+              <p>O Padre fará o sinal da cruz e dirá: <em>“...Eu te absolvo dos teus pecados, em nome do Pai, e do Filho e do Espírito Santo.”</em> Responda com fé: <strong>“Amém!”</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Orações & Ato de Contrição -->
+        <div class="confissao-tab-content hidden" id="confTabOracoes">
+          <div class="oracao-card-box">
+            <h3 style="color: var(--gold-400); margin-bottom: 8px;"><i class="fas fa-cross"></i> Ato de Contrição (Tradicional)</h3>
+            <p class="oracao-box-text" id="txtAtoContricaoTradicional"></p>
+          </div>
+          <div class="oracao-card-box">
+            <h3 style="color: var(--gold-400); margin-bottom: 8px;"><i class="fas fa-dove"></i> Ato de Contrição (Fórmula Breve)</h3>
+            <p class="oracao-box-text" id="txtAtoContricaoBreve"></p>
+          </div>
+          <div class="oracao-card-box">
+            <h3 style="color: var(--gold-400); margin-bottom: 8px;"><i class="fas fa-feather-pointed"></i> Actus Contritionis (Latim)</h3>
+            <p class="oracao-box-text" id="txtAtoContricaoLatim" style="font-style: italic;"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIÁRIO ESPIRITUAL & MURAL DE GRAÇAS ALCANÇADAS -->
+    <div id="diarioView" class="hidden">
+      <div class="diario-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Diário Espiritual</h2>
+              <p class="chapter-subtitle">Minhas Orações, Intenções & Graças Alcançadas</p>
+            </div>
+          </div>
+          <div class="teologia-header-actions">
+            <button class="hero-donate-btn pulse-animation" onclick="abrirModalNovaOracao()" style="padding: 10px 18px; font-size: 13px;">
+              <i class="fas fa-plus-circle"></i> Nova Prece
+            </button>
+          </div>
+        </div>
+
+        <!-- Métricas Rápidas -->
+        <div class="diario-metricas-grid">
+          <div class="diario-metric-card">
+            <span class="metric-num" id="metricDiarioTotal">0</span>
+            <span class="metric-label">Total de Preces</span>
+          </div>
+          <div class="diario-metric-card" style="border-color: rgba(234, 179, 8, 0.4);">
+            <span class="metric-num" style="color: var(--gold-400);" id="metricDiarioEmOracao">0</span>
+            <span class="metric-label">Em Oração ⏳</span>
+          </div>
+          <div class="diario-metric-card" style="border-color: rgba(34, 197, 94, 0.4);">
+            <span class="metric-num" style="color: #22c55e;" id="metricDiarioGracas">0</span>
+            <span class="metric-label">Graças Alcançadas! 🕊️</span>
+          </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="diario-filters-bar">
+          <button class="diario-filter-btn active" data-filter="todos" onclick="filterDiario('todos', this)"><i class="fas fa-layer-group"></i> Todas</button>
+          <button class="diario-filter-btn" data-filter="em_oracao" onclick="filterDiario('em_oracao', this)"><i class="fas fa-hourglass-half" style="color: var(--gold-400);"></i> Em Oração</button>
+          <button class="diario-filter-btn" data-filter="graca_alcancada" onclick="filterDiario('graca_alcancada', this)"><i class="fas fa-sparkles" style="color: #22c55e;"></i> Graças Alcançadas</button>
+        </div>
+
+        <!-- Lista de Orações / Graças -->
+        <div class="diario-itens-list" id="diarioItensList">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
       </div>
     </div>
 
@@ -1067,17 +1372,127 @@
           <textarea id="velaIntencaoInput" class="upload-textarea" rows="4" placeholder="Escreva aqui a sua prece ou pedido de intercessão..." required maxlength="450"></textarea>
         </div>
 
-        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
-          <button type="button" class="upload-btn-secondary" onclick="closeAcenderVelaModal()">Cancelar</button>
-          <button type="submit" id="btnSubmitVela" class="hero-donate-btn pulse-animation" style="padding: 10px 22px;">
-            <i class="fas fa-fire"></i> Acender Vela Sagrada
+  <!-- MODAL: HISTÓRICO DE LECTIO DIVINA -->
+  <div id="lectioHistoricoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeLectioHistoricoModal()">
+    <div class="donate-modal-content" style="max-width: 620px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeLectioHistoricoModal()"><i class="fas fa-times"></i></button>
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: #38bdf8; background: rgba(56, 189, 248, 0.12);">
+          <i class="fas fa-dove donate-icon" style="color: #38bdf8;"></i>
+        </div>
+        <h2 style="color: var(--gold-300); font-family: var(--font-display);">Histórico de Lectio Divina</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Suas sessões de oração, meditações e propósitos guardados no coração</p>
+      </div>
+      <div class="donate-body" id="lectioHistoricoList" style="max-height: 55vh; overflow-y: auto; padding-right: 4px;">
+        <p style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma sessão de Lectio Divina registrada ainda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RESUMO PARA O CONFESSIONÁRIO -->
+  <div id="confissaoResumoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeConfissaoResumoModal()">
+    <div class="donate-modal-content" style="max-width: 540px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeConfissaoResumoModal()"><i class="fas fa-times"></i></button>
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: #f43f5e; background: rgba(244, 63, 94, 0.12);">
+          <i class="fas fa-list-check donate-icon" style="color: #f43f5e;"></i>
+        </div>
+        <h2 style="color: var(--gold-300); font-family: var(--font-display);">Resumo para o Confessionário</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Faltas anotadas durante seu Exame de Consciência (100% privado)</p>
+      </div>
+      <div class="donate-body" id="confissaoResumoList" style="max-height: 50vh; overflow-y: auto; padding-right: 4px;">
+        <!-- Filled dynamically -->
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+        <button type="button" class="upload-btn-secondary" onclick="closeConfissaoResumoModal()">Fechar</button>
+        <button type="button" class="hero-donate-btn" onclick="marcarConfissaoConcluida()" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 10px 20px;">
+          <i class="fas fa-check-double"></i> Recebi a Absolvição
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVA INTENÇÃO NO DIÁRIO -->
+  <div id="diarioNovoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeDiarioNovoModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeDiarioNovoModal()"><i class="fas fa-times"></i></button>
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: #10b981; background: rgba(16, 185, 129, 0.12);">
+          <i class="fas fa-book-bookmark donate-icon" style="color: #10b981;"></i>
+        </div>
+        <h2 style="color: var(--gold-300); font-family: var(--font-display);">Nova Intenção de Oração</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Apresente sua súplica com fé. Deus ouve a oração dos humildes.</p>
+      </div>
+      <form id="diarioNovoForm" onsubmit="handleSalvarNovaOracao(event)" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+        <div>
+          <label for="diarioTituloInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Título da Intenção / Prece: *</label>
+          <input type="text" id="diarioTituloInput" class="upload-input" placeholder="Ex: Pela cura da minha mãe, Pelo meu trabalho..." required maxlength="100">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label for="diarioCategoriaSelect" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Categoria:</label>
+            <select id="diarioCategoriaSelect" class="upload-select">
+              <option value="saude">🌿 Saúde & Cura</option>
+              <option value="familia">👨‍👩‍👧‍👦 Família & Lar</option>
+              <option value="conversao">✝️ Conversão & Fé</option>
+              <option value="trabalho">💼 Trabalho & Finanças</option>
+              <option value="vocacao">🧭 Vocação</option>
+              <option value="protecao">🛡️ Proteção & Paz</option>
+              <option value="agradecimento" selected>✨ Gratidão & Louvor</option>
+            </select>
+          </div>
+          <div>
+            <label for="diarioVersiculoInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Versículo Base (opcional):</label>
+            <input type="text" id="diarioVersiculoInput" class="upload-input" placeholder="Ex: Filipenses 4,13" maxlength="50">
+          </div>
+        </div>
+        <div>
+          <label for="diarioPedidoTextarea" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Detalhes da sua Oração: *</label>
+          <textarea id="diarioPedidoTextarea" class="upload-textarea" rows="4" placeholder="Descreva sua prece, promessa ou consagração a Deus..." required maxlength="600"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeDiarioNovoModal()">Cancelar</button>
+          <button type="submit" class="hero-donate-btn pulse-animation" style="padding: 10px 22px;">
+            <i class="fas fa-save"></i> Guardar no Diário
           </button>
         </div>
       </form>
     </div>
   </div>
 
-
+  <!-- MODAL: CELEBRAR GRAÇA ALCANÇADA -->
+  <div id="diarioGracaModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeDiarioGracaModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeDiarioGracaModal()"><i class="fas fa-times"></i></button>
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,175,55,0.15);">
+          <i class="fas fa-sparkles donate-icon" style="color: var(--gold-300);"></i>
+        </div>
+        <h2 style="color: var(--gold-300); font-family: var(--font-display);">Graça Alcançada! 🙏✨</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Deus ouviu sua prece! Registre seu testemunho de gratidão ao Senhor.</p>
+      </div>
+      <form id="diarioGracaForm" onsubmit="handleSalvarGracaAlcancada(event)" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+        <input type="hidden" id="diarioGracaItemId" value="">
+        <div style="padding: 10px 14px; background: rgba(212,175,55,0.1); border-left: 3px solid var(--gold-400); border-radius: 0 10px 10px 0;">
+          <strong id="diarioGracaTituloPreview" style="color: var(--gold-300); font-size: 14px;"></strong>
+        </div>
+        <div>
+          <label for="diarioTestemunhoInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Seu Testemunho / Como a Graça foi Concedida: *</label>
+          <textarea id="diarioTestemunhoInput" class="upload-textarea" rows="4" placeholder="Escreva aqui como Deus e os Santos intercederam por você..." required maxlength="600"></textarea>
+        </div>
+        <div>
+          <label for="diarioGracaVersiculoInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Versículo de Agradecimento (opcional):</label>
+          <input type="text" id="diarioGracaVersiculoInput" class="upload-input" placeholder="Ex: Salmos 103,1-2" maxlength="60">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeDiarioGracaModal()">Cancelar</button>
+          <button type="submit" class="hero-donate-btn pulse-animation" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 10px 22px;">
+            <i class="fas fa-check-circle"></i> Confirmar Graça
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- FLOATING SACRED AMBIENT AUDIO BAR -->
   <aside id="sacredAudioBar" class="sacred-audio-bar" aria-label="Trilha Sonora Sacra Ambiente">
