@@ -5035,7 +5035,14 @@ async function renderDiarioItens() {
 
 window.abrirModalNovaOracao = function () {
   const modal = document.getElementById('diarioNovoModal');
-  if (modal) modal.classList.remove('hidden');
+  const form = document.getElementById('diarioNovoForm');
+  if (form) form.reset();
+  if (modal) {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('diarioTituloInput')?.focus();
+    }, 100);
+  }
 };
 
 window.closeDiarioNovoModal = function () {
@@ -5044,25 +5051,38 @@ window.closeDiarioNovoModal = function () {
 };
 
 window.handleSalvarNovaOracao = async function (e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const titulo = document.getElementById('diarioTituloInput')?.value;
   const categoria = document.getElementById('diarioCategoriaSelect')?.value;
   const versiculo = document.getElementById('diarioVersiculoInput')?.value;
   const pedido = document.getElementById('diarioPedidoTextarea')?.value;
 
-  if (!titulo || !pedido) return;
+  if (!titulo || !titulo.trim()) {
+    showToast('Por favor, informe o título da sua intenção.');
+    return;
+  }
+  if (!pedido || !pedido.trim()) {
+    showToast('Por favor, escreva os detalhes da sua oração.');
+    return;
+  }
 
-  await salvarNovoItemDiario({
-    titulo,
-    categoria,
-    versiculo,
-    pedido
-  });
+  try {
+    await salvarNovoItemDiario({
+      titulo: titulo.trim(),
+      categoria: categoria || 'agradecimento',
+      versiculo: versiculo ? versiculo.trim() : '',
+      pedido: pedido.trim()
+    });
 
-  closeDiarioNovoModal();
-  document.getElementById('diarioNovoForm')?.reset();
-  await renderDiarioItens();
-  showToast('🙏 Intenção guardada no seu Diário Espiritual.');
+    closeDiarioNovoModal();
+    const form = document.getElementById('diarioNovoForm');
+    if (form) form.reset();
+    await renderDiarioItens();
+    showToast('🙏 Intenção guardada no seu Diário Espiritual.');
+  } catch (err) {
+    console.error('[Diario] Erro ao salvar prece:', err);
+    showToast('Não foi possível salvar a prece. Tente novamente.');
+  }
 };
 
 window.abrirModalGracaAlcancada = function (id, titulo) {
@@ -5081,18 +5101,31 @@ window.closeDiarioGracaModal = function () {
 };
 
 window.handleSalvarGracaAlcancada = async function (e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const id = document.getElementById('diarioGracaItemId')?.value;
   const testemunho = document.getElementById('diarioTestemunhoInput')?.value;
   const versiculo = document.getElementById('diarioGracaVersiculoInput')?.value;
 
-  if (!id || !testemunho) return;
+  if (!id) {
+    showToast('Identificador de oração inválido.');
+    return;
+  }
+  if (!testemunho || !testemunho.trim()) {
+    showToast('Por favor, relate o testemunho da graça alcançada.');
+    return;
+  }
 
-  await marcarGracaAlcancada(id, testemunho, versiculo);
-  closeDiarioGracaModal();
-  document.getElementById('diarioGracaForm')?.reset();
-  await renderDiarioItens();
-  showToast('🎉 Glória a Deus! Graça alcançada registrada com sucesso!');
+  try {
+    await marcarGracaAlcancada(id, testemunho.trim(), versiculo ? versiculo.trim() : '');
+    closeDiarioGracaModal();
+    const form = document.getElementById('diarioGracaForm');
+    if (form) form.reset();
+    await renderDiarioItens();
+    showToast('🎉 Glória a Deus! Graça alcançada registrada com sucesso!');
+  } catch (err) {
+    console.error('[Diario] Erro ao marcar graça:', err);
+    showToast('Não foi possível registrar a graça. Tente novamente.');
+  }
 };
 
 window.toggleReabrirOracao = async function (id) {

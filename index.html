@@ -1372,6 +1372,16 @@
           <textarea id="velaIntencaoInput" class="upload-textarea" rows="4" placeholder="Escreva aqui a sua prece ou pedido de intercessão..." required maxlength="450"></textarea>
         </div>
 
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeAcenderVelaModal()">Cancelar</button>
+          <button type="submit" id="btnSubmitVela" class="hero-donate-btn pulse-animation" style="padding: 10px 22px;">
+            <i class="fas fa-fire"></i> Acender Vela Sagrada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: HISTÓRICO DE LECTIO DIVINA -->
   <div id="lectioHistoricoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeLectioHistoricoModal()">
     <div class="donate-modal-content" style="max-width: 620px; text-align: left;">
