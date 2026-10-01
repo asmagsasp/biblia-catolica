@@ -982,25 +982,34 @@ body::before {
 /* Verses Reading Layout */
 .verse {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: 14px;
   transition: var(--transition);
   position: relative;
-  border: 1px solid transparent;
-  margin-bottom: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+  margin-bottom: 14px;
+  width: 100%;
 }
 
 .verse:hover {
   background: rgba(212, 175, 55, 0.04);
-  border-color: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.18);
 }
 
 .verse.reading {
   background: rgba(212, 175, 55, 0.14);
   border-color: var(--gold-400);
   box-shadow: 0 0 25px rgba(212, 175, 55, 0.22);
-  transform: scale(1.01);
+  transform: scale(1.005);
+}
+
+.verse-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
 .verse-number {
@@ -1017,7 +1026,8 @@ body::before {
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.2);
   flex-shrink: 0;
-  margin-top: 4px;
+  margin-top: 2px;
+  user-select: none;
 }
 
 .verse.reading .verse-number {
@@ -1031,14 +1041,23 @@ body::before {
   line-height: var(--verse-line);
   color: var(--text-primary);
   flex: 1;
+  width: 100%;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+  letter-spacing: 0.2px;
 }
 
 .verse-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  opacity: 0;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+  opacity: 0.9;
   transition: var(--transition);
+  flex-wrap: wrap;
 }
 
 .verse:hover .verse-actions {
@@ -1048,7 +1067,7 @@ body::before {
 .verse-action-btn {
   width: 32px;
   height: 32px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
   cursor: pointer;
@@ -1062,16 +1081,41 @@ body::before {
 
 .verse-action-btn:hover {
   background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.35);
   color: var(--gold-300);
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .verse-action-btn.favorited {
   color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .verse-action-btn.whatsapp:hover {
   color: #22C55E;
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+[data-theme="light"] .verse {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="light"] .verse:hover {
+  background: #FFFFFF;
+  border-color: rgba(197, 155, 39, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .verse-actions {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .verse-action-btn {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
 /* Chapter Bottom Navigation */

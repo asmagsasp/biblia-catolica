@@ -385,8 +385,10 @@ async function loadVerses() {
       </div>
     ` + verses.map(v => `
             <div class="verse" data-v="${v.id_versiculo}" id="v-${v.id_versiculo}">
-                <span class="verse-number">${v.id_versiculo}</span>
-                <span class="verse-text">${v.texto}</span>
+                <div class="verse-content">
+                    <span class="verse-number">${v.id_versiculo}</span>
+                    <span class="verse-text">${v.texto}</span>
+                </div>
                 <div class="verse-actions">
                     <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Ouvir"><i class="fas fa-volume-up"></i></button>
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
