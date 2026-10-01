@@ -96,31 +96,59 @@ export async function deleteImageFromFirebase(id, fallbackImg = null) {
     const idStr = String(id);
 
     try {
-        // Se idStr é uma chave do Firebase (não começa com base_ ou usr_)
-        if (!idStr.startsWith('base_') && !idStr.startsWith('usr_') && idStr.length > 5) {
-            await fetch(`${FIREBASE_DB_URL}/gallery/${idStr}.json`, { method: 'DELETE' });
-            return true;
+        const deleteKeys = new Set();
+        if (!idStr.startsWith('usr_') && !idStr.startsWith('http') && !idStr.startsWith('data:')) {
+            deleteKeys.add(idStr);
         }
 
-        // Se veio com identificador local, buscar a chave correspondente no Firebase
-        const res = await fetch(`${FIREBASE_DB_URL}/gallery.json`);
-        if (res.ok) {
-            const data = await res.json();
+        // Scan database to delete by matching key, address or verse content
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch(`${FIREBASE_DB_URL}/gallery.json`, { 
+            cache: 'no-cache',
+            signal: controller.signal 
+        }).catch(() => null);
+        clearTimeout(timeout);
+
+        if (res && res.ok) {
+            const data = await res.json().catch(() => null);
             if (data && typeof data === 'object') {
                 for (const [key, val] of Object.entries(data)) {
-                    if (val && (
-                        (val.address && fallbackImg && val.address === fallbackImg.address) ||
-                        (val.texto && fallbackImg && val.texto === fallbackImg.texto && val.id_versiculo === fallbackImg.id_versiculo)
-                    )) {
-                        await fetch(`${FIREBASE_DB_URL}/gallery/${key}.json`, { method: 'DELETE' });
-                        console.log('[FirebaseGallery] Imagem removida do Firebase pela chave:', key);
-                        return true;
+                    if (val) {
+                        const matchesKey = (key === idStr || String(val.id) === idStr || String(val.firebase_key) === idStr);
+                        const matchesAddress = (fallbackImg && fallbackImg.address && val.address && val.address === fallbackImg.address) ||
+                                               (idStr.startsWith('http') && val.address === idStr) ||
+                                               (fallbackImg && fallbackImg.url && val.address === fallbackImg.url);
+                        const matchesContent = fallbackImg && fallbackImg.texto && val.texto === fallbackImg.texto && 
+                                               String(val.id_capitulo || '') === String(fallbackImg.id_capitulo || '') && 
+                                               String(val.id_versiculo || '') === String(fallbackImg.id_versiculo || '');
+
+                        if (matchesKey || matchesAddress || matchesContent) {
+                            deleteKeys.add(key);
+                        }
                     }
                 }
             }
         }
+
+        const deletePromises = [];
+        for (const key of deleteKeys) {
+            deletePromises.push(
+                fetch(`${FIREBASE_DB_URL}/gallery/${encodeURIComponent(key)}.json`, { 
+                    method: 'DELETE' 
+                }).then(() => {
+                    console.log('[FirebaseGallery] Imagem removida com sucesso do Firebase:', key);
+                }).catch(e => console.warn('[FirebaseGallery] Erro ao deletar chave:', key, e))
+            );
+        }
+
+        if (deletePromises.length > 0) {
+            await Promise.all(deletePromises);
+        }
+        return true;
     } catch (err) {
         console.warn('[FirebaseGallery] Erro ao remover do Firebase:', err);
+        return false;
     }
-    return false;
 }
+

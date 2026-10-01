@@ -681,16 +681,33 @@ export async function addImgVersiculo(imgData) {
     return newImg;
 }
 
-export async function deleteImgVersiculo(id) {
+export async function deleteImgVersiculo(id, fallbackImg = null) {
     const idStr = String(id);
-    const targetImg = userImages.find(img => String(img.id) === idStr);
+    const targetImg = fallbackImg || userImages.find(img => String(img.id) === idStr);
 
-    // 1. Delete from Firebase Cloud
-    deleteImageFromFirebase(idStr, targetImg).catch(e => console.warn('[Firebase] Delete error:', e));
+    // 1. Delete from Firebase Cloud (awaited to ensure cloud sync before re-fetching)
+    try {
+        await deleteImageFromFirebase(idStr, targetImg);
+    } catch (e) {
+        console.warn('[Firebase] Delete error:', e);
+    }
 
     // 2. Delete from local cache
-    userImages = userImages.filter(img => String(img.id) !== idStr);
-    saveUserImagesLocal();
+    userImages = userImages.filter(img => {
+        if (String(img.id) === idStr) return false;
+        if (targetImg && targetImg.address && img.address === targetImg.address) return false;
+        return true;
+    });
+
+    if (saveImagesTimeout) clearTimeout(saveImagesTimeout);
+    try {
+        await Preferences.set({
+            key: 'biblia_user_images',
+            value: JSON.stringify(userImages)
+        });
+    } catch (e) {
+        console.error("[NativeStorage] Erro ao salvar imagens após exclusão:", e);
+    }
 
     if (favoriteImages[idStr]) {
         delete favoriteImages[idStr];
@@ -700,7 +717,7 @@ export async function deleteImgVersiculo(id) {
     // 3. Delete from backend if available
     if (useBackend && !idStr.startsWith('usr_')) {
         try {
-            fetchWithTimeout(getApiUrl(`/api/img-versiculos/${id}`), { method: 'DELETE' }, 5000).catch(() => {});
+            await fetchWithTimeout(getApiUrl(`/api/img-versiculos/${id}`), { method: 'DELETE' }, 5000).catch(() => {});
         } catch (err) { }
     }
 

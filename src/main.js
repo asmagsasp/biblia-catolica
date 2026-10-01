@@ -1118,13 +1118,26 @@ window.deleteCardImage = async function (e, id) {
   e.stopPropagation();
   if (!confirm('Deseja realmente excluir esta imagem da sua galeria?')) return;
 
+  const idStr = String(id);
+  const targetImg = allGalleryItems.find(img => String(img.id) === idStr);
+
+  // 1. Instant visual removal (0ms feedback)
+  allGalleryItems = allGalleryItems.filter(img => {
+    if (String(img.id) === idStr) return false;
+    if (targetImg && targetImg.address && img.address === targetImg.address) return false;
+    return true;
+  });
+  renderGalleryGrid();
+  showToast('Imagem excluída com sucesso');
+
+  // 2. Persist deletion in Firebase Cloud & Local Storage
   try {
-    await db.deleteImgVersiculo(id);
-    showToast('Imagem excluída com sucesso');
-    allGalleryItems = allGalleryItems.filter(img => String(img.id) !== String(id));
-    loadGalleryData(true);
+    await db.deleteImgVersiculo(id, targetImg);
+    const refreshedImgs = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
+    allGalleryItems = refreshedImgs || [];
+    renderGalleryGrid();
   } catch (err) {
-    showToast('Erro ao excluir imagem');
+    console.warn('Erro ao persistir exclusão:', err);
   }
 };
 
@@ -1297,11 +1310,29 @@ window.deleteCurrentLightboxImage = async function () {
   if (!img) return;
   if (!confirm('Deseja excluir esta imagem da sua galeria?')) return;
   
-  await db.deleteImgVersiculo(img.id);
-  showToast('Imagem excluída');
+  const idStr = String(img.id);
+  const targetImg = img;
+
   closeGalleryLightbox();
-  allGalleryItems = allGalleryItems.filter(item => String(item.id) !== String(img.id));
-  loadGalleryData(true);
+
+  // 1. Instant visual removal (0ms feedback)
+  allGalleryItems = allGalleryItems.filter(item => {
+    if (String(item.id) === idStr) return false;
+    if (targetImg.address && item.address === targetImg.address) return false;
+    return true;
+  });
+  renderGalleryGrid();
+  showToast('Imagem excluída com sucesso');
+
+  // 2. Persist deletion in Firebase Cloud & Local Storage
+  try {
+    await db.deleteImgVersiculo(img.id, targetImg);
+    const refreshedImgs = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
+    allGalleryItems = refreshedImgs || [];
+    renderGalleryGrid();
+  } catch (err) {
+    console.warn('Erro ao persistir exclusão no lightbox:', err);
+  }
 };
 
 // Keyboard navigation for Lightbox
