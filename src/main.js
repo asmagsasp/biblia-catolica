@@ -2385,8 +2385,31 @@ function updateDonateAudioBtnState(speaking) {
   }
 }
 
+let donateAutoCloseTimer = null;
+
+function clearDonateAutoCloseTimer() {
+  if (donateAutoCloseTimer) {
+    clearTimeout(donateAutoCloseTimer);
+    donateAutoCloseTimer = null;
+  }
+}
+
+function handleDonateAudioFinished() {
+  updateDonateAudioBtnState(false);
+  clearDonateAutoCloseTimer();
+  // Automatically close the banner after the speech completes (1.5s delay for smooth transition)
+  donateAutoCloseTimer = setTimeout(() => {
+    const modal = document.getElementById('donateModal');
+    if (modal && !modal.classList.contains('hidden')) {
+      console.log('[Donate] Leitura do texto concluída. Fechando banner automaticamente.');
+      closeDonateModal();
+    }
+  }, 1500);
+}
+
 window.stopDonateAudio = function () {
   isDonateAudioSpeaking = false;
+  clearDonateAutoCloseTimer();
   updateDonateAudioBtnState(false);
   try {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
@@ -2412,7 +2435,7 @@ window.playDonateAudio = async function () {
         volume: 1.0,
         category: 'ambient'
       });
-      updateDonateAudioBtnState(false);
+      handleDonateAudioFinished();
     } catch (e) {
       console.warn("TTS capacitor donate audio failed, trying Web Speech fallback:", e);
       speakDonateWithWebSpeech();
@@ -2433,7 +2456,7 @@ function speakDonateWithWebSpeech() {
   const utterance = new SpeechSynthesisUtterance(DONATE_AUDIO_TEXT);
   utterance.lang = 'pt-BR';
   utterance.rate = 0.95;
-  utterance.onend = () => updateDonateAudioBtnState(false);
+  utterance.onend = () => handleDonateAudioFinished();
   utterance.onerror = () => updateDonateAudioBtnState(false);
   window.speechSynthesis.speak(utterance);
 }
@@ -2487,6 +2510,7 @@ window.showDonateModal = function () {
   const modal = document.getElementById('donateModal');
   if (modal) {
     modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
     setTimeout(() => {
       playDonateAudio();
     }, 350);
@@ -2494,8 +2518,10 @@ window.showDonateModal = function () {
 };
 
 window.closeDonateModal = function () {
+  clearDonateAutoCloseTimer();
   const modal = document.getElementById('donateModal');
   if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
   stopDonateAudio();
 };
 

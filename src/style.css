@@ -1715,10 +1715,10 @@ mark,
 .donate-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 4, 8, 0.82);
+  background: rgba(6, 4, 8, 0.85);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  z-index: 2000;
+  z-index: 99999 !important;
   display: flex;
   align-items: center;
   justify-content: center;

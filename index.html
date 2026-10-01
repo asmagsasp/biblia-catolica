@@ -276,7 +276,7 @@
   </div>
 
   <!-- DONATE MODAL -->
-  <div id="donateModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="donateTitle">
+  <div id="donateModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="donateTitle" onclick="if(event.target===this) closeDonateModal()">
     <div class="donate-modal-content">
       <button class="donate-close-btn" onclick="closeDonateModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
       <div class="donate-header">
