@@ -211,6 +211,18 @@
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
+
+        <div class="home-quick-card maria-card" onclick="showMariaDevocao()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+            <i class="fas fa-crown"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Rainha do Céu</div>
+            <h3 class="quick-card-title">Devoção a Maria</h3>
+            <p class="quick-card-desc">Aparições, Orações, Dogmas & Consagração</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
       </div>
 
       <div class="stats-bar" id="statsBar"></div>
@@ -953,6 +965,67 @@
       </div>
     </div>
 
+    <!-- DEVOÇÃO A MARIA (SANTÍSSIMA VIRGEM) -->
+    <div id="mariaView" class="hidden">
+      <div class="maria-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-crown" style="color: #60a5fa;"></i>
+                Devoção a Maria
+              </h2>
+              <p class="chapter-subtitle">Aparições, Orações Tradicionais, Dogmas & Consagração</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner Sacro Mariano -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.2) 0%, var(--bg-card) 70%); border-color: rgba(96, 165, 250, 0.4); margin: 0 16px 14px 16px;">
+          <div class="confissao-banner-icon" style="color: #60a5fa;"><i class="fas fa-crown"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: #93c5fd;">“Fazei tudo o que Ele vos disser” (Jo 2, 5)</h4>
+            <p>Conheça as santas aparições, reze as orações tradicionais da Igreja, aprofunde-se nos 4 dogmas marianos e consagre a sua vida ao Imaculado Coração de Maria.</p>
+          </div>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="cartas-filters-wrap">
+          <div class="cartas-search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="mariaSearchInput" placeholder="Buscar por aparição, oração, intenção ou dogma..." oninput="handleMariaSearch(this.value)" onkeyup="handleMariaSearch(this.value)" onchange="handleMariaSearch(this.value)" onsearch="handleMariaSearch(this.value)" autocomplete="off">
+            <button id="mariaSearchClear" class="hidden" onclick="clearMariaSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
+          </div>
+
+          <!-- Sugestões Rápidas de Busca -->
+          <div class="cartas-quick-chips">
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Aparecida')"><i class="fas fa-crown" style="color: #d4af37;"></i> Aparecida</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Fátima')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Fátima</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Guadalupe')"><i class="fas fa-sun" style="color: #10b981;"></i> Guadalupe</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Lourdes')"><i class="fas fa-droplet" style="color: #0ea5e9;"></i> Lourdes</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Desatadora')"><i class="fas fa-hands-holding" style="color: #ec4899;"></i> Desatadora dos Nós</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Ângelus')"><i class="fas fa-bell" style="color: #38bdf8;"></i> Ângelus</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Consagração')"><i class="fas fa-hands-praying" style="color: #d4af37;"></i> Consagração</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Dogmas')"><i class="fas fa-certificate" style="color: #8b5cf6;"></i> Dogmas</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Escapulário')"><i class="fas fa-shield-halved" style="color: #b45309;"></i> Escapulário</button>
+          </div>
+
+          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
+            <button class="nav-tab active" id="tabMariaTitulos" onclick="filterMariaAba('titulos', this)">🌹 Títulos e Aparições (12)</button>
+            <button class="nav-tab" id="tabMariaOracoes" onclick="filterMariaAba('oracoes', this)">📿 Orações Marianas (8)</button>
+            <button class="nav-tab" id="tabMariaDogmas" onclick="filterMariaAba('dogmas', this)">🕊️ Dogmas da Igreja (4)</button>
+            <button class="nav-tab" id="tabMariaPraticas" onclick="filterMariaAba('praticas', this)">📜 Devoções & Escapulário</button>
+          </div>
+        </div>
+
+        <!-- Grid de Conteúdo -->
+        <div id="mariaContentGrid" class="maria-grid-container">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- BOTTOM NAV (MOBILE) -->
@@ -1687,6 +1760,15 @@
         <button type="button" class="upload-btn-secondary" style="flex: 1;" onclick="closeNovenaConcluidaModal()">
           <i class="fas fa-check"></i> Concluir
         </button>
+      </div>
+    </div>
+  <!-- MODAL: DETALHES DA DEVOÇÃO A MARIA / ORAÇÃO / DOGMA -->
+  <div id="mariaDetailModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeMariaModal()">
+    <div class="donate-modal-content" style="max-width: 650px; max-height: 90vh; overflow-y: auto; text-align: left; padding: 22px;">
+      <button class="donate-close-btn" onclick="closeMariaModal()"><i class="fas fa-times"></i></button>
+      
+      <div id="mariaModalContent">
+        <!-- Renderizado dinamicamente -->
       </div>
     </div>
   </div>

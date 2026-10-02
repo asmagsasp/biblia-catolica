@@ -5852,6 +5852,388 @@ mark,
   transform: translateY(-1px);
 }
 
+/* ==========================================================================
+   DEVOÇÃO A MARIA (SANTÍSSIMA VIRGEM)
+   ========================================================================== */
+
+.home-quick-card.maria-card:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+}
+
+.maria-container {
+  padding-bottom: 90px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.maria-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding: 0 16px;
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .maria-grid-container {
+    grid-template-columns: 1fr;
+    padding: 0 12px;
+  }
+}
+
+.maria-item-card {
+  background: linear-gradient(145deg, rgba(20, 24, 38, 0.95) 0%, rgba(13, 17, 28, 0.98) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="light"] .maria-item-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f4f8ff 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
+}
+
+.maria-item-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+}
+
+.maria-card-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.maria-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.maria-card-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.maria-liturgical-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  border-radius: 20px;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+}
+
+.maria-card-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  margin: 0 0 4px 0;
+}
+
+.maria-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.maria-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.maria-quote-box {
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 3px solid #60a5fa;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.maria-theme-box {
+  background: rgba(212, 175, 55, 0.07);
+  border: 1px dashed rgba(212, 175, 55, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+.maria-theme-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold-400);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.maria-theme-text {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.maria-historia-excerpt {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 8px 0 12px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.maria-prayer-preview {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  font-style: italic;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+
+[data-theme="light"] .maria-prayer-preview {
+  background: rgba(240, 245, 255, 0.6);
+}
+
+.maria-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.maria-read-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.maria-read-btn:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  transform: translateY(-1px);
+}
+
+.maria-action-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.maria-action-icon-btn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: #60a5fa;
+  color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.maria-action-icon-btn.whatsapp-btn:hover {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+/* Dogmas styling */
+.maria-dogma-card {
+  background: linear-gradient(145deg, rgba(22, 27, 46, 0.95) 0%, rgba(15, 19, 32, 0.98) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+[data-theme="light"] .maria-dogma-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f7f5ff 100%);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.maria-dogma-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.maria-dogma-num-badge {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.maria-dogma-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.maria-dogma-meta {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.maria-dogma-resumo {
+  background: rgba(139, 92, 246, 0.08);
+  border-left: 3px solid #8b5cf6;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 12px 0;
+}
+
+.maria-dogma-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-400);
+  text-transform: uppercase;
+  margin: 12px 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.maria-dogma-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Modal detail styling */
+.maria-modal-header-banner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.maria-modal-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.maria-modal-title-wrap h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.maria-modal-subtitle {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.maria-modal-full-text {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-line;
+  margin: 14px 0;
+}
+
+.maria-modal-oracao-highlight {
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.15) 0%, rgba(20, 24, 38, 0.8) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 16px 0;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .maria-modal-oracao-highlight {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.maria-modal-bottom-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
 .hidden {
   display: none !important;
 }

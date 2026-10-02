@@ -15,6 +15,7 @@ import { MANDAMENTOS_DEUS, PECADOS_CAPITAIS, ORACOES_CONFISSAO, getPecadosMarcad
 import { DIARIO_CATEGORIAS, getDiarioItens, salvarNovoItemDiario, marcarGracaAlcancada, reabrirEmOracao, excluirItemDiario, getEstatisticasDiario, formatarTestemunhoWhatsApp } from './diarioService.js';
 import { NOVENAS_LIST, getNovenasComProgresso, iniciarNovena, marcarDiaNovenaConcluido, reiniciarNovena } from './novenasService.js';
 import { CARTAS_APOSTOLICAS, getCartasPorCategoria, getCartaPorId } from './cartasService.js';
+import { getMariaTitulos, getMariaOracoes, getMariaDogmas, getMariaPraticas, getMariaItemPorId } from './mariaService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -2534,7 +2535,8 @@ function showView(id) {
   stopRosarioSpeech();
   stopTeologiaSpeech();
   stopNovenaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView'].forEach(v => {
+  stopMariaSpeech();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -5845,6 +5847,496 @@ window.renderCartasGrid = function () {
 
   container.innerHTML = html;
 };
+
+
+// ==========================================================================
+// DEVOÇÃO A MARIA (SANTÍSSIMA VIRGEM)
+// ==========================================================================
+let currentMariaAba = 'titulos';
+let currentMariaSearch = '';
+let isMariaAudioSpeaking = false;
+let currentMariaSpeakingId = null;
+
+window.showMariaDevocao = function () {
+  showView('mariaView');
+  currentMariaAba = 'titulos';
+  currentMariaSearch = '';
+  const searchInput = document.getElementById('mariaSearchInput');
+  if (searchInput) searchInput.value = '';
+  const clearBtn = document.getElementById('mariaSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+
+  document.querySelectorAll('#mariaView .nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+  const tabTitulos = document.getElementById('tabMariaTitulos');
+  if (tabTitulos) tabTitulos.classList.add('active');
+
+  renderMariaGrid();
+};
+
+window.filterMariaAba = function (aba, btnEl) {
+  currentMariaAba = aba;
+  if (btnEl) {
+    document.querySelectorAll('#mariaView .nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  renderMariaGrid();
+};
+
+window.handleMariaSearch = function (query) {
+  currentMariaSearch = (query || '').trim();
+  const clearBtn = document.getElementById('mariaSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', currentMariaSearch.length === 0);
+  renderMariaGrid();
+};
+
+window.clearMariaSearch = function () {
+  currentMariaSearch = '';
+  const input = document.getElementById('mariaSearchInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  const clearBtn = document.getElementById('mariaSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  renderMariaGrid();
+};
+
+window.setMariaQuickSearch = function (term) {
+  const input = document.getElementById('mariaSearchInput');
+  if (input) {
+    input.value = term;
+    input.focus();
+  }
+  window.handleMariaSearch(term);
+};
+
+window.renderMariaGrid = function () {
+  const container = document.getElementById('mariaContentGrid');
+  if (!container) return;
+
+  const isSearching = currentMariaSearch.length > 0;
+  const normQ = isSearching ? normalizeSearchText(currentMariaSearch) : '';
+  const searchTerms = isSearching ? normQ.split(/\s+/).filter(Boolean) : [];
+
+  let html = '';
+
+  if (currentMariaAba === 'titulos') {
+    let titulos = getMariaTitulos();
+    if (isSearching) {
+      titulos = titulos.filter(t => {
+        const full = normalizeSearchText(`${t.nome} ${t.subtitulo} ${t.localAno} ${t.historia} ${t.mensagem} ${t.oracao} ${(t.tags || []).join(' ')}`);
+        return searchTerms.every(term => full.includes(term));
+      });
+    }
+
+    if (titulos.length === 0) {
+      container.innerHTML = renderMariaEmptySearch();
+      return;
+    }
+
+    titulos.forEach(t => {
+      const nomeHl = isSearching ? highlightSearchTerms(t.nome, currentMariaSearch) : t.nome;
+      const subHl = isSearching ? highlightSearchTerms(t.subtitulo, currentMariaSearch) : t.subtitulo;
+
+      html += `
+        <div class="maria-item-card">
+          <div class="maria-card-top">
+            <div class="maria-icon-box" style="background: rgba(59, 130, 246, 0.15); color: ${t.cor || '#60a5fa'}; border: 1px solid rgba(96, 165, 250, 0.3);">
+              <i class="fas ${t.icone}"></i>
+            </div>
+            <div class="maria-card-title-group">
+              <span class="maria-liturgical-badge">Festa: ${t.dataFesta}</span>
+              <h3 class="maria-card-title">${nomeHl}</h3>
+              <div class="maria-card-meta">
+                <span><i class="fas fa-location-dot" style="color: ${t.cor};"></i> ${t.localAno}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="maria-quote-box">
+            ${t.citacaoBiblica}
+          </div>
+
+          <p class="maria-historia-excerpt">${t.historia}</p>
+
+          <div class="maria-card-actions">
+            <button class="maria-read-btn" onclick="openMariaDetail('${t.id}', 'titulo')">
+              <i class="fas fa-book-open"></i> História & Oração
+            </button>
+            <button class="maria-action-icon-btn ${isMariaAudioSpeaking && currentMariaSpeakingId === t.id ? 'playing' : ''}" 
+                    onclick="speakMariaItem('${t.id}', 'titulo')" title="Ouvir Oração">
+              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === t.id ? 'fa-stop' : 'fa-volume-up'}"></i>
+            </button>
+            <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${t.id}', 'titulo')" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+  } else if (currentMariaAba === 'oracoes') {
+    let oracoes = getMariaOracoes();
+    if (isSearching) {
+      oracoes = oracoes.filter(o => {
+        const full = normalizeSearchText(`${o.titulo} ${o.subtitulo} ${o.texto} ${(o.tags || []).join(' ')}`);
+        return searchTerms.every(term => full.includes(term));
+      });
+    }
+
+    if (oracoes.length === 0) {
+      container.innerHTML = renderMariaEmptySearch();
+      return;
+    }
+
+    oracoes.forEach(o => {
+      const titleHl = isSearching ? highlightSearchTerms(o.titulo, currentMariaSearch) : o.titulo;
+      const subHl = isSearching ? highlightSearchTerms(o.subtitulo, currentMariaSearch) : o.subtitulo;
+
+      html += `
+        <div class="maria-item-card">
+          <div class="maria-card-top">
+            <div class="maria-icon-box" style="background: rgba(212, 175, 55, 0.15); color: ${o.cor || 'var(--gold-400)'}; border: 1px solid rgba(212, 175, 55, 0.3);">
+              <i class="fas ${o.icone}"></i>
+            </div>
+            <div class="maria-card-title-group">
+              <span class="maria-liturgical-badge" style="color: var(--gold-400); border-color: rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.1);">Tempo: ${o.tempoLeitura}</span>
+              <h3 class="maria-card-title">${titleHl}</h3>
+              <div class="maria-card-meta">
+                <span><i class="fas fa-hands-praying" style="color: var(--gold-400);"></i> ${subHl}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="maria-prayer-preview">${o.texto}</div>
+
+          <div class="maria-card-actions">
+            <button class="maria-read-btn" style="background: linear-gradient(135deg, var(--gold-500), var(--gold-600)); color: #111;" onclick="openMariaDetail('${o.id}', 'oracao')">
+              <i class="fas fa-hands-praying"></i> Rezar Completa
+            </button>
+            <button class="maria-action-icon-btn ${isMariaAudioSpeaking && currentMariaSpeakingId === o.id ? 'playing' : ''}" 
+                    onclick="speakMariaItem('${o.id}', 'oracao')" title="Ouvir em Voz Alta">
+              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === o.id ? 'fa-stop' : 'fa-volume-up'}"></i>
+            </button>
+            <button class="maria-action-icon-btn" onclick="copyMariaText('${o.id}', 'oracao')" title="Copiar Oração">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${o.id}', 'oracao')" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+  } else if (currentMariaAba === 'dogmas') {
+    let dogmas = getMariaDogmas();
+    if (isSearching) {
+      dogmas = dogmas.filter(d => {
+        const full = normalizeSearchText(`${d.titulo} ${d.proclamacao} ${d.papaConcilio} ${d.resumo} ${d.fundamentoBiblico} ${d.explicacaoTeologica}`);
+        return searchTerms.every(term => full.includes(term));
+      });
+    }
+
+    if (dogmas.length === 0) {
+      container.innerHTML = renderMariaEmptySearch();
+      return;
+    }
+
+    dogmas.forEach(d => {
+      html += `
+        <div class="maria-dogma-card">
+          <div class="maria-dogma-header">
+            <span class="maria-dogma-num-badge">${d.numero}</span>
+            <div>
+              <h3 class="maria-dogma-title">${d.titulo}</h3>
+              <div class="maria-dogma-meta"><i class="fas fa-scroll"></i> ${d.proclamacao} • ${d.papaConcilio}</div>
+            </div>
+          </div>
+
+          <div class="maria-dogma-resumo">
+            ${d.resumo}
+          </div>
+
+          <div class="maria-dogma-section-title"><i class="fas fa-book-bible"></i> Fundamento Bíblico</div>
+          <p class="maria-dogma-text" style="font-style: italic; color: var(--gold-300);">${d.fundamentoBiblico}</p>
+
+          <div class="maria-dogma-section-title"><i class="fas fa-church"></i> Explicação Teológica & Magistério</div>
+          <p class="maria-dogma-text">${d.explicacaoTeologica}</p>
+
+          <div class="maria-card-actions" style="margin-top: 14px;">
+            <button class="maria-read-btn" onclick="speakMariaItem('${d.id}', 'dogma')">
+              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === d.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explicação
+            </button>
+            <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${d.id}', 'dogma')" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+  } else if (currentMariaAba === 'praticas') {
+    let praticas = getMariaPraticas();
+    praticas.forEach(p => {
+      html += `
+        <div class="maria-item-card">
+          <div class="maria-card-top">
+            <div class="maria-icon-box" style="background: rgba(2, 132, 199, 0.15); color: ${p.cor}; border: 1px solid rgba(2, 132, 199, 0.3);">
+              <i class="fas ${p.icone}"></i>
+            </div>
+            <div class="maria-card-title-group">
+              <span class="maria-liturgical-badge">Devoção Solene</span>
+              <h3 class="maria-card-title">${p.titulo}</h3>
+              <div class="maria-card-meta"><span>${p.subtitulo}</span></div>
+            </div>
+          </div>
+
+          <div style="margin: 12px 0;">
+            <h4 style="font-size: 12px; font-weight: 700; color: var(--gold-400); text-transform: uppercase; margin-bottom: 8px;">
+              <i class="fas fa-list-check"></i> Como Praticar os Passos:
+            </h4>
+            ${p.passos.map(s => `
+              <div style="display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; line-height: 1.45;">
+                <span style="font-weight: 800; color: #38bdf8; min-width: 18px;">${s.num}.</span>
+                <div><strong style="color: var(--text-primary);">${s.titulo}:</strong> <span style="color: var(--text-secondary);">${s.desc}</span></div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="maria-quote-box" style="border-left-color: var(--gold-400); background: rgba(212, 175, 55, 0.08);">
+            <strong>Promessa da Virgem:</strong> ${p.promessa}
+          </div>
+
+          <div class="maria-card-actions">
+            <button class="maria-read-btn" onclick="speakMariaItem('${p.id}', 'pratica')">
+              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === p.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Devoção
+            </button>
+            <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${p.id}', 'pratica')" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  container.innerHTML = html;
+};
+
+function renderMariaEmptySearch() {
+  return `
+    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); grid-column: 1 / -1;">
+      <i class="fas fa-crown" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block; color: #60a5fa;"></i>
+      <p style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Nenhum conteúdo mariano encontrado para "${currentMariaSearch}"</p>
+      <p style="font-size: 12.5px; margin-top: 4px;">Tente buscar por <em>Aparecida, Fátima, Guadalupe, Lourdes, Desatadora, Ângelus, Consagração, Dogmas</em>.</p>
+      <button class="upload-btn-secondary" onclick="clearMariaSearch()" style="margin-top: 14px; font-size: 12px; padding: 7px 16px;">
+        <i class="fas fa-times"></i> Limpar Busca
+      </button>
+    </div>
+  `;
+}
+
+window.openMariaDetail = function (id, tipo) {
+  const item = getMariaItemPorId(id);
+  if (!item) return;
+
+  const modal = document.getElementById('mariaDetailModal');
+  const modalContent = document.getElementById('mariaModalContent');
+  if (!modal || !modalContent) return;
+
+  let html = '';
+  if (tipo === 'titulo') {
+    html = `
+      <div class="maria-modal-header-banner">
+        <div class="maria-modal-icon-wrap" style="background: rgba(59, 130, 246, 0.15); color: ${item.cor}; border: 1px solid rgba(96, 165, 250, 0.3);">
+          <i class="fas ${item.icone}"></i>
+        </div>
+        <div class="maria-modal-title-wrap">
+          <span class="maria-liturgical-badge">Festa: ${item.dataFesta}</span>
+          <h3>${item.nome}</h3>
+          <span class="maria-modal-subtitle">${item.subtitulo} • ${item.localAno}</span>
+        </div>
+      </div>
+
+      <div class="maria-quote-box">${item.citacaoBiblica}</div>
+
+      <h4 style="font-size: 13px; font-weight: 700; color: var(--gold-400); text-transform: uppercase; margin-top: 14px;">
+        <i class="fas fa-scroll"></i> História Sagrada & Aparição
+      </h4>
+      <div class="maria-modal-full-text">${item.historia}</div>
+
+      <div class="maria-theme-box">
+        <div class="maria-theme-label"><i class="fas fa-heart"></i> Mensagem para Nossas Vidas</div>
+        <div class="maria-theme-text">${item.mensagem}</div>
+      </div>
+
+      <h4 style="font-size: 13px; font-weight: 700; color: #60a5fa; text-transform: uppercase; margin-top: 16px;">
+        <i class="fas fa-hands-praying"></i> Oração Própria
+      </h4>
+      <div class="maria-modal-oracao-highlight">${item.oracao}</div>
+
+      <div class="maria-modal-bottom-actions">
+        <button class="maria-read-btn" onclick="speakMariaItem('${item.id}', 'titulo')">
+          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Oração
+        </button>
+        <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'titulo')">
+          <i class="fab fa-whatsapp"></i> Enviar no WhatsApp
+        </button>
+        <button class="upload-btn-secondary" onclick="copyMariaText('${item.id}', 'titulo')">
+          <i class="fas fa-copy"></i> Copiar
+        </button>
+      </div>
+    `;
+  } else if (tipo === 'oracao') {
+    html = `
+      <div class="maria-modal-header-banner">
+        <div class="maria-modal-icon-wrap" style="background: rgba(212, 175, 55, 0.15); color: ${item.cor || 'var(--gold-400)'}; border: 1px solid rgba(212, 175, 55, 0.3);">
+          <i class="fas ${item.icone}"></i>
+        </div>
+        <div class="maria-modal-title-wrap">
+          <span class="maria-liturgical-badge" style="color: var(--gold-400); border-color: rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.1);">Tempo: ${item.tempoLeitura}</span>
+          <h3>${item.titulo}</h3>
+          <span class="maria-modal-subtitle">${item.subtitulo}</span>
+        </div>
+      </div>
+
+      <div class="maria-modal-oracao-highlight" style="font-size: 15px; line-height: 1.75;">
+        ${item.texto}
+      </div>
+
+      <div class="maria-modal-bottom-actions">
+        <button class="maria-read-btn" style="background: linear-gradient(135deg, var(--gold-500), var(--gold-600)); color: #111;" onclick="speakMariaItem('${item.id}', 'oracao')">
+          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Oração
+        </button>
+        <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'oracao')">
+          <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
+        </button>
+        <button class="upload-btn-secondary" onclick="copyMariaText('${item.id}', 'oracao')">
+          <i class="fas fa-copy"></i> Copiar Texto
+        </button>
+      </div>
+    `;
+  }
+
+  modalContent.innerHTML = html;
+  modal.classList.remove('hidden');
+};
+
+window.closeMariaModal = function () {
+  const modal = document.getElementById('mariaDetailModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.stopMariaSpeech = async function () {
+  isMariaAudioSpeaking = false;
+  currentMariaSpeakingId = null;
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.stop();
+    }
+  } catch (e) {}
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  renderMariaGrid();
+};
+
+window.speakMariaItem = async function (id, tipo) {
+  if (isMariaAudioSpeaking && currentMariaSpeakingId === id) {
+    await stopMariaSpeech();
+    return;
+  }
+
+  await stopMariaSpeech();
+
+  const item = getMariaItemPorId(id);
+  if (!item) return;
+
+  let speakText = '';
+  if (tipo === 'titulo') {
+    speakText = `${item.nome}. ${item.subtitulo}. ${item.citacaoBiblica}. Oração: ${item.oracao}`;
+  } else if (tipo === 'oracao') {
+    speakText = `${item.titulo}. ${item.subtitulo}. ${item.texto}`;
+  } else if (tipo === 'dogma') {
+    speakText = `${item.numero}. ${item.titulo}. ${item.proclamacao}. Resumo: ${item.resumo}. Fundamento Bíblico: ${item.fundamentoBiblico}. Explicação Teológica: ${item.explicacaoTeologica}`;
+  } else if (tipo === 'pratica') {
+    speakText = `${item.titulo}. ${item.subtitulo}. Promessa: ${item.promessa}`;
+  }
+
+  isMariaAudioSpeaking = true;
+  currentMariaSpeakingId = id;
+  renderMariaGrid();
+
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: speakText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopMariaSpeech();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(speakText);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.onend = () => stopMariaSpeech();
+      utterance.onerror = () => stopMariaSpeech();
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {
+    console.error("Maria TTS Error:", e);
+    stopMariaSpeech();
+  }
+};
+
+window.copyMariaText = async function (id, tipo) {
+  const item = getMariaItemPorId(id);
+  if (!item) return;
+
+  let textToCopy = '';
+  if (tipo === 'titulo') {
+    textToCopy = `🌹 *${item.nome}* (${item.subtitulo})\n\n${item.citacaoBiblica}\n\n🙏 *Oração:*\n${item.oracao}\n\n📲 *Aplicativo Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+  } else if (tipo === 'oracao') {
+    textToCopy = `📿 *${item.titulo}*\n_${item.subtitulo}_\n\n${item.texto}\n\n📲 *Aplicativo Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+  }
+
+  const ok = await copyToClipboard(textToCopy);
+  if (ok) {
+    showToast('✨ Oração copiada com sucesso!');
+  } else {
+    showToast('❌ Não foi possível copiar.');
+  }
+};
+
+window.shareMariaWhatsApp = function (id, tipo) {
+  const item = getMariaItemPorId(id);
+  if (!item) return;
+
+  let msg = '';
+  if (tipo === 'titulo') {
+    msg = `🌹 *${item.nome}* — ${item.subtitulo}\n\n`;
+    msg += `📖 *Palavra de Deus:*\n${item.citacaoBiblica}\n\n`;
+    msg += `🙏 *Oração Própria:*\n${item.oracao}\n\n`;
+    msg += `✨ *Reze com o App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  } else if (tipo === 'oracao') {
+    msg = `📿 *${item.titulo}*\n_${item.subtitulo}_\n\n`;
+    msg += `${item.texto}\n\n`;
+    msg += `✨ *Reze com o App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  } else if (tipo === 'dogma') {
+    msg = `🕊️ *${item.numero}: ${item.titulo}*\n_${item.proclamacao}_\n\n`;
+    msg += `✨ *Doutrina da Igreja:*\n${item.resumo}\n\n`;
+    msg += `📖 *Fundamento Bíblico:*\n${item.fundamentoBiblico}\n\n`;
+    msg += `📲 *Aplicativo Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  } else if (tipo === 'pratica') {
+    msg = `📜 *${item.titulo}*\n_${item.subtitulo}_\n\n`;
+    msg += `✨ *Promessa de Nossa Senhora:*\n${item.promessa}\n\n`;
+    msg += `📲 *Aplicativo Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  }
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
 
 
 
