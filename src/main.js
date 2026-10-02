@@ -6214,6 +6214,40 @@ window.openMariaDetail = function (id, tipo) {
         </button>
       </div>
     `;
+  } else if (tipo === 'dogma') {
+    html = `
+      <div class="maria-modal-header-banner">
+        <div class="maria-modal-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3);">
+          <i class="fas ${item.icone}"></i>
+        </div>
+        <div class="maria-modal-title-wrap">
+          <span class="maria-liturgical-badge" style="color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.1);">${item.numero}</span>
+          <h3>${item.titulo}</h3>
+          <span class="maria-modal-subtitle">${item.proclamacao} • ${item.papaConcilio}</span>
+        </div>
+      </div>
+
+      <div class="maria-dogma-resumo" style="margin: 12px 0;">${item.resumo}</div>
+
+      <h4 style="font-size: 13px; font-weight: 700; color: var(--gold-400); text-transform: uppercase; margin-top: 14px;">
+        <i class="fas fa-book-bible"></i> Fundamento Bíblico
+      </h4>
+      <div class="maria-modal-full-text" style="font-style: italic; color: var(--gold-300);">${item.fundamentoBiblico}</div>
+
+      <h4 style="font-size: 13px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; margin-top: 14px;">
+        <i class="fas fa-church"></i> Explicação Teológica & Magistério
+      </h4>
+      <div class="maria-modal-full-text">${item.explicacaoTeologica}</div>
+
+      <div class="maria-modal-bottom-actions">
+        <button class="maria-read-btn" onclick="speakMariaItem('${item.id}', 'dogma')">
+          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explicação
+        </button>
+        <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'dogma')">
+          <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
+        </button>
+      </div>
+    `;
   }
 
   modalContent.innerHTML = html;
