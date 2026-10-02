@@ -199,6 +199,18 @@
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
+
+        <div class="home-quick-card cartas-card" onclick="showCartasApostolicas()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
+            <i class="fas fa-scroll"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--gold-400);">Epístolas do NT</div>
+            <h3 class="quick-card-title">Cartas Apostólicas</h3>
+            <p class="quick-card-desc">São Paulo, São Pedro, São João, Tiago & Judas</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
       </div>
 
       <div class="stats-bar" id="statsBar"></div>
@@ -876,6 +888,53 @@
 
         <!-- Novenas Grid / List -->
         <div class="novenas-grid" id="novenasGridList">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARTAS APOSTÓLICAS (EPÍSTOLAS DO NOVO TESTAMENTO) -->
+    <div id="cartasView" class="hidden">
+      <div class="cartas-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-scroll" style="color: var(--gold-400);"></i>
+                Cartas Apostólicas
+              </h2>
+              <p class="chapter-subtitle">As 21 Santas Epístolas do Novo Testamento & Destaques Litúrgicos</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner Explicativo e Sacro -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.15) 0%, var(--bg-card) 70%); border-color: rgba(212, 175, 55, 0.35); margin: 0 16px 14px 16px;">
+          <div class="confissao-banner-icon" style="color: var(--gold-400);"><i class="fas fa-feather-pointed"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: var(--gold-300);">A Doutrina dos Santos Apóstolos</h4>
+            <p>“Toda a Escritura é inspirada por Deus e útil para ensinar, repreender, corrigir e formar na justiça.” (2Tm 3,16). Explore as 14 Cartas Paulinas e as 7 Cartas Católicas.</p>
+          </div>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="cartas-filters-wrap">
+          <div class="cartas-search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="cartasSearchInput" placeholder="Buscar por carta, apóstolo, tema ou citação..." oninput="handleCartasSearch(this.value)">
+            <button id="cartasSearchClear" class="hidden" onclick="clearCartasSearch()"><i class="fas fa-times"></i></button>
+          </div>
+
+          <div class="nav-tabs" style="margin-top: 12px; margin-bottom: 4px;">
+            <button class="nav-tab active" id="tabCartasTodas" onclick="filterCartasCategoria('todas', this)">Todas (21)</button>
+            <button class="nav-tab" id="tabCartasPaulinas" onclick="filterCartasCategoria('paulinas', this)">São Paulo (14)</button>
+            <button class="nav-tab" id="tabCartasCatolicas" onclick="filterCartasCategoria('catolicas', this)">Cartas Católicas (7)</button>
+          </div>
+        </div>
+
+        <!-- Grid de Cartas -->
+        <div id="cartasGridList" class="cartas-grid-container">
           <div class="loading"><div class="loading-spinner"></div></div>
         </div>
       </div>

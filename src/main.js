@@ -15,6 +15,7 @@ import { LECTIO_STEPS, LECTIO_SUGESTOES, getLectioHistorico, salvarSessaoLectio,
 import { MANDAMENTOS_DEUS, PECADOS_CAPITAIS, ORACOES_CONFISSAO, getPecadosMarcados, togglePecadoMarcado, registrarConfissaoRealizada, getUltimaConfissaoData } from './confissaoService.js';
 import { DIARIO_CATEGORIAS, getDiarioItens, salvarNovoItemDiario, marcarGracaAlcancada, reabrirEmOracao, excluirItemDiario, getEstatisticasDiario, formatarTestemunhoWhatsApp } from './diarioService.js';
 import { NOVENAS_LIST, getNovenasComProgresso, iniciarNovena, marcarDiaNovenaConcluido, reiniciarNovena } from './novenasService.js';
+import { CARTAS_APOSTOLICAS, getCartasPorCategoria, getCartaPorId } from './cartasService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -2531,7 +2532,7 @@ function showView(id) {
   stopRosarioSpeech();
   stopTeologiaSpeech();
   stopNovenaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView'].forEach(v => {
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -5724,6 +5725,153 @@ window.shareNovenaConcluidaWhatsApp = function () {
   msg += `“${novena.oracaoAcaoDeGracas}”\n\n`;
   msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
+// ===== CARTAS APOSTÓLICAS (EPÍSTOLAS DO NOVO TESTAMENTO) =====
+let currentCartasCategoria = 'todas';
+let currentCartasSearch = '';
+
+window.showCartasApostolicas = function () {
+  showView('cartasView');
+  currentCartasCategoria = 'todas';
+  currentCartasSearch = '';
+  const searchInput = document.getElementById('cartasSearchInput');
+  if (searchInput) searchInput.value = '';
+  const clearBtn = document.getElementById('cartasSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+
+  document.querySelectorAll('#cartasView .nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+  const tabTodas = document.getElementById('tabCartasTodas');
+  if (tabTodas) tabTodas.classList.add('active');
+
+  renderCartasGrid();
+};
+
+window.filterCartasCategoria = function (cat, btnEl) {
+  currentCartasCategoria = cat;
+  if (btnEl) {
+    document.querySelectorAll('#cartasView .nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+  renderCartasGrid();
+};
+
+window.handleCartasSearch = function (query) {
+  currentCartasSearch = (query || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('cartasSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', currentCartasSearch.length === 0);
+  renderCartasGrid();
+};
+
+window.clearCartasSearch = function () {
+  currentCartasSearch = '';
+  const input = document.getElementById('cartasSearchInput');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('cartasSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  renderCartasGrid();
+};
+
+window.abrirCartaCapitulo = function (idLivro, nomeLivro, cap = 1) {
+  openBook(idLivro, nomeLivro, 0);
+  setTimeout(() => selectChapter(cap), 100);
+};
+
+window.renderCartasGrid = function () {
+  const container = document.getElementById('cartasGridList');
+  if (!container) return;
+
+  let cartas = getCartasPorCategoria(currentCartasCategoria);
+
+  if (currentCartasSearch.length >= 2) {
+    const q = currentCartasSearch;
+    cartas = cartas.filter(c => {
+      const matchBasic = c.nomeCurto.toLowerCase().includes(q) ||
+                         c.tituloLiturgico.toLowerCase().includes(q) ||
+                         c.autor.toLowerCase().includes(q) ||
+                         c.destinatario.toLowerCase().includes(q) ||
+                         c.temaCentral.toLowerCase().includes(q) ||
+                         c.proposito.toLowerCase().includes(q);
+      const matchPassagens = (c.passagensDestaque || []).some(p => 
+        p.referencia.toLowerCase().includes(q) ||
+        p.titulo.toLowerCase().includes(q) ||
+        p.texto.toLowerCase().includes(q)
+      );
+      return matchBasic || matchPassagens;
+    });
+  }
+
+  if (cartas.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+        <i class="fas fa-scroll" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
+        <p style="font-size: 15px; font-weight: 600;">Nenhuma carta encontrada para "${currentCartasSearch}"</p>
+        <button class="upload-btn-secondary" onclick="clearCartasSearch()" style="margin-top: 10px; font-size: 12px; padding: 6px 14px;">Limpar Busca</button>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  cartas.forEach(carta => {
+    let passagensHtml = '';
+    if (carta.passagensDestaque && carta.passagensDestaque.length > 0) {
+      passagensHtml = `
+        <div class="carta-highlights-wrap">
+          <div class="carta-highlights-header">
+            <i class="fas fa-bookmark" style="color: var(--gold-400);"></i> Destaques Litúrgicos na Santa Missa
+          </div>
+          ${carta.passagensDestaque.map(p => `
+            <div class="carta-highlight-item">
+              <div class="carta-highlight-top">
+                <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} — ${p.titulo}</span>
+                <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este capítulo">
+                  <i class="fas fa-book-open"></i> Cap. ${p.capitulo}
+                </button>
+              </div>
+              <p class="carta-highlight-quote">“${p.texto}”</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="carta-item-card">
+        <div class="carta-card-top">
+          <div class="carta-icon-box" style="background: rgba(212, 175, 55, 0.15); color: ${carta.cor || 'var(--gold-400)'}; border: 1px solid rgba(212, 175, 55, 0.3);">
+            <i class="fas ${carta.icone}"></i>
+          </div>
+          <div class="carta-card-title-group">
+            <span class="carta-liturgical-badge">${carta.categoriaNome} • ${carta.totalCapitulos} Cap${carta.totalCapitulos > 1 ? 'ítulos' : 'ítulo'}</span>
+            <h3 class="carta-card-title">${carta.tituloLiturgico}</h3>
+            <div class="carta-card-meta">
+              <span><i class="fas fa-pen-nib" style="color: var(--gold-400);"></i> ${carta.autor}</span>
+              <span><i class="fas fa-calendar" style="color: var(--gold-400);"></i> ${carta.anoLocal}</span>
+              <span><i class="fas fa-users" style="color: var(--gold-400);"></i> ${carta.destinatario}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="carta-theme-box">
+          <div class="carta-theme-label"><i class="fas fa-star"></i> Tema Central & Teologia</div>
+          <div class="carta-theme-text">${carta.temaCentral}</div>
+        </div>
+
+        <p class="carta-proposito-text">${carta.proposito}</p>
+
+        ${passagensHtml}
+
+        <div class="carta-card-actions">
+          <button class="carta-read-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', 1)">
+            <i class="fas fa-book-bible"></i> Ler Carta Completa
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
 };
 
 
