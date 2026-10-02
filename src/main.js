@@ -2523,9 +2523,11 @@ function updatePlanProgress() {
 function showView(id) {
   stopSpeech();
   stopLiturgiaSpeech();
+  stopHomiliaLiturgiaSpeech();
   stopRosarioSpeech();
   stopTeologiaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView'].forEach(v => {
+  stopNovenaSpeech();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
