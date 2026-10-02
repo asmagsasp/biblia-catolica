@@ -102,8 +102,9 @@
         </div>
       </section>
 
-      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, VELAS, TEOLOGIA, LECTIO, CONFISSÃO, DIÁRIO -->
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, DEVOÇÃO A MARIA, EXAME DE CONSCIÊNCIA, NOVENAS, DIÁRIO, VELAS, TEOLOGIA, LECTIO, CARTAS -->
       <div class="home-quick-grid">
+        <!-- 1. Liturgia Diária -->
         <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
           <div class="quick-card-icon-wrapper" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
             <i class="fas fa-calendar-day"></i>
@@ -116,6 +117,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
+        <!-- 2. Santo Rosário -->
         <div class="home-quick-card rosario-card" onclick="showRosario()">
           <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
             <i class="fas fa-praying-hands"></i>
@@ -128,42 +130,20 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <div class="home-quick-card velas-card" onclick="showVelas()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.18); color: var(--gold-400);">
-            <i class="fas fa-fire"></i>
+        <!-- 3. Devoção a Maria -->
+        <div class="home-quick-card maria-card" onclick="showMariaDevocao()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+            <i class="fas fa-crown"></i>
           </div>
           <div class="quick-card-content">
-            <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
-            <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
-            <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
+            <div class="quick-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Rainha do Céu</div>
+            <h3 class="quick-card-title">Devoção a Maria</h3>
+            <p class="quick-card-desc">Aparições, Orações, Dogmas & Consagração</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <div class="home-quick-card teologia-card" onclick="showTeologia()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.18); color: #c084fc;">
-            <i class="fas fa-feather-pointed"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Doutores da Igreja</div>
-            <h3 class="quick-card-title">IA Teológica Católica</h3>
-            <p class="quick-card-desc">São Tomás de Aquino, Santo Agostinho & CIC</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <div class="home-quick-card lectio-card" onclick="showLectio()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
-            <i class="fas fa-dove"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Oração dos Monges</div>
-            <h3 class="quick-card-title">Lectio Divina Guiada</h3>
-            <p class="quick-card-desc">Leitura, Meditação, Oração & Contemplação</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
+        <!-- 4. Exame de Consciência -->
         <div class="home-quick-card confissao-card" onclick="showConfissao()">
           <div class="quick-card-icon-wrapper" style="background: rgba(244, 63, 94, 0.18); color: #f43f5e;">
             <i class="fas fa-cross"></i>
@@ -176,18 +156,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <div class="home-quick-card diario-card" onclick="showDiario()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(16, 185, 129, 0.18); color: #10b981;">
-            <i class="fas fa-book-bookmark"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Livro da Gratidão</div>
-            <h3 class="quick-card-title">Diário Espiritual</h3>
-            <p class="quick-card-desc">Minhas Orações & Graças Alcançadas</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
+        <!-- 5. Novenas Tradicionais -->
         <div class="home-quick-card novenas-card" onclick="showNovenas()">
           <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
             <i class="fas fa-hands-praying"></i>
@@ -200,6 +169,59 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
+        <!-- 6. Diário Espiritual -->
+        <div class="home-quick-card diario-card" onclick="showDiario()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(16, 185, 129, 0.18); color: #10b981;">
+            <i class="fas fa-book-bookmark"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Livro da Gratidão</div>
+            <h3 class="quick-card-title">Diário Espiritual</h3>
+            <p class="quick-card-desc">Minhas Orações & Graças Alcançadas</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 7. Acenda uma Vela Virtual -->
+        <div class="home-quick-card velas-card" onclick="showVelas()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.18); color: var(--gold-400);">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
+            <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
+            <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 8. IA Teológica Católica -->
+        <div class="home-quick-card teologia-card" onclick="showTeologia()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.18); color: #c084fc;">
+            <i class="fas fa-feather-pointed"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Doutores da Igreja</div>
+            <h3 class="quick-card-title">IA Teológica Católica</h3>
+            <p class="quick-card-desc">São Tomás de Aquino, Santo Agostinho & CIC</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 9. Lectio Divina Guiada -->
+        <div class="home-quick-card lectio-card" onclick="showLectio()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
+            <i class="fas fa-dove"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Oração dos Monges</div>
+            <h3 class="quick-card-title">Lectio Divina Guiada</h3>
+            <p class="quick-card-desc">Leitura, Meditação, Oração & Contemplação</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 10. Cartas Apostólicas -->
         <div class="home-quick-card cartas-card" onclick="showCartasApostolicas()">
           <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
             <i class="fas fa-scroll"></i>
@@ -208,18 +230,6 @@
             <div class="quick-card-badge" style="background: rgba(212, 175, 55, 0.15); color: var(--gold-400);">Epístolas do NT</div>
             <h3 class="quick-card-title">Cartas Apostólicas</h3>
             <p class="quick-card-desc">São Paulo, São Pedro, São João, Tiago & Judas</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <div class="home-quick-card maria-card" onclick="showMariaDevocao()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
-            <i class="fas fa-crown"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Rainha do Céu</div>
-            <h3 class="quick-card-title">Devoção a Maria</h3>
-            <p class="quick-card-desc">Aparições, Orações, Dogmas & Consagração</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
