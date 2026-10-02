@@ -651,7 +651,7 @@ export function highlightSearchTerms(text, query) {
     'n': '[nñNÑ]'
   };
 
-  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapeRegex = (s) => (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   const makeFlexPattern = (phrase) => {
     const cleaned = phrase.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
@@ -668,15 +668,19 @@ export function highlightSearchTerms(text, query) {
   const cleanQuery = query.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
   if (cleanQuery.length === 0) return text;
 
-  // 1. Tentar casar a frase inteira primeiro como um único bloco contínuo
+  // Limites exatos de palavra respeitando letras acentuadas e pontuação
+  const leftBound = '(?:^|(?<=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]))';
+  const rightBound = '(?=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]|$)';
+
+  // 1. Tentar casar a frase inteira com limite de palavra exata
   const phrasePattern = makeFlexPattern(cleanQuery);
-  const phraseRegex = new RegExp('(' + phrasePattern + ')', 'gi');
+  const phraseRegex = new RegExp(leftBound + '(' + phrasePattern + ')' + rightBound, 'gi');
 
   if (phraseRegex.test(text)) {
     return text.replace(phraseRegex, '<mark class="search-highlight">$1</mark>');
   }
 
-  // 2. Se a frase completa contínua não casar, casar palavras significativas (>= 2 caracteres) com limites de palavra
+  // 2. Se a frase completa contínua não casar, casar palavras individuais com limites exatos
   const words = cleanQuery
     .split(/\s+/)
     .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
@@ -688,7 +692,7 @@ export function highlightSearchTerms(text, query) {
     .sort((a, b) => b.length - a.length)
     .map(w => makeFlexPattern(w));
 
-  const wordsRegex = new RegExp('(\\b(?:' + wordPatterns.join('|') + ')\\b)', 'gi');
+  const wordsRegex = new RegExp(leftBound + '((?:' + wordPatterns.join('|') + '))' + rightBound, 'gi');
   return text.replace(wordsRegex, '<mark class="search-highlight">$1</mark>');
 }
 

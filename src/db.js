@@ -273,6 +273,16 @@ function removeAccents(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildExactSearchRegex(term) {
+    const parts = removeAccents(term).toLowerCase().trim().split(/\s+/).filter(Boolean).map(escapeRegex);
+    if (parts.length === 0) return null;
+    return new RegExp(`(?:^|[^a-z0-9])${parts.join('\\s+')}(?:$|[^a-z0-9])`, 'i');
+}
+
 export async function buscar(termo) {
     if (!termo || termo.trim().length < 2) return [];
 
@@ -297,17 +307,19 @@ export async function buscar(termo) {
     const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
     if (cleanTerm.length < 2) return [];
 
-    const normCleanTerm = removeAccents(cleanTerm).toLowerCase();
+    const phraseRegex = buildExactSearchRegex(cleanTerm);
+    if (!phraseRegex) return [];
+
     const phraseResults = [];
 
-    // 1. Tentar busca pela frase exata contínua
+    // 1. Tentar busca pela frase exata contínua com limites de palavras exatas
     for (const livro of bibliaData.livros) {
         for (let cap = 1; cap <= livro.total_capitulos; cap++) {
             const key = `${livro.id_livro}_${cap}`;
             const vs = bibliaData.versiculos[key] || [];
             for (const v of vs) {
-                const normText = removeAccents(v.t).toLowerCase();
-                if (normText.includes(normCleanTerm)) {
+                const normText = removeAccents(v.t);
+                if (phraseRegex.test(normText)) {
                     phraseResults.push({
                         id_livro: livro.id_livro,
                         nome_livro: livro.nome_livro,
@@ -324,13 +336,15 @@ export async function buscar(termo) {
 
     if (phraseResults.length > 0) return phraseResults;
 
-    // 2. Fallback para palavras significativas (>= 2 caracteres)
+    // 2. Fallback para múltiplas palavras (todas devem ocorrer como palavras exatas)
     const words = cleanTerm
         .split(/\s+/)
-        .map(w => removeAccents(w).replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase())
+        .map(w => removeAccents(w).replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').toLowerCase())
         .filter(w => w.length >= 2);
 
-    if (words.length === 0) return [];
+    if (words.length <= 1) return []; // Se for apenas 1 palavra e não casou acima, não há resultados parciais indesejados
+
+    const wordRegexes = words.map(w => new RegExp(`(?:^|[^a-z0-9])${escapeRegex(w)}(?:$|[^a-z0-9])`, 'i'));
     const wordResults = [];
 
     for (const livro of bibliaData.livros) {
@@ -338,8 +352,8 @@ export async function buscar(termo) {
             const key = `${livro.id_livro}_${cap}`;
             const vs = bibliaData.versiculos[key] || [];
             for (const v of vs) {
-                const normText = removeAccents(v.t).toLowerCase();
-                if (words.every(w => normText.includes(w))) {
+                const normText = removeAccents(v.t);
+                if (wordRegexes.every(rgx => rgx.test(normText))) {
                     wordResults.push({
                         id_livro: livro.id_livro,
                         nome_livro: livro.nome_livro,

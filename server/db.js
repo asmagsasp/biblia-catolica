@@ -234,6 +234,21 @@ export async function getVersiculos(idLivro, idCapitulo) {
     return await getAll(sql, [idLivro, idCapitulo]);
 }
 
+function removeAccents(str) {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildExactSearchRegex(term) {
+    const parts = removeAccents(term).toLowerCase().trim().split(/\s+/).filter(Boolean).map(escapeRegex);
+    if (parts.length === 0) return null;
+    return new RegExp(`(?:^|[^a-z0-9])${parts.join('\\s+')}(?:$|[^a-z0-9])`, 'i');
+}
+
 export async function buscar(termo) {
     await ensureDB();
     if (!termo || termo.trim().length < 2) return [];
@@ -241,7 +256,10 @@ export async function buscar(termo) {
     const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
     if (cleanTerm.length < 2) return [];
 
-    // 1. Tentar busca de frase exata
+    const phraseRegex = buildExactSearchRegex(cleanTerm);
+    if (!phraseRegex) return [];
+
+    // 1. Tentar busca de frase exata (filtrando para palavras/frases exatas)
     const phraseSql = `
         SELECT 
             v.id_livro, 
@@ -252,9 +270,10 @@ export async function buscar(termo) {
         FROM versiculos v
         JOIN livros l ON v.id_livro = l.id_livro
         WHERE v.texto LIKE ?
-        LIMIT 200
+        LIMIT 400
     `;
-    const phraseResults = await getAll(phraseSql, [`%${cleanTerm}%`]);
+    const phraseCandidates = await getAll(phraseSql, [`%${cleanTerm}%`]);
+    const phraseResults = phraseCandidates.filter(r => phraseRegex.test(removeAccents(r.texto))).slice(0, 200);
     if (phraseResults && phraseResults.length > 0) {
         return phraseResults;
     }
@@ -262,10 +281,10 @@ export async function buscar(termo) {
     // 2. Se não encontrar a frase contínua, buscar por palavras significativas (>= 2 caracteres)
     const words = cleanTerm
         .split(/\s+/)
-        .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
+        .map(w => removeAccents(w).replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').toLowerCase())
         .filter(w => w.length >= 2);
 
-    if (words.length === 0) return [];
+    if (words.length <= 1) return []; // Se era palavra única e não achou como exata, encerra
 
     const conditions = words.map(() => `v.texto LIKE ?`);
     const wordsSql = `
@@ -278,9 +297,14 @@ export async function buscar(termo) {
         FROM versiculos v
         JOIN livros l ON v.id_livro = l.id_livro
         WHERE ${conditions.join(' AND ')}
-        LIMIT 200
+        LIMIT 400
     `;
-    return await getAll(wordsSql, words.map(w => `%${w}%`));
+    const wordRegexes = words.map(w => new RegExp(`(?:^|[^a-z0-9])${escapeRegex(w)}(?:$|[^a-z0-9])`, 'i'));
+    const wordCandidates = await getAll(wordsSql, words.map(w => `%${w}%`));
+    return wordCandidates.filter(r => {
+        const norm = removeAccents(r.texto);
+        return wordRegexes.every(rgx => rgx.test(norm));
+    }).slice(0, 200);
 }
 
 const VERSICULOS_INSPIRADORES = [
