@@ -104,8 +104,9 @@ function updateChapterReadBtnState(reading) {
 async function init() {
   const splashStartTime = performance.now();
 
-  // Inicia timer de doação
+  // Inicia timer de doação e brilho periódico a cada 1 minuto
   checkAndStartDonateTimer();
+  initDonateButtonShimmer();
 
   // Restore theme & font
   const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
@@ -2777,6 +2778,33 @@ window.resetDonateStatus = window.resetDonateStatusAndTimer;
 window.testDonateModalNow = function () {
   showDonateModal();
 };
+
+window.triggerDonateBtnShimmer = function () {
+  const btns = document.querySelectorAll('#heroDonateBtn, .donate-sweep-effect');
+  btns.forEach(btn => {
+    btn.classList.remove('donate-shimmer-active');
+    // Force reflow
+    void btn.offsetWidth;
+    btn.classList.add('donate-shimmer-active');
+    setTimeout(() => {
+      btn.classList.remove('donate-shimmer-active');
+    }, 1800);
+  });
+};
+
+let donateShimmerInterval = null;
+function initDonateButtonShimmer() {
+  if (donateShimmerInterval) clearInterval(donateShimmerInterval);
+  // Executa o brilho intenso a cada 1 minuto (60.000 ms)
+  donateShimmerInterval = setInterval(() => {
+    window.triggerDonateBtnShimmer();
+  }, 60000);
+
+  // Primeiro brilho suave 3.5 segundos após iniciar o app
+  setTimeout(() => {
+    window.triggerDonateBtnShimmer();
+  }, 3500);
+}
 
 async function updateAdminDonateBadge() {
   const badge = document.getElementById('adminDonateStatusBadge');
