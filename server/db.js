@@ -108,41 +108,54 @@ export async function initDatabase() {
                 await run(`CREATE INDEX IF NOT EXISTS idx_versiculos_busca ON versiculos(id_livro, id_capitulo)`);
 
                 const countRow = await getOne(`SELECT COUNT(*) as count FROM livros`);
+                const countVersRow = await getOne(`SELECT COUNT(*) as count FROM versiculos`);
                 const jsonPath = path.join(__dirname, '..', 'public', 'data', 'biblia.json');
 
-                if (countRow.count === 0) {
-                    console.log('[Backend DB] Populando banco SQLite a partir do biblia.json...');
+                if (countRow.count === 0 || countVersRow.count < 30000) {
+                    console.log('[Backend DB] Populando banco SQLite completo a partir do biblia.json...');
                     if (fs.existsSync(jsonPath)) {
                         const rawData = fs.readFileSync(jsonPath, 'utf-8');
                         const bibliaData = JSON.parse(rawData);
 
-                        await run('BEGIN TRANSACTION');
-                        const stmtLivro = db.prepare(`INSERT INTO livros (id_livro, nome_livro, id_testamento, total_capitulos) VALUES (?, ?, ?, ?)`);
-                        for (const l of bibliaData.livros) {
-                            stmtLivro.run(l.id_livro, l.nome_livro, l.id_testamento, l.total_capitulos);
-                        }
-                        stmtLivro.finalize();
+                        await run(`DELETE FROM livros`);
+                        await run(`DELETE FROM versiculos`);
+                        await run(`DELETE FROM img_versiculos WHERE is_user_upload = 0`);
 
-                        const stmtVer = db.prepare(`INSERT INTO versiculos (id_livro, id_capitulo, id_versiculo, texto) VALUES (?, ?, ?, ?)`);
-                        for (const key in bibliaData.versiculos) {
-                            const [idLivro, idCap] = key.split('_').map(Number);
-                            const vs = bibliaData.versiculos[key];
-                            for (const v of vs) {
-                                stmtVer.run(idLivro, idCap, v.v, v.t);
-                            }
-                        }
-                        stmtVer.finalize();
+                        await new Promise((resolvePopulate, rejectPopulate) => {
+                            db.serialize(() => {
+                                db.run('BEGIN TRANSACTION');
+                                
+                                const stmtLivro = db.prepare(`INSERT INTO livros (id_livro, nome_livro, id_testamento, total_capitulos) VALUES (?, ?, ?, ?)`);
+                                for (const l of bibliaData.livros) {
+                                    stmtLivro.run(l.id_livro, l.nome_livro, l.id_testamento, l.total_capitulos);
+                                }
+                                stmtLivro.finalize();
 
-                        if (bibliaData.img_versiculos && Array.isArray(bibliaData.img_versiculos)) {
-                            const stmtImg = db.prepare(`INSERT INTO img_versiculos (id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao, is_user_upload) VALUES (?, ?, ?, ?, ?, ?, ?, 0)`);
-                            for (const img of bibliaData.img_versiculos) {
-                                stmtImg.run(img.id_livro || null, img.nome_livro || '', img.id_capitulo || null, img.id_versiculo || null, img.texto || '', img.address || '', img.oracao || '');
-                            }
-                            stmtImg.finalize();
-                        }
+                                const stmtVer = db.prepare(`INSERT INTO versiculos (id_livro, id_capitulo, id_versiculo, texto) VALUES (?, ?, ?, ?)`);
+                                for (const key in bibliaData.versiculos) {
+                                    const [idLivro, idCap] = key.split('_').map(Number);
+                                    const vs = bibliaData.versiculos[key];
+                                    for (const v of vs) {
+                                        stmtVer.run(idLivro, idCap, v.v, v.t);
+                                    }
+                                }
+                                stmtVer.finalize();
 
-                        await run('COMMIT');
-                        console.log('[Backend DB] Banco de dados SQLite inicializado com sucesso!');
+                                if (bibliaData.img_versiculos && Array.isArray(bibliaData.img_versiculos)) {
+                                    const stmtImg = db.prepare(`INSERT INTO img_versiculos (id_livro, nome_livro, id_capitulo, id_versiculo, texto, address, oracao, is_user_upload) VALUES (?, ?, ?, ?, ?, ?, ?, 0)`);
+                                    for (const img of bibliaData.img_versiculos) {
+                                        stmtImg.run(img.id_livro || null, img.nome_livro || '', img.id_capitulo || null, img.id_versiculo || null, img.texto || '', img.address || '', img.oracao || '');
+                                    }
+                                    stmtImg.finalize();
+                                }
+
+                                db.run('COMMIT', (err) => {
+                                    if (err) return rejectPopulate(err);
+                                    console.log('[Backend DB] Banco de dados SQLite populado com sucesso!');
+                                    resolvePopulate();
+                                });
+                            });
+                        });
                     } else {
                         console.warn('[Backend DB] Arquivo biblia.json não encontrado em:', jsonPath);
                     }
@@ -236,7 +249,11 @@ export async function getVersiculos(idLivro, idCapitulo) {
 
 function removeAccents(str) {
     if (!str) return '';
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return str
+        .replace(/[\u00AD\u200B\u200C\u200D\uFEFF\u2060]/g, '')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 }
 
 function escapeRegex(str) {

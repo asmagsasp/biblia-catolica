@@ -270,7 +270,11 @@ export async function getVersiculos(idLivro, idCapitulo) {
 
 function removeAccents(str) {
     if (!str) return '';
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return str
+        .replace(/[\u00AD\u200B\u200C\u200D\uFEFF\u2060]/g, '')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 }
 
 function escapeRegex(str) {
