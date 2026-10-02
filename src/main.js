@@ -3,6 +3,7 @@ import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
 import { generateSacredAIImage, composeCardOnCanvas, SACRED_AI_INSPIRATIONS, SACRED_AI_STYLES } from './aiImageService.js';
 import { subscribeToFirebaseGallery } from './firebaseGallery.js';
+import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -2566,15 +2567,69 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ===== IOS & WEB SPEECH SYNTHESIS ENGINE PRIMER =====
+let cachedSpeechVoices = [];
+function updateSpeechVoices() {
+  if ('speechSynthesis' in window) {
+    try {
+      cachedSpeechVoices = window.speechSynthesis.getVoices() || [];
+    } catch (e) {}
+  }
+}
+if ('speechSynthesis' in window) {
+  updateSpeechVoices();
+  window.speechSynthesis.onvoiceschanged = updateSpeechVoices;
+}
+
+function getBestPortugueseVoice() {
+  if (!cachedSpeechVoices.length && 'speechSynthesis' in window) {
+    updateSpeechVoices();
+  }
+  return cachedSpeechVoices.find(v => v.lang === 'pt-BR' || v.lang === 'pt_BR') ||
+         cachedSpeechVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt')) || null;
+}
+
+// Unlocks iOS WebKit audio/speech synthesis restriction on first user interaction anywhere in the app
+let isSpeechSynthesizerPrimed = false;
+function primeSpeechForIos() {
+  if (isSpeechSynthesizerPrimed) return;
+  isSpeechSynthesizerPrimed = true;
+  if ('speechSynthesis' in window) {
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      const silentUtterance = new SpeechSynthesisUtterance(' ');
+      silentUtterance.volume = 0.01;
+      silentUtterance.rate = 10;
+      window.speechSynthesis.speak(silentUtterance);
+    } catch (e) {}
+  }
+}
+['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+  document.addEventListener(evt, primeSpeechForIos, { once: true, passive: true });
+});
+
 // ===== DONATE MODAL & RECURRING REMINDER =====
 const DONATE_AUDIO_TEXT = "Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde Já fiz minha doação e o banner deixará de aparecer. Seja um evangelizador você também!";
 let isDonateAudioSpeaking = false;
+let activeDonateUtterance = null;
+let donateHeartbeatResumeTimer = null;
+let donateAutoCloseTimer = null;
+
+function clearDonateHeartbeat() {
+  if (donateHeartbeatResumeTimer) {
+    clearInterval(donateHeartbeatResumeTimer);
+    donateHeartbeatResumeTimer = null;
+  }
+}
 
 function updateDonateAudioBtnState(speaking) {
   isDonateAudioSpeaking = speaking;
   const btn = document.getElementById('btnDonateAudio');
   if (!btn) return;
   if (speaking) {
+    btn.classList.remove('pulse-ready');
     btn.classList.add('speaking');
     btn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar</span>';
   } else {
@@ -2582,8 +2637,6 @@ function updateDonateAudioBtnState(speaking) {
     btn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
   }
 }
-
-let donateAutoCloseTimer = null;
 
 function clearDonateAutoCloseTimer() {
   if (donateAutoCloseTimer) {
@@ -2593,6 +2646,8 @@ function clearDonateAutoCloseTimer() {
 }
 
 function handleDonateAudioFinished() {
+  clearDonateHeartbeat();
+  activeDonateUtterance = null;
   updateDonateAudioBtnState(false);
   clearDonateAutoCloseTimer();
   // Automatically close the banner after the speech completes (1.5s delay for smooth transition)
@@ -2608,24 +2663,32 @@ function handleDonateAudioFinished() {
 window.stopDonateAudio = function () {
   isDonateAudioSpeaking = false;
   clearDonateAutoCloseTimer();
+  clearDonateHeartbeat();
+  activeDonateUtterance = null;
   updateDonateAudioBtnState(false);
+
   try {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
-      window.Capacitor.Plugins.TextToSpeech.stop();
+    if (Capacitor?.isNativePlatform() && TextToSpeech) {
+      TextToSpeech.stop();
     }
   } catch (e) {}
+
   if ('speechSynthesis' in window) {
-    try { window.speechSynthesis.cancel(); } catch (e) {}
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
   }
 };
 
 window.playDonateAudio = async function () {
-  stopDonateAudio();
-  updateDonateAudioBtnState(true);
+  clearDonateAutoCloseTimer();
+  clearDonateHeartbeat();
 
-  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+  // 1. Native platform (Android / iOS app compiled via Capacitor)
+  if (Capacitor?.isNativePlatform() && TextToSpeech) {
     try {
-      await window.Capacitor.Plugins.TextToSpeech.speak({
+      updateDonateAudioBtnState(true);
+      await TextToSpeech.speak({
         text: DONATE_AUDIO_TEXT,
         lang: 'pt-BR',
         rate: 0.95,
@@ -2634,11 +2697,15 @@ window.playDonateAudio = async function () {
         category: 'ambient'
       });
       handleDonateAudioFinished();
+      return;
     } catch (e) {
-      console.warn("TTS capacitor donate audio failed, trying Web Speech fallback:", e);
-      speakDonateWithWebSpeech();
+      console.warn("[Donate] TTS Capacitor falhou, tentando Web Speech fallback:", e);
+      updateDonateAudioBtnState(false);
     }
-  } else if ('speechSynthesis' in window) {
+  }
+
+  // 2. Web Speech Synthesis (iPhone Safari / iPad / PWA / Web Browser)
+  if ('speechSynthesis' in window) {
     speakDonateWithWebSpeech();
   } else {
     updateDonateAudioBtnState(false);
@@ -2650,13 +2717,78 @@ function speakDonateWithWebSpeech() {
     updateDonateAudioBtnState(false);
     return;
   }
-  window.speechSynthesis.cancel();
+
+  // Unpause WebKit synthesis if stalled
+  try {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  } catch (e) {}
+
+  // If already speaking, cancel previous speech
+  if (window.speechSynthesis.speaking) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
   const utterance = new SpeechSynthesisUtterance(DONATE_AUDIO_TEXT);
   utterance.lang = 'pt-BR';
   utterance.rate = 0.95;
-  utterance.onend = () => handleDonateAudioFinished();
-  utterance.onerror = () => updateDonateAudioBtnState(false);
-  window.speechSynthesis.speak(utterance);
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  const ptVoice = getBestPortugueseVoice();
+  if (ptVoice) {
+    utterance.voice = ptVoice;
+  }
+
+  // Preserve global reference to avoid WebKit garbage collection
+  activeDonateUtterance = utterance;
+
+  utterance.onstart = () => {
+    console.log('[Donate] Leitura de apoio iniciada via Web Speech.');
+    updateDonateAudioBtnState(true);
+
+    // Heartbeat to prevent WebKit 15-second speech synthesis pause bug
+    clearDonateHeartbeat();
+    donateHeartbeatResumeTimer = setInterval(() => {
+      if (!isDonateAudioSpeaking) {
+        clearDonateHeartbeat();
+        return;
+      }
+      if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }, 2500);
+  };
+
+  utterance.onend = () => {
+    clearDonateHeartbeat();
+    activeDonateUtterance = null;
+    handleDonateAudioFinished();
+  };
+
+  utterance.onerror = (evt) => {
+    console.warn('[Donate] Web Speech error:', evt);
+    clearDonateHeartbeat();
+    activeDonateUtterance = null;
+    updateDonateAudioBtnState(false);
+  };
+
+  // 40ms safety timeout to let WebKit finish any previous cancellation before queueing
+  setTimeout(() => {
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch (e) {
+      console.warn('[Donate] Erro ao invocar speechSynthesis.speak:', e);
+      updateDonateAudioBtnState(false);
+    }
+  }, 40);
 }
 
 window.toggleDonateAudio = function () {
@@ -2805,9 +2937,36 @@ window.showDonateModal = function () {
   if (modal) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      playDonateAudio();
-    }, 350);
+
+    clearDonateAutoCloseTimer();
+
+    // In case speech engine was paused on iOS Safari, unpause it
+    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+      try { window.speechSynthesis.resume(); } catch (e) {}
+    }
+
+    // Call immediately to preserve any user gesture (when opened via button)
+    playDonateAudio();
+
+    // Fallback for iOS timer-initiated popup: if audio was prevented by iOS due to lack of immediate gesture,
+    // pulse the button and allow the very first touch on the modal to start reading immediately
+    const btn = document.getElementById('btnDonateAudio');
+    if (btn && !isDonateAudioSpeaking) {
+      btn.classList.add('pulse-ready');
+    }
+
+    const onModalFirstTouch = (e) => {
+      // Ignore if user tapped close, already donated, or pix key
+      if (e.target.closest('.donate-close-btn') || e.target.closest('.donate-already-btn') || e.target.closest('.pix-key-box')) {
+        return;
+      }
+      if (!isDonateAudioSpeaking) {
+        console.log('[Donate] Disparando leitura ao primeiro toque no modal.');
+        playDonateAudio();
+      }
+    };
+    modal.addEventListener('pointerdown', onModalFirstTouch, { once: true });
+    modal.addEventListener('touchstart', onModalFirstTouch, { once: true, passive: true });
   }
 };
 

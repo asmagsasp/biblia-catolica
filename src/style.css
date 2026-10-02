@@ -2845,11 +2845,37 @@ mark,
   box-shadow: 0 4px 14px rgba(212, 175, 55, 0.55);
 }
 
+.donate-audio-btn.pulse-ready {
+  animation: pulseDonateReady 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseDonateReady {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.35);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.85);
+  }
+}
+
 .donate-audio-btn.speaking {
   background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
   color: #FFFFFF;
   box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
   animation: pulseSpeaking 1.5s infinite;
+}
+
+@keyframes pulseSpeaking {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.9);
+  }
 }
 
 .donate-audio-text {
