@@ -2666,8 +2666,28 @@ let donateHeartbeatInterval = null;
 const DONATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 let lastDonateTime = Date.now();
 
+export async function isDonatePopupDisabledByAdmin() {
+  try {
+    const res = await Preferences.get({ key: 'biblia_admin_disable_donate_popup' });
+    return res && (res.value === 'true' || res.value === true);
+  } catch (e) {
+    return false;
+  }
+}
+
 async function checkAndStartDonateTimer() {
   try {
+    const disabledByAdmin = await isDonatePopupDisabledByAdmin();
+    if (disabledByAdmin) {
+      console.log('[Donate] Popup de apoio desativado pelo Administrador (Modo Apresentação). Timer inativo.');
+      if (donateHeartbeatInterval) {
+        clearInterval(donateHeartbeatInterval);
+        donateHeartbeatInterval = null;
+      }
+      updateAdminDonateBadge();
+      return;
+    }
+
     const res = await Preferences.get({ key: 'biblia_already_donated' });
     const alreadyDonated = res && (res.value === 'true' || res.value === true);
     if (alreadyDonated) {
@@ -2684,6 +2704,14 @@ async function checkAndStartDonateTimer() {
     // Verificação contínua e imune a throttling e recarregamentos
     donateHeartbeatInterval = setInterval(async () => {
       try {
+        const adminOff = await isDonatePopupDisabledByAdmin();
+        if (adminOff) {
+          if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
+          donateHeartbeatInterval = null;
+          updateAdminDonateBadge();
+          return;
+        }
+
         const check = await Preferences.get({ key: 'biblia_already_donated' });
         if (check && (check.value === 'true' || check.value === true)) {
           if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
@@ -2714,8 +2742,11 @@ async function checkAndStartDonateTimer() {
 }
 
 // Ao voltar para a aba ou desbloquear celular, verifica se já se passaram 5 minutos
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
+    const disabledByAdmin = await isDonatePopupDisabledByAdmin();
+    if (disabledByAdmin) return;
+
     const elapsed = Date.now() - lastDonateTime;
     if (elapsed >= DONATE_INTERVAL_MS) {
       const modal = document.getElementById('donateModal');
@@ -2731,6 +2762,38 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
+
+window.toggleAdminDonatePopupState = async function () {
+  try {
+    const currentlyDisabled = await isDonatePopupDisabledByAdmin();
+    const willEnable = currentlyDisabled; // Se estava desativado, ativa; se estava ativo, desativa
+    
+    await Preferences.set({
+      key: 'biblia_admin_disable_donate_popup',
+      value: willEnable ? 'false' : 'true'
+    });
+
+    if (!willEnable) {
+      if (donateHeartbeatInterval) {
+        clearInterval(donateHeartbeatInterval);
+        donateHeartbeatInterval = null;
+      }
+      stopDonateAudio();
+      const modal = document.getElementById('donateModal');
+      if (modal) modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      showToast('🔕 Tela de apoio a cada 5 min DESATIVADA (Modo Apresentação)!');
+    } else {
+      await Preferences.remove({ key: 'biblia_already_donated' });
+      lastDonateTime = Date.now();
+      await checkAndStartDonateTimer();
+      showToast('🔔 Tela de apoio a cada 5 min ATIVADA!');
+    }
+    await updateAdminDonateBadge();
+  } catch (err) {
+    console.error('[AdminDonate] Erro ao alternar estado do popup:', err);
+  }
+};
 
 window.showDonateModal = function () {
   const modal = document.getElementById('donateModal');
@@ -2771,6 +2834,7 @@ window.markAsDonated = async function () {
 window.resetDonateStatusAndTimer = async function () {
   try {
     await Preferences.remove({ key: 'biblia_already_donated' });
+    await Preferences.set({ key: 'biblia_admin_disable_donate_popup', value: 'false' });
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
     showToast('✨ Timer de apoio reiniciado: exibirá a cada 5 minutos.');
@@ -2815,21 +2879,47 @@ function initDonateButtonShimmer() {
 
 async function updateAdminDonateBadge() {
   const badge = document.getElementById('adminDonateStatusBadge');
-  if (!badge) return;
+  const toggleBtn = document.getElementById('adminDonateToggleBtn');
+  if (!badge && !toggleBtn) return;
+
   try {
+    const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     const res = await Preferences.get({ key: 'biblia_already_donated' });
     const already = res && (res.value === 'true' || res.value === true);
-    if (already) {
-      badge.textContent = 'Já Doado (Desativado)';
-      badge.style.background = 'rgba(16, 185, 129, 0.15)';
-      badge.style.color = '#10b981';
-    } else {
-      const elapsedMins = Math.floor((Date.now() - lastDonateTime) / 60000);
-      badge.textContent = `Ativo (a cada 5 min • decorridos ${elapsedMins}m)`;
-      badge.style.background = 'rgba(234, 179, 8, 0.15)';
-      badge.style.color = 'var(--gold-400)';
+
+    if (toggleBtn) {
+      if (disabledByAdmin) {
+        toggleBtn.innerHTML = '<i class="fas fa-toggle-off" style="color: #ef4444; font-size: 16px;"></i> <span>Desativado</span>';
+        toggleBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        toggleBtn.style.background = 'rgba(239, 68, 68, 0.12)';
+        toggleBtn.title = 'Clique para ativar o popup a cada 5 minutos';
+      } else {
+        toggleBtn.innerHTML = '<i class="fas fa-toggle-on" style="color: #10b981; font-size: 16px;"></i> <span>Ativo</span>';
+        toggleBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        toggleBtn.style.background = 'rgba(16, 185, 129, 0.12)';
+        toggleBtn.title = 'Clique para desativar (Modo Apresentação para Padres)';
+      }
     }
-  } catch (e) {}
+
+    if (badge) {
+      if (disabledByAdmin) {
+        badge.textContent = 'Desativado (Modo Apresentação)';
+        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+        badge.style.color = '#ef4444';
+      } else if (already) {
+        badge.textContent = 'Já Apoiado (Pausado)';
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        badge.style.color = '#10b981';
+      } else {
+        const elapsedMins = Math.floor((Date.now() - lastDonateTime) / 60000);
+        badge.textContent = `Ativo (a cada 5 min • ${elapsedMins}m)`;
+        badge.style.background = 'rgba(234, 179, 8, 0.15)';
+        badge.style.color = 'var(--gold-400)';
+      }
+    }
+  } catch (e) {
+    console.warn('[AdminDonate] Erro no updateAdminDonateBadge:', e);
+  }
 }
 
 window.copyPix = async function () {
