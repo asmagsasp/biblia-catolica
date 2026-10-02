@@ -6088,9 +6088,42 @@ mark,
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.carta-read-btn:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.45);
+.cartas-quick-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 10px 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.cartas-quick-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.cartas-chip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.cartas-chip:hover,
+.cartas-chip:active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--gold-400);
+  color: var(--gold-300);
+  transform: translateY(-1px);
 }
 
 .hidden {

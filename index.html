@@ -926,7 +926,20 @@
             <button id="cartasSearchClear" class="hidden" onclick="clearCartasSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
           </div>
 
-          <div class="nav-tabs" style="margin-top: 12px; margin-bottom: 4px;">
+          <!-- Sugestões Rápidas de Temas -->
+          <div class="cartas-quick-chips">
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('Amor')"><i class="fas fa-heart" style="color: #ec4899;"></i> Amor (1Cor 13)</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('Graça')"><i class="fas fa-dove" style="color: var(--gold-400);"></i> Graça</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('Fé')"><i class="fas fa-cross" style="color: #8b5cf6;"></i> Fé</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('Obras')"><i class="fas fa-scale-balanced" style="color: #10b981;"></i> Obras (Tg 2)</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('Armadura')"><i class="fas fa-shield-halved" style="color: #3b82f6;"></i> Armadura (Ef 6)</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('São Paulo')"><i class="fas fa-pen-nib" style="color: var(--gold-400);"></i> São Paulo</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('São Pedro')"><i class="fas fa-key" style="color: #d97706;"></i> São Pedro</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('São Tiago')"><i class="fas fa-hands-praying" style="color: #10b981;"></i> São Tiago</button>
+            <button type="button" class="cartas-chip" onclick="setCartasQuickSearch('São João')"><i class="fas fa-sun" style="color: #e11d48;"></i> São João</button>
+          </div>
+
+          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
             <button class="nav-tab active" id="tabCartasTodas" onclick="filterCartasCategoria('todas', this)">Todas (21)</button>
             <button class="nav-tab" id="tabCartasPaulinas" onclick="filterCartasCategoria('paulinas', this)">São Paulo (14)</button>
             <button class="nav-tab" id="tabCartasCatolicas" onclick="filterCartasCategoria('catolicas', this)">Cartas Católicas (7)</button>

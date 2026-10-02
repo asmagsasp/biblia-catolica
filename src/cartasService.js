@@ -10,6 +10,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Romanos',
     tituloLiturgico: 'Leitura da Carta de São Paulo aos Romanos',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 57–58 d.C. • Corinto (Grécia)',
     destinatario: 'À comunidade dos cristãos em Roma (judeus e gentios convertidos)',
     categoria: 'paulinas',
@@ -19,6 +20,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#d4af37',
     temaCentral: 'A Justificação pela Fé, a Graça Soberana e a Vida no Espírito',
     proposito: 'Apresentar de forma profunda e sistemática o Evangelho da salvação em Jesus Cristo, revelando que tanto judeus como gentios são justificados não pelas obras da Lei antiga, mas pela graça mediante a fé viva em Cristo.',
+    tags: ['amor', 'graça', 'graca', 'fé', 'fe', 'obras', 'obras da lei', 'justificação', 'justificacao', 'esperança', 'esperanca', 'espírito santo', 'espirito santo', 'paz', 'caridade', 'salvação', 'salvacao', 'vida no espirito', 'corpo de cristo', 'renovação', 'paulo', 'são paulo', 'rm', 'rom', 'rm 8', 'rm 12', 'rm 5', 'romanos'],
     passagensDestaque: [
       {
         referencia: 'Romanos 8, 31-39',
@@ -46,6 +48,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'I Coríntios',
     tituloLiturgico: 'Leitura da Primeira Carta de São Paulo aos Coríntios',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 55 d.C. • Éfeso (Ásia Menor)',
     destinatario: 'À Igreja de Deus em Corinto (cidade comercial e portuária da Grécia)',
     categoria: 'paulinas',
@@ -55,6 +58,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#ec4899',
     temaCentral: 'A Unidade da Igreja, a Sagrada Eucaristia, os Carismas e o Hino ao Amor',
     proposito: 'Superar divisões internas na comunidade, instruir sobre a pureza moral cristã, o uso ordenado dos dons do Espírito Santo, a ceia eucarística e a gloriosa certeza da Ressurreição dos mortos.',
+    tags: ['amor', 'caridade', 'hino ao amor', 'hino a caridade', 'graça', 'graca', 'fé', 'fe', 'esperança', 'esperanca', 'eucaristia', 'ceia do senhor', 'ressurreição', 'ressurreicao', 'unidade', 'dons', 'carismas', 'corpo de cristo', 'santidade', 'paulo', 'são paulo', '1cor', '1co', '1 cor', '1cor 13', '1cor 11', '1cor 15', 'i corintios', 'corintios'],
     passagensDestaque: [
       {
         referencia: '1 Coríntios 13, 1-13',
@@ -82,6 +86,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'II Coríntios',
     tituloLiturgico: 'Leitura da Segunda Carta de São Paulo aos Coríntios',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 56 d.C. • Macedônia',
     destinatario: 'À Igreja em Corinto e a todos os santos de toda a Acaia',
     categoria: 'paulinas',
@@ -91,6 +96,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#8b5cf6',
     temaCentral: 'O Ministério da Reconciliação e o Poder de Deus na Fraqueza Humana',
     proposito: 'Expressar a alegria pelo restabelecimento da paz em Corinto, defender a integridade do chamado apostólico e ensinar que a glória e a força do Evangelho brilham precisamente nos vasos de barro da nossa fraqueza.',
+    tags: ['graça', 'graca', 'amor', 'fé', 'fe', 'reconciliação', 'reconciliacao', 'fraqueza', 'força de cristo', 'nova criatura', 'generosidade', 'dízimo', 'alegria', 'consolo', 'misericórdia', 'paulo', 'são paulo', '2cor', '2co', '2 cor', '2cor 12', '2cor 5', '2cor 9', 'ii corintios', 'corintios'],
     passagensDestaque: [
       {
         referencia: '2 Coríntios 12, 8-10',
@@ -118,6 +124,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Gálatas',
     tituloLiturgico: 'Leitura da Carta de São Paulo aos Gálatas',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 54–55 d.C. • Éfeso ou Macedônia',
     destinatario: 'Às comunidades cristãs da Galácia (região central da Ásia Menor)',
     categoria: 'paulinas',
@@ -127,6 +134,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#10b981',
     temaCentral: 'A Carta Magna da Liberdade Cristã e os Frutos do Espírito Santo',
     proposito: 'Proclamar com santa firmeza que fomos libertados por Cristo da escravidão da Lei e do pecado. Reafirma que a salvação é puro dom da graça e chama a viver segundo o Espírito na caridade fraterna.',
+    tags: ['graça', 'graca', 'fé', 'fe', 'obras', 'obras da lei', 'liberdade cristã', 'liberdade crista', 'frutos do espírito', 'fruto do espirito', 'amor', 'caridade', 'cruz de cristo', 'justificação', 'justificacao', 'filhos de deus', 'paulo', 'são paulo', 'gl', 'gal', 'gl 5', 'gl 2', 'gl 6', 'galatas', 'gálatas'],
     passagensDestaque: [
       {
         referencia: 'Gálatas 5, 22-25',
@@ -154,6 +162,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Efésios',
     tituloLiturgico: 'Leitura da Carta de São Paulo aos Efésios',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 61–63 d.C. • Prisão em Roma',
     destinatario: 'À Igreja de Éfeso e às comunidades da província da Ásia',
     categoria: 'paulinas',
@@ -163,6 +172,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#3b82f6',
     temaCentral: 'O Mistério da Igreja Corpo de Cristo e a Armadura de Deus',
     proposito: 'Desvendar o desígnio eterno de Deus de reconciliar todas as coisas no Céu e na Terra em Jesus Cristo, convocando as famílias, casais e fiéis a viverem no amor e no santo combate espiritual.',
+    tags: ['armadura', 'armadura de deus', 'graça', 'graca', 'fé', 'fe', 'obras', 'boas obras', 'amor', 'unidade', 'corpo de cristo', 'combate espiritual', 'família', 'casamento', 'oração', 'oracao', 'salvação pela graça', 'salvacao', 'igreja', 'paulo', 'são paulo', 'ef', 'efe', 'ef 6', 'ef 2', 'ef 4', 'efesios', 'efésios'],
     passagensDestaque: [
       {
         referencia: 'Efésios 6, 10-18',
@@ -190,6 +200,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Filipenses',
     tituloLiturgico: 'Leitura da Carta de São Paulo aos Filipenses',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 61–62 d.C. • Prisão em Roma',
     destinatario: 'Aos santos em Cristo Jesus com seus bispos e diáconos em Filipos (Macedônia)',
     categoria: 'paulinas',
@@ -199,6 +210,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#f59e0b',
     temaCentral: 'A Carta da Alegria Cristã e o Sagrado Hino Cristológico',
     proposito: 'Agradecer o carinho constante dos filipenses, encorajando-os à união fraterna, à humildade de Cristo e a uma alegria perene que independe de cadeias ou adversidades externas.',
+    tags: ['alegria', 'paz', 'amor', 'graça', 'graca', 'fé', 'fe', 'humildade', 'kenosis', 'hino cristológico', 'tudo posso naquele que me fortalece', 'esperança', 'esperanca', 'perseverança', 'paulo', 'são paulo', 'fp', 'fil', 'fp 4', 'fp 2', 'filipenses'],
     passagensDestaque: [
       {
         referencia: 'Filipenses 4, 4-13',
@@ -226,6 +238,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Colossenses',
     tituloLiturgico: 'Leitura da Carta de São Paulo aos Colossenses',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 61–63 d.C. • Prisão em Roma',
     destinatario: 'Aos irmãos santos e fiéis em Cristo estabelecidos em Colossos',
     categoria: 'paulinas',
@@ -235,6 +248,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#6366f1',
     temaCentral: 'A Soberania e Primazia Universal de Cristo sobre Toda a Criação',
     proposito: 'Refutar correntes de sincretismo e falsas filosofias, proclamando que em Jesus Cristo reside toda a plenitude da Divindade e que Ele é a cabeça absoluta da Igreja e do Cosmos.',
+    tags: ['amor', 'caridade', 'graça', 'graca', 'fé', 'fe', 'primogênito', 'hino a cristo', 'homem novo', 'paz de cristo', 'coisas do alto', 'ressurreição', 'ressurreicao', 'santidade', 'família', 'paulo', 'são paulo', 'cl', 'col', 'cl 3', 'cl 1', 'colossenses'],
     passagensDestaque: [
       {
         referencia: 'Colossenses 1, 15-20',
@@ -262,6 +276,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'I Tessalonicenses',
     tituloLiturgico: 'Leitura da Primeira Carta de São Paulo aos Tessalonicenses',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 50–51 d.C. • Corinto (O mais antigo documento do NT)',
     destinatario: 'À Igreja dos Tessalonicenses (capital da província romana da Macedônia)',
     categoria: 'paulinas',
@@ -271,6 +286,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#06b6d4',
     temaCentral: 'A Esperança Cristã, a Vigilância Santa e a Vinda Gloriosa do Senhor',
     proposito: 'Instruir e animar a jovem comunidade cristã em tempos de tribulação, trazendo consolação divina a respeito dos fiéis falecidos e conclamando à santidade e à oração incessante.',
+    tags: ['esperança', 'esperanca', 'fé', 'fe', 'amor', 'caridade', 'graça', 'graca', 'ressurreição', 'ressurreicao', 'vinda do senhor', 'parusia', 'oração incessante', 'santidade', 'vigilância', 'paulo', 'são paulo', '1ts', '1tes', '1ts 5', '1ts 4', '1 tessalonicenses', 'i tessalonicenses', 'tessalonicenses'],
     passagensDestaque: [
       {
         referencia: '1 Tessalonicenses 5, 16-24',
@@ -292,6 +308,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'II Tessalonicenses',
     tituloLiturgico: 'Leitura da Segunda Carta de São Paulo aos Tessalonicenses',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 51–52 d.C. • Corinto',
     destinatario: 'À Igreja dos Tessalonicenses',
     categoria: 'paulinas',
@@ -301,6 +318,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#0284c7',
     temaCentral: 'A Firmeza na Verdade, a Vitória sobre o Mal e a Dignidade do Trabalho',
     proposito: 'Esclarecer dúvidas sobre o Dia do Senhor, advertir contra alarmismos e desordens, estimulando os fiéis a perseverarem na oração e a trabalharem dignamente pelo Reino de Deus.',
+    tags: ['fé', 'fe', 'amor', 'graça', 'graca', 'perseverança', 'trabalho', 'tradição', 'sagrada tradição', 'vitória sobre o mal', 'firmeza na verdade', 'paulo', 'são paulo', '2ts', '2tes', '2ts 3', '2ts 2', '2 tessalonicenses', 'ii tessalonicenses', 'tessalonicenses'],
     passagensDestaque: [
       {
         referencia: '2 Tessalonicenses 3, 1-5',
@@ -322,6 +340,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'I Timóteo',
     tituloLiturgico: 'Leitura da Primeira Carta de São Paulo a Timóteo',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 64–65 d.C. • Macedônia',
     destinatario: 'A Timóteo, seu verdadeiro filho na fé e bispo de Éfeso',
     categoria: 'paulinas',
@@ -331,6 +350,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#14b8a6',
     temaCentral: 'A Ordem Pastoral da Igreja, a Sã Doutrina e o Bom Combate',
     proposito: 'Orientar o jovem bispo Timóteo na liderança do rebanho, na escolha de presbíteros e diáconos, no valor da oração pública por todos os governantes e no zelo pela sã doutrina católica.',
+    tags: ['fé', 'fe', 'amor', 'graça', 'graca', 'caridade', 'bom combate', 'oração universal', 'pastor', 'liderança', 'sã doutrina', 'igreja coluna e fundamento da verdade', 'sacramento da ordem', 'paulo', 'são paulo', '1tm', '1tim', '1tm 2', '1tm 6', '1tm 4', '1 timoteo', 'i timoteo', 'timoteo'],
     passagensDestaque: [
       {
         referencia: '1 Timóteo 2, 1-6',
@@ -358,6 +378,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'II Timóteo',
     tituloLiturgico: 'Leitura da Segunda Carta de São Paulo a Timóteo',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 67 d.C. • Segunda Prisão em Roma (O Testamento Espiritual de Paulo)',
     destinatario: 'A Timóteo, seu caríssimo filho espiritual',
     categoria: 'paulinas',
@@ -367,6 +388,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#e11d48',
     temaCentral: 'O Testamento de Fé do Apóstolo, a Coragem e a Coroa da Justiça',
     proposito: 'Comovente testamento espiritual de São Paulo às vésperas de seu martírio em Roma, transmitindo a tocha da fé a Timóteo e testemunhando a gloriosa fidelidade a Cristo até o fim.',
+    tags: ['fé', 'fe', 'amor', 'graça', 'graca', 'bom combate', 'coroa da justiça', 'sagrada escritura', 'inspirada por deus', 'fortaleza', 'martírio', 'fidelidade', 'testamento espiritual', 'paulo', 'são paulo', '2tm', '2tim', '2tm 4', '2tm 1', '2tm 3', '2 timoteo', 'ii timoteo', 'timoteo'],
     passagensDestaque: [
       {
         referencia: '2 Timóteo 4, 6-8',
@@ -394,6 +416,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Tito',
     tituloLiturgico: 'Leitura da Carta de São Paulo a Tito',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 64–65 d.C. • Nicópolis',
     destinatario: 'A Tito, seu companheiro leal e bispo da ilha de Creta',
     categoria: 'paulinas',
@@ -403,6 +426,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#059669',
     temaCentral: 'A Graça Manifestada, a Liderança Pastoral e a Prática das Boas Obras',
     proposito: 'Orientar o bispo Tito na estruturação das igrejas locais de Creta, ensinando a conduta exemplar das famílias cristãs e recordando a manifestação do amor salvador de Deus.',
+    tags: ['graça', 'graca', 'obras', 'boas obras', 'amor', 'fé', 'fe', 'esperança', 'esperanca', 'salvação', 'salvacao', 'batismo', 'regeneração', 'vida santa', 'família', 'paulo', 'são paulo', 'tt', 'tit', 'tt 2', 'tt 3', 'tito'],
     passagensDestaque: [
       {
         referencia: 'Tito 2, 11-14',
@@ -424,6 +448,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Filemon',
     tituloLiturgico: 'Leitura da Carta de São Paulo a Filemon',
     autor: 'São Paulo Apóstolo',
+    apostolo: 'São Paulo',
     anoLocal: 'c. 61–63 d.C. • Prisão em Roma',
     destinatario: 'A Filemon, caríssimo colaborador, e à Igreja reunida em sua casa em Colossos',
     categoria: 'paulinas',
@@ -433,6 +458,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#a855f7',
     temaCentral: 'O Perdão Evangélico, a Reconciliação e a Fraternidade em Cristo',
     proposito: 'Interceder com comovente ternura pelo escravo fugitivo Onésimo, pedindo a Filemon que o acolha não mais como escravo, mas como um irmão amadíssimo em Cristo.',
+    tags: ['amor', 'perdão', 'perdao', 'fraternidade', 'reconciliação', 'reconciliacao', 'irmão amado', 'liberdade', 'caridade', 'paulo', 'são paulo', 'fm', 'flm', 'fm 1', 'filemon', 'filêmon'],
     passagensDestaque: [
       {
         referencia: 'Filemon 1, 15-17',
@@ -448,6 +474,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'Hebreus',
     tituloLiturgico: 'Leitura da Carta aos Hebreus',
     autor: 'Tradição Apostólica / Círculo Paulino',
+    apostolo: 'Tradição Apostólica',
     anoLocal: 'c. 64–68 d.C. • Roma ou Jerusalém',
     destinatario: 'Aos cristãos de origem judaica tentados a recuar na fé sob provações',
     categoria: 'paulinas',
@@ -457,6 +484,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#ea580c',
     temaCentral: 'O Eterno Sumo Sacerdócio de Jesus Cristo e a Grandeza da Nova Aliança',
     proposito: 'Demonstrar a glória e perfeição insuperáveis do sacrifício único de Cristo sobre os antigos rituais levíticos, exortando os fiéis a correrem com perseverança a corrida da fé.',
+    tags: ['fé', 'fe', 'heróis da fé', 'graça', 'graca', 'trono da graça', 'esperança', 'esperanca', 'sacerdócio de cristo', 'sumo sacerdote', 'nova aliança', 'sacrifício de cristo', 'altar', 'eucaristia', 'fidelidade', 'hebreus', 'hb', 'heb', 'hb 11', 'hb 4', 'hb 12', 'hb 13'],
     passagensDestaque: [
       {
         referencia: 'Hebreus 11, 1-6',
@@ -490,6 +518,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'São Tiago',
     tituloLiturgico: 'Leitura da Carta de São Tiago',
     autor: 'São Tiago Apóstolo (O Justo, Bispo de Jerusalém)',
+    apostolo: 'São Tiago',
     anoLocal: 'c. 58–62 d.C. • Jerusalém',
     destinatario: 'Às doze tribos da dispersão (à Igreja Católica Universal)',
     categoria: 'catolicas',
@@ -499,6 +528,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#10b981',
     temaCentral: 'A Fé Viva Traduzida em Obras, a Sabedoria do Céu e a Oração dos Enfermos',
     proposito: 'Ensinar com autoridade prática que a fé sem as obras de misericórdia é morta em si mesma, instruindo sobre a santificação da língua, o socorro aos pobres e o sacramento da Unção dos Enfermos.',
+    tags: ['obras', 'fé e obras', 'fe sem obras e morta', 'fé', 'fe', 'graça', 'graca', 'oração', 'oracao', 'unção dos enfermos', 'uncao dos enfermos', 'sabedoria', 'justiça', 'pobres', 'misericórdia', 'controle da língua', 'praticantes da palavra', 'tiago', 'são tiago', 'sao tiago', 'tg', 'tia', 'tg 2', 'tg 5', 'tg 1'],
     passagensDestaque: [
       {
         referencia: 'São Tiago 2, 14-26',
@@ -526,6 +556,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'I São Pedro',
     tituloLiturgico: 'Leitura da Primeira Carta de São Pedro',
     autor: 'São Pedro Apóstolo (O Príncipe dos Apóstolos)',
+    apostolo: 'São Pedro',
     anoLocal: 'c. 63–64 d.C. • Roma ("Babilônia")',
     destinatario: 'Aos eleitos e peregrinos espalhados pelo Ponto, Galácia, Capadócia, Ásia e Bitínia',
     categoria: 'catolicas',
@@ -535,6 +566,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#d97706',
     temaCentral: 'A Esperança Viva, o Povo Escolhido e o Sacerdócio Real dos Fiéis',
     proposito: 'Confortar e animar os cristãos perseguidos pelo Império, recordando que foram resgatados pelo Sangue precioso de Cristo e chamados a ser sal, luz e nação santa.',
+    tags: ['esperança', 'esperanca', 'esperança viva', 'fé', 'fe', 'amor', 'caridade', 'povo de deus', 'sacerdócio régio', 'sangue de cristo', 'ansiedade', 'humildade', 'sofrimento e vitória', 'salvação', 'pedro', 'são pedro', 'sao pedro', '1pe', '1pd', '1ped', '1pe 2', '1pe 5', '1pe 1', '1 pedro', 'i sao pedro'],
     passagensDestaque: [
       {
         referencia: '1 São Pedro 2, 9-10',
@@ -562,6 +594,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'II São Pedro',
     tituloLiturgico: 'Leitura da Segunda Carta de São Pedro',
     autor: 'São Pedro Apóstolo',
+    apostolo: 'São Pedro',
     anoLocal: 'c. 66–67 d.C. • Roma (Pouco antes de seu martírio)',
     destinatario: 'A todos os que pela justiça de Deus receberam uma fé igualmente preciosa',
     categoria: 'catolicas',
@@ -571,6 +604,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#0284c7',
     temaCentral: 'A Participação na Natureza Divina e a Esperança de Novos Céus e Nova Terra',
     proposito: 'Exortar ao constante crescimento espiritual nas virtudes, advertir contra falsos mestres e reafirmar com autoridade a fidelidade de Deus que prepara novos céus e nova terra.',
+    tags: ['fé', 'fe', 'natureza divina', 'novos céus e nova terra', 'esperança', 'esperanca', 'virtudes', 'crescimento espiritual', 'paciência de deus', 'vigilância', 'sã doutrina', 'pedro', 'são pedro', 'sao pedro', '2pe', '2pd', '2ped', '2pe 1', '2pe 3', '2 pedro', 'ii sao pedro'],
     passagensDestaque: [
       {
         referencia: '2 São Pedro 1, 3-8',
@@ -592,6 +626,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'I São João',
     tituloLiturgico: 'Leitura da Primeira Carta de São João',
     autor: 'São João Apóstolo e Evangelista (O Discípulo Amado)',
+    apostolo: 'São João',
     anoLocal: 'c. 90–95 d.C. • Éfeso',
     destinatario: 'Às comunidades cristãs da Ásia Menor e a toda a Igreja',
     categoria: 'catolicas',
@@ -601,6 +636,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#e11d48',
     temaCentral: 'Deus é Amor (Deus Caritas Est), a Luz Divina e a Comunhão Fraterna',
     proposito: 'Proclamar com unção suprema que Deus é Amor e Luz. Ensinar que a verdadeira comunhão com Deus se comprova no amor concreto aos irmãos e na guarda dos santos mandamentos.',
+    tags: ['amor', 'deus é amor', 'deus caritas est', 'caridade', 'mandamento do amor', 'fé', 'fe', 'luz divina', 'filhos de deus', 'comunhão', 'perdão', 'sangue purificador', 'joão', 'são joão', 'sao joao', '1jo', '1jo 4', '1jo 3', '1jo 1', '1 joao', 'i sao joao'],
     passagensDestaque: [
       {
         referencia: '1 São João 4, 7-16',
@@ -628,6 +664,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'II São João',
     tituloLiturgico: 'Leitura da Segunda Carta de São João',
     autor: 'São João Apóstolo ("O Ancião")',
+    apostolo: 'São João',
     anoLocal: 'c. 90–95 d.C. • Éfeso',
     destinatario: 'À Senhora Eleita e aos seus filhos (à Igreja e aos seus fiéis)',
     categoria: 'catolicas',
@@ -637,6 +674,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#ec4899',
     temaCentral: 'A Verdade e o Mandamento do Amor Mútuo',
     proposito: 'Exortar a comunidade a perseverar no mandamento original de Jesus: amar uns aos outros e permanecer firmes na doutrina verdadeira da Encarnação do Filho de Deus.',
+    tags: ['amor', 'mandamento do amor', 'amor mútuo', 'fé', 'fe', 'verdade', 'encarnação de cristo', 'joão', 'são joão', 'sao joao', '2jo', '2jo 1', '2 joao', 'ii sao joao'],
     passagensDestaque: [
       {
         referencia: '2 São João 1, 5-6',
@@ -652,6 +690,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'III São João',
     tituloLiturgico: 'Leitura da Terceira Carta de São João',
     autor: 'São João Apóstolo ("O Ancião")',
+    apostolo: 'São João',
     anoLocal: 'c. 90–95 d.C. • Éfeso',
     destinatario: 'Ao caríssimo Gaio, a quem amo na verdade',
     categoria: 'catolicas',
@@ -661,6 +700,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#8b5cf6',
     temaCentral: 'A Hospitalidade Cristã, a Fidelidade e o Bom Exemplo',
     proposito: 'Elogiar Gaio pelo acolhimento caloroso aos missionários e obreiros da fé, recordando que quem pratica o bem é de Deus e glorifica a Igreja.',
+    tags: ['hospitalidade', 'amor', 'verdade', 'bom testemunho', 'fazer o bem', 'fidelidade', 'joão', 'são joão', 'sao joao', '3jo', '3jo 1', '3 joao', 'iii sao joao'],
     passagensDestaque: [
       {
         referencia: '3 São João 1, 11',
@@ -676,6 +716,7 @@ export const CARTAS_APOSTOLICAS = [
     nomeCurto: 'São Judas',
     tituloLiturgico: 'Leitura da Carta de São Judas',
     autor: 'São Judas Tadeu Apóstolo (O Apóstolo das Causas Impossíveis)',
+    apostolo: 'São Judas Tadeu',
     anoLocal: 'c. 65–70 d.C. • Judeia / Palestina',
     destinatario: 'Aos chamados e amados em Deus Pai e guardados para Jesus Cristo',
     categoria: 'catolicas',
@@ -685,6 +726,7 @@ export const CARTAS_APOSTOLICAS = [
     cor: '#10b981',
     temaCentral: 'A Batalha pela Fé Católica e a Soberana Doxologia a Deus',
     proposito: 'Exortar com zelo ardente à preservação da fé transmitida de uma vez por todas aos santos, confiando naquele que é poderoso para nos guardar de qualquer tropeço.',
+    tags: ['fé', 'fe', 'combate pela fé', 'santíssima fé', 'oração no espírito santo', 'amor de deus', 'doxologia', 'majestade e poder', 'guarda contra tropeços', 'judas', 'são judas', 'sao judas', 'são judas tadeu', 'judas tadeu', 'jd', 'jud', 'jd 1'],
     passagensDestaque: [
       {
         referencia: 'São Judas 1, 20-25',

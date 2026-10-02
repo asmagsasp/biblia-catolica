@@ -642,59 +642,63 @@ window.readFullChapter = async function () {
 export function highlightSearchTerms(text, query) {
   if (!text || !query) return text || '';
 
-  const accentMap = {
-    'a': '[aáàâãäAÁÀÂÃÄ]',
-    'e': '[eéèêëEÉÈÊË]',
-    'i': '[iíìîïIÍÌÎÏ]',
-    'o': '[oóòôõöOÓÒÔÕÖ]',
-    'u': '[uúùûüUÚÙÛÜ]',
-    'c': '[cçCÇ]',
-    'n': '[nñNÑ]'
-  };
+  try {
+    const accentMap = {
+      'a': '[aáàâãäAÁÀÂÃÄ]',
+      'e': '[eéèêëEÉÈÊË]',
+      'i': '[iíìîïIÍÌÎÏ]',
+      'o': '[oóòôõöOÓÒÔÕÖ]',
+      'u': '[uúùûüUÚÙÛÜ]',
+      'c': '[cçCÇ]',
+      'n': '[nñNÑ]'
+    };
 
-  const escapeRegex = (s) => (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapeRegex = (s) => (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const makeFlexPattern = (phrase) => {
-    const cleaned = phrase.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
-    return cleaned
-      .split('')
-      .map(ch => {
-        if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”]+';
-        const lower = ch.toLowerCase();
-        return accentMap[lower] || escapeRegex(ch);
-      })
-      .join('');
-  };
+    const makeFlexPattern = (phrase) => {
+      const cleaned = phrase.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+      return cleaned
+        .split('')
+        .map(ch => {
+          if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”]+';
+          const lower = ch.toLowerCase();
+          return accentMap[lower] || escapeRegex(ch);
+        })
+        .join('');
+    };
 
-  const cleanQuery = query.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
-  if (cleanQuery.length === 0) return text;
+    const cleanQuery = query.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+    if (cleanQuery.length === 0) return text;
 
-  // Limites exatos de palavra respeitando letras acentuadas e pontuação
-  const leftBound = '(?:^|(?<=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]))';
-  const rightBound = '(?=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]|$)';
+    // Limites exatos de palavra respeitando letras acentuadas e pontuação
+    const leftBound = '(?:^|(?<=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]))';
+    const rightBound = '(?=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]|$)';
 
-  // 1. Tentar casar a frase inteira com limite de palavra exata
-  const phrasePattern = makeFlexPattern(cleanQuery);
-  const phraseRegex = new RegExp(leftBound + '(' + phrasePattern + ')' + rightBound, 'gi');
+    // 1. Tentar casar a frase inteira com limite de palavra exata
+    const phrasePattern = makeFlexPattern(cleanQuery);
+    const phraseRegex = new RegExp(leftBound + '(' + phrasePattern + ')' + rightBound, 'gi');
 
-  if (phraseRegex.test(text)) {
-    return text.replace(phraseRegex, '<mark class="search-highlight">$1</mark>');
+    if (phraseRegex.test(text)) {
+      return text.replace(phraseRegex, '<mark class="search-highlight">$1</mark>');
+    }
+
+    // 2. Se a frase completa contínua não casar, casar palavras individuais com limites exatos
+    const words = cleanQuery
+      .split(/\s+/)
+      .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
+      .filter(w => w.length >= 2);
+
+    if (words.length === 0) return text;
+
+    const wordPatterns = words
+      .sort((a, b) => b.length - a.length)
+      .map(w => makeFlexPattern(w));
+
+    const wordsRegex = new RegExp(leftBound + '((?:' + wordPatterns.join('|') + '))' + rightBound, 'gi');
+    return text.replace(wordsRegex, '<mark class="search-highlight">$1</mark>');
+  } catch (err) {
+    return text;
   }
-
-  // 2. Se a frase completa contínua não casar, casar palavras individuais com limites exatos
-  const words = cleanQuery
-    .split(/\s+/)
-    .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
-    .filter(w => w.length >= 2);
-
-  if (words.length === 0) return text;
-
-  const wordPatterns = words
-    .sort((a, b) => b.length - a.length)
-    .map(w => makeFlexPattern(w));
-
-  const wordsRegex = new RegExp(leftBound + '((?:' + wordPatterns.join('|') + '))' + rightBound, 'gi');
-  return text.replace(wordsRegex, '<mark class="search-highlight">$1</mark>');
 }
 
 // ===== SEARCH =====
@@ -5799,6 +5803,15 @@ window.abrirCartaCapitulo = function (idLivro, nomeLivro, cap = 1) {
   setTimeout(() => selectChapter(cap), 100);
 };
 
+window.setCartasQuickSearch = function (term) {
+  const input = document.getElementById('cartasSearchInput');
+  if (input) {
+    input.value = term;
+    input.focus();
+  }
+  window.handleCartasSearch(term);
+};
+
 window.renderCartasGrid = function () {
   const container = document.getElementById('cartasGridList');
   if (!container) return;
@@ -5814,11 +5827,13 @@ window.renderCartasGrid = function () {
         ${c.nomeCurto} 
         ${c.tituloLiturgico} 
         ${c.autor} 
+        ${c.apostolo || ''} 
         ${c.destinatario} 
         ${c.anoLocal} 
         ${c.categoriaNome} 
         ${c.temaCentral} 
         ${c.proposito} 
+        ${(c.tags || []).join(' ')} 
         ${(c.passagensDestaque || []).map(p => `${p.referencia} ${p.titulo} ${p.texto}`).join(' ')}
       `);
       return searchTerms.every(term => fullContent.includes(term));
@@ -5832,11 +5847,13 @@ window.renderCartasGrid = function () {
           ${c.nomeCurto} 
           ${c.tituloLiturgico} 
           ${c.autor} 
+          ${c.apostolo || ''} 
           ${c.destinatario} 
           ${c.anoLocal} 
           ${c.categoriaNome} 
           ${c.temaCentral} 
           ${c.proposito} 
+          ${(c.tags || []).join(' ')} 
           ${(c.passagensDestaque || []).map(p => `${p.referencia} ${p.titulo} ${p.texto}`).join(' ')}
         `);
         return searchTerms.every(term => fullContent.includes(term));
