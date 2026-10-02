@@ -58,6 +58,8 @@
           class="fas fa-cross"></i></button>
       <button class="header-btn desktop-only" onclick="showDiario()" title="Diário Espiritual & Graças"><i
           class="fas fa-book-bookmark"></i></button>
+      <button class="header-btn desktop-only" onclick="showNovenas()" title="Novenas Tradicionais da Igreja"><i
+          class="fas fa-hands-praying"></i></button>
       <button class="header-btn desktop-only" onclick="showGallery()" title="Imagens"><i
           class="fas fa-images"></i></button>
       <button class="header-btn desktop-only" onclick="showPlan()" title="Plano de Leitura"><i
@@ -182,6 +184,18 @@
             <div class="quick-card-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Livro da Gratidão</div>
             <h3 class="quick-card-title">Diário Espiritual</h3>
             <p class="quick-card-desc">Minhas Orações & Graças Alcançadas</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <div class="home-quick-card novenas-card" onclick="showNovenas()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
+            <i class="fas fa-hands-praying"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeNovenasBadge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Guia 9 Dias</div>
+            <h3 class="quick-card-title">Novenas Tradicionais</h3>
+            <p class="quick-card-desc">Desatadora dos Nós, São Bento, São Miguel & Mais</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -833,6 +847,35 @@
 
         <!-- Lista de Orações / Graças -->
         <div class="diario-itens-list" id="diarioItensList">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOVENAS TRADICIONAIS DA IGREJA -->
+    <div id="novenasView" class="hidden">
+      <div class="novenas-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title">Novenas Tradicionais</h2>
+              <p class="chapter-subtitle">Guia Devocional de 9 Dias com Orações e Acompanhamento</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner Explicativo -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.15) 0%, var(--bg-card) 70%); border-color: rgba(56, 189, 248, 0.35);">
+          <div class="confissao-banner-icon" style="color: #38bdf8;"><i class="fas fa-hands-praying"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: var(--gold-300);">A Força da Oração Perseverante</h4>
+            <p>“Pedi e vos será dado; buscai e achareis; batei e abrir-se-vos-á.” (Lc 11,9). Reze 1 dia por vez durante 9 dias consecutivos.</p>
+          </div>
+        </div>
+
+        <!-- Novenas Grid / List -->
+        <div class="novenas-grid" id="novenasGridList">
           <div class="loading"><div class="loading-spinner"></div></div>
         </div>
       </div>
@@ -1525,6 +1568,43 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REZAR DIA DA NOVENA -->
+  <div id="novenaPrayerModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeNovenaPrayerModal()">
+    <div class="donate-modal-content" style="max-width: 620px; max-height: 90vh; overflow-y: auto; text-align: left; padding: 22px;">
+      <button class="donate-close-btn" onclick="closeNovenaPrayerModal()"><i class="fas fa-times"></i></button>
+      
+      <div id="novenaModalContent">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CELEBRAÇÃO DE CONCLUSÃO DA NOVENA -->
+  <div id="novenaConcluidaModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeNovenaConcluidaModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: center;">
+      <button class="donate-close-btn" onclick="closeNovenaConcluidaModal()"><i class="fas fa-times"></i></button>
+      <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212,175,55,0.18);">
+        <i class="fas fa-crown donate-icon" style="color: var(--gold-300);"></i>
+      </div>
+      <h2 style="color: var(--gold-300); font-family: 'Cinzel', serif; margin-top: 10px;">Novena Concluída com Fé! 🙏✨</h2>
+      <p id="novenaConcluidaSub" style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 16px;"></p>
+      
+      <div style="background: rgba(212,175,55,0.09); border: 1px solid rgba(212,175,55,0.3); border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 18px;">
+        <h4 style="color: var(--gold-400); margin-bottom: 6px; font-size: 14px;"><i class="fas fa-dove"></i> Oração de Ação de Graças:</h4>
+        <p id="novenaConcluidaOracao" style="font-size: 13.5px; line-height: 1.6; color: var(--text-primary); font-style: italic;"></p>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="hero-share-btn" id="btnShareNovenaConcluida" style="flex: 1;" onclick="shareNovenaConcluidaWhatsApp()">
+          <i class="fab fa-whatsapp"></i> Compartilhar Vitória
+        </button>
+        <button type="button" class="upload-btn-secondary" style="flex: 1;" onclick="closeNovenaConcluidaModal()">
+          <i class="fas fa-check"></i> Concluir
+        </button>
+      </div>
     </div>
   </div>
 

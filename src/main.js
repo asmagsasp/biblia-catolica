@@ -14,6 +14,7 @@ import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } fr
 import { LECTIO_STEPS, LECTIO_SUGESTOES, getLectioHistorico, salvarSessaoLectio, excluirSessaoLectio } from './lectioService.js';
 import { MANDAMENTOS_DEUS, PECADOS_CAPITAIS, ORACOES_CONFISSAO, getPecadosMarcados, togglePecadoMarcado, registrarConfissaoRealizada, getUltimaConfissaoData } from './confissaoService.js';
 import { DIARIO_CATEGORIAS, getDiarioItens, salvarNovoItemDiario, marcarGracaAlcancada, reabrirEmOracao, excluirItemDiario, getEstatisticasDiario, formatarTestemunhoWhatsApp } from './diarioService.js';
+import { NOVENAS_LIST, getNovenasComProgresso, iniciarNovena, marcarDiaNovenaConcluido, reiniciarNovena } from './novenasService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -5339,6 +5340,294 @@ window.compartilharTestemunhoWhatsApp = async function (id) {
 
   const msg = formatarTestemunhoWhatsApp(item);
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+// ==========================================================================
+// 4. NOVENAS TRADICIONAIS DA IGREJA (GUIA 9 DIAS)
+// ==========================================================================
+let currentNovenaActive = null;
+let currentNovenaDiaActive = 1;
+let isNovenaSpeaking = false;
+
+window.showNovenas = async function () {
+  showView('novenasView');
+  await renderNovenasGrid();
+};
+
+async function renderNovenasGrid() {
+  const container = document.getElementById('novenasGridList');
+  if (!container) return;
+
+  const novenas = await getNovenasComProgresso();
+
+  container.innerHTML = novenas.map(n => {
+    const isEmAndamento = n.emAndamento;
+    const isConcluida = n.concluida;
+    const diaAtual = n.diaAtual || 1;
+    const historico = n.historicoDias || [];
+
+    return `
+      <div class="novena-card ${isEmAndamento ? 'em-andamento' : ''} ${isConcluida ? 'concluida' : ''}">
+        <div>
+          <div class="novena-card-header">
+            <div class="novena-icon-box" style="background: ${n.cor}22; color: ${n.cor}; border: 1px solid ${n.cor}44;">
+              <i class="fas ${n.icone}"></i>
+            </div>
+            <div style="flex: 1;">
+              <h3 class="novena-card-title">${n.titulo}</h3>
+              <span class="novena-card-padroeiro">${n.padroeiro}</span>
+            </div>
+          </div>
+          <p class="novena-card-desc">${n.subtitulo}</p>
+        </div>
+
+        <div>
+          <div class="novena-beads-wrap">
+            <div class="novena-beads-header">
+              <span><i class="fas fa-calendar-check"></i> Progresso da Novena</span>
+              <span style="color: ${isConcluida ? '#22c55e' : (isEmAndamento ? 'var(--gold-400)' : 'var(--text-muted)')}; font-weight: 800;">
+                ${isConcluida ? '9 de 9 (Concluída)' : (isEmAndamento ? `Dia ${diaAtual} de 9` : 'Não Iniciada')}
+              </span>
+            </div>
+            <div class="novena-beads-row">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => {
+                const isCompleted = historico.includes(d);
+                const isCurrent = isEmAndamento && d === diaAtual;
+                return `<div class="novena-bead ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}" title="Dia ${d}">
+                  ${isCompleted ? '<i class="fas fa-check"></i>' : d}
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="novena-card-actions">
+            ${isEmAndamento ? `
+              <button type="button" class="hero-donate-btn pulse-animation" onclick="abrirNovenaDia('${n.id}', ${diaAtual})" style="width: 100%; justify-content: center; font-size: 13px; padding: 10px 16px;">
+                <i class="fas fa-hands-praying"></i> Rezar Dia ${diaAtual} de 9
+              </button>
+            ` : (isConcluida ? `
+              <button type="button" class="hero-donate-btn" onclick="verConclusaoNovena('${n.id}')" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; flex: 1; justify-content: center; font-size: 12.5px; padding: 10px 12px;">
+                <i class="fas fa-crown"></i> Ver Conclusão
+              </button>
+              <button type="button" class="upload-btn-secondary" onclick="reiniciarNovenaConfirm('${n.id}')" title="Rezar Novamente" style="padding: 10px 14px;">
+                <i class="fas fa-redo"></i>
+              </button>
+            ` : `
+              <button type="button" class="hero-donate-btn" onclick="iniciarENovena('${n.id}')" style="width: 100%; justify-content: center; font-size: 13px; padding: 10px 16px;">
+                <i class="fas fa-play"></i> Iniciar Novena (Dia 1)
+              </button>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.iniciarENovena = async function (novenaId) {
+  await iniciarNovena(novenaId);
+  await renderNovenasGrid();
+  abrirNovenaDia(novenaId, 1);
+};
+
+window.reiniciarNovenaConfirm = async function (novenaId) {
+  await reiniciarNovena(novenaId);
+  await renderNovenasGrid();
+  showToast('Novena reiniciada. Que Deus abençoe suas orações!');
+  abrirNovenaDia(novenaId, 1);
+};
+
+window.abrirNovenaDia = function (novenaId, diaNum) {
+  stopNovenaSpeech();
+  const novena = NOVENAS_LIST.find(n => n.id === novenaId);
+  if (!novena) return;
+
+  currentNovenaActive = novena;
+  currentNovenaDiaActive = diaNum;
+  const diaData = novena.dias.find(d => d.dia === diaNum) || novena.dias[0];
+
+  const contentEl = document.getElementById('novenaModalContent');
+  const modal = document.getElementById('novenaPrayerModal');
+
+  if (contentEl) {
+    contentEl.innerHTML = `
+      <div style="text-align: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
+        <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: ${novena.cor}; background: ${novena.cor}18; padding: 4px 10px; border-radius: 8px;">
+          ${novena.padroeiro}
+        </span>
+        <h2 style="font-family: 'Cinzel', serif; color: var(--gold-300); font-size: 20px; margin: 8px 0 4px;">${novena.titulo}</h2>
+        <div style="font-size: 13.5px; font-weight: 700; color: var(--gold-400);">
+          <i class="fas fa-calendar-day"></i> Dia ${diaNum} de 9: ${diaData.tema}
+        </div>
+      </div>
+
+      <!-- 1. Oração Inicial -->
+      <div class="novena-prayer-box initial">
+        <div class="novena-prayer-title"><i class="fas fa-cross"></i> Oração Preparatória Inicial:</div>
+        <p class="novena-prayer-text">${novena.oracaoInicial}</p>
+      </div>
+
+      <!-- 2. Meditação do Dia -->
+      <div class="novena-prayer-box specific">
+        <div class="novena-prayer-title" style="color: ${novena.cor};"><i class="fas fa-dove"></i> Meditação do Dia ${diaNum}:</div>
+        <p class="novena-prayer-text" style="font-style: italic; margin-bottom: 12px;">“${diaData.reflexao}”</p>
+        <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+          <strong style="color: var(--text-primary); font-size: 13.5px; display: block; margin-bottom: 6px;">Oração do ${diaNum}º Dia:</strong>
+          <p class="novena-prayer-text">${diaData.oracao}</p>
+        </div>
+      </div>
+
+      <!-- 3. Jaculatória -->
+      <div class="novena-jaculatoria-box">
+        <p class="novena-jaculatoria-text">“${diaData.jaculatoria}”</p>
+      </div>
+
+      <!-- 4. Oração Final -->
+      <div class="novena-prayer-box final">
+        <div class="novena-prayer-title" style="color: #c084fc;"><i class="fas fa-hands-praying"></i> Oração Final & Bênção:</div>
+        <p class="novena-prayer-text">${novena.oracaoFinal}</p>
+      </div>
+
+      <!-- Ações do Modal -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <button type="button" class="upload-btn-secondary" id="btnSpeakNovena" style="padding: 10px 14px; font-size: 12.5px;" onclick="toggleSpeakNovena()">
+          <i class="fas fa-volume-up"></i> Ouvir Oração
+        </button>
+        <button type="button" class="hero-share-btn" style="padding: 10px 14px; font-size: 12.5px;" onclick="shareNovenaWhatsApp()">
+          <i class="fab fa-whatsapp"></i> Compartilhar
+        </button>
+        <button type="button" class="hero-donate-btn pulse-animation" onclick="executarConcluirDiaNovena('${novena.id}', ${diaNum})" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; flex: 1; min-width: 170px; justify-content: center; font-size: 13px;">
+          <i class="fas fa-check-circle"></i> Concluir Dia ${diaNum}
+        </button>
+      </div>
+    `;
+  }
+
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeNovenaPrayerModal = function () {
+  stopNovenaSpeech();
+  const modal = document.getElementById('novenaPrayerModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.executarConcluirDiaNovena = async function (novenaId, diaNum) {
+  stopNovenaSpeech();
+  closeNovenaPrayerModal();
+
+  const p = await marcarDiaNovenaConcluido(novenaId, diaNum);
+  await renderNovenasGrid();
+
+  if (diaNum >= 9) {
+    verConclusaoNovena(novenaId);
+  } else {
+    showToast(`🙏 Dia ${diaNum} concluído com sucesso! Amanhã reze o Dia ${diaNum + 1}.`);
+  }
+};
+
+window.verConclusaoNovena = function (novenaId) {
+  const novena = NOVENAS_LIST.find(n => n.id === novenaId);
+  if (!novena) return;
+  currentNovenaActive = novena;
+
+  const modal = document.getElementById('novenaConcluidaModal');
+  const sub = document.getElementById('novenaConcluidaSub');
+  const oracao = document.getElementById('novenaConcluidaOracao');
+
+  if (sub) sub.textContent = `Parabéns por perseverar nos 9 dias da Novena de ${novena.titulo}!`;
+  if (oracao) oracao.textContent = `“${novena.oracaoAcaoDeGracas}”`;
+
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeNovenaConcluidaModal = function () {
+  const modal = document.getElementById('novenaConcluidaModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+function stopNovenaSpeech() {
+  isNovenaSpeaking = false;
+  const btn = document.getElementById('btnSpeakNovena');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Oração';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+window.toggleSpeakNovena = async function () {
+  if (isNovenaSpeaking) {
+    stopNovenaSpeech();
+    return;
+  }
+  if (!currentNovenaActive) return;
+
+  const novena = currentNovenaActive;
+  const diaData = novena.dias.find(d => d.dia === currentNovenaDiaActive) || novena.dias[0];
+
+  const btn = document.getElementById('btnSpeakNovena');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+  isNovenaSpeaking = true;
+
+  const fullText = `Novena de ${novena.titulo}. Dia ${currentNovenaDiaActive}. ${diaData.tema}.\n\nOração Inicial: ${novena.oracaoInicial}.\n\nMeditação: ${diaData.reflexao}.\n\nOração do Dia: ${diaData.oracao}.\n\nJaculatória: ${diaData.jaculatoria}.\n\nOração Final: ${novena.oracaoFinal}.`;
+
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: fullText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopNovenaSpeech();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(fullText);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.onend = () => stopNovenaSpeech();
+      utterance.onerror = () => stopNovenaSpeech();
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {
+    console.error("Novena TTS Error:", e);
+    stopNovenaSpeech();
+  }
+};
+
+window.shareNovenaWhatsApp = function () {
+  if (!currentNovenaActive) return;
+  const novena = currentNovenaActive;
+  const diaData = novena.dias.find(d => d.dia === currentNovenaDiaActive) || novena.dias[0];
+
+  let msg = `🕊️ *Novena de ${novena.titulo}*\n📅 *Dia ${currentNovenaDiaActive} de 9: ${diaData.tema}*\n\n`;
+  msg += `✝️ *Oração do Dia:*\n${diaData.oracao}\n\n`;
+  msg += `🙏 *Jaculatória:*\n“${diaData.jaculatoria}”\n\n`;
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
+window.shareNovenaConcluidaWhatsApp = function () {
+  if (!currentNovenaActive) return;
+  const novena = currentNovenaActive;
+
+  let msg = `✨ *Novena Concluída com Fé!* ✨\n\n`;
+  msg += `Concluí hoje os 9 dias de oração da *Novena de ${novena.titulo}*! 🙏🕊️\n\n`;
+  msg += `“${novena.oracaoAcaoDeGracas}”\n\n`;
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 
