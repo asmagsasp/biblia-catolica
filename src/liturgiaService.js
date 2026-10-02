@@ -1,7 +1,4 @@
-/**
- * liturgiaService.js - Liturgia Diária & Santo do Dia
- * Bíblia Sagrada Católica (Edição Ave Maria)
- */
+import { getDevotionalHomily } from './homilyService.js';
 
 // Cache de liturgia diária por data (YYYY-MM-DD)
 const liturgiaCache = new Map();
@@ -116,8 +113,39 @@ export async function getLiturgiaDiaria(dateInput = null) {
     dataLegivel: targetDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
   };
 
+  // 4. Gera Homilia Teológica do Evangelho
+  liturgiaData.homilia = gerarHomiliaDoEvangelho(liturgiaData.evangelho, liturgiaData.reflexao);
+
   liturgiaCache.set(dateKey, liturgiaData);
   return liturgiaData;
+}
+
+/**
+ * Gera Homilia Teológica Católica para o Evangelho da Liturgia
+ */
+export function gerarHomiliaDoEvangelho(evangelhoObj, fallbackReflexao = '') {
+  if (!evangelhoObj) return null;
+  const refStr = evangelhoObj.referencia || '';
+  const titulo = evangelhoObj.titulo || '';
+  const texto = evangelhoObj.texto || fallbackReflexao || '';
+
+  let book = 'São Mateus';
+  let chap = 1;
+  let verses = '';
+
+  const combined = (refStr + ' ' + titulo).toLowerCase();
+  if (combined.includes('luc') || combined.includes('lc')) book = 'São Lucas';
+  else if (combined.includes('mar') || combined.includes('mc')) book = 'São Marcos';
+  else if (combined.includes('jo')) book = 'São João';
+  else if (combined.includes('mat') || combined.includes('mt')) book = 'São Mateus';
+
+  const match = refStr.match(/(\d+)[\s,:]+(\d+.*)?/);
+  if (match) {
+    chap = parseInt(match[1]) || 1;
+    verses = (match[2] || '').trim();
+  }
+
+  return getDevotionalHomily(book, chap, verses, texto);
 }
 
 /**

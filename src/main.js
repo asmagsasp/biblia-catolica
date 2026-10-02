@@ -3413,6 +3413,9 @@ async function loadLiturgiaData() {
 
   if (!container) return;
 
+  stopLiturgiaSpeech();
+  stopHomiliaLiturgiaSpeech();
+
   const now = new Date();
   const isToday = currentLiturgiaDate.toDateString() === now.toDateString();
   if (todayBtn) todayBtn.classList.toggle('active', isToday);
@@ -3524,15 +3527,39 @@ function renderLiturgiaView(data) {
       </div>
     </div>
 
-    <!-- Reflexão / Homilia Diária -->
-    ${data.reflexao ? `
+    <!-- Homilia Teológica do Santo Evangelho -->
+    ${data.homilia ? `
+    <div class="liturgia-section-card homilia-evangelho-card" style="border: 1px solid rgba(212, 175, 55, 0.45); background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.1) 0%, var(--bg-card) 75%);">
+      <div class="liturgia-section-header" style="border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 class="liturgia-section-title" style="color: var(--gold-400); font-family: 'Cinzel', serif; font-size: 16px; margin: 0;">
+            <i class="fas fa-cross" style="color: var(--gold-400); margin-right: 6px;"></i> Homilia do Evangelho
+          </h3>
+          <span style="font-size: 11px; color: var(--gold-300); display: block; margin-top: 2px;">
+            <i class="fas fa-church"></i> Tradição, Doutrina & Patrística Católica
+          </span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="upload-btn-secondary" id="btnSpeakHomiliaLiturgia" style="padding: 5px 11px; font-size: 11.5px;" onclick="toggleSpeakHomiliaLiturgia()" title="Ouvir Homilia do Evangelho">
+            <i class="fas fa-volume-up"></i> Ouvir Homilia
+          </button>
+          <button type="button" class="hero-share-btn" style="padding: 5px 11px; font-size: 11.5px;" onclick="shareHomiliaLiturgiaWhatsApp()" title="Compartilhar Homilia no WhatsApp">
+            <i class="fab fa-whatsapp"></i> Compartilhar
+          </button>
+        </div>
+      </div>
+      <div class="homilia-content-body" style="font-size: 14.5px; line-height: 1.68; color: var(--text-primary);">
+        ${data.homilia.html || `<p>${data.reflexao || ''}</p>`}
+      </div>
+    </div>
+    ` : (data.reflexao ? `
     <div class="liturgia-section-card" style="background: rgba(0,0,0,0.18);">
       <div class="liturgia-section-header">
-        <h3 class="liturgia-section-title"><i class="fas fa-dove"></i> Reflexão Espiritual</h3>
+        <h3 class="liturgia-section-title"><i class="fas fa-cross"></i> Homilia do Evangelho</h3>
       </div>
       <p class="liturgia-reading-text" style="font-style: italic; font-size: 15.5px;">“${data.reflexao}”</p>
     </div>
-    ` : ''}
+    ` : '')}
 
     <!-- Santo do Dia -->
     ${data.santo ? `
@@ -3557,7 +3584,7 @@ function renderLiturgiaView(data) {
   container.innerHTML = html;
 }
 
-// Ouvir Liturgia por Voz (TTS)
+// Ouvir Liturgia Completa por Voz (TTS)
 function stopLiturgiaSpeech() {
   isLiturgiaSpeaking = false;
   const btn = document.getElementById('btnReadLiturgia');
@@ -3579,6 +3606,7 @@ window.toggleSpeakLiturgia = async function () {
     stopLiturgiaSpeech();
     return;
   }
+  stopHomiliaLiturgiaSpeech();
   if (!currentLiturgiaData) return;
 
   const btn = document.getElementById('btnReadLiturgia');
@@ -3616,6 +3644,79 @@ window.toggleSpeakLiturgia = async function () {
   }
 };
 
+// Ouvir Homilia do Evangelho Separadamente (TTS)
+let isHomiliaLiturgiaSpeaking = false;
+
+function stopHomiliaLiturgiaSpeech() {
+  isHomiliaLiturgiaSpeaking = false;
+  const btn = document.getElementById('btnSpeakHomiliaLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Homilia';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+window.toggleSpeakHomiliaLiturgia = async function () {
+  if (isHomiliaLiturgiaSpeaking) {
+    stopHomiliaLiturgiaSpeech();
+    return;
+  }
+  stopLiturgiaSpeech();
+  if (!currentLiturgiaData || !currentLiturgiaData.homilia) return;
+
+  const btn = document.getElementById('btnSpeakHomiliaLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+  isHomiliaLiturgiaSpeaking = true;
+
+  const homilyText = `Homilia do Santo Evangelho. ${currentLiturgiaData.homilia.themeTitle || ''}.\n\n${currentLiturgiaData.homilia.textToSpeak || currentLiturgiaData.reflexao || ''}`;
+
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: homilyText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopHomiliaLiturgiaSpeech();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(homilyText);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.onend = () => stopHomiliaLiturgiaSpeech();
+      utterance.onerror = () => stopHomiliaLiturgiaSpeech();
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {
+    console.error("Homilia TTS Error:", e);
+    stopHomiliaLiturgiaSpeech();
+  }
+};
+
+window.shareHomiliaLiturgiaWhatsApp = function () {
+  if (!currentLiturgiaData || !currentLiturgiaData.homilia) return;
+  const d = currentLiturgiaData;
+  const h = d.homilia;
+  let msg = `✝️ *Homilia do Evangelho — ${d.evangelho?.referencia || ''}*\n_${d.dataExtenso} • ${d.tempoLiturgico}_\n\n`;
+  msg += `📖 *${h.themeTitle || 'Meditação e Doutrina Católica'}*\n\n`;
+  msg += `${h.textToSpeak || d.reflexao}\n\n`;
+  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
+};
+
 window.shareLiturgiaWhatsApp = function () {
   if (!currentLiturgiaData) return;
   const d = currentLiturgiaData;
@@ -3628,6 +3729,9 @@ window.shareLiturgiaWhatsApp = function () {
   }
   if (d.evangelho) {
     msg += `✝️ *Evangelho (${d.evangelho.referencia})*\n${d.evangelho.texto}\n\n`;
+  }
+  if (d.homilia && d.homilia.themeTitle) {
+    msg += `🕊️ *Homilia:* ${d.homilia.themeTitle}\n\n`;
   }
   if (d.santo) {
     msg += `🕊️ *Santo do Dia: ${d.santo.nome}*\n_${d.santo.oracao}_\n\n`;
