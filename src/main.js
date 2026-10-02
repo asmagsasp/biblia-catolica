@@ -5861,6 +5861,8 @@ window.renderCartasGrid = function () {
   }
 
   let html = '';
+  const isSearching = currentCartasSearch.length > 0;
+  
   cartas.forEach(carta => {
     let passagensHtml = '';
     if (carta.passagensDestaque && carta.passagensDestaque.length > 0) {
@@ -5872,17 +5874,22 @@ window.renderCartasGrid = function () {
           ${carta.passagensDestaque.map(p => `
             <div class="carta-highlight-item">
               <div class="carta-highlight-top">
-                <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} — ${p.titulo}</span>
+                <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} — ${isSearching ? highlightSearchTerms(p.titulo, currentCartasSearch) : p.titulo}</span>
                 <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este capítulo na Bíblia">
                   <i class="fas fa-book-open"></i> Cap. ${p.capitulo}
                 </button>
               </div>
-              <p class="carta-highlight-quote">“${p.texto}”</p>
+              <p class="carta-highlight-quote">“${isSearching ? highlightSearchTerms(p.texto, currentCartasSearch) : p.texto}”</p>
             </div>
           `).join('')}
         </div>
       `;
     }
+
+    const titleHl = isSearching ? highlightSearchTerms(carta.tituloLiturgico, currentCartasSearch) : carta.tituloLiturgico;
+    const autorHl = isSearching ? highlightSearchTerms(carta.autor, currentCartasSearch) : carta.autor;
+    const temaHl = isSearching ? highlightSearchTerms(carta.temaCentral, currentCartasSearch) : carta.temaCentral;
+    const propositoHl = isSearching ? highlightSearchTerms(carta.proposito, currentCartasSearch) : carta.proposito;
 
     html += `
       <div class="carta-item-card">
@@ -5892,9 +5899,9 @@ window.renderCartasGrid = function () {
           </div>
           <div class="carta-card-title-group">
             <span class="carta-liturgical-badge">${carta.categoriaNome} • ${carta.totalCapitulos} Cap${carta.totalCapitulos > 1 ? 'ítulos' : 'ítulo'}</span>
-            <h3 class="carta-card-title">${carta.tituloLiturgico}</h3>
+            <h3 class="carta-card-title">${titleHl}</h3>
             <div class="carta-card-meta">
-              <span><i class="fas fa-pen-nib" style="color: var(--gold-400);"></i> ${carta.autor}</span>
+              <span><i class="fas fa-pen-nib" style="color: var(--gold-400);"></i> ${autorHl}</span>
               <span><i class="fas fa-calendar" style="color: var(--gold-400);"></i> ${carta.anoLocal}</span>
               <span><i class="fas fa-users" style="color: var(--gold-400);"></i> ${carta.destinatario}</span>
             </div>
@@ -5903,10 +5910,10 @@ window.renderCartasGrid = function () {
 
         <div class="carta-theme-box">
           <div class="carta-theme-label"><i class="fas fa-star"></i> Tema Central & Teologia</div>
-          <div class="carta-theme-text">${carta.temaCentral}</div>
+          <div class="carta-theme-text">${temaHl}</div>
         </div>
 
-        <p class="carta-proposito-text">${carta.proposito}</p>
+        <p class="carta-proposito-text">${propositoHl}</p>
 
         ${passagensHtml}
 

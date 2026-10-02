@@ -76,9 +76,16 @@ export async function initDatabase() {
                         id_capitulo INTEGER NOT NULL,
                         id_versiculo INTEGER NOT NULL,
                         texto TEXT NOT NULL,
+                        texto_norm TEXT,
                         PRIMARY KEY (id_livro, id_capitulo, id_versiculo)
                     )
                 `);
+
+                try {
+                    await run(`ALTER TABLE versiculos ADD COLUMN texto_norm TEXT`);
+                } catch (e) {
+                    // Coluna já existe
+                }
 
                 await run(`
                     CREATE TABLE IF NOT EXISTS favoritos (
@@ -105,6 +112,7 @@ export async function initDatabase() {
                 `);
 
                 await run(`CREATE INDEX IF NOT EXISTS idx_versiculos_texto ON versiculos(texto)`);
+                await run(`CREATE INDEX IF NOT EXISTS idx_versiculos_texto_norm ON versiculos(texto_norm)`);
                 await run(`CREATE INDEX IF NOT EXISTS idx_versiculos_busca ON versiculos(id_livro, id_capitulo)`);
 
                 const countRow = await getOne(`SELECT COUNT(*) as count FROM livros`);
@@ -131,12 +139,12 @@ export async function initDatabase() {
                                 }
                                 stmtLivro.finalize();
 
-                                const stmtVer = db.prepare(`INSERT INTO versiculos (id_livro, id_capitulo, id_versiculo, texto) VALUES (?, ?, ?, ?)`);
+                                const stmtVer = db.prepare(`INSERT INTO versiculos (id_livro, id_capitulo, id_versiculo, texto, texto_norm) VALUES (?, ?, ?, ?, ?)`);
                                 for (const key in bibliaData.versiculos) {
                                     const [idLivro, idCap] = key.split('_').map(Number);
                                     const vs = bibliaData.versiculos[key];
                                     for (const v of vs) {
-                                        stmtVer.run(idLivro, idCap, v.v, v.t);
+                                        stmtVer.run(idLivro, idCap, v.v, v.t, removeAccents(v.t));
                                     }
                                 }
                                 stmtVer.finalize();
@@ -206,6 +214,26 @@ export async function initDatabase() {
                     }
                     console.log('[Backend DB] Banco de dados SQLite pronto. Registros de livros:', countRow.count);
                 }
+
+                // Garantir que todos os versículos existentes tenham texto_norm preenchido para busca sem acentos
+                try {
+                    const unnormCount = await getOne(`SELECT COUNT(*) as count FROM versiculos WHERE texto_norm IS NULL`);
+                    if (unnormCount && unnormCount.count > 0) {
+                        console.log(`[Backend DB] Normalizando ${unnormCount.count} versículos para busca ultra-rápida sem acentos...`);
+                        const allVerses = await getAll(`SELECT id_livro, id_capitulo, id_versiculo, texto FROM versiculos WHERE texto_norm IS NULL`);
+                        await run('BEGIN TRANSACTION');
+                        const stmtNorm = db.prepare(`UPDATE versiculos SET texto_norm = ? WHERE id_livro = ? AND id_capitulo = ? AND id_versiculo = ?`);
+                        for (const v of allVerses) {
+                            stmtNorm.run(removeAccents(v.texto), v.id_livro, v.id_capitulo, v.id_versiculo);
+                        }
+                        await new Promise((resFin) => stmtNorm.finalize(resFin));
+                        await run('COMMIT');
+                        console.log('[Backend DB] Normalização de versículos concluída com sucesso!');
+                    }
+                } catch (errNorm) {
+                    console.warn('[Backend DB] Aviso na normalização de versículos:', errNorm);
+                }
+
                 isInitialized = true;
                 resolve();
             });
@@ -273,29 +301,75 @@ export async function buscar(termo) {
     const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
     if (cleanTerm.length < 2) return [];
 
+    const normTerm = removeAccents(cleanTerm);
     const phraseRegex = buildExactSearchRegex(cleanTerm);
     if (!phraseRegex) return [];
 
-    // 1. Tentar busca de frase exata (filtrando para palavras/frases exatas)
-    const phraseSql = `
-        SELECT 
-            v.id_livro, 
-            l.nome_livro, 
-            v.id_capitulo, 
-            v.id_versiculo, 
-            v.texto
-        FROM versiculos v
-        JOIN livros l ON v.id_livro = l.id_livro
-        WHERE v.texto LIKE ?
-        LIMIT 400
-    `;
-    const phraseCandidates = await getAll(phraseSql, [`%${cleanTerm}%`]);
-    const phraseResults = phraseCandidates.filter(r => phraseRegex.test(removeAccents(r.texto))).slice(0, 200);
+    // 1. Tentar busca de frase exata usando texto_norm (accent-insensitive)
+    let phraseSql;
+    let phraseParams;
+
+    if (normTerm.length <= 3 && !normTerm.includes(' ')) {
+        phraseSql = `
+            SELECT 
+                v.id_livro, 
+                l.nome_livro, 
+                v.id_capitulo, 
+                v.id_versiculo, 
+                v.texto,
+                v.texto_norm
+            FROM versiculos v
+            JOIN livros l ON v.id_livro = l.id_livro
+            WHERE v.texto_norm LIKE ? 
+               OR v.texto_norm LIKE ? 
+               OR v.texto_norm LIKE ? 
+               OR v.texto_norm LIKE ?
+               OR v.texto_norm LIKE ?
+               OR v.texto_norm LIKE ?
+               OR v.texto_norm LIKE ?
+               OR v.texto_norm LIKE ?
+               OR v.texto_norm LIKE ?
+            LIMIT 1000
+        `;
+        phraseParams = [
+            `% ${normTerm} %`,
+            `${normTerm} %`,
+            `% ${normTerm}`,
+            `% ${normTerm},%`,
+            `% ${normTerm}.%`,
+            `% ${normTerm};%`,
+            `% ${normTerm}:%`,
+            `% ${normTerm}?%`,
+            `% ${normTerm}!%`
+        ];
+    } else {
+        phraseSql = `
+            SELECT 
+                v.id_livro, 
+                l.nome_livro, 
+                v.id_capitulo, 
+                v.id_versiculo, 
+                v.texto,
+                v.texto_norm
+            FROM versiculos v
+            JOIN livros l ON v.id_livro = l.id_livro
+            WHERE v.texto_norm LIKE ?
+            LIMIT 1000
+        `;
+        phraseParams = [`%${normTerm}%`];
+    }
+
+    const phraseCandidates = await getAll(phraseSql, phraseParams);
+    const phraseResults = phraseCandidates
+        .filter(r => phraseRegex.test(r.texto_norm || removeAccents(r.texto)))
+        .slice(0, 200)
+        .map(({ texto_norm, ...rest }) => rest);
+
     if (phraseResults && phraseResults.length > 0) {
         return phraseResults;
     }
 
-    // 2. Se não encontrar a frase contínua, buscar por palavras significativas (>= 2 caracteres)
+    // 2. Se não encontrar a frase contínua, buscar por múltiplas palavras significativas (>= 2 caracteres)
     const words = cleanTerm
         .split(/\s+/)
         .map(w => removeAccents(w).replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').toLowerCase())
@@ -303,25 +377,29 @@ export async function buscar(termo) {
 
     if (words.length <= 1) return []; // Se era palavra única e não achou como exata, encerra
 
-    const conditions = words.map(() => `v.texto LIKE ?`);
+    const conditions = words.map(() => `v.texto_norm LIKE ?`);
     const wordsSql = `
         SELECT 
             v.id_livro, 
             l.nome_livro, 
             v.id_capitulo, 
             v.id_versiculo, 
-            v.texto
+            v.texto,
+            v.texto_norm
         FROM versiculos v
         JOIN livros l ON v.id_livro = l.id_livro
         WHERE ${conditions.join(' AND ')}
-        LIMIT 400
+        LIMIT 1000
     `;
     const wordRegexes = words.map(w => new RegExp(`(?:^|[^a-z0-9])${escapeRegex(w)}(?:$|[^a-z0-9])`, 'i'));
     const wordCandidates = await getAll(wordsSql, words.map(w => `%${w}%`));
-    return wordCandidates.filter(r => {
-        const norm = removeAccents(r.texto);
-        return wordRegexes.every(rgx => rgx.test(norm));
-    }).slice(0, 200);
+    return wordCandidates
+        .filter(r => {
+            const norm = r.texto_norm || removeAccents(r.texto);
+            return wordRegexes.every(rgx => rgx.test(norm));
+        })
+        .slice(0, 200)
+        .map(({ texto_norm, ...rest }) => rest);
 }
 
 const VERSICULOS_INSPIRADORES = [

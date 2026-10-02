@@ -922,8 +922,8 @@
         <div class="cartas-filters-wrap">
           <div class="cartas-search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="cartasSearchInput" placeholder="Buscar por carta, apóstolo, tema ou citação..." oninput="handleCartasSearch(this.value)">
-            <button id="cartasSearchClear" class="hidden" onclick="clearCartasSearch()"><i class="fas fa-times"></i></button>
+            <input type="text" id="cartasSearchInput" placeholder="Buscar por carta, apóstolo, tema ou citação..." oninput="handleCartasSearch(this.value)" onkeyup="handleCartasSearch(this.value)" onchange="handleCartasSearch(this.value)" onsearch="handleCartasSearch(this.value)" autocomplete="off">
+            <button id="cartasSearchClear" class="hidden" onclick="clearCartasSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
           </div>
 
           <div class="nav-tabs" style="margin-top: 12px; margin-bottom: 4px;">

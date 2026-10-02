@@ -295,7 +295,7 @@ export async function buscar(termo) {
             const res = await fetchWithTimeout(getApiUrl(`/api/busca?q=${encodeURIComponent(termo)}`), {}, 2500);
             if (res.ok) {
                 const bRes = await res.json();
-                if (bRes && bRes.length > 0) {
+                if (Array.isArray(bRes)) {
                     return bRes.map(r => ({
                         ...r,
                         favorito: favoritos[`${r.id_livro}_${r.id_capitulo}_${r.id_versiculo}`] ? 1 : (r.favorito || 0)
@@ -303,11 +303,23 @@ export async function buscar(termo) {
                 }
             }
         } catch (err) {
-            console.warn('[BibliaDB] Falha na busca backend, usando local:', err);
+            console.warn('[BibliaDB] Falha na busca backend, usando fallback local:', err);
         }
     }
 
-    if (!bibliaData) return [];
+    if (!bibliaData || !bibliaData.livros) {
+        try {
+            const res = await fetch('data/biblia.json');
+            if (res.ok) {
+                bibliaData = await res.json();
+                bibliaData.livros.forEach(l => livrosMap.set(l.id_livro, l));
+            }
+        } catch (e) {
+            console.warn('[BibliaDB] Erro ao carregar biblia.json para busca local:', e);
+        }
+    }
+
+    if (!bibliaData || !bibliaData.livros) return [];
     const cleanTerm = termo.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
     if (cleanTerm.length < 2) return [];
 
