@@ -243,4 +243,46 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     }
 });
 
+// GET /api/liturgia?dia=DD&mes=MM&ano=YYYY (Proxy/cache seguro da Liturgia Diária)
+const liturgiaServerCache = new Map();
+
+router.get('/liturgia', async (req, res) => {
+    try {
+        const now = new Date();
+        const dia = String(req.query.dia || now.getDate()).padStart(2, '0');
+        const mes = String(req.query.mes || (now.getMonth() + 1)).padStart(2, '0');
+        const ano = String(req.query.ano || now.getFullYear());
+        const cacheKey = `${ano}-${mes}-${dia}`;
+
+        if (liturgiaServerCache.has(cacheKey)) {
+            return res.json(liturgiaServerCache.get(cacheKey));
+        }
+
+        const urls = [
+            `https://liturgia.up.railway.app/v2/?dia=${dia}&mes=${mes}&ano=${ano}`,
+            `https://liturgia.up.railway.app/?dia=${dia}&mes=${mes}`,
+            `https://liturgia.up.railway.app/v2/`,
+            `https://liturgia.up.railway.app/`
+        ];
+
+        for (const url of urls) {
+            try {
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && (data.leituras || data.evangelho || data.primeiraLeitura)) {
+                        liturgiaServerCache.set(cacheKey, data);
+                        return res.json(data);
+                    }
+                }
+            } catch (inner) {}
+        }
+
+        res.status(404).json({ error: 'LITURGIA_NOT_FOUND' });
+    } catch (err) {
+        console.error('[Backend API] Erro ao buscar liturgia:', err);
+        res.status(500).json({ error: 'INTERNAL_ERROR' });
+    }
+});
+
 export default router;

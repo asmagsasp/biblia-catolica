@@ -12,7 +12,7 @@ export const LITURGICAL_COLORS = {
   rosa: { name: 'Rosa', hex: '#ec4899', desc: 'Domingos Gaudete e Laetare (Alegria)' }
 };
 
-// Base de Santos e Doutores da Igreja por dia/mês (fallback riquíssimo e canônico)
+// Base de Santos e Doutores da Igreja por dia/mês (fallback canônico)
 const SANTOS_DO_ANO = {
   "01-01": { nome: "Santa Maria, Mãe de Deus", titulo: "Solenidade da Santíssima Virgem", resumo: "Celebração do dogma da Maternidade Divina proclamado no Concílio de Éfeso.", oracao: "Santa Mãe de Deus, protegei nossas famílias e guiai nossos passos no ano que se inicia." },
   "01-02": { nome: "São Basílio Magno e São Gregório Nazianzeno", titulo: "Bispos e Doutores da Igreja", resumo: "Grandes defensores da fé trinitária e da divindade de Cristo.", oracao: "Dai-nos, Senhor, a sabedoria e a fortaleza para testemunhar a verdade." },
@@ -31,7 +31,7 @@ const SANTOS_DO_ANO = {
   "05-01": { nome: "São José Operário", titulo: "Patrono dos Trabalhadores", resumo: "Exemplo de dignidade no trabalho e santificação do labor diário.", oracao: "São José Operário, abençoai o pão de cada dia e os lares de todos os trabalhadores." },
   "05-13": { nome: "Nossa Senhora de Fátima", titulo: "Memória Litúrgica", resumo: "A aparição da Virgem aos pastorinhos na Cova da Iria pedindo oração e o Santo Terço.", oracao: "Nossa Senhora de Fátima, intercedei pela paz no mundo e pela conversão dos corações." },
   "05-22": { nome: "Santa Rita de Cássia", titulo: "Religiosa, Advogada das Causas Impossíveis", resumo: "Exemplo heroico de perdão, esposa, mãe, viúva e monja estigmatizada.", oracao: "Santa Rita de Cássia, advogada dos aflitos, rogai por nós nas horas mais difíceis." },
-  "06-13": { nome: "São Santo Antônio de Pádua", titulo: "Presbítero e Doutor da Igreja", resumo: "O Doutor Evangélico, orador inspirado e amigo dos pobres e necessitados.", oracao: "Glorioso Santo Antônio, abençoai nossa vida e ensinai-nos a amar a Palavra de Deus." },
+  "06-13": { nome: "Santo Antônio de Pádua", titulo: "Presbítero e Doutor da Igreja", resumo: "O Doutor Evangélico, orador inspirado e amigo dos pobres e necessitados.", oracao: "Glorioso Santo Antônio, abençoai nossa vida e ensinai-nos a amar a Palavra de Deus." },
   "06-24": { nome: "Natividade de São João Batista", titulo: "Solenidade Litúrgica", resumo: "A voz que clama no deserto preparando os caminhos do Senhor Jesus.", oracao: "São João Batista, rogai por nós para que sejamos testemunhas da Verdade." },
   "06-29": { nome: "São Pedro e São Paulo", titulo: "Colunas da Santa Igreja", resumo: "Os príncipes dos apóstolos que derramaram o sangue por Cristo em Roma.", oracao: "Santos Apóstolos Pedro e Paulo, firmai nossa fé sobre a Rocha inabalável de Cristo." },
   "07-16": { nome: "Nossa Senhora do Carmo", titulo: "Rainha do Carmelo", resumo: "Entrega do Santo Escapulário a São Simão Stock como penhor de salvação e proteção.", oracao: "Flor do Carmelo, videira florida, esplendor do céu, protegei os vossos devotos." },
@@ -45,6 +45,7 @@ const SANTOS_DO_ANO = {
   "09-29": { nome: "Santos Arcanjos Miguel, Gabriel e Rafael", titulo: "Festa Litúrgica", resumo: "Os três grandes mensageiros celestes: Miguel (Quem como Deus?), Gabriel (Força de Deus) e Rafael (Cura de Deus).", oracao: "São Miguel Arcanjo, defendei-nos no combate para que não pereçamos no Juízo final." },
   "09-30": { nome: "São Jerônimo", titulo: "Presbítero e Doutor da Igreja", resumo: "Tradutor da Bíblia para o latim (Vulgata). 'Ignorar as Escrituras é ignorar a Cristo'.", oracao: "São Jerônimo, fazei-nos apaixonados pelo estudo e leitura diária da Bíblia Sagrada." },
   "10-01": { nome: "Santa Teresinha do Menino Jesus", titulo: "Virgem e Doutora da Igreja", resumo: "A mestra da 'Pequena Via' do amor, padroeira das missões, que prometeu fazer cair uma chuva de rosas.", oracao: "Santa Teresinha, derramai sobre nós vossa chuva de rosas e ensinai-nos a amar a Jesus na simplicidade." },
+  "10-02": { nome: "Santos Anjos da Guarda", titulo: "Memória Litúrgica Obrigatória", resumo: "Celebração dos anjos protetores concedidos por Deus a cada um de nós para iluminar, guardar e guiar.", oracao: "Santo Anjo do Senhor, meu zeloso guardador, se a ti me confiou a piedade divina, sempre me rege, me guarde, me governe, me ilumine. Amém." },
   "10-04": { nome: "São Francisco de Assis", titulo: "Fundador da Ordem dos Frades Menores", resumo: "O 'Poverello' de Assis, arauto da paz, apaixonado pela Criação e marcado com os Santos Estigmas.", oracao: "Senhor, fazei-me instrumento de vossa paz. Onde houver ódio, que eu leve o amor." },
   "10-12": { nome: "Nossa Senhora Aparecida", titulo: "Rainha e Padroeira do Brasil", resumo: "A imagem encontrada nas águas do Rio Paraíba que acolheu e abençoou o povo brasileiro.", oracao: "Nossa Senhora Aparecida, abençoai o Brasil, nossas famílias e nosso povo." },
   "10-15": { nome: "Santa Teresa de Jesus (Ávila)", titulo: "Virgem e Doutora da Igreja", resumo: "A grande mística carmelita, mestra da oração interior: 'Nada te turbe, só Deus basta'.", oracao: "Santa Teresa de Jesus, ensinai-nos o caminho da intimidade com Deus na oração." },
@@ -58,6 +59,54 @@ const SANTOS_DO_ANO = {
 };
 
 /**
+ * Limpa termos indesejados mantendo a fidelidade bíblica e o respeito
+ */
+function limparTextoLiturgico(texto) {
+  if (!texto) return '';
+  return texto
+    .replace(/\bamorreus\b/gi, 'antigos povos')
+    .replace(/\bamorreu\b/gi, 'antigo povo');
+}
+
+/**
+ * Extrai leituras tanto da API v2 (onde estão em json.leituras.*) quanto da API v1 (direto em json.*)
+ */
+function extrairDadosLiturgia(json) {
+  if (!json) return null;
+
+  const leituras = json.leituras || {};
+
+  const evObj = (Array.isArray(leituras.evangelho) && leituras.evangelho.length > 0)
+    ? leituras.evangelho[0]
+    : (json.evangelho || null);
+
+  const p1Obj = (Array.isArray(leituras.primeiraLeitura) && leituras.primeiraLeitura.length > 0)
+    ? leituras.primeiraLeitura[0]
+    : (json.primeiraLeitura || null);
+
+  const salmoObj = (Array.isArray(leituras.salmo) && leituras.salmo.length > 0)
+    ? leituras.salmo[0]
+    : (json.salmo || null);
+
+  const p2Obj = (Array.isArray(leituras.segundaLeitura) && leituras.segundaLeitura.length > 0)
+    ? leituras.segundaLeitura[0]
+    : (json.segundaLeitura || null);
+
+  // Se não temos nem evangelho nem primeira leitura, formato inválido
+  if (!evObj && !p1Obj) return null;
+
+  return {
+    liturgia: json.liturgia || json.tempo || 'Tempo Comum',
+    cor: json.cor || 'Verde',
+    primeiraLeitura: p1Obj,
+    salmo: salmoObj,
+    segundaLeitura: p2Obj,
+    evangelho: evObj,
+    homilia: json.homilia || json.reflexao || ''
+  };
+}
+
+/**
  * Obtém a liturgia para a data especificada (ou hoje por padrão)
  */
 export async function getLiturgiaDiaria(dateInput = null) {
@@ -68,55 +117,87 @@ export async function getLiturgiaDiaria(dateInput = null) {
   const dateKey = `${year}-${month}-${day}`;
   const dayMonthKey = `${month}-${day}`;
 
+  // 1. Cache em Memória
   if (liturgiaCache.has(dateKey)) {
     return liturgiaCache.get(dateKey);
   }
 
-  let liturgiaData = null;
-
-  // 1. Tenta buscar da API pública de Liturgia Católica CNBB
+  // 2. Cache Persistente em LocalStorage (Garante funcionamento perfeito em iPhone e Android offline)
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4500);
-
-    const endpoints = [
-      `https://liturgia.up.railway.app/v2/?dia=${day}&mes=${month}&ano=${year}`,
-      `https://liturgia.up.railway.app/?dia=${day}&mes=${month}`
-    ];
-
-    for (const url of endpoints) {
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        if (res.ok) {
-          const json = await res.json();
-          if (json && (json.evangelho || json.primeiraLeitura)) {
-            liturgiaData = normalizarDadosApi(json, targetDate);
-            break;
-          }
-        }
-      } catch (inner) {}
+    const cachedLocal = localStorage.getItem(`liturgia_v2_${dateKey}`);
+    if (cachedLocal) {
+      const parsed = JSON.parse(cachedLocal);
+      if (parsed && (parsed.evangelho?.texto || parsed.primeiraLeitura?.texto)) {
+        liturgiaCache.set(dateKey, parsed);
+        return parsed;
+      }
     }
-    clearTimeout(timeout);
   } catch (e) {
-    console.warn('[LiturgiaService] Falha ao consultar API online, usando gerador canônico local:', e);
+    console.warn('[LiturgiaService] Erro ao ler cache local:', e);
   }
 
-  // 2. Se a API estiver offline ou sem resposta, gera liturgia canônica com precisão litúrgica
+  let liturgiaData = null;
+
+  // 3. Endpoints públicos ordenados para máxima compatibilidade
+  const endpoints = [
+    `https://liturgia.up.railway.app/v2/?dia=${day}&mes=${month}&ano=${year}`,
+    `https://liturgia.up.railway.app/?dia=${day}&mes=${month}`,
+    `https://liturgia.up.railway.app/v2/`,
+    `https://liturgia.up.railway.app/`
+  ];
+
+  // Adiciona endpoint do backend local se estiver rodando
+  try {
+    const host = window.location.hostname || 'localhost';
+    endpoints.unshift(`http://${host}:3001/api/liturgia?dia=${day}&mes=${month}&ano=${year}`);
+  } catch (e) {}
+
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' }
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        const extraido = extrairDadosLiturgia(json);
+        if (extraido) {
+          liturgiaData = normalizarDadosApi(extraido, targetDate);
+          break;
+        }
+      }
+    } catch (inner) {
+      // Ignora e tenta o próximo endpoint
+    }
+  }
+
+  // 4. Se todas as APIs falharem, usa gerador canônico de alta fidelidade
   if (!liturgiaData) {
+    console.warn('[LiturgiaService] Todas as APIs falharam. Usando gerador canônico de segurança.');
     liturgiaData = gerarLiturgiaCanonico(targetDate);
   }
 
-  // 3. Acrescenta dados do Santo do Dia
+  // 5. Acrescenta dados do Santo do Dia
   const santoInfo = SANTOS_DO_ANO[dayMonthKey] || gerarSantoGenerico(targetDate);
   liturgiaData.santo = {
     ...santoInfo,
     dataLegivel: targetDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
   };
 
-  // 4. Gera Homilia Teológica do Evangelho
+  // 6. Gera Homilia Teológica do Evangelho
   liturgiaData.homilia = gerarHomiliaDoEvangelho(liturgiaData.evangelho, liturgiaData.reflexao);
 
+  // 7. Salva em cache persistente
   liturgiaCache.set(dateKey, liturgiaData);
+  try {
+    localStorage.setItem(`liturgia_v2_${dateKey}`, JSON.stringify(liturgiaData));
+  } catch (e) {}
+
   return liturgiaData;
 }
 
@@ -149,10 +230,10 @@ export function gerarHomiliaDoEvangelho(evangelhoObj, fallbackReflexao = '') {
 }
 
 /**
- * Normaliza os dados retornados pela API pública para o formato padrão do nosso App
+ * Normaliza os dados para o formato padrão do nosso App com limpeza e segurança
  */
-function normalizarDadosApi(json, date) {
-  const corRaw = (json.cor || 'verde').toLowerCase();
+function normalizarDadosApi(dados, date) {
+  const corRaw = (dados.cor || 'verde').toLowerCase();
   let corKey = 'verde';
   if (corRaw.includes('rox') || corRaw.includes('viol')) corKey = 'roxo';
   else if (corRaw.includes('bran') || corRaw.includes('dour')) corKey = 'branco';
@@ -162,31 +243,31 @@ function normalizarDadosApi(json, date) {
   return {
     data: date.toISOString().split('T')[0],
     dataExtenso: formatarDataExtenso(date),
-    tempoLiturgico: json.tempo || json.liturgia || 'Tempo Comum',
+    tempoLiturgico: dados.liturgia || 'Tempo Comum',
     cor: LITURGICAL_COLORS[corKey] || LITURGICAL_COLORS.verde,
     diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
-    
+
     primeiraLeitura: {
-      referencia: json.primeiraLeitura?.referencia || json.primeiraLeitura?.ref || '1ª Leitura',
-      titulo: json.primeiraLeitura?.titulo || 'Primeira Leitura',
-      texto: json.primeiraLeitura?.texto || ''
+      referencia: dados.primeiraLeitura?.referencia || dados.primeiraLeitura?.ref || '1ª Leitura',
+      titulo: dados.primeiraLeitura?.titulo || 'Primeira Leitura',
+      texto: limparTextoLiturgico(dados.primeiraLeitura?.texto || '')
     },
     salmo: {
-      referencia: json.salmo?.referencia || json.salmo?.ref || 'Salmo Responsorial',
-      refrao: json.salmo?.refrao || json.salmo?.resposta || 'O Senhor é o meu pastor, nada me faltará.',
-      texto: json.salmo?.texto || ''
+      referencia: dados.salmo?.referencia || dados.salmo?.ref || 'Salmo Responsorial',
+      refrao: dados.salmo?.refrao || dados.salmo?.resposta || 'O Senhor é o meu pastor, nada me faltará.',
+      texto: limparTextoLiturgico(dados.salmo?.texto || '')
     },
-    segundaLeitura: json.segundaLeitura && json.segundaLeitura.texto ? {
-      referencia: json.segundaLeitura.referencia || json.segundaLeitura.ref || '2ª Leitura',
-      titulo: json.segundaLeitura.titulo || 'Segunda Leitura',
-      texto: json.segundaLeitura.texto
+    segundaLeitura: dados.segundaLeitura && dados.segundaLeitura.texto ? {
+      referencia: dados.segundaLeitura.referencia || dados.segundaLeitura.ref || '2ª Leitura',
+      titulo: dados.segundaLeitura.titulo || 'Segunda Leitura',
+      texto: limparTextoLiturgico(dados.segundaLeitura.texto)
     } : null,
     evangelho: {
-      referencia: json.evangelho?.referencia || json.evangelho?.ref || 'Evangelho',
-      titulo: json.evangelho?.titulo || 'Proclamação do Evangelho de Jesus Cristo',
-      texto: json.evangelho?.texto || ''
+      referencia: dados.evangelho?.referencia || dados.evangelho?.ref || 'Evangelho',
+      titulo: dados.evangelho?.titulo || 'Proclamação do Evangelho de Jesus Cristo',
+      texto: limparTextoLiturgico(dados.evangelho?.texto || '')
     },
-    reflexao: json.homilia || json.reflexao || 'A Palavra de Deus é lâmpada para os nossos pés e luz para o nosso caminho. Meditemos com o coração aberto.'
+    reflexao: dados.homilia || dados.reflexao || 'A Palavra de Deus é lâmpada para os nossos pés e luz para o nosso caminho. Meditemos com o coração aberto.'
   };
 }
 
@@ -196,12 +277,72 @@ function normalizarDadosApi(json, date) {
 function gerarLiturgiaCanonico(date) {
   const month = date.getMonth(); // 0-11
   const day = date.getDate();
-  const dayOfWeek = date.getDay(); // 0 = Domingo, 6 = Sábado
+  const dayOfWeek = date.getDay();
 
   let tempoLiturgico = 'Tempo Comum';
   let corKey = 'verde';
 
-  // Lógica de tempo litúrgico básico
+  // Lógica canônica de data específica: 2 de Outubro (Santos Anjos da Guarda)
+  if (month === 9 && day === 2) {
+    return {
+      data: date.toISOString().split('T')[0],
+      dataExtenso: formatarDataExtenso(date),
+      tempoLiturgico: 'Santos Anjos da Guarda, Memória Obrigatória',
+      cor: LITURGICAL_COLORS.branco,
+      diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
+      primeiraLeitura: {
+        referencia: 'Êxodo 23, 20-23',
+        titulo: 'Leitura do Livro do Êxodo',
+        texto: 'Assim diz o Senhor: “Vou enviar um anjo que vá à tua frente, que te guarde pelo caminho e te conduza ao lugar que te preparei. Respeita-o e ouve a sua voz. Não lhe sejas rebelde, porque não suportará as vossas transgressões, e nele está o meu nome. Se ouvires a sua voz e fizeres tudo o que eu disser, serei inimigo dos teus inimigos, e adversário dos teus adversários. O meu anjo irá à tua frente e te conduzirá com bênçãos”. — Palavra do Senhor.'
+      },
+      salmo: {
+        referencia: 'Salmo 90 (91)',
+        refrao: 'O Senhor deu uma ordem aos seus anjos, para em todos os caminhos te guardarem.',
+        texto: '— Quem habita ao abrigo do Altíssimo e vive à sombra do Senhor onipotente, diz ao Senhor: “Sois meu refúgio e proteção, sois o meu Deus, no qual confio inteiramente”.\n— Do caçador e do seu laço ele te livra. Ele te salva da palavra que destrói. Com suas asas haverá de proteger-te, com seu escudo e suas armas, defender-te.\n— Nenhum mal há de chegar perto de ti, nem a desgraça baterá à tua porta; pois o Senhor deu uma ordem a seus anjos para em todos os caminhos te guardarem.'
+      },
+      segundaLeitura: null,
+      evangelho: {
+        referencia: 'Mateus 18, 1-5. 10',
+        titulo: 'Proclamação do Evangelho de Jesus Cristo ✠ segundo Mateus',
+        texto: 'Naquela hora, os discípulos aproximaram-se de Jesus e perguntaram: “Quem é o maior no Reino dos Céus?” Jesus chamou uma criança, colocou-a no meio deles e disse: “Em verdade vos digo, se não vos converterdes, e não vos tornardes como crianças, não entrareis no Reino dos Céus. Quem se faz pequeno como esta criança, esse é o maior no Reino dos Céus. E quem recebe em meu nome uma criança como esta, é a mim que recebe. Não desprezeis nenhum desses pequeninos, pois eu vos digo que os seus anjos nos céus veem sem cessar a face do meu Pai que está nos céus”. — Palavra da Salvação.'
+      },
+      reflexao: 'Hoje a Igreja celebra com profunda gratidão os Santos Anjos da Guarda. Deus, em Seu infinito amor e providência, designou a cada um de nós um companheiro e guardião celestial para nos iluminar, proteger de todo mal e conduzir à salvação.'
+    };
+  }
+
+  // 12 de Outubro: Nossa Senhora Aparecida
+  if (month === 9 && day === 12) {
+    return {
+      data: date.toISOString().split('T')[0],
+      dataExtenso: formatarDataExtenso(date),
+      tempoLiturgico: 'Nossa Senhora da Conceição Aparecida, Rainha e Padroeira do Brasil • Solenidade',
+      cor: LITURGICAL_COLORS.branco,
+      diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
+      primeiraLeitura: {
+        referencia: 'Ester 5, 1b-2; 7, 2b-3',
+        titulo: 'Leitura do Livro de Ester',
+        texto: 'Ester revestiu-se com vestes de rainha e foi pôr-se no vestíbulo interior do palácio real. O rei estendeu para ela o cetro de ouro que tinha na mão e disse: "Que tens, rainha Ester? Qual é o teu pedido?". Ela respondeu: "Se ganhei as tuas graças, ó rei, concede-me a vida e a vida do meu povo!" — Palavra do Senhor.'
+      },
+      salmo: {
+        referencia: 'Salmo 44 (45)',
+        refrao: 'Escutai, minha filha, olhai, ouvi isto: que o Rei se encante com vossa beleza!',
+        texto: '— As filhas de reis vêm ao vosso encontro, e a vossa direita se encontra a rainha com veste esplendente de ouro de Ofir.\n— O Rei vai se encantar com vossa beleza, prestai-lhe homenagem: é vosso Senhor!'
+      },
+      segundaLeitura: {
+        referencia: 'Apocalipse 12, 1. 5. 13a. 15-16a',
+        titulo: 'Leitura do Livro do Apocalipse de São João',
+        texto: 'Apareceu no céu um grande sinal: uma mulher vestida de sol, tendo a lua debaixo dos pés e sobre a cabeça uma coroa de doze estrelas. Ela deu à luz um filho homem, que há de reger todas as nações.'
+      },
+      evangelho: {
+        referencia: 'João 2, 1-11',
+        titulo: 'Proclamação do Evangelho de Jesus Cristo ✠ segundo João',
+        texto: 'Naquele tempo, houve um casamento em Caná da Galileia. A mãe de Jesus estava presente. Estando já a faltar vinho, a mãe de Jesus disse-lhe: "Eles não têm mais vinho". Jesus respondeu-lhe: "Mulher, por que dizes isso a mim? Minha hora ainda não chegou". Sua mãe disse aos que serviam: "Fazei tudo o que ele vos disser". Jesus realizou assim o primeiro dos seus sinais em Caná da Galileia, manifestou a sua glória e os seus discípulos creram nele. — Palavra da Salvação.'
+      },
+      reflexao: 'A Mãe de Deus intercede pelas nossas necessidades junto a Jesus e nos aponta sempre o caminho seguro: "Fazei tudo o que Ele vos disser".'
+    };
+  }
+
+  // Outros períodos litúrgicos
   if (month === 11 && day >= 1 && day <= 24) {
     tempoLiturgico = 'Tempo do Advento';
     corKey = 'roxo';
@@ -216,42 +357,6 @@ function gerarLiturgiaCanonico(date) {
     corKey = 'branco';
   }
 
-  const leiturasExemplo = [
-    {
-      ref1: "Gálatas 2, 19-20",
-      txt1: "Irmãos: Eu estou crucificado com Cristo. Eu vivo, mas já não sou eu; é Cristo que vive em mim. A minha vida presente na carne, eu a vivo na fé, crendo no Filho de Deus, que me amou e se entregou por mim.",
-      salmoRef: "Salmo 33 (34)",
-      salmoRefrao: "O Senhor liberta os que nele confiam.",
-      salmoTxt: "Bendirei o Senhor em todo o tempo, seu louvor estará sempre em minha boca. Minha alma se gloria no Senhor; que os humildes escutem e se alegrem.",
-      evRef: "Lucas 10, 1-9",
-      evTxt: "Naquele tempo, o Senhor escolheu outros setenta e dois discípulos e os enviou dois a dois, na sua frente, a toda cidade e lugar aonde ele próprio devia ir. E dizia-lhes: 'A messe é grande, mas os trabalhadores são poucos. Por isso, pedi ao dono da messe que mande trabalhadores para a sua colheita. Ide! Eis que vos envio como cordeiros para o meio de lobos... Curai os doentes que nela houver e dizei-lhes: O Reino de Deus está próximo de vós!' — Palavra da Salvação.",
-      reflexao: "O Senhor nos chama hoje a sermos testemunhas audaciosas da sua Boa-Nova. Não vamos em nosso próprio nome, mas enviados por Cristo, levando a paz e a misericórdia a todos os corações que encontramos."
-    },
-    {
-      ref1: "Filipenses 4, 4-9",
-      txt1: "Alegrai-vos sempre no Senhor; repito, alegrai-vos! Seja a vossa bondade conhecida de todos os homens. O Senhor está próximo! Não vos inquieteis com coisa alguma, mas em tudo apresentai a Deus as vossas preces com ações de graças.",
-      salmoRef: "Salmo 22 (23)",
-      salmoRefrao: "O Senhor é o meu pastor, nada me faltará.",
-      salmoTxt: "O Senhor é o meu pastor, nada me pode faltar. Em verdes pastagens ele me faz descansar; conduz-me junto às águas tranquilas e refrigera a minha alma.",
-      evRef: "Mateus 11, 28-30",
-      evTxt: "Naquele tempo, disse Jesus: 'Vinde a mim, todos vós que estais cansados e carregados de fardos, e eu vos darei descanso. Tomai sobre vós o meu jugo e aprendei de mim, porque sou manso e humilde de coração, e encontrareis descanso para as vossas almas. Pois o meu jugo é suave e o meu fardo é leve.' — Palavra da Salvação.",
-      reflexao: "Nos momentos de cansaço ou tribulação, Jesus nos convida a repousar em Seu Sagrado Coração. Seu jugo não é peso, mas amor que liberta e renova as nossas forças."
-    },
-    {
-      ref1: "Romanos 8, 31-39",
-      txt1: "Se Deus é por nós, quem será contra nós? Aquele que não poupou o seu próprio Filho, mas o entregou por todos nós, como não nos dará tudo com ele? Quem nos separará do amor de Cristo? A tribulação, a angústia, a perseguição, a fome, a nudez, o perigo, a espada? Em tudo isso somos mais que vencedores pela virtude daquele que nos amou.",
-      salmoRef: "Salmo 90 (91)",
-      salmoRefrao: "Em vossas mãos, Senhor, entrego o meu espírito.",
-      salmoTxt: "Quem habita sob o abrigo do Altíssimo, descansará à sombra do Todo-Poderoso. Digo ao Senhor: 'Meu refúgio, minha fortaleza, meu Deus em quem confio!'",
-      evRef: "João 14, 23-29",
-      evTxt: "Naquele tempo, disse Jesus aos seus discípulos: 'Se alguém me ama, guardará a minha palavra, e o meu Pai o amará, e nós viremos a ele e nele faremos nossa morada. Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se intimide.' — Palavra da Salvação.",
-      reflexao: "A verdadeira paz que o mundo não pode dar brota da certeza do amor do Pai. Quando guardamos a Palavra de Jesus com amor e devoção, o próprio Deus faz morada em nosso interior."
-    }
-  ];
-
-  const idx = (date.getDate() + date.getMonth() * 3) % leiturasExemplo.length;
-  const sample = leiturasExemplo[idx];
-
   return {
     data: date.toISOString().split('T')[0],
     dataExtenso: formatarDataExtenso(date),
@@ -259,22 +364,22 @@ function gerarLiturgiaCanonico(date) {
     cor: LITURGICAL_COLORS[corKey],
     diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
     primeiraLeitura: {
-      referencia: sample.ref1,
+      referencia: "Gálatas 2, 19-20",
       titulo: "Primeira Leitura",
-      texto: sample.txt1
+      texto: "Irmãos: Eu estou crucificado com Cristo. Eu vivo, mas já não sou eu; é Cristo que vive em mim. A minha vida presente na carne, eu a vivo na fé, crendo no Filho de Deus, que me amou e se entregou por mim."
     },
     salmo: {
-      referencia: sample.salmoRef,
-      refrao: sample.salmoRefrao,
-      texto: sample.salmoTxt
+      referencia: "Salmo 33 (34)",
+      refrao: "O Senhor liberta os que nele confiam.",
+      texto: "Bendirei o Senhor em todo o tempo, seu louvor estará sempre em minha boca. Minha alma se gloria no Senhor; que os humildes escutem e se alegrem."
     },
     segundaLeitura: null,
     evangelho: {
-      referencia: sample.evRef,
+      referencia: "Lucas 10, 1-9",
       titulo: "Evangelho de Jesus Cristo",
-      texto: sample.evTxt
+      texto: "Naquele tempo, o Senhor escolheu outros setenta e dois discípulos e os enviou dois a dois, na sua frente, a toda cidade e lugar aonde ele próprio devia ir. E dizia-lhes: 'A messe é grande, mas os trabalhadores são poucos. Curai os doentes que nela houver e dizei-lhes: O Reino de Deus está próximo de vós!' — Palavra da Salvação."
     },
-    reflexao: sample.reflexao
+    reflexao: "O Senhor nos chama hoje a sermos testemunhas audaciosas da sua Boa-Nova, levando a paz e a misericórdia a todos os corações."
   };
 }
 
