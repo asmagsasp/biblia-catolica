@@ -5731,6 +5731,15 @@ window.shareNovenaConcluidaWhatsApp = function () {
 let currentCartasCategoria = 'todas';
 let currentCartasSearch = '';
 
+function normalizeSearchText(str) {
+  if (!str) return '';
+  return str
+    .replace(/[\u00AD\u200B\u200C\u200D\uFEFF\u2060]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 window.showCartasApostolicas = function () {
   showView('cartasView');
   currentCartasCategoria = 'todas';
@@ -5757,7 +5766,7 @@ window.filterCartasCategoria = function (cat, btnEl) {
 };
 
 window.handleCartasSearch = function (query) {
-  currentCartasSearch = (query || '').trim().toLowerCase();
+  currentCartasSearch = (query || '').trim();
   const clearBtn = document.getElementById('cartasSearchClear');
   if (clearBtn) clearBtn.classList.toggle('hidden', currentCartasSearch.length === 0);
   renderCartasGrid();
@@ -5766,11 +5775,24 @@ window.handleCartasSearch = function (query) {
 window.clearCartasSearch = function () {
   currentCartasSearch = '';
   const input = document.getElementById('cartasSearchInput');
-  if (input) input.value = '';
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
   const clearBtn = document.getElementById('cartasSearchClear');
   if (clearBtn) clearBtn.classList.add('hidden');
   renderCartasGrid();
 };
+
+const cartasSearchInputEl = document.getElementById('cartasSearchInput');
+if (cartasSearchInputEl) {
+  cartasSearchInputEl.addEventListener('input', (e) => {
+    window.handleCartasSearch(e.target.value);
+  });
+  cartasSearchInputEl.addEventListener('keyup', (e) => {
+    window.handleCartasSearch(e.target.value);
+  });
+}
 
 window.abrirCartaCapitulo = function (idLivro, nomeLivro, cap = 1) {
   openBook(idLivro, nomeLivro, 0);
@@ -5783,30 +5805,56 @@ window.renderCartasGrid = function () {
 
   let cartas = getCartasPorCategoria(currentCartasCategoria);
 
-  if (currentCartasSearch.length >= 2) {
-    const q = currentCartasSearch;
-    cartas = cartas.filter(c => {
-      const matchBasic = c.nomeCurto.toLowerCase().includes(q) ||
-                         c.tituloLiturgico.toLowerCase().includes(q) ||
-                         c.autor.toLowerCase().includes(q) ||
-                         c.destinatario.toLowerCase().includes(q) ||
-                         c.temaCentral.toLowerCase().includes(q) ||
-                         c.proposito.toLowerCase().includes(q);
-      const matchPassagens = (c.passagensDestaque || []).some(p => 
-        p.referencia.toLowerCase().includes(q) ||
-        p.titulo.toLowerCase().includes(q) ||
-        p.texto.toLowerCase().includes(q)
-      );
-      return matchBasic || matchPassagens;
+  if (currentCartasSearch.length > 0) {
+    const normQ = normalizeSearchText(currentCartasSearch);
+    const searchTerms = normQ.split(/\s+/).filter(Boolean);
+
+    let filtered = cartas.filter(c => {
+      const fullContent = normalizeSearchText(`
+        ${c.nomeCurto} 
+        ${c.tituloLiturgico} 
+        ${c.autor} 
+        ${c.destinatario} 
+        ${c.anoLocal} 
+        ${c.categoriaNome} 
+        ${c.temaCentral} 
+        ${c.proposito} 
+        ${(c.passagensDestaque || []).map(p => `${p.referencia} ${p.titulo} ${p.texto}`).join(' ')}
+      `);
+      return searchTerms.every(term => fullContent.includes(term));
     });
+
+    // Se não encontrou na categoria atual, busca em todas as 21 cartas
+    if (filtered.length === 0 && currentCartasCategoria !== 'todas') {
+      const allCartas = getCartasPorCategoria('todas');
+      filtered = allCartas.filter(c => {
+        const fullContent = normalizeSearchText(`
+          ${c.nomeCurto} 
+          ${c.tituloLiturgico} 
+          ${c.autor} 
+          ${c.destinatario} 
+          ${c.anoLocal} 
+          ${c.categoriaNome} 
+          ${c.temaCentral} 
+          ${c.proposito} 
+          ${(c.passagensDestaque || []).map(p => `${p.referencia} ${p.titulo} ${p.texto}`).join(' ')}
+        `);
+        return searchTerms.every(term => fullContent.includes(term));
+      });
+    }
+
+    cartas = filtered;
   }
 
   if (cartas.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
         <i class="fas fa-scroll" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
-        <p style="font-size: 15px; font-weight: 600;">Nenhuma carta encontrada para "${currentCartasSearch}"</p>
-        <button class="upload-btn-secondary" onclick="clearCartasSearch()" style="margin-top: 10px; font-size: 12px; padding: 6px 14px;">Limpar Busca</button>
+        <p style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Nenhuma carta encontrada para "${currentCartasSearch}"</p>
+        <p style="font-size: 12.5px; margin-top: 4px;">Tente pesquisar por temas como <em>amor, fé, graça, obras, armadura, união, ressurreição</em> ou por apóstolos como <em>São Paulo, São Pedro, São João, Tiago, Judas</em>.</p>
+        <button class="upload-btn-secondary" onclick="clearCartasSearch()" style="margin-top: 14px; font-size: 12px; padding: 7px 16px;">
+          <i class="fas fa-times"></i> Limpar Busca
+        </button>
       </div>
     `;
     return;
@@ -5825,7 +5873,7 @@ window.renderCartasGrid = function () {
             <div class="carta-highlight-item">
               <div class="carta-highlight-top">
                 <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} — ${p.titulo}</span>
-                <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este capítulo">
+                <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este capítulo na Bíblia">
                   <i class="fas fa-book-open"></i> Cap. ${p.capitulo}
                 </button>
               </div>
