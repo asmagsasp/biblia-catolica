@@ -9,7 +9,6 @@ import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { getLiturgiaDiaria, LITURGICAL_COLORS } from './liturgiaService.js';
 import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
-import { sacredAudio, SACRED_TRACKS } from './audioAmbienteService.js';
 import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
 import { LECTIO_STEPS, LECTIO_SUGESTOES, getLectioHistorico, salvarSessaoLectio, excluirSessaoLectio } from './lectioService.js';
 import { MANDAMENTOS_DEUS, PECADOS_CAPITAIS, ORACOES_CONFISSAO, getPecadosMarcados, togglePecadoMarcado, registrarConfissaoRealizada, getUltimaConfissaoData } from './confissaoService.js';
@@ -148,7 +147,6 @@ async function init() {
   renderBooks(allBooks);
   await loadVersiculoDoDia();
   await loadStats();
-  initSacredAudioUI();
 
   // Remove splash com no mínimo 1.8 segundos de exibição suave para destacar o ícone
   const MIN_SPLASH_TIME_MS = 1800;
@@ -4356,104 +4354,6 @@ window.shareVelaWhatsApp = function (e, id) {
   msg += `https://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-};
-
-
-// ==========================================================================
-// TRILHA SONORA SACRA AMBIENTE (WEB AUDIO API PROCEDURAL SYNTHESIS)
-// ==========================================================================
-function initSacredAudioUI() {
-  const tracksListContainer = document.getElementById('audioTracksList');
-  const trackTitle = document.getElementById('audioTrackTitle');
-  const trackSub = document.getElementById('audioTrackSub');
-  const volSlider = document.getElementById('audioVolumeSlider');
-
-  if (trackTitle && trackSub) {
-    const cur = sacredAudio.getCurrentTrack();
-    trackTitle.textContent = cur.nome;
-    trackSub.textContent = cur.subtitulo;
-  }
-
-  if (volSlider) {
-    volSlider.value = sacredAudio.getVolume();
-  }
-
-  if (tracksListContainer) {
-    let html = '';
-    SACRED_TRACKS.forEach(t => {
-      const isActive = t.id === sacredAudio.currentTrackId;
-      html += `
-        <button class="audio-track-item ${isActive ? 'active' : ''}" 
-                id="track_btn_${t.id}"
-                onclick="selectSacredAudioTrack('${t.id}')">
-          <div class="audio-track-icon-box" style="color: ${t.cor};">
-            <i class="fas ${t.icone}"></i>
-          </div>
-          <div class="audio-track-text">
-            <span class="audio-track-name">${t.nome}</span>
-            <span class="audio-track-desc">${t.subtitulo}</span>
-          </div>
-        </button>`;
-    });
-    tracksListContainer.innerHTML = html;
-  }
-}
-
-window.togglePlaySacredAudio = function () {
-  const isPlaying = sacredAudio.isPlaying();
-  const playIcon = document.getElementById('audioPlayIcon');
-  const playBtn = document.getElementById('btnPlaySacredAudio');
-  const soundwaves = document.getElementById('audioSoundwaves');
-
-  if (isPlaying) {
-    sacredAudio.stop();
-    if (playIcon) playIcon.className = 'fas fa-play';
-    if (playBtn) playBtn.classList.remove('playing');
-    if (soundwaves) soundwaves.classList.remove('playing');
-    showToast('Música ambiente pausada');
-  } else {
-    sacredAudio.play();
-    if (playIcon) playIcon.className = 'fas fa-pause';
-    if (playBtn) playBtn.classList.add('playing');
-    if (soundwaves) soundwaves.classList.add('playing');
-    const cur = sacredAudio.getCurrentTrack();
-    showToast(`🎶 Tocando: ${cur.nome}`);
-  }
-};
-
-window.selectSacredAudioTrack = function (trackId) {
-  sacredAudio.play(trackId);
-
-  const cur = sacredAudio.getCurrentTrack();
-  const trackTitle = document.getElementById('audioTrackTitle');
-  const trackSub = document.getElementById('audioTrackSub');
-  const playIcon = document.getElementById('audioPlayIcon');
-  const playBtn = document.getElementById('btnPlaySacredAudio');
-  const soundwaves = document.getElementById('audioSoundwaves');
-
-  if (trackTitle) trackTitle.textContent = cur.nome;
-  if (trackSub) trackSub.textContent = cur.subtitulo;
-  if (playIcon) playIcon.className = 'fas fa-pause';
-  if (playBtn) playBtn.classList.add('playing');
-  if (soundwaves) soundwaves.classList.add('playing');
-
-  // Update active state in track list
-  document.querySelectorAll('.audio-track-item').forEach(el => {
-    el.classList.toggle('active', el.id === `track_btn_${trackId}`);
-  });
-
-  showToast(`🎶 Tocando: ${cur.nome}`);
-};
-
-window.changeSacredAudioVolume = function (vol) {
-  sacredAudio.setVolume(parseFloat(vol));
-};
-
-window.toggleAudioBarDrawer = function () {
-  const drawer = document.getElementById('audioBarDrawer');
-  if (drawer) {
-    drawer.classList.toggle('hidden');
-  }
 };
 
 
