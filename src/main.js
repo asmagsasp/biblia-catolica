@@ -2554,8 +2554,6 @@ function showToast(msg) {
 }
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
-let donateInterval = null;
-const DONATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 const DONATE_AUDIO_TEXT = "Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde Já fiz minha doação e o banner deixará de aparecer. Seja um evangelizador você também!";
 let isDonateAudioSpeaking = false;
 
@@ -2656,42 +2654,75 @@ window.toggleDonateAudio = function () {
   }
 };
 
+let donateHeartbeatInterval = null;
+const DONATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+let lastDonateTime = Date.now();
+
 async function checkAndStartDonateTimer() {
   try {
     const res = await Preferences.get({ key: 'biblia_already_donated' });
     const alreadyDonated = res && (res.value === 'true' || res.value === true);
     if (alreadyDonated) {
-      console.log('[Donate] Usuário já marcou como doado. Timer desativado.');
+      console.log('[Donate] Usuário já marcou como doado anteriormente. Timer inativo.');
+      updateAdminDonateBadge();
       return;
     }
 
-    if (donateInterval) clearInterval(donateInterval);
-    console.log('[Donate] Timer de apoio ativado: abrirá a cada 5 minutos.');
+    if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
+    lastDonateTime = Date.now();
+    console.log('[Donate] Timer de apoio ativado: abrirá após 5 minutos de uso.');
+    updateAdminDonateBadge();
 
-    donateInterval = setInterval(async () => {
+    // Verificação contínua e imune a throttling e recarregamentos
+    donateHeartbeatInterval = setInterval(async () => {
       try {
         const check = await Preferences.get({ key: 'biblia_already_donated' });
         if (check && (check.value === 'true' || check.value === true)) {
-          if (donateInterval) clearInterval(donateInterval);
+          if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
+          donateHeartbeatInterval = null;
+          updateAdminDonateBadge();
           return;
         }
 
-        const modal = document.getElementById('donateModal');
-        const homilyModal = document.getElementById('homilyModal');
-        const homilyVisible = homilyModal && !homilyModal.classList.contains('hidden');
+        const elapsed = Date.now() - lastDonateTime;
+        if (elapsed >= DONATE_INTERVAL_MS) {
+          const modal = document.getElementById('donateModal');
+          const homilyModal = document.getElementById('homilyModal');
+          const homilyVisible = homilyModal && !homilyModal.classList.contains('hidden');
 
-        if (modal && modal.classList.contains('hidden') && !homilyVisible) {
-          console.log('[Donate] 5 minutos decorridos. Exibindo modal de apoio.');
-          showDonateModal();
+          if (modal && modal.classList.contains('hidden') && !homilyVisible) {
+            console.log('[Donate] 5 minutos decorridos. Exibindo banner de apoio.');
+            lastDonateTime = Date.now(); // Reinicia contagem para o próximo ciclo
+            showDonateModal();
+          }
         }
       } catch (err) {
         console.error('[Donate] Erro no ciclo do timer:', err);
       }
-    }, DONATE_INTERVAL_MS);
+    }, 10000); // Heartbeat a cada 10 segundos
   } catch (err) {
     console.error("[Donate] Erro ao verificar timer de doação:", err);
   }
 }
+
+// Ao voltar para a aba ou desbloquear celular, verifica se já se passaram 5 minutos
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const elapsed = Date.now() - lastDonateTime;
+    if (elapsed >= DONATE_INTERVAL_MS) {
+      const modal = document.getElementById('donateModal');
+      if (modal && modal.classList.contains('hidden')) {
+        Preferences.get({ key: 'biblia_already_donated' }).then(res => {
+          const already = res && (res.value === 'true' || res.value === true);
+          if (!already) {
+            lastDonateTime = Date.now();
+            showDonateModal();
+          }
+        }).catch(() => {});
+      }
+    }
+  }
+});
 
 window.showDonateModal = function () {
   const modal = document.getElementById('donateModal');
@@ -2716,11 +2747,12 @@ window.markAsDonated = async function () {
   try {
     stopDonateAudio();
     await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
-    if (donateInterval) {
-      clearInterval(donateInterval);
-      donateInterval = null;
+    if (donateHeartbeatInterval) {
+      clearInterval(donateHeartbeatInterval);
+      donateHeartbeatInterval = null;
     }
     closeDonateModal();
+    updateAdminDonateBadge();
     showToast('🙏 Deus abençoe sua generosidade! Muito obrigado por apoiar o projeto.');
   } catch (err) {
     console.error("[Donate] Erro ao salvar status de doação:", err);
@@ -2728,15 +2760,42 @@ window.markAsDonated = async function () {
   }
 };
 
-window.resetDonateStatus = async function () {
+window.resetDonateStatusAndTimer = async function () {
   try {
     await Preferences.remove({ key: 'biblia_already_donated' });
-    checkAndStartDonateTimer();
-    showToast('Status de doação reiniciado (2 min).');
+    lastDonateTime = Date.now();
+    await checkAndStartDonateTimer();
+    showToast('✨ Timer de apoio reiniciado: exibirá a cada 5 minutos.');
+    updateAdminDonateBadge();
   } catch (e) {
     console.error(e);
   }
 };
+
+window.resetDonateStatus = window.resetDonateStatusAndTimer;
+
+window.testDonateModalNow = function () {
+  showDonateModal();
+};
+
+async function updateAdminDonateBadge() {
+  const badge = document.getElementById('adminDonateStatusBadge');
+  if (!badge) return;
+  try {
+    const res = await Preferences.get({ key: 'biblia_already_donated' });
+    const already = res && (res.value === 'true' || res.value === true);
+    if (already) {
+      badge.textContent = 'Já Doado (Desativado)';
+      badge.style.background = 'rgba(16, 185, 129, 0.15)';
+      badge.style.color = '#10b981';
+    } else {
+      const elapsedMins = Math.floor((Date.now() - lastDonateTime) / 60000);
+      badge.textContent = `Ativo (a cada 5 min • decorridos ${elapsedMins}m)`;
+      badge.style.background = 'rgba(234, 179, 8, 0.15)';
+      badge.style.color = 'var(--gold-400)';
+    }
+  } catch (e) {}
+}
 
 window.copyPix = async function () {
   const pixKeyEl = document.getElementById('pixKey');
@@ -2828,6 +2887,7 @@ window.unlockAdminPanel = function () {
     const currentKey = getGeminiApiKey();
     if (keyInput) keyInput.value = currentKey || '';
     updateAdminKeyBadge(!!currentKey);
+    updateAdminDonateBadge();
     showToast('🔓 Painel do Administrador desbloqueado com sucesso!');
   } else {
     showToast('PIN de Administrador incorreto. Tente novamente.');
