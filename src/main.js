@@ -3540,9 +3540,9 @@ window.unlockAdminPanel = function () {
     if (dashSec) dashSec.classList.remove('hidden');
 
     const keyInput = document.getElementById('adminGeminiKeyInput');
-    const currentKey = getGeminiApiKey();
+    const currentKey = getAiApiKey();
     if (keyInput) keyInput.value = currentKey || '';
-    updateAdminKeyBadge(!!currentKey);
+    updateAdminKeyBadge(currentKey);
     updateAdminDonateBadge();
     showToast('🔓 Painel do Administrador desbloqueado com sucesso!');
   } else {
@@ -3560,32 +3560,44 @@ window.lockAdminPanel = function () {
   if (pinInput) pinInput.value = '';
 };
 
-function updateAdminKeyBadge(hasKey) {
+function updateAdminKeyBadge(key) {
   const badge = document.getElementById('adminKeyStatusBadge');
   if (!badge) return;
-  if (hasKey) {
-    badge.textContent = 'Chave Configurada e Ativa ✨';
-    badge.style.background = 'rgba(16, 185, 129, 0.15)';
-    badge.style.color = '#10b981';
+  const currentKey = typeof key === 'string' ? key.trim() : (getAiApiKey() || '');
+  if (currentKey) {
+    if (currentKey.startsWith('gsk_')) {
+      badge.textContent = 'Groq IA Ativa (100% Grátis ⚡)';
+      badge.style.background = 'rgba(249, 115, 22, 0.15)';
+      badge.style.color = '#f97316';
+    } else if (currentKey.startsWith('AIza')) {
+      badge.textContent = 'Google Gemini Ativo ✨';
+      badge.style.background = 'rgba(16, 185, 129, 0.15)';
+      badge.style.color = '#10b981';
+    } else {
+      badge.textContent = 'Chave IA Ativa ✨';
+      badge.style.background = 'rgba(16, 185, 129, 0.15)';
+      badge.style.color = '#10b981';
+    }
   } else {
-    badge.textContent = 'Nenhuma chave ativa (Modo Nativo)';
+    badge.textContent = 'Nenhuma chave ativa (Modo Offline Nativo)';
     badge.style.background = 'rgba(239, 68, 68, 0.15)';
     badge.style.color = '#ef4444';
   }
 }
 
-window.saveAdminGeminiKey = async function () {
+window.saveAdminAiKey = window.saveAdminGeminiKey = async function () {
   const input = document.getElementById('adminGeminiKeyInput');
   if (!input) return;
   const key = input.value.trim();
 
   if (!key) {
-    showToast('Por favor, informe sua chave do Google Gemini.');
+    showToast('Por favor, informe a chave da Groq (gsk_...) ou do Gemini.');
     return;
   }
 
+  localStorage.setItem('biblia_ai_api_key', key);
   localStorage.setItem('biblia_gemini_api_key', key);
-  updateAdminKeyBadge(true);
+  updateAdminKeyBadge(key);
 
   try {
     await fetch(db.getApiUrl('/api/admin/set-gemini-key'), {
@@ -3595,25 +3607,70 @@ window.saveAdminGeminiKey = async function () {
     });
   } catch (e) {}
 
-  showToast('✨ Chave do Google Gemini salva com sucesso pelo Administrador!');
+  const provider = key.startsWith('gsk_') ? 'Groq IA (100% Gratuita)' : (key.startsWith('AIza') ? 'Google Gemini' : 'Inteligência Artificial');
+  showToast(`✨ Chave da ${provider} salva com sucesso pelo Administrador!`);
 };
 
-window.testAdminGeminiKey = async function () {
+window.testAdminAiKey = window.testAdminGeminiKey = async function () {
   const keyInput = document.getElementById('adminGeminiKeyInput');
   const statusDiv = document.getElementById('adminTestStatus');
-  const testKey = keyInput ? keyInput.value.trim() : getGeminiApiKey();
+  const testKey = keyInput ? keyInput.value.trim() : getAiApiKey();
 
   if (!testKey) {
     showToast('Informe uma chave antes de testar.');
     return;
   }
 
+  const isGroq = testKey.startsWith('gsk_');
+
   if (statusDiv) {
     statusDiv.style.display = 'block';
-    statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação com o Google Gemini IA...</span>';
+    if (isGroq) {
+      statusDiv.innerHTML = '<span style="color: #f97316;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação ultra-rápida com Groq IA (Llama 3.3 70B)...</span>';
+    } else {
+      statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação com Google Gemini IA...</span>';
+    }
   }
 
   const startTime = Date.now();
+
+  if (isGroq) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${testKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: "Diga apenas 'OK' para teste de conexao." }],
+          max_tokens: 10
+        })
+      });
+
+      const elapsed = Date.now() - startTime;
+      if (res.ok) {
+        if (statusDiv) {
+          statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a Groq IA validada com sucesso! Resposta ultra-rápida (Latência: ${elapsed}ms) ⚡</span>`;
+        }
+        showToast('✨ Conexão com a Groq IA funcionando perfeitamente!');
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson.error?.message || `Código HTTP ${res.status}`;
+        if (statusDiv) {
+          statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha na Groq: ${msg}. Verifique sua chave no console.groq.com.</span>`;
+        }
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-times-circle"></i> Erro de rede ao conectar com a API da Groq: ${err.message}</span>`;
+      }
+    }
+    return;
+  }
+
+  // Google Gemini Test
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${testKey}`, {
       method: 'POST',
@@ -3642,11 +3699,12 @@ window.testAdminGeminiKey = async function () {
   }
 };
 
-window.clearAdminGeminiKey = async function () {
+window.clearAdminAiKey = window.clearAdminGeminiKey = async function () {
+  localStorage.removeItem('biblia_ai_api_key');
   localStorage.removeItem('biblia_gemini_api_key');
   const keyInput = document.getElementById('adminGeminiKeyInput');
   if (keyInput) keyInput.value = '';
-  updateAdminKeyBadge(false);
+  updateAdminKeyBadge('');
   try {
     await fetch(db.getApiUrl('/api/admin/set-gemini-key'), {
       method: 'POST',
@@ -3678,12 +3736,18 @@ window.updateAdminPin = async function () {
 };
 
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
-function getGeminiApiKey() {
-  const localKey = (localStorage.getItem('biblia_gemini_api_key') || '').trim();
+function getAiApiKey() {
+  const localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
   if (localKey) return localKey;
-  const envKey = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
-  if (envKey && envKey !== 'COLE_SUA_CHAVE_AQUI') return envKey;
+  const envGroq = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
+  if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return envGroq;
+  const envGemini = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
+  if (envGemini && envGemini !== 'COLE_SUA_CHAVE_AQUI') return envGemini;
   return '';
+}
+
+function getGeminiApiKey() {
+  return getAiApiKey();
 }
 
 window.closeHomilyModal = function () {
@@ -3714,9 +3778,9 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
-  const apiKey = getGeminiApiKey();
+  const apiKey = getAiApiKey();
   if (apiKey) {
-    generateDynamicGeminiHomily(bookName, chapter, verse, text);
+    generateDynamicAiHomily(bookName, chapter, verse, text);
     return;
   }
 
@@ -3741,7 +3805,111 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   updateSpeakBtnState(false);
 };
 
-window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
+// Groq API Call (Ultra-fast, Llama 3.3 70B & 8B Fallback, 100% Free)
+async function callGroqAPI(prompt, apiKey) {
+  const models = [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant'
+  ];
+  let lastError = null;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 14000);
+
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'Você é um padre católico profundamente piedoso, sábio e acolhedor, com sólida formação teológica, patrística e pastoral da Santa Igreja Católica Apostólica Romana.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices && data.choices[0]?.message?.content;
+          if (text) {
+            return text;
+          }
+        }
+
+        const errorText = await response.text();
+        console.warn(`Groq modelo ${model} erro (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
+
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("INVALID_OR_EXPIRED_KEY");
+        }
+
+        lastError = new Error(`Código ${response.status}: Servidor da Groq retornou erro.`);
+
+        if (response.status === 429 || response.status >= 500) {
+          await new Promise(res => setTimeout(res, 600 * (attempt + 1)));
+          continue;
+        }
+        break;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err;
+        if (err.name === 'AbortError') {
+          console.warn(`Modelo Groq ${model} timeout. Alternando modelo...`);
+          lastError = new Error("Tempo de resposta esgotado. Alternando modelo...");
+        } else if (err.message === 'INVALID_OR_EXPIRED_KEY') {
+          throw err;
+        }
+      }
+    }
+  }
+
+  throw lastError || new Error("Servidor da Groq indisponível no momento.");
+}
+
+async function callAiAPI(prompt) {
+  const apiKey = getAiApiKey();
+  if (!apiKey) {
+    throw new Error("KEY_NOT_CONFIGURED");
+  }
+
+  // 1. Chave da Groq (gsk_...) - 100% Gratuita e Instantânea
+  if (apiKey.startsWith('gsk_')) {
+    return await callGroqAPI(prompt, apiKey);
+  }
+
+  // 2. Chave do Google Gemini (AIza...)
+  if (apiKey.startsWith('AIza')) {
+    const data = await callGeminiAPIWithFallback(prompt);
+    return data.candidates[0].content.parts[0].text;
+  }
+
+  // 3. Fallback genérico: tenta Groq primeiro, se falhar tenta Gemini
+  try {
+    return await callGroqAPI(prompt, apiKey);
+  } catch (err) {
+    const data = await callGeminiAPIWithFallback(prompt);
+    return data.candidates[0].content.parts[0].text;
+  }
+}
+
+window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
   const body = document.getElementById('homilyBody');
   const speakBtn = document.getElementById('homilySpeakBtn');
 
@@ -3766,8 +3934,7 @@ Instruções para a homilia:
 5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
 Destaque frases e conceitos espirituais centrais em negrito.`;
 
-    const data = await callGeminiAPIWithFallback(prompt);
-    let homily = data.candidates[0].content.parts[0].text;
+    const homily = await callAiAPI(prompt);
 
     const formattedHomily = homily
       .split('\n\n')
@@ -3777,7 +3944,7 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     body.innerHTML = `
       ${formattedHomily}
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <button onclick="generateDynamicGeminiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
+        <button onclick="generateDynamicAiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
                 style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
           <i class="fas fa-redo"></i> Nova Meditação
         </button>
