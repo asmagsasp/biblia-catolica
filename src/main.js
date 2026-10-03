@@ -3611,25 +3611,31 @@ window.saveAdminAiKey = window.saveAdminGeminiKey = async function () {
   showToast(`✨ Chave da ${provider} salva com sucesso pelo Administrador!`);
 };
 
+function sanitizeApiKey(key) {
+  if (!key) return '';
+  return key.trim().replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '').trim();
+}
+
 async function getBestGroqModel(apiKey) {
+  const cleanKey = sanitizeApiKey(apiKey);
   try {
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: {
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${cleanKey}`
       }
     });
     if (res.ok) {
       const json = await res.json();
       const ids = (json.data || []).map(m => m.id);
-      console.log("Modelos disponíveis na conta Groq:", ids);
+      console.log("[Groq API] Modelos disponíveis na conta:", ids);
 
+      // Modelos ativos em 2026 na Groq
       const preferred = [
         'llama-3.1-8b-instant',
         'llama-3.3-70b-versatile',
-        'llama3-70b-8192',
-        'llama3-8b-8192',
-        'mixtral-8x7b-32768',
-        'gemma2-9b-it'
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b'
       ];
 
       for (const pref of preferred) {
@@ -3638,7 +3644,7 @@ async function getBestGroqModel(apiKey) {
         }
       }
 
-      const anyChatModel = ids.find(id => (id.includes('llama') || id.includes('mixtral') || id.includes('gemma')) && !id.includes('guard') && !id.includes('whisper'));
+      const anyChatModel = ids.find(id => (id.includes('llama') || id.includes('qwen') || id.includes('gpt-oss')) && !id.includes('guard') && !id.includes('whisper') && !id.includes('orpheus'));
       if (anyChatModel) return anyChatModel;
       if (ids.length > 0) return ids[0];
     }
@@ -3651,7 +3657,8 @@ async function getBestGroqModel(apiKey) {
 window.testAdminAiKey = window.testAdminGeminiKey = async function () {
   const keyInput = document.getElementById('adminGeminiKeyInput');
   const statusDiv = document.getElementById('adminTestStatus');
-  const testKey = keyInput ? keyInput.value.trim() : getAiApiKey();
+  const rawKey = keyInput ? keyInput.value : getAiApiKey();
+  const testKey = sanitizeApiKey(rawKey);
 
   if (!testKey) {
     showToast('Informe uma chave antes de testar.');
@@ -3663,7 +3670,7 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
   if (statusDiv) {
     statusDiv.style.display = 'block';
     if (isGroq) {
-      statusDiv.innerHTML = '<span style="color: #f97316;"><i class="fas fa-spinner fa-spin"></i> Conectando à Groq IA e detectando melhor modelo disponível...</span>';
+      statusDiv.innerHTML = '<span style="color: #f97316;"><i class="fas fa-spinner fa-spin"></i> Conectando à Groq IA e testando modelos ativos...</span>';
     } else {
       statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação com Google Gemini IA...</span>';
     }
@@ -3676,17 +3683,17 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
       // 1. Detecta dinamicamente os modelos aos quais esta chave tem acesso
       const detectedModel = await getBestGroqModel(testKey);
 
+      // Apenas modelos ativos oficiais da Groq (sem modelos descontinuados)
       const candidateModels = [
         detectedModel,
         'llama-3.1-8b-instant',
         'llama-3.3-70b-versatile',
-        'llama3-70b-8192',
-        'llama3-8b-8192',
-        'mixtral-8x7b-32768'
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-120b'
       ].filter((m, idx, self) => m && self.indexOf(m) === idx);
 
       let workingModel = null;
-      let lastErrMsg = '';
+      let attemptedDetails = [];
 
       for (const modelToTest of candidateModels) {
         try {
@@ -3698,8 +3705,9 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
             },
             body: JSON.stringify({
               model: modelToTest,
-              messages: [{ role: 'user', content: "Diga apenas 'OK' para teste de conexao." }],
-              max_tokens: 10
+              messages: [{ role: 'user', content: "Diga apenas 'OK' para teste." }],
+              max_tokens: 16,
+              temperature: 0.5
             })
           });
 
@@ -3708,13 +3716,15 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
             break;
           } else {
             const errJson = await res.json().catch(() => ({}));
-            lastErrMsg = errJson.error?.message || `Código HTTP ${res.status}`;
+            const errMsg = errJson.error?.message || `HTTP ${res.status}`;
+            console.warn(`[Groq Test] ${modelToTest}:`, errMsg);
+            attemptedDetails.push(`• ${modelToTest}: ${errMsg}`);
             if (res.status === 401 || res.status === 403) {
               break;
             }
           }
         } catch (e) {
-          lastErrMsg = e.message;
+          attemptedDetails.push(`• ${modelToTest}: ${e.message}`);
         }
       }
 
@@ -3727,7 +3737,7 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
         showToast(`✨ Conexão com a Groq IA validada com sucesso (${workingModel})!`);
       } else {
         if (statusDiv) {
-          statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha na Groq: ${lastErrMsg}. Verifique sua chave no console.groq.com.</span>`;
+          statusDiv.innerHTML = `<div style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha ao validar conexão com a Groq:</div><div style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">${attemptedDetails.join('<br>')}</div><div style="font-size: 11px; margin-top: 6px; color: var(--gold-400);">Dica: Verifique se copiou a chave completa gerada no console.groq.com/keys.</div>`;
         }
       }
     } catch (err) {
@@ -3807,11 +3817,11 @@ window.updateAdminPin = async function () {
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
 function getAiApiKey() {
   const localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
-  if (localKey) return localKey;
+  if (localKey) return sanitizeApiKey(localKey);
   const envGroq = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
-  if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return envGroq;
+  if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGroq);
   const envGemini = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
-  if (envGemini && envGemini !== 'COLE_SUA_CHAVE_AQUI') return envGemini;
+  if (envGemini && envGemini !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGemini);
   return '';
 }
 
@@ -3876,21 +3886,22 @@ window.generateHomily = function (bookName, chapter, verse, text) {
 
 // Groq API Call (Ultra-fast, Auto-discovery & Fallback, 100% Free)
 async function callGroqAPI(prompt, apiKey) {
+  const cleanKey = sanitizeApiKey(apiKey);
   let preferredModel = localStorage.getItem('biblia_groq_detected_model');
   if (!preferredModel) {
-    preferredModel = await getBestGroqModel(apiKey);
+    preferredModel = await getBestGroqModel(cleanKey);
     if (preferredModel) {
       localStorage.setItem('biblia_groq_detected_model', preferredModel);
     }
   }
 
+  // Apenas modelos ativos oficiais da Groq em 2026
   const models = [
     preferredModel,
     'llama-3.1-8b-instant',
     'llama-3.3-70b-versatile',
-    'llama3-70b-8192',
-    'llama3-8b-8192',
-    'mixtral-8x7b-32768'
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b'
   ].filter((m, idx, self) => m && self.indexOf(m) === idx);
 
   let lastError = null;
@@ -3906,7 +3917,7 @@ async function callGroqAPI(prompt, apiKey) {
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Authorization': `Bearer ${cleanKey}`
           },
           body: JSON.stringify({
             model: model,
@@ -3943,8 +3954,8 @@ async function callGroqAPI(prompt, apiKey) {
           throw new Error("INVALID_OR_EXPIRED_KEY");
         }
 
-        // Se o modelo não existir ou não estiver liberado (404), passa imediatamente para o próximo modelo
-        if (response.status === 404) {
+        // Se o modelo não existir ou não estiver liberado (404 ou 400), passa imediatamente para o próximo modelo
+        if (response.status === 404 || response.status === 400) {
           break;
         }
 
