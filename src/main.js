@@ -521,6 +521,75 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
 });
 
+let activeVerseUtterance = null;
+async function speakSingleVerseText(text) {
+  if (!text || stopRequested) return;
+
+  // 1. Capacitor Native TTS (Android / iOS app compilado)
+  if (Capacitor?.isNativePlatform() && TextToSpeech) {
+    try {
+      await TextToSpeech.speak({
+        text: text,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
+      return;
+    } catch (e) {
+      console.warn('[TTS Native] Falha, tentando Web Speech:', e);
+    }
+  }
+
+  // 2. Web Speech Synthesis (iPhone Safari / Web Browser)
+  if ('speechSynthesis' in window && !stopRequested) {
+    return new Promise((resolve) => {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        const ptVoice = getBestPortugueseVoice();
+        if (ptVoice) {
+          utterance.voice = ptVoice;
+        }
+
+        activeVerseUtterance = utterance;
+
+        utterance.onstart = () => {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        };
+
+        utterance.onend = () => {
+          activeVerseUtterance = null;
+          resolve();
+        };
+        utterance.onerror = (e) => {
+          console.warn('[WebSpeech] Erro no versículo:', e);
+          activeVerseUtterance = null;
+          resolve();
+        };
+
+        window.speechSynthesis.speak(utterance);
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch (err) {
+        console.error('[WebSpeech] Exceção ao falar versículo:', err);
+        resolve();
+      }
+    });
+  }
+}
+
 window.speakText = async function (text, vNum = null, customEl = null) {
   await stopSpeech();
   if (!text) return;
@@ -542,26 +611,7 @@ window.speakText = async function (text, vNum = null, customEl = null) {
   }
 
   try {
-    await TextToSpeech.speak({
-      text: text,
-      lang: 'pt-BR',
-      rate: 0.95,
-      pitch: 1.0,
-      volume: 1.0,
-      category: 'ambient'
-    });
-  } catch (e) {
-    // Fallback Web SpeechSynthesis se TextToSpeech não estiver disponível
-    if ('speechSynthesis' in window && !stopRequested) {
-      await new Promise((resolve) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.95;
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
-        window.speechSynthesis.speak(utterance);
-      });
-    }
+    await speakSingleVerseText(text);
   } finally {
     if (vNum) {
       const el = document.getElementById(`v-${vNum}`);
@@ -579,64 +629,69 @@ window.speakText = async function (text, vNum = null, customEl = null) {
   }
 };
 
-window.readFullChapter = async function () {
-  if (isChapterReading) {
-    await stopSpeech();
-    return;
-  }
-
+window.readVersesRange = async function (verseNumbers = null) {
   await stopSpeech();
-  const verses = document.querySelectorAll('.verse');
-  if (!verses || verses.length === 0) return;
-
   stopRequested = false;
   isSpeaking = true;
+  isChapterReading = true;
   updateChapterReadBtnState(true);
 
   try {
-    for (let i = 0; i < verses.length; i++) {
-      if (stopRequested) break;
+    if (Array.isArray(verseNumbers) && verseNumbers.length > 0) {
+      // Lê sequencialmente a lista exata de versículos (ex: [1, 2, 3, 4, 5])
+      for (const vNum of verseNumbers) {
+        if (stopRequested) break;
 
-      const v = verses[i];
-      const textEl = v.querySelector('.verse-text');
-      if (!textEl) continue;
-      const text = textEl.textContent.trim();
+        const v = document.getElementById(`v-${vNum}`);
+        if (!v) continue;
 
-      v.classList.add('reading');
-      v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const textEl = v.querySelector('.verse-text');
+        if (!textEl) continue;
+        const text = textEl.textContent.trim();
 
-      try {
-        await TextToSpeech.speak({
-          text: text,
-          lang: 'pt-BR',
-          rate: 0.95,
-          pitch: 1.0,
-          volume: 1.0,
-          category: 'ambient'
-        });
-      } catch (e) {
-        // Fallback Web SpeechSynthesis se TextToSpeech não estiver disponível
-        if ('speechSynthesis' in window && !stopRequested) {
-          await new Promise((resolve) => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.95;
-            utterance.onend = () => resolve();
-            utterance.onerror = () => resolve();
-            window.speechSynthesis.speak(utterance);
-          });
-        } else {
-          break;
+        v.classList.add('reading');
+        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        try {
+          await speakSingleVerseText(text);
+        } finally {
+          v.classList.remove('reading');
         }
-      } finally {
-        v.classList.remove('reading');
+      }
+    } else {
+      // Lê todos os versículos do capítulo
+      const verses = document.querySelectorAll('.verse');
+      for (let i = 0; i < verses.length; i++) {
+        if (stopRequested) break;
+        const v = verses[i];
+        const textEl = v.querySelector('.verse-text');
+        if (!textEl) continue;
+        const text = textEl.textContent.trim();
+
+        v.classList.add('reading');
+        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        try {
+          await speakSingleVerseText(text);
+        } finally {
+          v.classList.remove('reading');
+        }
       }
     }
   } finally {
     document.querySelectorAll('.verse.reading').forEach(v => v.classList.remove('reading'));
     isSpeaking = false;
+    isChapterReading = false;
     updateChapterReadBtnState(false);
   }
+};
+
+window.readFullChapter = async function () {
+  if (isChapterReading) {
+    await stopSpeech();
+    return;
+  }
+  await readVersesRange(null);
 };
 
 // ===== SEARCH HIGHLIGHTING HELPER =====
@@ -4166,6 +4221,31 @@ function findBiblicalBook(rawQuery) {
   return null;
 }
 
+function parseVerseNumbers(versePart) {
+  if (!versePart) return [];
+  // Considera a primeira cláusula antes de ponto-e-vírgula caso haja múltiplos capítulos
+  const clause = versePart.split(';')[0].trim();
+  const tokens = clause.split(/[\.\s,]+/).filter(Boolean);
+  const verses = new Set();
+  
+  tokens.forEach(tok => {
+    // Trata intervalos como 1-5, 20-23, 5b-14 ou 7-12a
+    const rangeMatch = tok.match(/^(\d+)[a-z]?-(\d+)[a-z]?$/i);
+    if (rangeMatch) {
+      const start = parseInt(rangeMatch[1], 10);
+      const end = parseInt(rangeMatch[2], 10);
+      for (let i = start; i <= end; i++) verses.add(i);
+    } else {
+      const singleMatch = tok.match(/^(\d+)[a-z]?$/i);
+      if (singleMatch) {
+        verses.add(parseInt(singleMatch[1], 10));
+      }
+    }
+  });
+
+  return Array.from(verses).sort((a, b) => a - b);
+}
+
 function parseBiblicalRef(refStr) {
   if (!refStr || typeof refStr !== 'string') return null;
 
@@ -4176,18 +4256,21 @@ function parseBiblicalRef(refStr) {
   // 2. Trata numeração dupla de Salmos: "Sl 90(91)" -> "Sl 90"
   clean = clean.replace(/(\d+)\s*\(\s*\d+\s*\)/g, (m, p1) => p1);
 
-  // 3. Captura Livro, Capítulo e Versículo inicial
-  // Ex: "Êx 23, 20-23" -> Book: "Êx", Cap: 23, Ver: 20
-  // Ex: "1Pd 5, 5b-14" -> Book: "1Pd", Cap: 5, Ver: 5
-  // Ex: "Mt 18, 1-5"   -> Book: "Mt", Cap: 18, Ver: 1
-  const regex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)(?:[,\s:]+(\d+))?/;
+  // 3. Captura Livro, Capítulo e Versículos
+  // Ex: "Êx 23, 20-23" -> Book: "Êx", Cap: 23, VersesPart: "20-23"
+  // Ex: "Mt 18, 1-5. 10" -> Book: "Mt", Cap: 18, VersesPart: "1-5. 10"
+  const regex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)(?:[,\s:]+([\d\w\s\.\-;]+))?/;
   const match = clean.match(regex);
 
   if (match) {
     const rawBook = match[1].trim();
     const cap = parseInt(match[2], 10) || 1;
-    const ver = match[3] ? parseInt(match[3], 10) : null;
-    return { rawBook, cap, ver, cleanRef: clean };
+    const versePart = match[3] ? match[3].trim() : '';
+    const verseList = parseVerseNumbers(versePart);
+    const startVer = verseList.length > 0 ? verseList[0] : 1;
+    const endVer = verseList.length > 0 ? verseList[verseList.length - 1] : null;
+
+    return { rawBook, cap, verseList, startVer, endVer, cleanRef: clean };
   }
 
   // 4. Fallback para livros de capítulo único (ex: Fm 9-10, Jd 17-25)
@@ -4196,13 +4279,13 @@ function parseBiblicalRef(refStr) {
   if (singleMatch) {
     const rawBook = singleMatch[1].trim();
     const num = parseInt(singleMatch[2], 10) || 1;
-    return { rawBook, cap: 1, ver: num, cleanRef: clean };
+    return { rawBook, cap: 1, verseList: [num], startVer: num, endVer: num, cleanRef: clean };
   }
 
   return null;
 }
 
-// Abrir livro e capítulo diretamente pela referência da leitura litúrgica
+// Abrir livro e capítulo diretamente pela referência da leitura litúrgica com áudio e destaque contínuo
 window.openBibleByRef = async function (refStr) {
   if (!refStr) return;
 
@@ -4229,19 +4312,16 @@ window.openBibleByRef = async function (refStr) {
     // Abre diretamente o livro e o capítulo correto
     await openBook(targetBook.id_livro, targetBook.nome_livro, targetBook.total_capitulos, cap);
     
-    showToast(`📖 ${targetBook.nome_livro} ${cap}${parsed.ver ? ', ' + parsed.ver : ''}`);
+    const rangeLabel = (parsed.verseList && parsed.verseList.length > 0)
+      ? `${parsed.verseList[0]}${parsed.verseList.length > 1 ? '-' + parsed.verseList[parsed.verseList.length - 1] : ''}`
+      : `${parsed.startVer}`;
 
-    // Se houver versículo inicial específico, rola suavemente até ele e destaca
-    if (parsed.ver) {
-      setTimeout(() => {
-        const vEl = document.getElementById(`v-${parsed.ver}`);
-        if (vEl) {
-          vEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          vEl.classList.add('reading');
-          setTimeout(() => vEl.classList.remove('reading'), 2500);
-        }
-      }, 250);
-    }
+    showToast(`🔊 Lendo ${targetBook.nome_livro} ${cap}, ${rangeLabel}...`);
+
+    // Inicia a leitura sequencial em áudio percorrendo versículo por versículo até o final da passagem
+    setTimeout(() => {
+      readVersesRange(parsed.verseList);
+    }, 350);
   } else {
     console.warn(`[openBibleByRef] Livro não reconhecido para "${parsed.rawBook}" (ref: ${refStr})`);
     showToast(`Livro não localizado: ${refStr}`);
