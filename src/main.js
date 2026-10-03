@@ -3354,7 +3354,7 @@ async function updateAdminDonateBadge() {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-off" style="color: #ef4444; font-size: 16px;"></i> <span>Desativado</span>';
         toggleBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
         toggleBtn.style.background = 'rgba(239, 68, 68, 0.12)';
-        toggleBtn.title = 'Clique para ativar o popup a cada 5 minutos';
+        toggleBtn.title = 'Clique para ativar o popup a cada 20 minutos (máx 1x/dia)';
       } else {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-on" style="color: #10b981; font-size: 16px;"></i> <span>Ativo</span>';
         toggleBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
@@ -3373,10 +3373,17 @@ async function updateAdminDonateBadge() {
         badge.style.background = 'rgba(16, 185, 129, 0.15)';
         badge.style.color = '#10b981';
       } else {
+        const seenToday = await hasAlreadySeenDonateToday();
         const elapsedMins = Math.floor((Date.now() - lastDonateTime) / 60000);
-        badge.textContent = `Ativo (a cada 5 min • ${elapsedMins}m)`;
-        badge.style.background = 'rgba(234, 179, 8, 0.15)';
-        badge.style.color = 'var(--gold-400)';
+        if (seenToday) {
+          badge.textContent = 'Exibido hoje (máx. 1x/dia)';
+          badge.style.background = 'rgba(59, 130, 246, 0.15)';
+          badge.style.color = '#3b82f6';
+        } else {
+          badge.textContent = `Ativo (20 min • ${elapsedMins}m)`;
+          badge.style.background = 'rgba(234, 179, 8, 0.15)';
+          badge.style.color = 'var(--gold-400)';
+        }
       }
     }
   } catch (e) {
