@@ -2874,14 +2874,7 @@ function handleDonateAudioFinished() {
   activeDonateUtterance = null;
   updateDonateAudioBtnState(false);
   clearDonateAutoCloseTimer();
-  // Automatically close the banner after the speech completes (1.5s delay for smooth transition)
-  donateAutoCloseTimer = setTimeout(() => {
-    const modal = document.getElementById('donateModal');
-    if (modal && !modal.classList.contains('hidden')) {
-      console.log('[Donate] Leitura do texto concluída. Fechando banner automaticamente.');
-      closeDonateModal();
-    }
-  }, 1500);
+  console.log('[Donate] Leitura do texto concluída. Modal permanece aberto para interação do usuário.');
 }
 
 window.stopDonateAudio = function () {
