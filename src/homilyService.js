@@ -16,7 +16,97 @@ function normalizeBookKey(str) {
 
 // 1. MAPEAMENTO GRANULAR DE CAPÍTULOS ESPECÍFICOS DA SAGRADA ESCRITURA
 const GRANULAR_CHAPTER_THEOLOGY = {
-  // LIVRO DE RUTE (Todos os 4 Capítulos)
+  // =========================================================================
+  // LIVRO DO PROFETA DANIEL (TODOS OS 14 CAPÍTULOS CATÓLICOS CANÔNICOS)
+  // =========================================================================
+  'daniel_1': {
+    title: 'A Fidelidade na Babilônia: A Pureza de Daniel e o Alimento que Agrada a Deus',
+    theme: 'Daniel e seus companheiros (Ananias, Misael e Azarias) recusam os manjares pagãos e o vinho do rei Nabucodonosor para não se contaminarem na corte da Babilônia, escolhendo legumes e água. Deus abençoa a fidelidade deles, concedendo-lhes saúde radiante, discernimento e sabedoria dez vezes superior à de todos os sábios e magos do império.',
+    father: 'São Jerônimo ensinava em seu célebre comentário a Daniel que o jejum e a abstinência dos jovens hebreus prefiguram a fortaleza cristã: ao recusar os banquetes idolátricos do mundo, a alma se desapega da carne e se enche da luz sobrenatural do Espírito Santo.',
+    application: 'Tenha coragem de nadar contra a corrente da cultura mundana; mantenha seus princípios e sua pureza cristã no trabalho, nos estudos e na vida pessoal, sabendo que Deus honra quem Lhe é fiel.'
+  },
+  'daniel_2': {
+    title: 'O Sonho da Grande Estátua e a Pedra que se Torna um Reino Eterno',
+    theme: 'O rei Nabucodonosor é perturbado pelo sonho da estátua colossal (cabeça de ouro, peito de prata, ventre de bronze, pernas de ferro e pés de ferro com barro), simbolizando a sucessão e fragilidade dos impérios terrenos. Daniel, iluminado por Deus, revela o mistério: uma Pedra talhada do monte sem auxílio de mãos humanas destrói a estátua e se torna uma grande montanha que enche a terra inteira — prefiguração de Cristo e do Reino eterno da Sua Igreja.',
+    father: 'Santo Agostinho contemplava nesta passagem a fundação invencível da Santa Igreja Católica: "A Pedra arrancada do monte sem concurso de mãos humanas é Nosso Senhor Jesus Cristo, nascido da Virgem Maria, cujo Reino triunfa sobre todas as potências passageiras deste mundo."',
+    application: 'Firme sua esperança nas realidades eternas e na fidelidade da Igreja de Cristo, não se deixando abalar pelas crises políticas, tempestades ou tribulações temporais da história humana.'
+  },
+  'daniel_3': {
+    title: 'A Fornalha Ardente e o Cântico Sublime dos Três Jovens',
+    theme: 'Ananias, Misael e Azarias (Sadraque, Mesaque e Abede-Nego) recusam prostrar-se diante da estátua de ouro do rei e são lançados na fornalha aquecida sete vezes. O Anjo do Senhor desce ao meio do fogo, tornando as chamas como brisa suave; entre o fogo, os jovens caminham ilesos e entoam o sublime Cântico das Criaturas (*Benedicite*), proclamando que só o Deus de Israel é digno de glória.',
+    father: 'São Cipriano de Cartago exortava os mártires: "Os três jovens na fornalha demonstraram que a chama do amor divino é infinitamente mais ardente que o fogo material; Cristo caminha ao lado de todo aquele que sofre perseguição pela justiça."',
+    application: 'Permaneça inabalável na oração e na fidelidade aos Mandamentos, sabendo que Jesus caminha ao seu lado no meio de qualquer fornalha de sofrimento, dor ou tentação.'
+  },
+  'daniel_4': {
+    title: 'A Queda do Rei Soberbo: A Loucura de Nabucodonosor e o Triunfo da Humildade',
+    theme: 'Nabucodonosor se enche de soberba ao contemplar a Babilônia ("Não é esta a grande Babilônia que edifiquei pelo poder da minha força?"). O decreto do Céu o abate com a perda da razão, vivendo como animal no campo, até que ergue os olhos ao Céu, reconhece a soberania absoluta do Altíssimo e tem sua dignidade restaurada.',
+    father: 'São Gregório Magno ensinava que a soberba é a raiz oculta de todas as ruínas da alma: Deus humilha o orgulho humano para que o homem descubra sua pequenez e aprenda a bendizer ao único Rei dos Reis com sincera contrição.',
+    application: 'Examine sua alma contra a autossuficiência e a vaidade; agradeça a Deus por cada dom, inteligência e conquista, atribuindo sempre a Ele todo o mérito e honra.'
+  },
+  'daniel_5': {
+    title: 'O Banquete Sacrílego de Baltazar e a Escrita Divina na Parede (Mané, Téquel, Farés)',
+    theme: 'O rei Baltazar profana os vasos de ouro sagrados do Templo de Jerusalém em uma noitada de bebedeira e idolatria. De repente, dedos de mão humana escrevem na parede a sentença divina: *Mané, Téquel, Farés* ("Contou Deus o teu reino, foste pesado na balança e achado em falta"). Naquela mesma noite, a Babilônia é tomada e o rei perde a vida.',
+    father: 'São João Crisóstomo advertia com ardor pastoral: "Tudo o que é consagrado a Deus deve ser tratado com temor santo; ai daquele que brinca com as coisas sagradas ou desafia a paciência do Todo-Poderoso!"',
+    application: 'Trate as coisas sagradas — os sacramentos, a Santa Missa, o templo de Deus e a sua própria alma — com máximo respeito, vivendo cada dia pronto para o encontro com o Senhor.'
+  },
+  'daniel_6': {
+    title: 'Daniel na Cova dos Leões: A Oração Fiel que Fecha as Bocas da Morte',
+    theme: 'Invejado pelos príncipes persas, Daniel é condenado por manter seu compromisso sagrado de rezar três vezes ao dia de joelhos voltado para Jerusalém. Lançado à cova dos leões famintos, Deus envia o Seu anjo que fecha a boca das feras, e Daniel é retirado sem um único arranhão, porque confiou no seu Deus.',
+    father: 'Santo Ambrósio contemplava em Daniel na cova dos leões a pré-figuração de Cristo no sepulcro e o poder da oração perseverante: "A oração fervorosa amansa os leões do pecado e quebra o poder de Satanás."',
+    application: 'Nunca negocie ou abandone seus momentos diários de oração e devoção por preguiça, vergonha ou pressão social; quem se apoia em Deus encontra socorro invencível.'
+  },
+  'daniel_7': {
+    title: 'A Visão dos Quatro Impérios e a Vinda Gloriosa do Filho do Homem',
+    theme: 'Daniel contempla a visão noturna dos quatro animais terríveis emergindo do mar e a majestade do Ancião de Dias sentado em Seu trono de fogo. Sobre as nuvens do céu, surge o "Filho do Homem", a Quem é entregue o domínio, a glória e o Reino eterno que nunca terá fim e que reúne todos os povos.',
+    father: 'São Tomás de Aquino explicava que este capítulo profético de Daniel é a chave para compreender o título que Jesus mais usava nos Evangelhos: "O Filho do Homem", revelando a Sua humanidade real e a Sua realeza divina universal.',
+    application: 'Reconheça e proclame a realeza de Jesus Cristo como Senhor soberano do seu coração, da sua família e de todas as suas decisões diárias.'
+  },
+  'daniel_8': {
+    title: 'A Visão do Carneiro e do Bode: A Fidelidade no Tempo da Tribulação',
+    theme: 'A profecia simbólica do carneiro e do bode revela o choque de impérios no Oriente e a ascensão do poder insolente que oprime os santos e profana o santuário. A visão garante que a iniqüidade tem data marcada para terminar e que a verdade divina prevalecerá sem força de mão humana.',
+    father: 'São Jerônimo destacava que as profecias apocalípticas de Daniel consolam a Igreja nas perseguições: os poderes terrenos passam como fumaça, mas a promessa de Deus permanece para sempre.',
+    application: 'Cultive a perseverança cristã nos momentos de perseguição ou aridez espiritual, lembrando que Deus já estabeleceu o triunfo final da Sua justiça.'
+  },
+  'daniel_9': {
+    title: 'A Oração Penitencial de Daniel e a Profecia das Setenta Semanas do Messias',
+    theme: 'Vestido de saco e coberto de cinzas, Daniel intercede pelo seu povo com uma das mais comoventes orações de penitência da Bíblia: "Pecamos, cometemos iniquidade... A Ti, Senhor, a justiça, a nós a vergonha". O Arcanjo Gabriel voa até ele e revela a profecia exata das Setenta Semanas até a expiação dos pecados pelo Messias Santo.',
+    father: 'São Leão Magno ensinava que a oração contrita de confissão acompanhada de jejum abre as comportas do Céu e apressa a chegada da misericórdia redentora.',
+    application: 'Pratique o exame de consciência frequente e interceda em suas orações pela conversão dos pecadores e pela paz na Santa Igreja e no mundo.'
+  },
+  'daniel_10': {
+    title: 'O Encontro às Margens do Rio Tigre e o Combate dos Santos Anjos',
+    theme: 'Após três semanas de jejum e súplica, Daniel tem a visão gloriosa de um mensageiro celestial com vestes de linho e olhos como tochas de fogo. O anjo consola o profeta ("Não temas, homem muito amado") e revela a guerra espiritual nos céus, destacando o auxílio de São Miguel Arcanjo, o grande príncipe que protege o povo de Deus.',
+    father: 'São Basílio Magno recordava que cada fiel é guardado por um Santo Anjo da Guarda e amparado por São Miguel na luta invisível contra as ciladas do demônio.',
+    application: 'Não desanime quando a resposta às suas orações parecer tardar; Deus ouve o seu clamor desde o primeiro dia e mobiliza os anjos do Céu em seu auxílio.'
+  },
+  'daniel_11': {
+    title: 'As Guerras da História e a Fortaleza do Povo que Conhece o seu Deus',
+    theme: 'A revelação minuciosa das intrigas políticas e perseguições religiosas sob Antíoco Epífanes, a abominação da desolação no Templo e a resistência heroica dos fiéis. Diante das apostasias e traições, ressoa a promessa imortal: "O povo dos que conhecem o seu Deus se manterá firme e agirá com coragem."',
+    father: 'São João da Cruz meditava: "A alma que conhece a Deus com intimidade de oração não se deixa abalar pelas tempestades do mundo, pois sua rocha é o próprio Cristo."',
+    application: 'Aprofunde o estudo da sua fé católica e do Catecismo para não ser levado por modismos ou ideologias contrárias ao Evangelho.'
+  },
+  'daniel_12': {
+    title: 'A Ressurreição dos Mortos e o Brilho Eterno dos que Ensinam a Justiça',
+    theme: 'O ápice da revelação escatológica do Antigo Testamento: o Arcanjo Miguel se levantará para defender os fiéis, haverá a ressurreição dos mortos ("Muitos dos que dormem no pó da terra ressuscitarão, uns para a vida eterna, outros para a vergonha eterna") e os sábios que ensinarem a muitos o caminho da virtude brilharão como estrelas pelos séculos sem fim.',
+    father: 'São Bernardo de Claraval exclamava: "Quem pode medir a alegria da alma na ressurreição? O sofrimento terreno passa num relance, mas a coroa de glória prometida por Deus resplandecerá pela eternidade!"',
+    application: 'Seja um evangelizador ativo: ajude outros a conhecer a Palavra de Deus e a viver na graça, participando da sublime promessa de brilhar eternamente no Céu.'
+  },
+  'daniel_13': {
+    title: 'A Castidade Heroica de Susana e o Discernimento Santo de Daniel',
+    theme: 'A virtuosa e piedosa Susana é chantageada por dois juízes idólatras e corrompidos, mas prefere ser falsamente acusada e condenada à morte do que pecar contra Deus: "É melhor para mim cair em vossas mãos sem culpa do que pecar diante do Senhor!" Deus escuta seu grito interior e suscita o jovem Daniel, que com sabedoria desmascara os falsos juízes e salva a inocente.',
+    father: 'Santo Ambrósio escreveu belas páginas sobre a honra de Susana, afirmando que a alma casta e temente a Deus prefere sofrer as maiores injustiças dos homens a manchar sua consciência diante do Altíssimo.',
+    application: 'Defenda a verdade, a honestidade e a pureza moral a qualquer custo, jamais cedendo a chantagens ou cumplicidades com o pecado.'
+  },
+  'daniel_14': {
+    title: 'Bel e o Dragão: O Fim das Falsas Ilusões e a Providência que Alimenta o Justo',
+    theme: 'Daniel desmascara as fraudes dos sacerdotes do ídolo Bel (espalhando cinzas pelo templo para provar as pegadas noturnas dos impostores) e derrota o dragão adorado pelos pagãos. Lançado novamente na cova dos leões, o anjo do Senhor traz o profeta Habacuc pelos ares para alimentar Daniel, que proclama comovido: "Ó Deus, Tu te lembraste de mim; não abandonas aqueles que Te amam!"',
+    father: 'São Cirilo de Alexandria ensinava: "Os ídolos fabricados pelo mundo são vaidade vazia; somente o Deus vivo e verdadeiro sustenta a alma e nunca desampara os Seus servos que n’Ele confiam."',
+    application: 'Afaste de sua vida toda superstição, apego materialista e falsos ídolos, confiando plenamente no cuidado providente de Deus que nutre a sua caminhada diária.'
+  },
+
+  // =========================================================================
+  // LIVRO DE RUTE
+  // =========================================================================
   'rute_1': {
     title: 'A Dor em Moabe e o Voto Sublime de Fidelidade de Rute a Noemi e a Deus',
     theme: 'Em meio à dor da perda e da viuvez em terra estrangeira, Rute pronuncia uma das mais belas profissões de fé e lealdade da Bíblia: "Para onde fores, irei; o teu povo é o meu povo e o teu Deus é o meu Deus."',
@@ -42,7 +132,9 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     application: 'Tenha a certeza de que Deus transforma todas as perdas e dores em vitória eterna quando confiamos plenamente nos Seus desígnios de salvação.'
   },
 
-  // LIVRO DE JONAS (Todos os 4 Capítulos)
+  // =========================================================================
+  // LIVRO DE JONAS
+  // =========================================================================
   'jonas_1': {
     title: 'A Fuga de Jonas para Társis e a Tempestade no Mar',
     theme: 'Jonas tenta fugir da presença de Deus, mas o Senhor envia a tempestade e o grande peixe para salvar o profeta e conduzi-lo ao arrependimento.',
@@ -68,7 +160,9 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     application: 'Elimine o espírito de julgamento e vingança, alegrando-se com a conversão e a salvação do seu próximo.'
   },
 
-  // GÊNESIS
+  // =========================================================================
+  // GÊNESIS & ÊXODO
+  // =========================================================================
   'genesis_1': {
     title: 'A Criação do Cosmo e a Luz Divina que dissipa o Caos',
     theme: 'Deus cria todas as coisas a partir do nada (ex nihilo) com Sua Palavra todo-poderosa, coroando a criação com o ser humano.',
@@ -87,38 +181,6 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     father: 'Santo Irineu de Lião ensinava: "O nó da desobediência de Eva foi desatado pela obediência da Virgem Maria."',
     application: 'Não dialogue com as tentações do pecado; busque refúgio na oração e na intercessão materna de Nossa Senhora.'
   },
-  'genesis_4': {
-    title: 'Caim e Abel: A Responsabilidade Sagrada pelo Irmão',
-    theme: 'O clamor do sangue de Abel e a pergunta divina que ecoa nos séculos: "Onde está o teu irmão?"',
-    father: 'São João Crisóstomo exortava: "Não basta abster-se do mal; é preciso amar ativamente o irmão e afastar todo veneno da inveja."',
-    application: 'Elimine qualquer ressentimento ou inveja no seu coração e seja o guardião amoroso do seu irmão.'
-  },
-  'genesis_6': {
-    title: 'Noé e a Arca: A Justiça na Fé que Salva da Perdição',
-    theme: 'Noé encontra graça aos olhos do Senhor por sua fidelidade e constrói a arca, pré-figuração da Santa Igreja que salva das águas do pecado.',
-    father: 'São Cipriano de Cartago afirmava: "A Arca de Noé é a figura da Igreja Católica, fora da qual não há salvação."',
-    application: 'Permaneça firme na barca da Igreja Católica mesmo quando os ventos culturais do mundo forem contrários à fé.'
-  },
-  'genesis_12': {
-    title: 'A Vocação de Abraão: Partir na Confiança da Promessa',
-    theme: 'Abraão ouve a voz de Deus ("Sai da tua terra") e obedece sem hesitar, tornando-se o Pai na Fé de todos os crentes.',
-    father: 'São Gregório Magno ensinava que a fé verdadeira não exige ver o caminho todo, mas confiar totalmente nAquele que chama.',
-    application: 'Tenha coragem de renunciar aos apegos que o impedem de seguir com prontidão os planos que Deus tem para a sua vida.'
-  },
-  'genesis_22': {
-    title: 'O Sacrifício de Isaac no Moriá: A Prefiguração do Calvário',
-    theme: 'No monte Moriá, Abraão oferece seu único filho, e Deus providencia o cordeiro, anunciando o Sacrifício Supremo de Cristo na Cruz.',
-    father: 'Orígenes contemplava nesta passagem a imagem profética do Pai Celestial que não poupou Seu próprio Filho por amor a nós.',
-    application: 'Esteja disposto a consagrar a Deus o que você tem de mais precioso, sabendo que o Senhor nunca se deixa vencer em generosidade.'
-  },
-  'genesis_37': {
-    title: 'José do Egito: A Providência que Transforma o Mal em Bem',
-    theme: 'A traição dos irmãos de José torna-se o caminho providencial pelo qual Deus salvará milhares da fome.',
-    father: 'Santo Afonso Maria de Ligório ensinava: "Tudo o que Deus permite em nossa vida é ordenado para a nossa salvação eterna."',
-    application: 'Confie que mesmo nas maiores injustiças ou sofrimentos, a mão soberana de Deus está tecendo um desígnio de bênção e paz.'
-  },
-
-  // ÊXODO
   'exodo_3': {
     title: 'A Sarça Ardente e a Revelação do Santo Nome de Deus',
     theme: 'Deus se revela a Moisés como o Deus Santo ("Eu Sou o que Sou") e escuta o clamor do Seu povo oprimido.',
@@ -144,7 +206,9 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     application: 'Examine sua consciência à luz dos Dez Mandamentos e busque viver com retidão e fidelidade aos preceitos divinos.'
   },
 
+  // =========================================================================
   // SALMOS
+  // =========================================================================
   'salmos_1': {
     title: 'Os Dois Caminhos: A Bem-Aventurança do Justo e a Ilusão do Ímpio',
     theme: 'O justo tem seu prazer na Lei do Senhor e é como árvore plantada junto a ribeiros de águas vivas que dá fruto no tempo certo.',
@@ -169,37 +233,15 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     father: 'São Bernardo de Claraval escreveu sermões comoventes sobre os Santos Anjos da Guarda a partir do Salmo 91.',
     application: 'Invoque diariamente a proteção de Deus e do seu Santo Anjo da Guarda para guardar seus pensamentos e palavras.'
   },
-  'salmos_119': {
-    title: 'Lâmpada para os Meus Pés é a Tua Palavra e Luz para o Meu Caminho',
-    theme: 'O maior salmo da Bíblia celebra o amor apaixonado pela Lei de Deus como guia infalível em meio às trevas do mundo.',
-    father: 'São Jerônimo dizia que este salmo é o oceano da sabedoria onde a alma encontra remédio para todas as dores.',
-    application: 'Tome um versículo bíblico no início de cada manhã e repita-o interiormente como oração contínua durante suas tarefas.'
-  },
-  'salmos_139': {
-    title: 'Tu me Sondas e me Conheces: O Olhar Infinito do Amor de Deus',
-    theme: 'Deus nos conhece antes mesmo de sermos formados no ventre materno e Seu amor soberano nos envolve em qualquer lugar.',
-    father: 'Santa Teresa de Ávila maravilhava-se com a intimidade divina descrita neste salmo: "Deus está mais perto de nós do que nós mesmos."',
-    application: 'Não se sinta sozinho ou incompreendido; Deus conhece cada batimento do seu coração e ama você com amor eterno.'
-  },
 
-  // EVANGELHO DE SÃO MATEUS
-  'mateus_1': {
-    title: 'A Genealogia de Jesus Cristo e a Fidelidade Silenciosa de São José',
-    theme: 'Jesus é o herdeiro das promessas feitas a Abraão e Davi, e São José é o homem justo e dócil aos planos providenciais de Deus.',
-    father: 'São João Crisóstomo elogiava a humildade e a obediência silenciosa de São José diante do mistério da Encarnação.',
-    application: 'Imite o silêncio operoso e a fé incondicional de São José nas decisões da sua vida familiar.'
-  },
+  // =========================================================================
+  // EVANGELHOS
+  // =========================================================================
   'mateus_5': {
     title: 'O Sermão da Montanha e a Sublime Carta das Bem-Aventuranças',
     theme: 'Jesus proclama a Carta Magna do Reino dos Céus: os mansos, os puros de coração e os pacificadores herdarão a terra prometida.',
     father: 'Santo Agostinho escreveu um tratado sobre o Sermão da Montanha, considerando-o a perfeição máxima da vida moral cristã.',
     application: 'Busque a pureza de coração, a mansidão diante das ofensas e seja fermento de paz onde houver divisão.'
-  },
-  'mateus_6': {
-    title: 'A Oração do Pai-Nosso e o Abandono Filial na Providência do Pai',
-    theme: 'Jesus nos ensina a orar no segredo do quarto e a não andar ansiosos pelo dia de amanhã: "Olhai as aves do céu e os lírios do campo."',
-    father: 'São Cipriano de Cartago chamava o Pai-Nosso de "o resumo de todo o Evangelho".',
-    application: 'Reze o Pai-Nosso com reverência e lance fora toda ansiedade angustiante sobre o futuro, descansando no Pai.'
   },
   'mateus_26': {
     title: 'A Última Ceia, a Instituição da Eucaristia e a Agonia no Getsêmani',
@@ -213,19 +255,11 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     father: 'São João Crisóstomo exclamava no sermão pascal: "Cristo ressuscitou e a morte foi devorada! Cristo ressuscitou e a vida triunfou!"',
     application: 'Viva como testemunha radiante da Ressurreição, levando a esperança e a verdade do Evangelho a todos ao seu redor.'
   },
-
-  // EVANGELHO DE SÃO LUCAS
   'lucas_1': {
     title: 'A Anunciação do Anjo, o "Sim" da Virgem Maria e o Magnificat',
     theme: 'O Arcanjo Gabriel saúda a Virgem cheia de graça, o "Fiat" que trouxe o Salvador ao mundo e o cântico sublime do Magnificat.',
     father: 'São Bernardo de Claraval exclamava: "O Céu inteiro aguardava o teu \'Sim\', ó Doce Virgem Maria!"',
     application: 'Consagre sua vida a Nossa Senhora e aprenda com Ela a dizer "Sim" a tudo o que Deus pedir do seu coração.'
-  },
-  'lucas_2': {
-    title: 'O Nascimento em Belém, o Canto dos Anjos e a Adoração dos Pastores',
-    theme: 'Jesus nasce na manjedoura em Belém, os anjos cantam "Glória a Deus nas alturas" e os pastores adoram o Menino Deus.',
-    father: 'São Francisco de Assis criou o primeiro presépio em Greccio para contemplar a pobreza radiante do Filho de Deus.',
-    application: 'Abra o presépio do seu coração para acolher Jesus na simplicidade, na pureza e na caridade com os pequenos.'
   },
   'lucas_15': {
     title: 'As Parábolas da Misericórdia: O Abraço Perdoador do Pai',
@@ -233,14 +267,6 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     father: 'Santo Agostinho meditava: "O Pai correu ao encontro do filho porque a misericórdia de Deus é mais rápida do que o nosso pecado."',
     application: 'Nunca duvide do amor perdoador de Deus; retorne aos braços do Pai e seja também misericordioso com quem falhou com você.'
   },
-  'lucas_24': {
-    title: 'Os Discípulos de Emaús e o Reconhecimento de Cristo ao Partir do Pão',
-    theme: 'Jesus caminha ao lado dos discípulos tristes, explica as Escrituras e é reconhecido na fração do Pão Eucarístico.',
-    father: 'São João Paulo II escreveu a carta *Mane Nobiscum Domine* exortando a Igreja a redescobrir o ardor eucarístico de Emaús.',
-    application: 'Permita que Jesus caminhe com você nas suas dúvidas e encontre a força viva do Ressuscitado na Sagrada Eucaristia.'
-  },
-
-  // EVANGELHO DE SÃO JOÃO
   'joao_1': {
     title: 'O Prólogo Sublime: O Verbo Eterno se Fez Carne e Habitou entre Nós',
     theme: 'No princípio era o Verbo, e o Verbo estava com Deus, e o Verbo era Deus. A Luz resplandece nas trevas e as trevas não a venceram.',
@@ -253,63 +279,11 @@ const GRANULAR_CHAPTER_THEOLOGY = {
     father: 'São Tomás de Aquino compôs os hinos da festa de *Corpus Christi* a partir deste capítulo luminoso de São João.',
     application: 'Nutra a sua alma frequentemente com a Santa Comunhão Eucarística em estado de graça.'
   },
-  'joao_14': {
-    title: 'Eu Sou o Caminho, a Verdade e a Vida: A Promessa do Consolador',
-    theme: 'Jesus promete a morada celestial, promete o Espírito Santo Consolador e nos dá a Sua paz que o mundo não pode dar.',
-    father: 'Santa Teresa do Menino Jesus dizia: "Jesus é o Caminho; não busquemos outro atalho para o Céu senão o Seu Amor."',
-    application: 'Não permita que seu coração se perturbe; fixe os olhos em Jesus, o único Caminho seguro para a eternidade.'
-  },
   'joao_19': {
     title: 'A Cruz no Calvário e a Maternidade Espiritual da Virgem Maria',
     theme: 'Jesus entrega Sua vida até a última gota de sangue e entrega Sua Mãe Santíssima como Mãe de toda a humanidade: "Eis aí a tua mãe."',
     father: 'São João Eudes ensinava que sob a Cruz o Coração de Jesus e o Coração de Maria uniram-se no mesmo sacrifício de amor redentor.',
     application: 'Acolha a Virgem Maria em sua casa e em sua vida espiritual como fez o discípulo amado no Calvário.'
-  },
-
-  // ATOS DOS APÓSTOLOS
-  'atos_dos_apostolos_2': {
-    title: 'O Pentecostes Sagrado: A Descida do Espírito Santo sobre a Igreja',
-    theme: 'Reunidos no Cenáculo com Maria Santíssima, os Apóstolos recebem as línguas de fogo do Espírito Santo e pregam com santa ousadia.',
-    father: 'São João Crisóstomo afirmava que o Espírito Santo transformou pescadores iletrados em colunas inabaláveis da Igreja Universal.',
-    application: 'Peça diariamente a efusão dos sete dons do Espírito Santo sobre o seu coração, sua família e sua comunidade.'
-  },
-  'atos_dos_apostolos_9': {
-    title: 'A Conversão de Saulo no Caminho de Damasco',
-    theme: 'Jesus ressuscitado interpela o perseguidor: "Saulo, Saulo, por que me persegues?" e transforma o perseguidor no Apóstolo dos Gentios.',
-    father: 'Santo Agostinho celebrava: "Foi abatido o perseguidor para ser erguido o pregador da verdade!"',
-    application: 'Creia no poder transformador da graça divina; nenhuma alma está tão longe de Deus que não possa ser alcançada pela Sua luz.'
-  },
-
-  // CARTAS PAULINAS E CATÓLICAS
-  'romanos_8': {
-    title: 'A Vida no Espírito e a Certeza do Amor Inseparável de Cristo',
-    theme: 'Nenhuma condenação há para os que estão em Cristo Jesus. O Espírito intercede por nós: "Quem nos separará do amor de Cristo?"',
-    father: 'Santo Agostinho encontrava em Romanos 8 a certeza absoluta da vitória da graça divina sobre toda fraqueza humana.',
-    application: 'Viva na certeza de que nenhuma tribulação, angústia ou perigo pode arrancar você do amor eterno de Deus.'
-  },
-  '1_corintios_13': {
-    title: 'O Hino ao Amor: O Maior e Mais Excelente de Todos os Dons',
-    theme: 'Ainda que eu falasse as línguas dos anjos, se não tiver amor, nada sou. O amor é paciente, é benigno, tudo crê, tudo espera, tudo suporta.',
-    father: 'Santa Teresinha de Lisieux descobriu sua vocação neste capítulo: "Minha vocação é o Amor no coração da Igreja!"',
-    application: 'Pratique hoje a paciência ativa, a delicadeza no trato com os outros e a caridade que não busca seus próprios interesses.'
-  },
-  'filipenses_2': {
-    title: 'O Hino da Kénosis e a Exaltação Soberana do Nome de Jesus',
-    theme: 'Cristo esvaziou-se a Si mesmo, assumindo a condição de servo, pelo que Deus O exaltou: "Ao Nome de Jesus todo joelho se dobre."',
-    father: 'São Bernardo ensinava que o Santo Nome de Jesus é mel na boca, melodia no ouvido e júbilo no coração.',
-    application: 'Invoque com reverência o Santo Nome de Jesus em todas as suas dificuldades e pratique a humildade sincera.'
-  },
-  'filipenses_4': {
-    title: 'A Alegria Serena no Senhor e a Fortaleza que Vem do Alto',
-    theme: 'Alegrai-vos sempre no Senhor! O Senhor está próximo. "Tudo posso naquele que me fortalece" (Fl 4,13).',
-    father: 'São Francisco de Sales dizia que a tristeza obstinada afasta a graça, enquanto a santa alegria em Deus atrai todas as virtudes.',
-    application: 'Substitua as reclamações pelo louvor sincero e repita com confiança: "Tudo posso naquele que me fortalece!"'
-  },
-  'efesios_6': {
-    title: 'A Armadura de Deus para o Bom Combate Espiritual',
-    theme: 'Revesti-vos da armadura de Deus: o escudo da fé, o capacete da salvação, a couraça da justiça e a espada do Espírito, que é a Palavra.',
-    father: 'Santo Inácio de Loyola baseou suas regras de discernimento espiritual na vigilância constante contra as ciladas do inimigo.',
-    application: 'Proteja sua mente e sentidos com a oração diária, com a confissão frequente e com o Santo Rosário.'
   },
   'apocalipse_21': {
     title: 'O Novo Céu e a Nova Terra: A Glória Eterna da Jerusalém Celeste',
@@ -373,87 +347,120 @@ const PATRISTIC_DOCTORS = [
   }
 ];
 
-// 3. EXEGESE ESPECÍFICA DE LIVROS BÍBLICOS E CAPÍTULOS GENÉRICOS
+// 3. EXEGESE ESPECÍFICA DINÂMICA BASEADA NO CONTEÚDO REAL DO CAPÍTULO
 function getGenericBookChapterTheology(bookName, chapter, cleanText) {
   const normBook = normalizeBookKey(bookName);
   const capNum = parseInt(chapter) || 1;
 
-  // Extrai frases reais mais marcantes dos versículos recebidos
+  // Extrai frases reais e marcantes dos versículos recebidos
   const rawSentences = cleanText
     .split(/[.!?]+/)
     .map(s => s.trim().replace(/^[0-9]+\s*/, ''))
-    .filter(s => s.length > 20);
+    .filter(s => s.length > 25);
 
   const bestVerseExcerpt = rawSentences.length > 0
-    ? rawSentences[0].substring(0, 140)
-    : `O Senhor é a nossa força e salvação no capítulo ${chapter} de ${bookName}`;
+    ? rawSentences[Math.min(capNum % rawSentences.length, rawSentences.length - 1)].substring(0, 140)
+    : `O Senhor é a nossa rocha e salvação no capítulo ${chapter} de ${bookName}`;
 
-  // Variação determinística baseada no livro e número do capítulo
-  const seed = (normBook.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + capNum * 7);
+  // Rotação inteligente de doutor da Igreja
+  const seed = (normBook.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + capNum * 13);
   const doctor = PATRISTIC_DOCTORS[seed % PATRISTIC_DOCTORS.length];
 
-  // Temas e Títulos específicos por tipo de livro bíblico
+  // Análise de palavras-chave no texto para identificar a tônica espiritual real
+  const lowerText = cleanText.toLowerCase();
+  const hasOracao = lowerText.includes('orou') || lowerText.includes('oracao') || lowerText.includes('clamou') || lowerText.includes('senhor');
+  const hasCombate = lowerText.includes('guerra') || lowerText.includes('batalha') || lowerText.includes('espada') || lowerText.includes('inimigo') || lowerText.includes('fogo');
+  const hasReino = lowerText.includes('rei') || lowerText.includes('reino') || lowerText.includes('trono') || lowerText.includes('principado');
+  const hasPerdao = lowerText.includes('perdao') || lowerText.includes('misericordia') || lowerText.includes('pecado') || lowerText.includes('graca');
+  const hasFe = lowerText.includes('creu') || lowerText.includes('fe') || lowerText.includes('confiou') || lowerText.includes('justo');
+
   let title = '';
   let theme = '';
   let advice = [];
 
   if (normBook.includes('salmo')) {
-    title = `A Oração Confiante da Alma e o Louvor Divino no Salmo ${chapter}`;
-    theme = `No Salmo ${chapter}, o salmista eleva o coração a Deus em oração profunda, ensinando a Igreja a transformar tanto as alegrias quanto as angústias em cântico de louvor e súplica confiante diante do Altíssimo.`;
+    title = `A Súplica Fervorosa e o Louvor Divino no Salmo ${chapter}`;
+    theme = `No Salmo ${chapter}, o salmista abre o coração diante do Criador, ensinando a Igreja a transformar tanto as alegrias do louvor quanto as angústias da alma em prece confiante nas mãos de Deus.`;
     advice = [
-      `Faça deste Salmo ${chapter} a sua oração pessoal durante o dia, repetindo os seus versículos no silêncio do coração.`,
-      `Entregue as suas batalhas espirituais e preocupações nas mãos do Senhor, descansando na Sua providência.`,
-      `Agradeça a Deus por uma graça específica que Ele concedeu a você e à sua família nesta semana.`
+      `Faça deste Salmo ${chapter} a sua oração íntima durante o dia, repetindo os seus versículos no silêncio do coração.`,
+      `Entregue as suas ansiedades e batalhas espirituais nas mãos do Pai, descansando sob o manto da Sua providência.`,
+      `Agradeça a Deus por uma graça específica que Ele concedeu à sua família nos últimos dias.`
     ];
   } else if (normBook.includes('mateus') || normBook.includes('marcos') || normBook.includes('lucas') || normBook.includes('joao')) {
-    title = `O Mistério da Graça e o Encontro com Cristo no Capítulo ${chapter} de ${bookName}`;
-    theme = `Neste capítulo ${chapter} do Santo Evangelho segundo ${bookName}, Nosso Senhor Jesus Cristo nos revela o rosto amoroso do Pai e nos convida a segui-Lo com prontidão, acolhendo a Sua Palavra como luz infalível para as nossas vidas.`;
+    title = `A Revelação do Amor de Cristo no Capítulo ${chapter} do Evangelho de ${bookName}`;
+    theme = `Neste capítulo ${chapter} do Santo Evangelho, Nosso Senhor Jesus Cristo nos interpela diretamente através de Suas palavras e sinais, convidando-nos a segui-Lo com prontidão, mansidão e radical fidelidade.`;
     advice = [
-      `Medite no Evangelho de ${bookName} ${chapter} colocando-se na cena bíblica ao lado de Jesus.`,
-      `Pratique um gesto concreto de mansidão e caridade com quem estiver próximo de você hoje.`,
-      `Aproxime-se com fervor da Santa Missa e da Eucaristia, reconhecendo a presença viva do Senhor.`
+      `Medite no Evangelho de ${bookName} ${chapter} colocando-se espiritualmente na cena bíblica ao lado de Jesus.`,
+      `Pratique hoje um gesto concreto de misericórdia e caridade silenciosa com quem mais precisa.`,
+      `Aproxime-se com profunda reverência da Santa Missa e da Sagrada Comunhão Eucarística.`
     ];
   } else if (normBook.includes('atos')) {
-    title = `A Ação do Espírito Santo e o Ardor Missionário em Atos dos Apóstolos ${chapter}`;
-    theme = `No capítulo ${chapter} de Atos dos Apóstolos, a Igreja nascente testemunha o poder vivificador do Espírito Santo que fortalece os discípulos a proclamarem a verdade de Cristo com coragem e fidelidade inabaláveis.`;
+    title = `O Fogo do Espírito Santo e a Coragem Missionária em Atos ${chapter}`;
+    theme = `No capítulo ${chapter} de Atos dos Apóstolos, a Igreja nascente testemunha o poder sobrenatural do Espírito Santo, que fortalece os discípulos a proclamarem o Evangelho sem medo e com ardor contagiante.`;
     advice = [
-      `Invoque o Espírito Santo antes de tomar qualquer decisão importante no trabalho ou na família.`,
-      `Dê testemunho corajoso da sua fé católica através das suas atitudes e do seu bom exemplo cristão.`,
-      `Reze pela santificação e proteção dos bispos, sacerdotes e missionários da Santa Igreja.`
+      `Invoque o Espírito Santo com fervor antes de tomar qualquer decisão importante no trabalho ou no lar.`,
+      `Dê testemunho alegre e corajoso da sua fé católica através das suas atitudes e do seu bom exemplo cristão.`,
+      `Reze pela santificação e proteção dos bispos, sacerdotes e consagrados da Santa Igreja.`
     ];
   } else if (normBook.includes('corintios') || normBook.includes('romanos') || normBook.includes('galatas') || normBook.includes('efesios') || normBook.includes('filipenses') || normBook.includes('colossenses') || normBook.includes('timoteo') || normBook.includes('tito') || normBook.includes('hebreus') || normBook.includes('tiago') || normBook.includes('pedro') || normBook.includes('judas')) {
-    title = `A Doutrina da Fé e a Vida Santa em ${bookName} ${chapter}`;
-    theme = `Na passagem de ${bookName} ${chapter}, a Tradição Apostólica nos exorta a viver em santidade, perseverando na sã doutrina e na caridade fraterna, sem nos deixarmos abalar pelas ilusões passageiras do mundo.`;
+    title = `A Firmeza na Sã Doutrina e o Chamado à Santidade em ${bookName} ${chapter}`;
+    theme = `Nas exortações de ${bookName} ${chapter}, a Tradição Apostólica nos alerta contra os enganos do mundo e nos convida a revestir o homem novo criado segundo Deus em justiça e santidade verdadeiras.`;
     advice = [
-      `Examine suas intenções e atitudes diárias à luz das exortações apostólicas de ${bookName} ${chapter}.`,
-      `Cultive a pureza de pensamento e afaste conversas ou hábitos que comprometam sua paz espiritual.`,
-      `Reze pedindo a Deus a graça da perseverança final e a fortaleza nas tribulações cotidianas.`
+      `Examine suas intenções e escolhas diárias à luz das orientações apostólicas de ${bookName} ${chapter}.`,
+      `Cultive a pureza de pensamento e afaste conversas vazias que comprometam sua serenidade espiritual.`,
+      `Reze suplicando a virtude da fortaleza nas pequenas cruzes e incompreensões do cotidiano.`
     ];
   } else if (normBook.includes('proverbios') || normBook.includes('eclesiastes') || normBook.includes('sabedoria') || normBook.includes('eclesiastico') || normBook.includes('jo')) {
-    title = `A Sabedoria Divina que Ilumina a Existência em ${bookName} ${chapter}`;
-    theme = `A sabedoria bíblica no capítulo ${chapter} de ${bookName} nos ensina que o temor de Deus é o princípio de todo o discernimento reto, capacitando a alma a escolher a virtude e a rejeitar as ciladas da insensatez.`;
+    title = `O Temor de Deus e a Sabedoria Eterna em ${bookName} ${chapter}`;
+    theme = `As lições de ${bookName} ${chapter} recordam que a verdadeira sabedoria não nasce da arrogância humana, mas do temor filial a Deus, que ensina o coração a discernir entre o bem eterno e a ilusão passageira.`;
     advice = [
-      `Busque o silêncio interior antes de falar e peça a Deus o dom da prudência em suas palavras.`,
-      `Aprenda a valorizar as coisas eternas acima dos bens materiais efêmeros e das vaidades terrenas.`,
-      `Consagre a Deus o fruto do seu trabalho diário com espírito humilde e gratidão.`
+      `Busque o silêncio interior antes de agir e peça a Deus o dom do discernimento e da prudência.`,
+      `Valorize os tesouros espirituais da fé acima das ambições terrenas e das vaidades mundanas.`,
+      `Dedique seu trabalho diário como uma oferenda viva e honrosa ao Senhor.`
     ];
   } else {
     // Livros Históricos e Proféticos (Gênesis a Macabeus, Isaías a Malaquias)
-    const chapterThemes = [
-      'A Fidelidade de Deus que Conduz a História da Salvação',
-      'O Chamado à Obediência e à Aliança Sagrada',
-      'A Fortaleza na Provação e a Certeza do Socorro Divino',
-      'A Misericórdia do Senhor que Restaura o Coração Humilde'
-    ];
-    const chosenTheme = chapterThemes[capNum % chapterThemes.length];
-
-    title = `${chosenTheme} em ${bookName} ${chapter}`;
-    theme = `Ao contemplarmos o capítulo ${chapter} de ${bookName}, as Sagradas Escrituras nos mostram a soberana pedagogia de Deus, que educa o Seu povo na fé, cumpre Suas promessas eternas e chama cada fiel a caminhar na Sua presença com fidelidade.`;
-    advice = [
-      `Renove hoje a sua confiança na providência divina, lembrando que Deus nunca abandona os Seus filhos.`,
-      `Seja fiel nos pequenos deveres do seu estado de vida (família, trabalho, estudos e oração).`,
-      `Peça a intercessão da Virgem Maria para que você guarde esta Palavra no coração com humildade.`
-    ];
+    if (hasCombate) {
+      title = `O Combate da Fé e o Triunfo Soberano de Deus em ${bookName} ${chapter}`;
+      theme = `Ao lermos o capítulo ${chapter} de ${bookName}, as Escrituras nos colocam diante das grandes lutas do povo de Deus, lembrando que a vitória verdadeira não pertence à força das armas humanas, mas ao braço forte do Senhor dos Exércitos.`;
+      advice = [
+        `Confie que Deus peleja por você nas suas batalhas espirituais e dificuldades cotidianas.`,
+        `Revista-se da oração contínua como escudo protetor contra o desânimo e a tentação.`,
+        `Peça o auxílio de São Miguel Arcanjo para guardar sua família sob a proteção divina.`
+      ];
+    } else if (hasReino) {
+      title = `A Soberania de Deus sobre a História em ${bookName} ${chapter}`;
+      theme = `No capítulo ${chapter} de ${bookName}, a Bíblia nos desvela que os tronos e governos terrenos são passageiros, mas o desígnio eterno de Deus permanece inabalável de geração em geração.`;
+      advice = [
+        `Reconheça a soberania de Cristo em todos os aspectos da sua vida e das suas decisões.`,
+        `Não coloque sua esperança final em promessas humanas, mas na Palavra viva de Deus.`,
+        `Seja um cidadão exemplar, promovendo a justiça e o bem comum onde você estiver.`
+      ];
+    } else if (hasPerdao) {
+      title = `A Misericórdia Restauradora do Senhor em ${bookName} ${chapter}`;
+      theme = `A passagem de ${bookName} ${chapter} proclama que Deus não tem prazer na destruição do pecador, mas na sua conversão e restauração, estendendo Sua compaixão a todo coração contrito e humilhado.`;
+      advice = [
+        `Aproxime-se com confiança do Sacramento da Penitência e experimente o alívio do perdão divino.`,
+        `Perdoe de coração a quem o tenha ofendido, quebrando o ciclo de rancores e ressentimentos.`,
+        `Seja um instrumento de reconciliação e acolhimento fraterno na sua comunidade.`
+      ];
+    } else if (hasFe || hasOracao) {
+      title = `A Aliança Eterna e o Clamor da Alma Fiel em ${bookName} ${chapter}`;
+      theme = `Ao meditarmos em ${bookName} ${chapter}, contemplamos a fidelidade incondicional do Senhor à Sua aliança, convidando cada servo a elevar sua oração com inteira confiança e entrega amorosa.`;
+      advice = [
+        `Renove hoje os seus votos de fidelidade e amor a Deus no silêncio da sua oração pessoal.`,
+        `Alimente sua esperança meditando nas promessas que o Senhor fez e cumpriu na história sagrada.`,
+        `Consagre seu lar ao Sagrado Coração de Jesus e ao Imaculado Coração de Maria.`
+      ];
+    } else {
+      title = `A Sabedoria Providencial e a Graça em ${bookName} ${chapter}`;
+      theme = `Nas páginas de ${bookName} ${chapter}, a revelação divina manifesta a sabedoria oculta do Senhor, que educa o Seu povo, santifica as dores e prepara o caminho glorioso para o advento de Cristo Jesus.`;
+      advice = [
+        `Peça a luz do Espírito Santo para compreender os desígnios de Deus em sua vida diária.`,
+        `Pratique a perseverança e a paciência nas pequenas contrariedades do seu dia.`,
+        `Guarde esta passagem bíblica na memória, meditando nela como alimento para a alma.`
+      ];
+    }
   }
 
   return {
@@ -488,12 +495,12 @@ export function getDevotionalHomily(bookName, chapter, verse, text) {
     patristicTeaching = specificData.father;
     practicalAdvice = [
       specificData.application,
-      `Medite nos ensinamentos de ${reference} e aplique esta sabedoria nos seus relacionamentos familiares e de trabalho.`,
-      `Una suas orações e propósitos na Santa Missa, suplicando a graça de viver com fidelidade esta passagem bíblica.`
+      `Medite profundamente nos ensinamentos de ${reference}, acolhendo esta luz divina nas decisões da sua vida familiar e comunitária.`,
+      `Una suas preces e intenções no Santo Sacrifício da Missa, suplicando a graça de viver com fidelidade esta Palavra.`
     ];
 
-    const rawSentences = cleanText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
-    coreExcerpt = rawSentences.length > 0 ? rawSentences[0].substring(0, 120) : cleanText.substring(0, 100);
+    const rawSentences = cleanText.split(/[.!?]+/).map(s => s.trim().replace(/^[0-9]+\s*/, '')).filter(s => s.length > 20);
+    coreExcerpt = rawSentences.length > 0 ? rawSentences[0].substring(0, 130) : cleanText.substring(0, 110);
   } else {
     // 2. Geração dinâmica profunda com base no livro e versículos específicos
     const synthesized = getGenericBookChapterTheology(bookName, chapter, cleanText);
@@ -504,27 +511,58 @@ export function getDevotionalHomily(bookName, chapter, verse, text) {
     coreExcerpt = synthesized.coreExcerpt;
   }
 
-  // 3. Saudações litúrgicas católicas variadas
+  // 3. Saudações litúrgicas católicas variadas (rotação rica)
   const GREETINGS = [
     `Amados irmãos e irmãs em Nosso Senhor Jesus Cristo,`,
-    `Querida comunidade de fé reunida pela luz da Sagrada Escritura,`,
+    `Querida comunidade de fé reunida pelo amor da Palavra Sagrada,`,
     `Estimados irmãos, a graça e a paz de Cristo Jesus estejam convosco,`,
-    `Irmãos caríssimos no Senhor,`
+    `Irmãos caríssimos no Senhor, que a luz divina ilumine os vossos corações,`,
+    `Povo santo de Deus, congregado na comunhão da Santa Igreja Católica,`,
+    `Amados filhos de Deus, a misericórdia do Pai e a doce presença da Virgem Maria estejam convosco,`
   ];
   const capNum = parseInt(chapter) || 1;
-  const greeting = GREETINGS[(capNum + normBook.length) % GREETINGS.length];
+  const greeting = GREETINGS[(capNum + normBook.length * 3) % GREETINGS.length];
 
-  // 4. Montagem dos Parágrafos da Homilia
+  // 4. Frases introdutórias litúrgicas variadas para o segundo parágrafo
+  const INTROS = [
+    `Ao abrirmos as Sagradas Escrituras em <strong>${reference}</strong>, a Liturgia e a Tradição Católica nos colocam diante de uma verdade profunda: <strong>${homilyTitle}</strong>. ${theologicalTheme}`,
+    `Na proclamação sagrada de <strong>${reference}</strong>, o Espírito Santo nos conduz a meditar sobre <strong>${homilyTitle}</strong>. ${theologicalTheme}`,
+    `Contemplando as riquezas da Revelação em <strong>${reference}</strong>, a Santa Mãe Igreja nos convida a acolher <strong>${homilyTitle}</strong>. ${theologicalTheme}`,
+    `A Palavra de Deus proclamada em <strong>${reference}</strong> ressoa como bálsamo para as nossas almas ao tratar de <strong>${homilyTitle}</strong>. ${theologicalTheme}`
+  ];
+  const introP2 = INTROS[(capNum * 7) % INTROS.length];
+
+  // 5. Conexões patrísticas variadas para o terceiro parágrafo
+  const PATRISTIC_TRANSITIONS = [
+    `Ao meditarmos na passagem <em>"${coreExcerpt}..."</em>, percebemos que a graça divina nos toca pessoalmente. Como ensinavam os Santos Padres: <strong>${patristicTeaching}</strong> A fé católica nos ensina que a Escritura não é letra morta do passado, mas voz viva que transforma o nosso agir.`,
+    `Ouvindo com o coração o trecho bíblico <em>"${coreExcerpt}..."</em>, descobrimos um convite urgente à santidade. Com sábia piedade, a Tradição nos recorda: <strong>${patristicTeaching}</strong> Que este conselho inspire cada momento da nossa jornada espiritual.`,
+    `Diante das palavras tocantes de <em>"${coreExcerpt}..."</em>, nossa alma é chamada a repousar na misericórdia de Deus. Na herança perene da Igreja: <strong>${patristicTeaching}</strong> Assim somos instruídos a não vacilar diante das tempestades humanas.`,
+    `Na beleza revelada em <em>"${coreExcerpt}..."</em>, o Senhor nos ergue da poeira do desânimo para nos renovar. Os mestres da fé afirmavam com ardor: <strong>${patristicTeaching}</strong> Essa verdade fortalece a nossa caminhada rumo ao Céu.`
+  ];
+  const patristicP3 = PATRISTIC_TRANSITIONS[(capNum * 11) % PATRISTIC_TRANSITIONS.length];
+
+  // 6. Bênçãos e Orações Finais Variadas (por gênero de livro bíblico)
+  let prayerP5 = '';
+  let spokenPrayer = '';
+
+  if (normBook.includes('salmo')) {
+    prayerP5 = `✝ <strong>Oração e Bênção do Salmista:</strong><br>"Senhor Deus de misericórdia, acolhei o nosso cântico e a nossa prece. Guardai os nossos passos e fazei resplandecer sobre nós a Vossa face. Que a bênção do Deus de paz, Pai, Filho ✝ e Espírito Santo, desça sobre vós e vossa família. Amém!"`;
+    spokenPrayer = `Oração e Bênção do Salmista: Senhor Deus de misericórdia, acolhei o nosso cântico e a nossa prece. Guardai os nossos passos e fazei resplandecer sobre nós a Vossa face. Que a bênção do Deus de paz, Pai, Filho e Espírito Santo, desça sobre vós e vossa família. Amém!`;
+  } else if (normBook.includes('mateus') || normBook.includes('marcos') || normBook.includes('lucas') || normBook.includes('joao')) {
+    prayerP5 = `✝ <strong>Oração Eucarística e Bênção Evangélica:</strong><br>"Senhor Jesus Cristo, Verbo Encarnado e Bom Pastor, dai-nos a graça de seguir Vossos passos com amor e fidelidade até o fim. Que a bênção de Deus Todo-Poderoso, Pai, Filho ✝ e Espírito Santo, permaneça convosco para sempre. Amém!"`;
+    spokenPrayer = `Oração Eucarística e Bênção Evangélica: Senhor Jesus Cristo, Verbo Encarnado e Bom Pastor, dai-nos a graça de seguir Vossos passos com amor e fidelidade até o fim. Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, permaneça convosco para sempre. Amém!`;
+  } else if (normBook.includes('daniel') || normBook.includes('isaias') || normBook.includes('jeremias') || normBook.includes('ezequiel') || normBook.includes('apocalipse')) {
+    prayerP5 = `✝ <strong>Oração Profética e Bênção Apostólica:</strong><br>"Deus Santo e Onipotente, que governas os tempos e as nações, concedei-nos a fortaleza profética para testemunhar a verdade sem jamais esmorecer. Pela intercessão de São Miguel Arcanjo e da Virgem Maria, desça sobre vós a bênção do Pai, do Filho ✝ e do Espírito Santo. Amém!"`;
+    spokenPrayer = `Oração Profética e Bênção Apostólica: Deus Santo e Onipotente, que governas os tempos e as nações, concedei-nos a fortaleza profética para testemunhar a verdade sem jamais esmorecer. Pela intercessão de São Miguel Arcanjo e da Virgem Maria, desça sobre vós a bênção do Pai, do Filho e do Espírito Santo. Amém!`;
+  } else {
+    prayerP5 = `✝ <strong>Oração Sacerdotal e Bênção Bíblica:</strong><br>"Senhor Nosso Deus, fazei frutificar em nossas almas a semente bendita da Vossa Palavra, em obras de justiça, amor e caridade. Que a bênção de Deus Todo-Poderoso, Pai, Filho ✝ e Espírito Santo, vos guarde em perfeita paz hoje e sempre. Amém!"`;
+    spokenPrayer = `Oração Sacerdotal e Bênção Bíblica: Senhor Nosso Deus, fazei frutificar em nossas almas a semente bendita da Vossa Palavra, em obras de justiça, amor e caridade. Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, vos guarde em perfeita paz hoje e sempre. Amém!`;
+  }
+
+  // Montagem do HTML formatado
   const p1 = `<p style="margin-bottom: 12px; font-weight: bold; color: var(--gold-400); font-size: 15px;">${greeting}</p>`;
-
-  const p2 = `<p style="margin-bottom: 12px; line-height: 1.65; color: var(--text-primary);">
-    Ao abrirmos as Sagradas Escrituras em <strong>${reference}</strong>, a Liturgia e a Tradição Católica nos colocam diante de uma verdade profunda: <strong>${homilyTitle}</strong>. ${theologicalTheme}
-  </p>`;
-
-  const p3 = `<p style="margin-bottom: 12px; line-height: 1.65; color: var(--text-primary);">
-    Ao meditarmos na passagem <em>"${coreExcerpt}..."</em>, percebemos que o Senhor não se dirige a nós com palavras distantes ou frias, mas toca diretamente as realidades da nossa existência humana. Como ensinavam os Santos Padres: <strong>${patristicTeaching}</strong> A fé católica nos ensina que toda palavra saída da boca de Deus é viva, eficaz e capaz de transformar nosso coração de pedra em um coração de carne.
-  </p>`;
-
+  const p2 = `<p style="margin-bottom: 12px; line-height: 1.65; color: var(--text-primary);">${introP2}</p>`;
+  const p3 = `<p style="margin-bottom: 12px; line-height: 1.65; color: var(--text-primary);">${patristicP3}</p>`;
   const p4 = `<div style="background: rgba(212, 168, 83, 0.08); border-left: 3px solid var(--gold-400); padding: 12px 14px; border-radius: 8px; margin: 14px 0;">
     <strong style="color: var(--gold-300); display: block; margin-bottom: 8px; font-size: 13px;">
       <i class="fas fa-cross" style="margin-right: 6px;"></i> Compromissos Práticos para o seu Dia a Dia:
@@ -535,20 +573,16 @@ export function getDevotionalHomily(bookName, chapter, verse, text) {
       <li>${practicalAdvice[2]}</li>
     </ul>
   </div>`;
-
-  const p5 = `<p style="margin-top: 14px; margin-bottom: 6px; font-style: italic; color: var(--gold-300); text-align: center; line-height: 1.5; font-size: 13.5px;">
-    ✝ <strong>Oração e Bênção Sacerdotal:</strong><br>
-    "Senhor Jesus Cristo, concedei-nos a graça de acolher Vossa Palavra e fazê-la frutificar em santidade e caridade. Que a bênção de Deus Todo-Poderoso, Pai, Filho ✝ e Espírito Santo, desça sobre vós, vossa família e permaneça para sempre. Amém!"
-  </p>`;
+  const p5 = `<p style="margin-top: 14px; margin-bottom: 6px; font-style: italic; color: var(--gold-300); text-align: center; line-height: 1.5; font-size: 13.5px;">${prayerP5}</p>`;
 
   const html = [p1, p2, p3, p4, p5].join('');
 
-  // Texto para Síntese de Voz (TTS) - 100% idêntico palavra por palavra
+  // Texto falado para Síntese de Voz (TTS) - 100% harmonizado
   const spokenP1 = greeting;
-  const spokenP2 = `Ao abrirmos as Sagradas Escrituras em ${reference}, a Liturgia e a Tradição Católica nos colocam diante de uma verdade profunda: ${homilyTitle}. ${theologicalTheme}`;
-  const spokenP3 = `Ao meditarmos na passagem "${coreExcerpt}...", percebemos que o Senhor não se dirige a nós com palavras distantes ou frias, mas toca diretamente as realidades da nossa existência humana. Como ensinavam os Santos Padres: ${patristicTeaching.replace(/<[^>]*>?/gm, '')} A fé católica nos ensina que toda palavra saída da boca de Deus é viva, eficaz e capaz de transformar nosso coração de pedra em um coração de carne.`;
+  const spokenP2 = introP2.replace(/<[^>]*>?/gm, '');
+  const spokenP3 = patristicP3.replace(/<[^>]*>?/gm, '');
   const spokenP4 = `Compromissos Práticos para o seu Dia a Dia: Primeiro: ${practicalAdvice[0]}. Segundo: ${practicalAdvice[1]}. Terceiro: ${practicalAdvice[2]}.`;
-  const spokenP5 = `Oração e Bênção Sacerdotal: Senhor Jesus Cristo, concedei-nos a graça de acolher Vossa Palavra e fazê-la frutificar em santidade e caridade. Que a bênção de Deus Todo-Poderoso, Pai, Filho e Espírito Santo, desça sobre vós, vossa família e permaneça para sempre. Amém!`;
+  const spokenP5 = spokenPrayer;
 
   const textToSpeak = [spokenP1, spokenP2, spokenP3, spokenP4, spokenP5].join('\n\n');
 
