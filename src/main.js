@@ -110,6 +110,7 @@ async function init() {
   // Inicia timer de doação e brilho periódico a cada 1 minuto
   checkAndStartDonateTimer();
   initDonateButtonShimmer();
+  updateHomeFraternalCard();
 
   // Restore theme & font
   const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
@@ -3072,6 +3073,55 @@ export function isUserInDeepPrayer() {
   return false;
 }
 
+/**
+ * Atualiza visualmente o card fraterno na tela inicial (Home)
+ */
+export async function updateHomeFraternalCard() {
+  const card = document.getElementById('homeDonateFraternalCard');
+  if (!card) return;
+
+  try {
+    const res = await Preferences.get({ key: 'biblia_already_donated' });
+    const already = res && (res.value === 'true' || res.value === true);
+
+    if (already) {
+      card.classList.add('donated-mode');
+      card.innerHTML = `
+        <div class="fraternal-card-glow"></div>
+        <div class="fraternal-card-icon" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: #10b981;"><i class="fas fa-heart"></i> Evangelizador Apoiador</span>
+            <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Você é um sustentador deste projeto sagrado. Deus abençoe imensamente a sua generosidade e oração!
+          </p>
+        </div>
+      `;
+    } else {
+      card.classList.remove('donated-mode');
+      card.innerHTML = `
+        <div class="fraternal-card-glow"></div>
+        <div class="fraternal-card-icon">
+          <i class="fas fa-mug-hot"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag"><i class="fas fa-heart"></i> Evangelização Sem Anúncios</span>
+            <span class="fraternal-card-cta">Apoiar <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Este aplicativo é mantido sem propagandas para a sua oração. Apoie com um café fraterno (R$ 2,00) ou o que o coração desejar!
+          </p>
+        </div>
+      `;
+    }
+  } catch (e) {}
+}
+
 async function checkAndStartDonateTimer() {
   try {
     // Remove chave antiga de bloqueio diário total para não travar após testes
@@ -3280,6 +3330,7 @@ window.markAsDonated = async function () {
     }
     closeDonateModal();
     updateAdminDonateBadge();
+    updateHomeFraternalCard();
     showToast('🙏 Deus abençoe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
   } catch (err) {
     console.error("[Donate] Erro ao salvar status de doação:", err);
@@ -3309,6 +3360,7 @@ window.resetDonateStatusAndTimer = async function () {
     await Preferences.set({ key: 'biblia_admin_disable_donate_popup', value: 'false' });
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
+    updateHomeFraternalCard();
     showToast('✨ Timer de apoio reiniciado: ativo a cada 20 minutos.');
     updateAdminDonateBadge();
   } catch (e) {
