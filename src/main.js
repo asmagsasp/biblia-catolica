@@ -3838,18 +3838,31 @@ window.updateAdminPin = async function () {
 const GLOBAL_DEFAULT_GROQ_KEY = (import.meta.env.VITE_GROQ_API_KEY || ['gs', 'k_', 'KKysd6Po', '7jSQtaEw', '1cAtWGdy', 'b3FYWFuw', 'bL671WgD', '1Sr5facKNQMH'].join('')).trim();
 
 function getAiApiKey() {
-  let localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
-  if (localKey && localKey.length > 10) return sanitizeApiKey(localKey);
-  const input = document.getElementById('adminGeminiKeyInput');
-  if (input && input.value && input.value.trim().length > 10) {
-    return sanitizeApiKey(input.value.trim());
+  // 1. Chave da Groq salva explicitamente no dispositivo
+  const localGroq = (localStorage.getItem('biblia_ai_api_key') || '').trim();
+  if (localGroq && localGroq.startsWith('gsk_')) return sanitizeApiKey(localGroq);
+
+  // 2. Chave Global da Groq do App (prioridade sobre qualquer chave antiga de Gemini no localStorage)
+  if (GLOBAL_DEFAULT_GROQ_KEY && GLOBAL_DEFAULT_GROQ_KEY.startsWith('gsk_')) {
+    return GLOBAL_DEFAULT_GROQ_KEY;
   }
+
+  // 3. Fallback de chave salva ou env
   const envGroq = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
   if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGroq);
+
+  const input = document.getElementById('adminGeminiKeyInput');
+  if (input && input.value && input.value.trim().startsWith('gsk_')) {
+    return sanitizeApiKey(input.value.trim());
+  }
+
+  let localOther = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
+  if (localOther && localOther.length > 10) return sanitizeApiKey(localOther);
+
   const envGemini = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   if (envGemini && envGemini !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGemini);
-  if (GLOBAL_DEFAULT_GROQ_KEY) return GLOBAL_DEFAULT_GROQ_KEY;
-  return '';
+
+  return GLOBAL_DEFAULT_GROQ_KEY || '';
 }
 
 function getGeminiApiKey() {
@@ -4023,34 +4036,35 @@ async function callGroqAPI(prompt, apiKey) {
 
 async function callAiAPI(prompt) {
   const apiKey = getAiApiKey();
-  if (!apiKey) {
-    throw new Error("Chave de IA não configurada.");
-  }
 
   // 1. Chave da Groq (gsk_...) - 100% Gratuita e Instantânea
-  if (apiKey.startsWith('gsk_')) {
+  if (apiKey && apiKey.startsWith('gsk_')) {
     return await callGroqAPI(prompt, apiKey);
   }
 
-  // 2. Chave do Google Gemini (AIza...)
-  if (apiKey.startsWith('AIza')) {
-    const data = await callGeminiAPIWithFallback(prompt);
-    return {
-      text: data.candidates[0].content.parts[0].text,
-      model: 'Google Gemini'
-    };
+  // 2. Chave do Google Gemini (AIza...) com fallback automático para Groq
+  if (apiKey && apiKey.startsWith('AIza')) {
+    try {
+      const data = await callGeminiAPIWithFallback(prompt);
+      return {
+        text: data.candidates[0].content.parts[0].text,
+        model: 'Google Gemini'
+      };
+    } catch (err) {
+      console.warn("[callAiAPI] Falha no Gemini, alternando para Groq Global:", err.message);
+      if (GLOBAL_DEFAULT_GROQ_KEY) {
+        return await callGroqAPI(prompt, GLOBAL_DEFAULT_GROQ_KEY);
+      }
+      throw err;
+    }
   }
 
-  // 3. Fallback genérico: tenta Groq primeiro, se falhar tenta Gemini
-  try {
-    return await callGroqAPI(prompt, apiKey);
-  } catch (err) {
-    const data = await callGeminiAPIWithFallback(prompt);
-    return {
-      text: data.candidates[0].content.parts[0].text,
-      model: 'Google Gemini'
-    };
+  // 3. Fallback genérico: tenta Groq Global
+  if (GLOBAL_DEFAULT_GROQ_KEY) {
+    return await callGroqAPI(prompt, GLOBAL_DEFAULT_GROQ_KEY);
   }
+
+  throw new Error("Chave de IA não configurada.");
 }
 
 window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
