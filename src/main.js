@@ -3031,11 +3031,11 @@ export async function isDonatePopupDisabledByAdmin() {
 }
 
 /**
- * Verifica se o usuário já viu o popup de apoio na data de hoje
+ * Verifica se o usuário pediu para ser lembrado em outro dia (snooze até amanhã)
  */
-export async function hasAlreadySeenDonateToday() {
+export async function isDonateSnoozedToday() {
   try {
-    const res = await Preferences.get({ key: 'biblia_last_donate_popup_date' });
+    const res = await Preferences.get({ key: 'biblia_donate_snooze_date' });
     const today = new Date().toISOString().slice(0, 10);
     return res && res.value === today;
   } catch (e) {
@@ -3044,22 +3044,17 @@ export async function hasAlreadySeenDonateToday() {
 }
 
 /**
- * Registra que o popup foi visualizado hoje
- */
-export async function markDonateSeenToday() {
-  try {
-    const today = new Date().toISOString().slice(0, 10);
-    await Preferences.set({ key: 'biblia_last_donate_popup_date', value: today });
-  } catch (e) {}
-}
-
-/**
- * Salvaguarda da oração: verifica se o usuário está em momento profundo de oração ou áudio
+ * Salvaguarda da oração: verifica se o usuário está em momento profundo de oração ou ouvindo áudio
  */
 export function isUserInDeepPrayer() {
-  // Áudios ativos
+  // Áudios devocionais ativos controlados pela aplicação
   if (isSpeaking || isChapterReading || isRosarioSpeaking || isDonateAudioSpeaking) return true;
-  if ('speechSynthesis' in window && window.speechSynthesis.speaking) return true;
+  if (typeof isLiturgiaSpeaking !== 'undefined' && isLiturgiaSpeaking) return true;
+  if (typeof isHomilySpeaking !== 'undefined' && isHomilySpeaking) return true;
+  if (typeof isHomiliaLiturgiaSpeaking !== 'undefined' && isHomiliaLiturgiaSpeaking) return true;
+  if (typeof isNovenaSpeaking !== 'undefined' && isNovenaSpeaking) return true;
+  if (typeof isMariaAudioSpeaking !== 'undefined' && isMariaAudioSpeaking) return true;
+  if (typeof isTeologiaSpeaking !== 'undefined' && isTeologiaSpeaking) return true;
 
   // Telas devocionais que não devem ser interrompidas
   const prayerViews = ['rosarioView', 'novenasView', 'lectioView', 'confissaoView'];
@@ -3079,6 +3074,9 @@ export function isUserInDeepPrayer() {
 
 async function checkAndStartDonateTimer() {
   try {
+    // Remove chave antiga de bloqueio diário total para não travar após testes
+    try { await Preferences.remove({ key: 'biblia_last_donate_popup_date' }); } catch (e) {}
+
     const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     if (disabledByAdmin) {
       console.log('[Donate] Popup de apoio desativado pelo Administrador (Modo Apresentação). Timer inativo.');
@@ -3094,23 +3092,27 @@ async function checkAndStartDonateTimer() {
     const alreadyDonated = res && (res.value === 'true' || res.value === true);
     if (alreadyDonated) {
       console.log('[Donate] Usuário já marcou como doado anteriormente. Timer inativo.');
+      if (donateHeartbeatInterval) {
+        clearInterval(donateHeartbeatInterval);
+        donateHeartbeatInterval = null;
+      }
       updateAdminDonateBadge();
       return;
     }
 
-    const alreadySeenToday = await hasAlreadySeenDonateToday();
-    if (alreadySeenToday) {
-      console.log('[Donate] Usuário já visualizou o apoio hoje. Respeitando limite diário.');
+    const snoozedToday = await isDonateSnoozedToday();
+    if (snoozedToday) {
+      console.log('[Donate] Usuário pediu para lembrar outro dia. Pausado hoje.');
       updateAdminDonateBadge();
       return;
     }
 
     if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
     lastDonateTime = Date.now();
-    console.log('[Donate] Timer de apoio ativado: abrirá após 20 minutos de uso contínuo (máx. 1x/dia).');
+    console.log('[Donate] Timer de apoio ativado: monitorando periodicidade a cada 20 minutos.');
     updateAdminDonateBadge();
 
-    // Verificação contínua e imune a throttling e recarregamentos
+    // Verificação contínua e imune a throttling a cada 5 segundos
     donateHeartbeatInterval = setInterval(async () => {
       try {
         const adminOff = await isDonatePopupDisabledByAdmin();
@@ -3129,10 +3131,11 @@ async function checkAndStartDonateTimer() {
           return;
         }
 
-        const seenToday = await hasAlreadySeenDonateToday();
-        if (seenToday) {
+        const isSnoozed = await isDonateSnoozedToday();
+        if (isSnoozed) {
           if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
           donateHeartbeatInterval = null;
+          updateAdminDonateBadge();
           return;
         }
 
@@ -3149,12 +3152,13 @@ async function checkAndStartDonateTimer() {
             console.log('[Donate] 20 minutos decorridos. Exibindo banner de apoio fraterno.');
             lastDonateTime = Date.now();
             showDonateModal();
+            updateAdminDonateBadge();
           }
         }
       } catch (err) {
         console.error('[Donate] Erro no ciclo do timer:', err);
       }
-    }, 10000); // Heartbeat a cada 10 segundos
+    }, 5000); // Heartbeat a cada 5 segundos
   } catch (err) {
     console.error("[Donate] Erro ao verificar timer de doação:", err);
   }
@@ -3166,8 +3170,12 @@ document.addEventListener('visibilitychange', async () => {
     const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     if (disabledByAdmin) return;
 
-    const seenToday = await hasAlreadySeenDonateToday();
-    if (seenToday) return;
+    const snoozedToday = await isDonateSnoozedToday();
+    if (snoozedToday) return;
+
+    const res = await Preferences.get({ key: 'biblia_already_donated' });
+    const already = res && (res.value === 'true' || res.value === true);
+    if (already) return;
 
     const elapsed = Date.now() - lastDonateTime;
     if (elapsed >= DONATE_INTERVAL_MS) {
@@ -3175,13 +3183,8 @@ document.addEventListener('visibilitychange', async () => {
 
       const modal = document.getElementById('donateModal');
       if (modal && modal.classList.contains('hidden')) {
-        Preferences.get({ key: 'biblia_already_donated' }).then(res => {
-          const already = res && (res.value === 'true' || res.value === true);
-          if (!already) {
-            lastDonateTime = Date.now();
-            showDonateModal();
-          }
-        }).catch(() => {});
+        lastDonateTime = Date.now();
+        showDonateModal();
       }
     }
   }
@@ -3209,10 +3212,11 @@ window.toggleAdminDonatePopupState = async function () {
       showToast('🔕 Banner de apoio DESATIVADO (Modo Apresentação)!');
     } else {
       await Preferences.remove({ key: 'biblia_already_donated' });
+      await Preferences.remove({ key: 'biblia_donate_snooze_date' });
       await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
       lastDonateTime = Date.now();
       await checkAndStartDonateTimer();
-      showToast('🔔 Banner de apoio ATIVADO (a cada 20 min de oração, máx 1x/dia)!');
+      showToast('🔔 Banner de apoio ATIVADO (a cada 20 min de uso)!');
     }
     await updateAdminDonateBadge();
   } catch (err) {
@@ -3225,9 +3229,6 @@ window.showDonateModal = function () {
   if (modal) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-
-    // Marca como visto na data de hoje
-    markDonateSeenToday();
 
     // Atualiza QR Code e valores
     updatePixDisplay();
@@ -3287,19 +3288,28 @@ window.markAsDonated = async function () {
 };
 
 window.remindDonateLater = async function () {
-  await markDonateSeenToday();
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    await Preferences.set({ key: 'biblia_donate_snooze_date', value: today });
+  } catch (e) {}
+  if (donateHeartbeatInterval) {
+    clearInterval(donateHeartbeatInterval);
+    donateHeartbeatInterval = null;
+  }
   closeDonateModal();
-  showToast('🕊️ Que a paz de Jesus esteja com você! Lembraremos em outro momento.');
+  updateAdminDonateBadge();
+  showToast('🕊️ Que a paz de Jesus esteja com você! Lembraremos em outro dia.');
 };
 
 window.resetDonateStatusAndTimer = async function () {
   try {
     await Preferences.remove({ key: 'biblia_already_donated' });
+    await Preferences.remove({ key: 'biblia_donate_snooze_date' });
     await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
     await Preferences.set({ key: 'biblia_admin_disable_donate_popup', value: 'false' });
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
-    showToast('✨ Preferências de apoio reiniciadas: ativo a cada 20 min (máx. 1x/dia).');
+    showToast('✨ Timer de apoio reiniciado: ativo a cada 20 minutos.');
     updateAdminDonateBadge();
   } catch (e) {
     console.error(e);
@@ -3354,7 +3364,7 @@ async function updateAdminDonateBadge() {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-off" style="color: #ef4444; font-size: 16px;"></i> <span>Desativado</span>';
         toggleBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
         toggleBtn.style.background = 'rgba(239, 68, 68, 0.12)';
-        toggleBtn.title = 'Clique para ativar o popup a cada 20 minutos (máx 1x/dia)';
+        toggleBtn.title = 'Clique para ativar o popup periódico a cada 20 minutos';
       } else {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-on" style="color: #10b981; font-size: 16px;"></i> <span>Ativo</span>';
         toggleBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
@@ -3373,14 +3383,14 @@ async function updateAdminDonateBadge() {
         badge.style.background = 'rgba(16, 185, 129, 0.15)';
         badge.style.color = '#10b981';
       } else {
-        const seenToday = await hasAlreadySeenDonateToday();
+        const snoozed = await isDonateSnoozedToday();
         const elapsedMins = Math.floor((Date.now() - lastDonateTime) / 60000);
-        if (seenToday) {
-          badge.textContent = 'Exibido hoje (máx. 1x/dia)';
+        if (snoozed) {
+          badge.textContent = 'Pausado hoje (Lembrar outro dia)';
           badge.style.background = 'rgba(59, 130, 246, 0.15)';
           badge.style.color = '#3b82f6';
         } else {
-          badge.textContent = `Ativo (20 min • ${elapsedMins}m)`;
+          badge.textContent = `Ativo (${elapsedMins}m / 20m)`;
           badge.style.background = 'rgba(234, 179, 8, 0.15)';
           badge.style.color = 'var(--gold-400)';
         }
@@ -4795,15 +4805,15 @@ function showRosaryCompletedModal() {
   const m = currentRosarioState?.misterio?.nome || 'Santo Rosário';
   showToast(`🎉 Você concluiu a oração dos ${m}! Que Deus te abençoe! 🙏`);
 
-  // Convite fraterno pós-oração: após concluir o Terço, convida suavemente a apoiar o projeto (se não viu hoje)
+  // Convite fraterno pós-oração: após concluir o Terço, convida suavemente a apoiar o projeto (se não foi silenciado hoje)
   setTimeout(async () => {
     try {
       const disabled = await isDonatePopupDisabledByAdmin();
       if (disabled) return;
       const resDonated = await Preferences.get({ key: 'biblia_already_donated' });
       if (resDonated && (resDonated.value === 'true' || resDonated.value === true)) return;
-      const seenToday = await hasAlreadySeenDonateToday();
-      if (!seenToday) {
+      const snoozedToday = await isDonateSnoozedToday();
+      if (!snoozedToday) {
         showDonateModal();
       }
     } catch (e) {}
