@@ -1090,8 +1090,8 @@
         <div class="donate-icon-container pulse-animation">
           <i class="fas fa-hand-holding-heart donate-icon"></i>
         </div>
-        <h2 id="donateTitle">Apoie este Projeto</h2>
-        <p>Sua doação ajuda a manter a Palavra de Deus no ar e sem anúncios.</p>
+        <h2 id="donateTitle">Apoie a Evangelização</h2>
+        <p>Este aplicativo é 100% gratuito e livre de propagandas comerciais para honrar a sua oração. Sua doação voluntária nos ajuda a manter a Palavra de Deus viva para milhares de lares.</p>
       </div>
 
       <!-- MENSAGEM DO EVANGELIZADOR EM ÁUDIO / DESTAQUE -->
@@ -1099,32 +1099,77 @@
         <div class="donate-audio-header">
           <div class="donate-audio-title">
             <i class="fas fa-broadcast-tower"></i>
-            <span>Mensagem do Evangelizador</span>
+            <span>Mensagem Fraterna</span>
           </div>
           <button type="button" class="donate-audio-btn" id="btnDonateAudio" onclick="toggleDonateAudio()" title="Ouvir / Pausar mensagem em áudio">
             <i class="fas fa-volume-up"></i> <span>Ouvir</span>
           </button>
         </div>
         <p class="donate-audio-text">
-          “Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde <strong>Já fiz minha doação</strong> e o banner deixará de aparecer. Seja um evangelizador você também!”
+          “A paz de Jesus! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!”
         </p>
+      </div>
+
+      <!-- SELETOR DE VALORES SUGERIDOS -->
+      <div class="donate-values-container">
+        <div class="donate-values-label">
+          <i class="fas fa-hand-sparkles"></i> <span>Escolha uma contribuição fraterna:</span>
+        </div>
+        <div class="donate-values-grid">
+          <button type="button" class="donate-value-chip active" data-amount="2" onclick="selectDonateValue(2, this)">
+            <span class="chip-val">R$ 2,00</span>
+            <span class="chip-desc">☕ Café fraterno</span>
+          </button>
+          <button type="button" class="donate-value-chip" data-amount="5" onclick="selectDonateValue(5, this)">
+            <span class="chip-val">R$ 5,00</span>
+            <span class="chip-desc">🕯️ Manutenção</span>
+          </button>
+          <button type="button" class="donate-value-chip" data-amount="10" onclick="selectDonateValue(10, this)">
+            <span class="chip-val">R$ 10,00</span>
+            <span class="chip-desc">🕊️ Evangelizador</span>
+          </button>
+          <button type="button" class="donate-value-chip" data-amount="0" onclick="selectDonateValue(0, this)">
+            <span class="chip-val">Livre</span>
+            <span class="chip-desc">✨ Outro valor</span>
+          </button>
+        </div>
       </div>
 
       <div class="donate-body">
         <div class="pix-container" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
-          <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" alt="Pix" class="pix-logo">
-          <p class="pix-instruction">Chave Pix (E-mail):</p>
-          <div class="pix-key-box" onclick="copyPix()" title="Toque para copiar a chave Pix" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
-            <span id="pixKey" class="pix-key-text" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">minhabibliacatolica1@gmail.com</span>
-            <button id="pixCopyBtn" class="pix-copy-btn" onclick="event.stopPropagation(); copyPix()" type="button" aria-label="Copiar chave Pix">
-              <i class="far fa-copy"></i> <span>Copiar</span>
-            </button>
+          <div class="pix-header-row">
+            <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" alt="Pix" class="pix-logo">
+            <span id="pixInstructionText" class="pix-instruction">Código Pix Copia e Cola de <strong>R$ 2,00</strong>:</span>
           </div>
-          <p class="pix-tip"><i class="fas fa-info-circle"></i> Toque na chave ou no botão para copiar</p>
+
+          <!-- QR CODE DINÂMICO -->
+          <div class="pix-qr-wrapper">
+            <img id="pixQrImg" class="pix-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=00020126520014br.gov.bcb.pix0130minhabibliacatolica1%40gmail.com52040000530398654042.005802BR5915Biblia%20Catolica6009SAO%20PAULO62070503***6304C0B8&margin=4" alt="QR Code Pix" />
+            <p class="pix-qr-tip"><i class="fas fa-qrcode"></i> Escaneie com o app do seu banco ou copie abaixo</p>
+          </div>
+
+          <!-- CAIXA COM CÓDIGO COPIA E COLA / CHAVE -->
+          <div class="pix-key-box" onclick="copyCurrentPixSelection()" title="Toque para copiar o código Pix" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
+            <span id="pixKeyDisplay" class="pix-key-text" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">00020126520014br.gov.bcb.pix0130minhabibliacatolica1@gmail.com52040000530398654042.005802BR5915Biblia Catolica6009SAO PAULO62070503***6304C0B8</span>
+          </div>
+
+          <!-- BOTÃO PRINCIPAL DE COPIAR -->
+          <button id="pixCopyBtn" class="pix-main-copy-btn" onclick="copyCurrentPixSelection()" type="button" aria-label="Copiar código Pix">
+            <i class="far fa-copy"></i> <span>Copiar Pix Copia e Cola (R$ 2,00)</span>
+          </button>
+
+          <!-- ATALHO DA CHAVE E-MAIL DIRETA -->
+          <div class="pix-direct-email-row" onclick="copyDirectEmailKey()" title="Toque para copiar a chave e-mail direta">
+            <i class="fas fa-envelope"></i> Chave E-mail direta: <strong>minhabibliacatolica1@gmail.com</strong> <i class="far fa-copy" style="margin-left: 4px;"></i>
+          </div>
         </div>
+
         <div class="donate-actions">
           <button class="donate-already-btn" onclick="markAsDonated()">
-            <i class="fas fa-check-circle"></i> Já fiz minha doação
+            <i class="fas fa-check-circle"></i> Já fiz minha doação (Não exibir mais)
+          </button>
+          <button class="donate-remind-btn" onclick="remindDonateLater()">
+            <i class="fas fa-clock"></i> Lembrar outro dia
           </button>
         </div>
       </div>

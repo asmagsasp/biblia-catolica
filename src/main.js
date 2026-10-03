@@ -2667,11 +2667,179 @@ function primeSpeechForIos() {
 });
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
-const DONATE_AUDIO_TEXT = "Não quer mais ver esse banner? Ajude este projeto a continuar evangelizando na internet com qualquer valor, que poderá ser 1 real, 2 reais, 5 reais ou o valor que desejar. Após fazer a doação, clique no botão verde Já fiz minha doação e o banner deixará de aparecer. Seja um evangelizador você também!";
+const DONATE_AUDIO_TEXT = "A paz de Jesus! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
 let isDonateAudioSpeaking = false;
 let activeDonateUtterance = null;
 let donateHeartbeatResumeTimer = null;
 let donateAutoCloseTimer = null;
+
+// Chave PIX oficial e credenciais do projeto
+const PIX_KEY = 'minhabibliacatolica1@gmail.com';
+const PIX_MERCHANT_NAME = 'Biblia Catolica';
+const PIX_MERCHANT_CITY = 'SAO PAULO';
+
+// Valor selecionado atualmente (2, 5, 10 ou 0 para Livre)
+let selectedDonateAmount = 2;
+
+/**
+ * Formata um campo no padrão EMV / Pix do Banco Central (ID + Tamanho 2 dígitos + Conteúdo)
+ */
+function formatPixField(id, val) {
+  const len = String(val.length).padStart(2, '0');
+  return id + len + val;
+}
+
+/**
+ * Calcula o checksum CRC16-CCITT (Polinômio 0x1021, valor inicial 0xFFFF)
+ */
+function crc16Pix(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= (str.charCodeAt(i) << 8);
+    for (let j = 0; j < 8; j++) {
+      if ((crc & 0x8000) !== 0) {
+        crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+      } else {
+        crc = (crc << 1) & 0xFFFF;
+      }
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+/**
+ * Gera a string Pix Copia e Cola (BR Code) homologada pelo BACEN
+ */
+function generatePixBrCode(amount) {
+  let payload = formatPixField('00', '01');
+  const merchantAccount = formatPixField('00', 'br.gov.bcb.pix') + formatPixField('01', PIX_KEY);
+  payload += formatPixField('26', merchantAccount);
+  payload += formatPixField('52', '0000');
+  payload += formatPixField('53', '986');
+  if (amount > 0) {
+    payload += formatPixField('54', Number(amount).toFixed(2));
+  }
+  payload += formatPixField('58', 'BR');
+  payload += formatPixField('59', PIX_MERCHANT_NAME);
+  payload += formatPixField('60', PIX_MERCHANT_CITY);
+  payload += formatPixField('62', formatPixField('05', '***'));
+  payload += '6304';
+  const crc = crc16Pix(payload);
+  return payload + crc;
+}
+
+/**
+ * Seleciona um valor sugerido (2, 5, 10 ou 0 para livre) e atualiza QR Code e Pix Copia e Cola
+ */
+window.selectDonateValue = function (amount, btnEl) {
+  selectedDonateAmount = Number(amount);
+  document.querySelectorAll('.donate-value-chip').forEach(btn => btn.classList.remove('active'));
+  if (btnEl) {
+    btnEl.classList.add('active');
+  }
+  updatePixDisplay();
+};
+
+/**
+ * Atualiza visualmente o QR Code e os textos do modal conforme o valor selecionado
+ */
+window.updatePixDisplay = function () {
+  const brCode = generatePixBrCode(selectedDonateAmount);
+
+  // Texto da instrução
+  const instructionEl = document.getElementById('pixInstructionText');
+  if (instructionEl) {
+    if (selectedDonateAmount > 0) {
+      instructionEl.innerHTML = `Código Pix Copia e Cola de <strong>R$ ${selectedDonateAmount},00</strong>:`;
+    } else {
+      instructionEl.innerHTML = `Código Pix Copia e Cola com <strong>Valor Livre</strong>:`;
+    }
+  }
+
+  // QR Code Dinâmico
+  const qrImg = document.getElementById('pixQrImg');
+  if (qrImg) {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(brCode)}&margin=4`;
+    qrImg.src = qrUrl;
+  }
+
+  // Texto exibido na caixinha
+  const keyDisplay = document.getElementById('pixKeyDisplay');
+  if (keyDisplay) {
+    keyDisplay.innerText = brCode;
+  }
+
+  // Botão principal de copiar
+  const copyBtn = document.getElementById('pixCopyBtn');
+  if (copyBtn) {
+    if (selectedDonateAmount > 0) {
+      copyBtn.innerHTML = `<i class="far fa-copy"></i> <span>Copiar Pix Copia e Cola (R$ ${selectedDonateAmount},00)</span>`;
+    } else {
+      copyBtn.innerHTML = `<i class="far fa-copy"></i> <span>Copiar Pix Copia e Cola (Valor Livre)</span>`;
+    }
+  }
+};
+
+/**
+ * Copia o código Pix Copia e Cola atualmente selecionado
+ */
+window.copyCurrentPixSelection = async function () {
+  const brCode = generatePixBrCode(selectedDonateAmount);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(brCode);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = brCode;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+
+    const valStr = selectedDonateAmount > 0 ? `R$ ${selectedDonateAmount},00` : 'Valor Livre';
+    showToast(`📋 Pix Copia e Cola (${valStr}) copiado com sucesso! Abra o app do seu banco.`);
+
+    const copyBtn = document.getElementById('pixCopyBtn');
+    if (copyBtn) {
+      const origHtml = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> <span>Código Copiado!</span>';
+      copyBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+      setTimeout(() => {
+        copyBtn.innerHTML = origHtml;
+        copyBtn.style.background = '';
+      }, 2500);
+    }
+  } catch (err) {
+    console.error('[Donate] Erro ao copiar código Pix:', err);
+    showToast('Falha ao copiar automaticamente. Selecione e copie o código acima.');
+  }
+};
+
+/**
+ * Copia a chave de e-mail direta (sem valor fixo)
+ */
+window.copyDirectEmailKey = async function () {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(PIX_KEY);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = PIX_KEY;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    showToast(`✉️ Chave e-mail (${PIX_KEY}) copiada com sucesso!`);
+  } catch (err) {
+    showToast(`Chave Pix: ${PIX_KEY}`);
+  }
+};
 
 function clearDonateHeartbeat() {
   if (donateHeartbeatResumeTimer) {
@@ -2856,7 +3024,8 @@ window.toggleDonateAudio = function () {
 };
 
 let donateHeartbeatInterval = null;
-const DONATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+// Intervalo de 20 minutos de uso contínuo (respeitoso e equilibrado para oração)
+const DONATE_INTERVAL_MS = 20 * 60 * 1000;
 let lastDonateTime = Date.now();
 
 export async function isDonatePopupDisabledByAdmin() {
@@ -2866,6 +3035,53 @@ export async function isDonatePopupDisabledByAdmin() {
   } catch (e) {
     return false;
   }
+}
+
+/**
+ * Verifica se o usuário já viu o popup de apoio na data de hoje
+ */
+export async function hasAlreadySeenDonateToday() {
+  try {
+    const res = await Preferences.get({ key: 'biblia_last_donate_popup_date' });
+    const today = new Date().toISOString().slice(0, 10);
+    return res && res.value === today;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Registra que o popup foi visualizado hoje
+ */
+export async function markDonateSeenToday() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    await Preferences.set({ key: 'biblia_last_donate_popup_date', value: today });
+  } catch (e) {}
+}
+
+/**
+ * Salvaguarda da oração: verifica se o usuário está em momento profundo de oração ou áudio
+ */
+export function isUserInDeepPrayer() {
+  // Áudios ativos
+  if (isSpeaking || isChapterReading || isRosarioSpeaking || isDonateAudioSpeaking) return true;
+  if ('speechSynthesis' in window && window.speechSynthesis.speaking) return true;
+
+  // Telas devocionais que não devem ser interrompidas
+  const prayerViews = ['rosarioView', 'novenasView', 'lectioView', 'confissaoView'];
+  for (const vId of prayerViews) {
+    const el = document.getElementById(vId);
+    if (el && !el.classList.contains('hidden')) {
+      return true;
+    }
+  }
+
+  // Modal de homilia aberto
+  const homilyModal = document.getElementById('homilyModal');
+  if (homilyModal && !homilyModal.classList.contains('hidden')) return true;
+
+  return false;
 }
 
 async function checkAndStartDonateTimer() {
@@ -2889,9 +3105,16 @@ async function checkAndStartDonateTimer() {
       return;
     }
 
+    const alreadySeenToday = await hasAlreadySeenDonateToday();
+    if (alreadySeenToday) {
+      console.log('[Donate] Usuário já visualizou o apoio hoje. Respeitando limite diário.');
+      updateAdminDonateBadge();
+      return;
+    }
+
     if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
     lastDonateTime = Date.now();
-    console.log('[Donate] Timer de apoio ativado: abrirá após 5 minutos de uso.');
+    console.log('[Donate] Timer de apoio ativado: abrirá após 20 minutos de uso contínuo (máx. 1x/dia).');
     updateAdminDonateBadge();
 
     // Verificação contínua e imune a throttling e recarregamentos
@@ -2913,15 +3136,25 @@ async function checkAndStartDonateTimer() {
           return;
         }
 
+        const seenToday = await hasAlreadySeenDonateToday();
+        if (seenToday) {
+          if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
+          donateHeartbeatInterval = null;
+          return;
+        }
+
         const elapsed = Date.now() - lastDonateTime;
         if (elapsed >= DONATE_INTERVAL_MS) {
-          const modal = document.getElementById('donateModal');
-          const homilyModal = document.getElementById('homilyModal');
-          const homilyVisible = homilyModal && !homilyModal.classList.contains('hidden');
+          // Salvaguarda da oração: se estiver rezando, aguarda terminar
+          if (isUserInDeepPrayer()) {
+            console.log('[Donate] 20 minutos decorridos, mas usuário está rezando ou ouvindo áudio. Aguardando...');
+            return;
+          }
 
-          if (modal && modal.classList.contains('hidden') && !homilyVisible) {
-            console.log('[Donate] 5 minutos decorridos. Exibindo banner de apoio.');
-            lastDonateTime = Date.now(); // Reinicia contagem para o próximo ciclo
+          const modal = document.getElementById('donateModal');
+          if (modal && modal.classList.contains('hidden')) {
+            console.log('[Donate] 20 minutos decorridos. Exibindo banner de apoio fraterno.');
+            lastDonateTime = Date.now();
             showDonateModal();
           }
         }
@@ -2934,14 +3167,19 @@ async function checkAndStartDonateTimer() {
   }
 }
 
-// Ao voltar para a aba ou desbloquear celular, verifica se já se passaram 5 minutos
+// Ao voltar para a aba ou desbloquear celular, verifica tempo decorrido com salvaguarda
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
     const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     if (disabledByAdmin) return;
 
+    const seenToday = await hasAlreadySeenDonateToday();
+    if (seenToday) return;
+
     const elapsed = Date.now() - lastDonateTime;
     if (elapsed >= DONATE_INTERVAL_MS) {
+      if (isUserInDeepPrayer()) return;
+
       const modal = document.getElementById('donateModal');
       if (modal && modal.classList.contains('hidden')) {
         Preferences.get({ key: 'biblia_already_donated' }).then(res => {
@@ -2959,7 +3197,7 @@ document.addEventListener('visibilitychange', async () => {
 window.toggleAdminDonatePopupState = async function () {
   try {
     const currentlyDisabled = await isDonatePopupDisabledByAdmin();
-    const willEnable = currentlyDisabled; // Se estava desativado, ativa; se estava ativo, desativa
+    const willEnable = currentlyDisabled;
     
     await Preferences.set({
       key: 'biblia_admin_disable_donate_popup',
@@ -2975,12 +3213,13 @@ window.toggleAdminDonatePopupState = async function () {
       const modal = document.getElementById('donateModal');
       if (modal) modal.classList.add('hidden');
       document.body.style.overflow = '';
-      showToast('🔕 Tela de apoio a cada 5 min DESATIVADA (Modo Apresentação)!');
+      showToast('🔕 Banner de apoio DESATIVADO (Modo Apresentação)!');
     } else {
       await Preferences.remove({ key: 'biblia_already_donated' });
+      await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
       lastDonateTime = Date.now();
       await checkAndStartDonateTimer();
-      showToast('🔔 Tela de apoio a cada 5 min ATIVADA!');
+      showToast('🔔 Banner de apoio ATIVADO (a cada 20 min de oração, máx 1x/dia)!');
     }
     await updateAdminDonateBadge();
   } catch (err) {
@@ -2994,6 +3233,12 @@ window.showDonateModal = function () {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 
+    // Marca como visto na data de hoje
+    markDonateSeenToday();
+
+    // Atualiza QR Code e valores
+    updatePixDisplay();
+
     clearDonateAutoCloseTimer();
 
     // In case speech engine was paused on iOS Safari, unpause it
@@ -3004,16 +3249,13 @@ window.showDonateModal = function () {
     // Call immediately to preserve any user gesture (when opened via button)
     playDonateAudio();
 
-    // Fallback for iOS timer-initiated popup: if audio was prevented by iOS due to lack of immediate gesture,
-    // pulse the button and allow the very first touch on the modal to start reading immediately
     const btn = document.getElementById('btnDonateAudio');
     if (btn && !isDonateAudioSpeaking) {
       btn.classList.add('pulse-ready');
     }
 
     const onModalFirstTouch = (e) => {
-      // Ignore if user tapped close, already donated, or pix key
-      if (e.target.closest('.donate-close-btn') || e.target.closest('.donate-already-btn') || e.target.closest('.pix-key-box')) {
+      if (e.target.closest('.donate-close-btn') || e.target.closest('.donate-already-btn') || e.target.closest('.donate-remind-btn') || e.target.closest('.pix-key-box') || e.target.closest('.donate-value-chip')) {
         return;
       }
       if (!isDonateAudioSpeaking) {
@@ -3044,20 +3286,27 @@ window.markAsDonated = async function () {
     }
     closeDonateModal();
     updateAdminDonateBadge();
-    showToast('🙏 Deus abençoe sua generosidade! Muito obrigado por apoiar o projeto.');
+    showToast('🙏 Deus abençoe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
   } catch (err) {
     console.error("[Donate] Erro ao salvar status de doação:", err);
     closeDonateModal();
   }
 };
 
+window.remindDonateLater = async function () {
+  await markDonateSeenToday();
+  closeDonateModal();
+  showToast('🕊️ Que a paz de Jesus esteja com você! Lembraremos em outro momento.');
+};
+
 window.resetDonateStatusAndTimer = async function () {
   try {
     await Preferences.remove({ key: 'biblia_already_donated' });
+    await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
     await Preferences.set({ key: 'biblia_admin_disable_donate_popup', value: 'false' });
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
-    showToast('✨ Timer de apoio reiniciado: exibirá a cada 5 minutos.');
+    showToast('✨ Preferências de apoio reiniciadas: ativo a cada 20 min (máx. 1x/dia).');
     updateAdminDonateBadge();
   } catch (e) {
     console.error(e);
@@ -4545,6 +4794,20 @@ window.shareRosarioWhatsApp = function () {
 function showRosaryCompletedModal() {
   const m = currentRosarioState?.misterio?.nome || 'Santo Rosário';
   showToast(`🎉 Você concluiu a oração dos ${m}! Que Deus te abençoe! 🙏`);
+
+  // Convite fraterno pós-oração: após concluir o Terço, convida suavemente a apoiar o projeto (se não viu hoje)
+  setTimeout(async () => {
+    try {
+      const disabled = await isDonatePopupDisabledByAdmin();
+      if (disabled) return;
+      const resDonated = await Preferences.get({ key: 'biblia_already_donated' });
+      if (resDonated && (resDonated.value === 'true' || resDonated.value === true)) return;
+      const seenToday = await hasAlreadySeenDonateToday();
+      if (!seenToday) {
+        showDonateModal();
+      }
+    } catch (e) {}
+  }, 2500);
 }
 
 // ==========================================================================
