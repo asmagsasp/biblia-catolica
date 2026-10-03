@@ -2667,7 +2667,7 @@ function primeSpeechForIos() {
 });
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
-const DONATE_AUDIO_TEXT = "A paz de Jesus! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
+const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria esteja contigo! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
 let isDonateAudioSpeaking = false;
 let activeDonateUtterance = null;
 let donateHeartbeatResumeTimer = null;
