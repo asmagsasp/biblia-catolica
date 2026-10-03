@@ -3730,11 +3730,14 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
 
       const elapsed = Date.now() - startTime;
       if (workingModel) {
+        localStorage.setItem('biblia_ai_api_key', testKey);
+        localStorage.setItem('biblia_gemini_api_key', testKey);
         localStorage.setItem('biblia_groq_detected_model', workingModel);
+        updateAdminKeyBadge(testKey);
         if (statusDiv) {
-          statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a Groq IA validada com sucesso! Modelo ativo: <code>${workingModel}</code> (Latência: ${elapsed}ms) ⚡</span>`;
+          statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a Groq IA validada e ativada com sucesso! Modelo: <code>${workingModel}</code> (Latência: ${elapsed}ms) ⚡</span>`;
         }
-        showToast(`✨ Conexão com a Groq IA validada com sucesso (${workingModel})!`);
+        showToast(`✨ Chave da Groq ativada com sucesso (${workingModel})!`);
       } else {
         if (statusDiv) {
           statusDiv.innerHTML = `<div style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha ao validar conexão com a Groq:</div><div style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">${attemptedDetails.join('<br>')}</div><div style="font-size: 11px; margin-top: 6px; color: var(--gold-400);">Dica: Verifique se copiou a chave completa gerada no console.groq.com/keys.</div>`;
@@ -3761,8 +3764,11 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
 
     const elapsed = Date.now() - startTime;
     if (res.ok) {
+      localStorage.setItem('biblia_ai_api_key', testKey);
+      localStorage.setItem('biblia_gemini_api_key', testKey);
+      updateAdminKeyBadge(testKey);
       if (statusDiv) {
-        statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a IA validada com sucesso! (Latência: ${elapsed}ms)</span>`;
+        statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a IA validada e ativada com sucesso! (Latência: ${elapsed}ms)</span>`;
       }
       showToast('✨ Conexão com o Google Gemini funcionando perfeitamente!');
     } else {
@@ -3858,6 +3864,8 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
   const apiKey = getAiApiKey();
+  console.log("[generateHomily] Provedor de IA ativo:", apiKey ? (apiKey.startsWith('gsk_') ? 'Groq IA' : 'Google Gemini') : 'Motor Católico Nativo (Offline)');
+
   if (apiKey) {
     generateDynamicAiHomily(bookName, chapter, verse, text);
     return;
@@ -3867,6 +3875,14 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   const devotional = getDevotionalHomily(bookName, chapter, verse, text);
   
   body.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
+      <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+        <i class="fas fa-church"></i> Meditação Católica Nativa
+      </span>
+      <span style="font-size: 10.5px; color: var(--text-muted);">
+        <i class="fas fa-shield-alt"></i> Modo Offline Seguro
+      </span>
+    </div>
     ${devotional.html}
     <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
@@ -3909,7 +3925,7 @@ async function callGroqAPI(prompt, apiKey) {
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 14000);
+      const timeoutId = setTimeout(() => controller.abort(), 18000);
 
       try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -3932,7 +3948,7 @@ async function callGroqAPI(prompt, apiKey) {
               }
             ],
             temperature: 0.7,
-            max_tokens: 2048
+            max_tokens: 1200
           })
         });
 
@@ -3943,7 +3959,7 @@ async function callGroqAPI(prompt, apiKey) {
           const text = data.choices && data.choices[0]?.message?.content;
           if (text) {
             localStorage.setItem('biblia_groq_detected_model', model);
-            return text;
+            return { text: text, model: `Groq (${model})` };
           }
         }
 
@@ -3951,7 +3967,7 @@ async function callGroqAPI(prompt, apiKey) {
         console.warn(`Groq modelo ${model} erro (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
 
         if (response.status === 401 || response.status === 403) {
-          throw new Error("INVALID_OR_EXPIRED_KEY");
+          throw new Error("Chave da Groq inválida ou expirada.");
         }
 
         // Se o modelo não existir ou não estiver liberado (404 ou 400), passa imediatamente para o próximo modelo
@@ -3985,7 +4001,7 @@ async function callGroqAPI(prompt, apiKey) {
 async function callAiAPI(prompt) {
   const apiKey = getAiApiKey();
   if (!apiKey) {
-    throw new Error("KEY_NOT_CONFIGURED");
+    throw new Error("Chave de IA não configurada.");
   }
 
   // 1. Chave da Groq (gsk_...) - 100% Gratuita e Instantânea
@@ -3996,7 +4012,10 @@ async function callAiAPI(prompt) {
   // 2. Chave do Google Gemini (AIza...)
   if (apiKey.startsWith('AIza')) {
     const data = await callGeminiAPIWithFallback(prompt);
-    return data.candidates[0].content.parts[0].text;
+    return {
+      text: data.candidates[0].content.parts[0].text,
+      model: 'Google Gemini'
+    };
   }
 
   // 3. Fallback genérico: tenta Groq primeiro, se falhar tenta Gemini
@@ -4004,7 +4023,10 @@ async function callAiAPI(prompt) {
     return await callGroqAPI(prompt, apiKey);
   } catch (err) {
     const data = await callGeminiAPIWithFallback(prompt);
-    return data.candidates[0].content.parts[0].text;
+    return {
+      text: data.candidates[0].content.parts[0].text,
+      model: 'Google Gemini'
+    };
   }
 }
 
@@ -4015,15 +4037,18 @@ window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async func
   body.innerHTML = `
     <div style="text-align: center; padding: 30px;">
         <div class="loading-spinner" style="border-color: rgba(212, 168, 83, 0.3); border-top-color: var(--gold-400); width: 40px; height: 40px; margin: 0 auto 15px;"></div>
-        <p style="color: var(--gold-300); font-weight: bold; animation: pulse-glow 1.5s infinite;">Preparando a homilia e meditação espiritual...</p>
+        <p style="color: var(--gold-300); font-weight: bold; animation: pulse-glow 1.5s infinite;">Preparando a homilia com Inteligência Artificial...</p>
         <span style="font-size: 12px; color: var(--text-muted);">Consultando a Sagrada Escritura e o Magistério da Igreja...</span>
     </div>
   `;
 
   try {
+    const cleanText = (text || '').trim();
+    const promptText = cleanText.length > 2500 ? cleanText.substring(0, 2500) + '... [trecho principal do capítulo]' : cleanText;
+
     const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
 Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para a seguinte passagem bíblica:
-${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${text}"
+${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${promptText}"
 
 Instruções para a homilia:
 1. Comece com uma saudação cristã paternal e calorosa.
@@ -4033,7 +4058,9 @@ Instruções para a homilia:
 5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
 Destaque frases e conceitos espirituais centrais em negrito.`;
 
-    const homily = await callAiAPI(prompt);
+    const result = await callAiAPI(prompt);
+    const homily = typeof result === 'string' ? result : result.text;
+    const modelUsed = (typeof result === 'object' && result.model) ? result.model : 'Groq IA';
 
     const formattedHomily = homily
       .split('\n\n')
@@ -4041,6 +4068,14 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
       .join('');
 
     body.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(249, 115, 22, 0.15); color: #f97316; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+          <i class="fas fa-bolt"></i> Homilia Viva IA (${modelUsed})
+        </span>
+        <span style="font-size: 11px; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
+          <i class="fas fa-check-circle"></i> Sacerdócio Católico & Tradição
+        </span>
+      </div>
       ${formattedHomily}
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button onclick="generateDynamicAiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
@@ -4059,9 +4094,16 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
 
   } catch (err) {
     console.warn("Transição graciosa para o motor exegético católico:", err.message || err);
-    // Transição 100% silenciosa e perfeita para o motor exegético nativo
     const devotional = getDevotionalHomily(bookName, chapter, verse, text);
     body.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+          <i class="fas fa-church"></i> Meditação Católica Nativa
+        </span>
+        <span style="font-size: 10.5px; color: var(--text-muted);" title="${err.message || ''}">
+          <i class="fas fa-info-circle"></i> Offline (${err.message || 'Transição automática'})
+        </span>
+      </div>
       ${devotional.html}
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
