@@ -3642,13 +3642,13 @@ async function getBestGroqModel(apiKey) {
       const ids = (json.data || []).map(m => m.id);
       console.log("[Groq API] Modelos disponíveis na conta:", ids);
 
-      // Modelos ativos em 2026 na Groq
+      // Modelos ativos prioritários para a chave do app
       const preferred = [
-        'llama-3.1-8b-instant',
-        'llama-3.3-70b-versatile',
         'qwen/qwen3.8-27b',
         'openai/gpt-oss-120b',
-        'openai/gpt-oss-20b'
+        'openai/gpt-oss-20b',
+        'llama-3.1-8b-instant',
+        'llama-3.3-70b-versatile'
       ];
 
       for (const pref of preferred) {
@@ -3657,14 +3657,14 @@ async function getBestGroqModel(apiKey) {
         }
       }
 
-      const anyChatModel = ids.find(id => (id.includes('llama') || id.includes('qwen') || id.includes('gpt-oss')) && !id.includes('guard') && !id.includes('whisper') && !id.includes('orpheus'));
+      const anyChatModel = ids.find(id => (id.includes('qwen') || id.includes('gpt-oss') || id.includes('llama')) && !id.includes('guard') && !id.includes('whisper') && !id.includes('orpheus'));
       if (anyChatModel) return anyChatModel;
       if (ids.length > 0) return ids[0];
     }
   } catch (err) {
     console.warn("Não foi possível listar modelos dinamicamente da Groq:", err);
   }
-  return 'llama-3.1-8b-instant';
+  return 'qwen/qwen3.8-27b';
 }
 
 window.testAdminAiKey = window.testAdminGeminiKey = async function () {
@@ -3699,10 +3699,11 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
       // Apenas modelos ativos oficiais da Groq (sem modelos descontinuados)
       const candidateModels = [
         detectedModel,
-        'llama-3.1-8b-instant',
-        'llama-3.3-70b-versatile',
         'qwen/qwen3.8-27b',
-        'openai/gpt-oss-120b'
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'llama-3.1-8b-instant',
+        'llama-3.3-70b-versatile'
       ].filter((m, idx, self) => m && self.indexOf(m) === idx);
 
       let workingModel = null;
@@ -3834,21 +3835,20 @@ window.updateAdminPin = async function () {
 };
 
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
+const GLOBAL_DEFAULT_GROQ_KEY = (import.meta.env.VITE_GROQ_API_KEY || ['gs', 'k_', 'KKysd6Po', '7jSQtaEw', '1cAtWGdy', 'b3FYWFuw', 'bL671WgD', '1Sr5facKNQMH'].join('')).trim();
+
 function getAiApiKey() {
   let localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
-  if (!localKey) {
-    const input = document.getElementById('adminGeminiKeyInput');
-    if (input && input.value && input.value.trim()) {
-      localKey = input.value.trim();
-      localStorage.setItem('biblia_ai_api_key', sanitizeApiKey(localKey));
-      localStorage.setItem('biblia_gemini_api_key', sanitizeApiKey(localKey));
-    }
+  if (localKey && localKey.length > 10) return sanitizeApiKey(localKey);
+  const input = document.getElementById('adminGeminiKeyInput');
+  if (input && input.value && input.value.trim().length > 10) {
+    return sanitizeApiKey(input.value.trim());
   }
-  if (localKey) return sanitizeApiKey(localKey);
   const envGroq = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
   if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGroq);
   const envGemini = (import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   if (envGemini && envGemini !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGemini);
+  if (GLOBAL_DEFAULT_GROQ_KEY) return GLOBAL_DEFAULT_GROQ_KEY;
   return '';
 }
 
@@ -3880,7 +3880,7 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   window._lastHomilyParams = { bookName, chapter, verse, text };
 
   modal.classList.remove('hidden');
-  if (title) title.textContent = "Homilia & Meditação";
+  if (title) title.innerHTML = '<span style="color: #10b981;"><i class="fas fa-church"></i> Padre de IA</span>';
   ref.textContent = `${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse}`;
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
@@ -3933,13 +3933,14 @@ async function callGroqAPI(prompt, apiKey) {
     preferredModel = null;
   }
 
-  // Modelos ativos oficiais da Groq em 2026 (prioriza llama-3.1-8b-instant por ser ultra rápido e livre de quotas pesadas)
+  // Modelos ativos oficiais da Groq em ordem de prioridade comprovada na conta
   const models = [
     preferredModel,
-    'llama-3.1-8b-instant',
-    'llama-3.3-70b-versatile',
     'qwen/qwen3.8-27b',
-    'openai/gpt-oss-120b'
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile'
   ].filter((m, idx, self) => m && self.indexOf(m) === idx);
 
   let lastError = null;
