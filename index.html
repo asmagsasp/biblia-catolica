@@ -1562,7 +1562,7 @@
             </p>
           </div>
 
-          <input type="text" id="adminGeminiKeyInput" class="upload-input" placeholder="gsk_... (Groq Gratuita) ou AIzaSy... (Gemini)" style="font-family: monospace; font-size: 12px; margin-bottom: 8px;">
+          <input type="text" id="adminGeminiKeyInput" class="upload-input" placeholder="gsk_... (Groq Gratuita) ou AIzaSy... (Gemini)" style="font-family: monospace; font-size: 12px; margin-bottom: 8px;" oninput="saveAdminAiKeyInstant(this.value)">
           
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" class="hero-donate-btn" onclick="saveAdminAiKey()" style="padding: 8px 14px; font-size: 12px; flex: 1;">

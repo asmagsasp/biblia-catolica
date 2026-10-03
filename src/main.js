@@ -3611,6 +3611,19 @@ window.saveAdminAiKey = window.saveAdminGeminiKey = async function () {
   showToast(`✨ Chave da ${provider} salva com sucesso pelo Administrador!`);
 };
 
+window.saveAdminAiKeyInstant = function (rawVal) {
+  const key = sanitizeApiKey(rawVal);
+  if (key) {
+    localStorage.setItem('biblia_ai_api_key', key);
+    localStorage.setItem('biblia_gemini_api_key', key);
+    updateAdminKeyBadge(key);
+  } else {
+    localStorage.removeItem('biblia_ai_api_key');
+    localStorage.removeItem('biblia_gemini_api_key');
+    updateAdminKeyBadge('');
+  }
+};
+
 function sanitizeApiKey(key) {
   if (!key) return '';
   return key.trim().replace(/^["']|["']$/g, '').replace(/^Bearer\s+/i, '').trim();
@@ -3822,7 +3835,15 @@ window.updateAdminPin = async function () {
 
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
 function getAiApiKey() {
-  const localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
+  let localKey = (localStorage.getItem('biblia_ai_api_key') || localStorage.getItem('biblia_gemini_api_key') || '').trim();
+  if (!localKey) {
+    const input = document.getElementById('adminGeminiKeyInput');
+    if (input && input.value && input.value.trim()) {
+      localKey = input.value.trim();
+      localStorage.setItem('biblia_ai_api_key', sanitizeApiKey(localKey));
+      localStorage.setItem('biblia_gemini_api_key', sanitizeApiKey(localKey));
+    }
+  }
   if (localKey) return sanitizeApiKey(localKey);
   const envGroq = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
   if (envGroq && envGroq !== 'COLE_SUA_CHAVE_AQUI') return sanitizeApiKey(envGroq);
@@ -3879,9 +3900,9 @@ window.generateHomily = function (bookName, chapter, verse, text) {
       <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
         <i class="fas fa-church"></i> Meditação Católica Nativa
       </span>
-      <span style="font-size: 10.5px; color: var(--text-muted);">
-        <i class="fas fa-shield-alt"></i> Modo Offline Seguro
-      </span>
+      <button onclick="openAdminModal()" style="font-size: 10.5px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 5px; padding: 2px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+        <i class="fas fa-bolt"></i> Ativar Padre de IA (Groq Grátis)
+      </button>
     </div>
     ${devotional.html}
     <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -3903,15 +3924,16 @@ window.generateHomily = function (bookName, chapter, verse, text) {
 // Groq API Call (Ultra-fast, Auto-discovery & Fallback, 100% Free)
 async function callGroqAPI(prompt, apiKey) {
   const cleanKey = sanitizeApiKey(apiKey);
+  
+  // Limpa modelos antigos/descontinuados salvos
+  const knownBad = ['mixtral', 'llama3-70b-8192', 'llama3-8b-8192', 'gemma'];
   let preferredModel = localStorage.getItem('biblia_groq_detected_model');
-  if (!preferredModel) {
-    preferredModel = await getBestGroqModel(cleanKey);
-    if (preferredModel) {
-      localStorage.setItem('biblia_groq_detected_model', preferredModel);
-    }
+  if (preferredModel && knownBad.some(b => preferredModel.toLowerCase().includes(b))) {
+    localStorage.removeItem('biblia_groq_detected_model');
+    preferredModel = null;
   }
 
-  // Apenas modelos ativos oficiais da Groq em 2026
+  // Modelos ativos oficiais da Groq em 2026 (prioriza llama-3.1-8b-instant por ser ultra rápido e livre de quotas pesadas)
   const models = [
     preferredModel,
     'llama-3.1-8b-instant',
@@ -3925,7 +3947,7 @@ async function callGroqAPI(prompt, apiKey) {
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 18000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
       try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -3948,7 +3970,7 @@ async function callGroqAPI(prompt, apiKey) {
               }
             ],
             temperature: 0.7,
-            max_tokens: 1200
+            max_tokens: 1100
           })
         });
 
@@ -3967,10 +3989,10 @@ async function callGroqAPI(prompt, apiKey) {
         console.warn(`Groq modelo ${model} erro (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
 
         if (response.status === 401 || response.status === 403) {
-          throw new Error("Chave da Groq inválida ou expirada.");
+          throw new Error("Chave da Groq inválida ou sem permissão. Verifique sua chave em console.groq.com/keys.");
         }
 
-        // Se o modelo não existir ou não estiver liberado (404 ou 400), passa imediatamente para o próximo modelo
+        // Se o modelo não existir ou não estiver liberado (404 ou 400), pula imediatamente para o próximo modelo
         if (response.status === 404 || response.status === 400) {
           break;
         }
@@ -3987,8 +4009,8 @@ async function callGroqAPI(prompt, apiKey) {
         lastError = err;
         if (err.name === 'AbortError') {
           console.warn(`Modelo Groq ${model} timeout. Alternando modelo...`);
-          lastError = new Error("Tempo de resposta esgotado. Alternando modelo...");
-        } else if (err.message === 'INVALID_OR_EXPIRED_KEY') {
+          lastError = new Error("Tempo de resposta da IA esgotado.");
+        } else if (err.message && err.message.includes('inválida')) {
           throw err;
         }
       }
@@ -4033,18 +4055,24 @@ async function callAiAPI(prompt) {
 window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
   const body = document.getElementById('homilyBody');
   const speakBtn = document.getElementById('homilySpeakBtn');
+  const title = document.getElementById('homilyTitle');
+  if (title) title.innerHTML = '<span style="color: #10b981;"><i class="fas fa-church"></i> Padre de IA</span>';
 
+  // MENSAGEM VERDE SOLICITADA PELO USUÁRIO: "Padre de IA gerando homilia"
   body.innerHTML = `
-    <div style="text-align: center; padding: 30px;">
-        <div class="loading-spinner" style="border-color: rgba(212, 168, 83, 0.3); border-top-color: var(--gold-400); width: 40px; height: 40px; margin: 0 auto 15px;"></div>
-        <p style="color: var(--gold-300); font-weight: bold; animation: pulse-glow 1.5s infinite;">Preparando a homilia com Inteligência Artificial...</p>
-        <span style="font-size: 12px; color: var(--text-muted);">Consultando a Sagrada Escritura e o Magistério da Igreja...</span>
+    <div style="text-align: center; padding: 32px 16px;">
+        <div class="loading-spinner" style="border-color: rgba(16, 185, 129, 0.25); border-top-color: #10b981; width: 44px; height: 44px; margin: 0 auto 16px; border-width: 3.5px;"></div>
+        <p style="color: #10b981; font-weight: 700; font-size: 16.5px; margin: 0 0 8px 0; animation: pulse-glow 1.5s infinite; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fas fa-church"></i> Padre de IA gerando homilia...
+        </p>
+        <span style="font-size: 12.5px; color: var(--text-muted); display: block;">Iluminando o coração com a Sagrada Escritura e o Magistério da Igreja...</span>
     </div>
   `;
 
   try {
     const cleanText = (text || '').trim();
-    const promptText = cleanText.length > 2500 ? cleanText.substring(0, 2500) + '... [trecho principal do capítulo]' : cleanText;
+    // Limita tamanho do texto para respeitar TPM (Tokens Per Minute) da Groq
+    const promptText = cleanText.length > 2000 ? cleanText.substring(0, 2000) + '... [trecho principal do capítulo]' : cleanText;
 
     const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
 Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para a seguinte passagem bíblica:
@@ -4069,8 +4097,8 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
 
     body.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
-        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(249, 115, 22, 0.15); color: #f97316; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">
-          <i class="fas fa-bolt"></i> Homilia Viva IA (${modelUsed})
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700;">
+          <i class="fas fa-church"></i> Padre de IA • Homilia Concluída (${modelUsed})
         </span>
         <span style="font-size: 11px; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
           <i class="fas fa-check-circle"></i> Sacerdócio Católico & Tradição
@@ -4079,8 +4107,8 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
       ${formattedHomily}
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button onclick="generateDynamicAiHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
-                style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-redo"></i> Nova Meditação
+                style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-redo"></i> Nova Homilia IA
         </button>
         <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
           <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
@@ -4093,15 +4121,26 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     updateSpeakBtnState(false);
 
   } catch (err) {
-    console.warn("Transição graciosa para o motor exegético católico:", err.message || err);
+    console.warn("Falha na chamada da IA, exibindo aviso e meditação católica:", err.message || err);
     const devotional = getDevotionalHomily(bookName, chapter, verse, text);
     body.innerHTML = `
+      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #ef4444;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <span style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-exclamation-triangle"></i> Falha no Padre de IA: ${err.message || 'Erro de comunicação'}
+          </span>
+          <button onclick="openAdminModal()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 10.5px; padding: 3px 8px; border-radius: 5px; cursor: pointer;">
+            <i class="fas fa-key"></i> Ajustar Chave
+          </button>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Exibindo meditação católica nativa como alternativa offline:</div>
+      </div>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
         <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
           <i class="fas fa-church"></i> Meditação Católica Nativa
         </span>
-        <span style="font-size: 10.5px; color: var(--text-muted);" title="${err.message || ''}">
-          <i class="fas fa-info-circle"></i> Offline (${err.message || 'Transição automática'})
+        <span style="font-size: 10.5px; color: var(--text-muted);">
+          <i class="fas fa-shield-alt"></i> Modo Offline Seguro
         </span>
       </div>
       ${devotional.html}
