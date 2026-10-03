@@ -365,13 +365,14 @@ window.shareHeroWhatsApp = function () {
 };
 
 // ===== OPEN BOOK =====
-async function openBook(id, nome, total) {
+async function openBook(id, nome, total, initialChapter = 1) {
   if (!db.isReady()) return;
   try {
     if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
     currentBook = { id, nome, total };
     totalChapters = total;
-    currentChapter = 1;
+    const targetCap = Math.max(1, Math.min(total, parseInt(initialChapter) || 1));
+    currentChapter = targetCap;
     showView('chapterView');
     document.getElementById('chapterTitle').textContent = nome;
     document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
@@ -3752,6 +3753,12 @@ function renderLiturgiaView(data) {
         <strong>Refrão:</strong> ${data.salmo?.refrao || ''}
       </div>
       <p class="liturgia-reading-text" style="white-space: pre-line;">${data.salmo?.texto || ''}</p>
+      ${data.salmo?.referencia ? `
+      <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+        <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.salmo.referencia || '').replace(/'/g, "\\'")}')">
+          <i class="fas fa-bible"></i> Ler Salmo na Bíblia
+        </button>
+      </div>` : ''}
     </div>
   `;
 
@@ -4008,25 +4015,236 @@ window.shareSantoWhatsApp = function () {
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
-// Abrir livro e capítulo diretamente pela referência da leitura
+// ==========================================================================
+// CANONICAL CATHOLIC BIBLE BOOK RESOLVER & REFERENCE PARSER
+// ==========================================================================
+const BIBLE_BOOK_MAP = [
+  // Antigo Testamento (46 livros)
+  { id: 1, aliases: ['genesis', 'genese', 'gn', 'gen', 'ge'] },
+  { id: 2, aliases: ['exodo', 'ex', 'êx', 'exo'] },
+  { id: 3, aliases: ['levitico', 'lv', 'lev'] },
+  { id: 4, aliases: ['numeros', 'nm', 'num', 'nu'] },
+  { id: 5, aliases: ['deuteronomio', 'dt', 'deut', 'de'] },
+  { id: 6, aliases: ['josue', 'js', 'jos'] },
+  { id: 7, aliases: ['juizes', 'jz', 'juiz', 'jui'] },
+  { id: 8, aliases: ['rute', 'rt', 'rut'] },
+  { id: 9, aliases: ['1 samuel', '1samuel', '1sm', '1 sm', '1sam', '1 s', 'i samuel', 'isamuel', 'ism', 'i sm', '1º samuel', 'primeiro samuel'] },
+  { id: 10, aliases: ['2 samuel', '2samuel', '2sm', '2 sm', '2sam', '2 s', 'ii samuel', 'iisamuel', 'iism', 'ii sm', '2º samuel', 'segundo samuel'] },
+  { id: 11, aliases: ['1 reis', '1reis', '1rs', '1 rs', '1re', '1 re', 'i reis', 'ireis', 'irs', 'i rs', '1º reis', 'primeiro reis'] },
+  { id: 12, aliases: ['2 reis', '2reis', '2rs', '2 rs', '2re', '2 re', 'ii reis', 'iireis', 'iirs', 'ii rs', '2º reis', 'segundo reis'] },
+  { id: 13, aliases: ['1 cronicas', '1cronicas', '1cr', '1 cr', '1cro', 'i cronicas', 'icronicas', 'icr', 'i cr', '1º cronicas', 'primeiro cronicas'] },
+  { id: 14, aliases: ['2 cronicas', '2cronicas', '2cr', '2 cr', '2cro', 'ii cronicas', 'iicronicas', 'iicr', 'ii cr', '2º cronicas', 'segundo cronicas'] },
+  { id: 15, aliases: ['esdras', 'esd', 'ed', 'es'] },
+  { id: 16, aliases: ['neemias', 'ne', 'neem'] },
+  { id: 17, aliases: ['tobias', 'tb', 'tob'] },
+  { id: 18, aliases: ['judite', 'jdt', 'jt', 'jud'] },
+  { id: 19, aliases: ['ester', 'est', 'et'] },
+  { id: 20, aliases: ['jó', 'job'] },
+  { id: 21, aliases: ['salmos', 'salmo', 'sl', 'psm', 'ps'] },
+  { id: 22, aliases: ['1 macabeus', '1macabeus', '1mc', '1 mc', '1mac', '1 mac', 'i macabeus', 'imacabeus', 'imc', 'i mc', '1º macabeus', 'primeiro macabeus'] },
+  { id: 23, aliases: ['2 macabeus', '2macabeus', '2mc', '2 mc', '2mac', '2 mac', 'ii macabeus', 'iimacabeus', 'iimc', 'ii mc', '2º macabeus', 'segundo macabeus'] },
+  { id: 24, aliases: ['proverbios', 'pr', 'prov', 'pro'] },
+  { id: 25, aliases: ['eclesiastes', 'ec', 'ecl', 'qo', 'qoh'] },
+  { id: 26, aliases: ['cantico dos canticos', 'canticos', 'cantico', 'ct', 'cnt', 'cant', 'can'] },
+  { id: 27, aliases: ['sabedoria', 'sb', 'sab'] },
+  { id: 28, aliases: ['eclesiastico', 'eclo', 'sir', 'eclasiastico'] },
+  { id: 29, aliases: ['isaias', 'is', 'isa'] },
+  { id: 30, aliases: ['jeremias', 'jr', 'jer'] },
+  { id: 31, aliases: ['lamentacoes', 'lamentacao', 'lm', 'lam'] },
+  { id: 32, aliases: ['baruc', 'baruque', 'br', 'bar'] },
+  { id: 33, aliases: ['ezequiel', 'ez', 'eze'] },
+  { id: 34, aliases: ['daniel', 'dn', 'dan'] },
+  { id: 35, aliases: ['oseias', 'oséias', 'os', 'ose'] },
+  { id: 36, aliases: ['joel', 'jl', 'joe'] },
+  { id: 37, aliases: ['amos', 'amós', 'am'] },
+  { id: 38, aliases: ['abdias', 'ab', 'abd', 'ob'] },
+  { id: 39, aliases: ['jonas', 'jn', 'jon'] },
+  { id: 40, aliases: ['miqueias', 'miquéias', 'mq', 'miq', 'mic'] },
+  { id: 41, aliases: ['naum', 'na', 'nah'] },
+  { id: 42, aliases: ['habacuc', 'habacuque', 'hab', 'hc'] },
+  { id: 43, aliases: ['sofonias', 'sf', 'sof'] },
+  { id: 44, aliases: ['ageu', 'ag', 'hag'] },
+  { id: 45, aliases: ['zacarias', 'zc', 'zac'] },
+  { id: 46, aliases: ['malaquias', 'ml', 'mal'] },
+
+  // Novo Testamento (27 livros)
+  { id: 47, aliases: ['sao mateus', 'mateus', 'mt', 'mat', 's. mateus', 'evangelho de mateus', 'evangelho de sao mateus'] },
+  { id: 48, aliases: ['sao marcos', 'marcos', 'mc', 'mar', 's. marcos', 'evangelho de marcos', 'evangelho de sao marcos'] },
+  { id: 49, aliases: ['sao lucas', 'lucas', 'lc', 'luc', 's. lucas', 'evangelho de lucas', 'evangelho de sao lucas'] },
+  { id: 50, aliases: ['sao joao', 'joao', 'jo', 'joh', 's. joao', 'evangelho de joao', 'evangelho de sao joao'] },
+  { id: 51, aliases: ['atos dos apostolos', 'atos', 'at', 'act'] },
+  { id: 52, aliases: ['romanos', 'rm', 'rom', 'ro'] },
+  { id: 53, aliases: ['1 corintios', '1corintios', '1cor', '1 cor', '1co', '1 co', 'i corintios', 'icorintios', 'icor', 'i cor', '1º corintios', 'primeiro corintios'] },
+  { id: 54, aliases: ['2 corintios', '2corintios', '2cor', '2 cor', '2co', '2 co', 'ii corintios', 'iicorintios', 'iicor', 'ii cor', '2º corintios', 'segundo corintios'] },
+  { id: 55, aliases: ['galatas', 'gl', 'gal'] },
+  { id: 56, aliases: ['efesios', 'ef', 'efe', 'ep'] },
+  { id: 57, aliases: ['filipenses', 'fl', 'flp', 'fp', 'fil'] },
+  { id: 58, aliases: ['colossenses', 'cl', 'col'] },
+  { id: 59, aliases: ['1 tessalonicenses', '1tessalonicenses', '1ts', '1 ts', '1tes', '1 tes', 'i tessalonicenses', 'itessalonicenses', 'its', 'i ts', '1º tessalonicenses', 'primeiro tessalonicenses'] },
+  { id: 60, aliases: ['2 tessalonicenses', '2tessalonicenses', '2ts', '2 ts', '2tes', '2 tes', 'ii tessalonicenses', 'iitessalonicenses', 'iits', 'ii ts', '2º tessalonicenses', 'segundo tessalonicenses'] },
+  { id: 61, aliases: ['1 timoteo', '1timoteo', '1tm', '1 tm', '1ti', '1 ti', 'i timoteo', 'itimoteo', 'itm', 'i tm', '1º timoteo', 'primeiro timoteo'] },
+  { id: 62, aliases: ['2 timoteo', '2timoteo', '2tm', '2 tm', '2ti', '2 ti', 'ii timoteo', 'iitimoteo', 'iitm', 'ii tm', '2º timoteo', 'segundo timoteo'] },
+  { id: 63, aliases: ['tito', 'tt', 'tit'] },
+  { id: 64, aliases: ['filemon', 'filêmon', 'fm', 'flm', 'phm'] },
+  { id: 65, aliases: ['hebreus', 'hb', 'heb'] },
+  { id: 66, aliases: ['sao tiago', 'tiago', 'tg', 'tia', 's. tiago', 'epistola de tiago'] },
+  { id: 67, aliases: ['1 pedro', '1pedro', '1pd', '1 pd', '1pe', '1 pe', '1p', '1 p', '1 sao pedro', '1sao pedro', 'i pedro', 'ipedro', 'ipd', 'i pd', 'ipe', 'i pe', 'i sao pedro', 'isao pedro', '1º pedro', 'primeiro pedro'] },
+  { id: 68, aliases: ['2 pedro', '2pedro', '2pd', '2 pd', '2pe', '2 pe', '2p', '2 p', '2 sao pedro', '2sao pedro', 'ii pedro', 'iipedro', 'iipd', 'ii pd', 'iipe', 'ii pe', 'ii sao pedro', 'iisao pedro', '2º pedro', 'segundo pedro'] },
+  { id: 69, aliases: ['1 joao', '1joao', '1jo', '1 jo', '1j', '1 j', '1 sao joao', '1sao joao', 'i joao', 'ijoao', 'ijo', 'i jo', 'i sao joao', 'isao joao', '1º joao', 'primeiro joao'] },
+  { id: 70, aliases: ['2 joao', '2joao', '2jo', '2 jo', '2j', '2 j', '2 sao joao', '2sao joao', 'ii joao', 'iijoao', 'iijo', 'ii jo', 'ii sao joao', 'iisao joao', '2º joao', 'segundo joao'] },
+  { id: 71, aliases: ['3 joao', '3joao', '3jo', '3 jo', '3j', '3 j', '3 sao joao', '3sao joao', 'iii joao', 'iiijoao', 'iiijo', 'iii jo', 'iii sao joao', 'iiisao joao', '3º joao', 'terceiro joao'] },
+  { id: 72, aliases: ['sao judas', 'judas', 'jd', 'jud', 's. judas', 'epistola de judas'] },
+  { id: 73, aliases: ['apocalipse', 'ap', 'apoc', 'apc', 'rev'] }
+];
+
+function normalizeBibleStr(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+function findBiblicalBook(rawQuery) {
+  if (!rawQuery) return null;
+  const trimmed = rawQuery.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Desambiguação explícita de Jó vs João
+  if (lower === 'jó' || lower === 'job') {
+    return allBooks.find(b => b.id_livro === 20) || null;
+  }
+  if (lower === 'jo' || lower === 'joao' || lower === 'joão') {
+    return allBooks.find(b => b.id_livro === 50) || null;
+  }
+
+  // Desambiguação explícita de Judas vs Judite
+  if (lower === 'jd') {
+    return allBooks.find(b => b.id_livro === 72) || null; // São Judas
+  }
+  if (lower === 'jdt' || lower === 'jt') {
+    return allBooks.find(b => b.id_livro === 18) || null; // Judite
+  }
+
+  const cleanQ = normalizeBibleStr(trimmed);
+
+  // 1. Busca exata pelos aliases mapeados
+  for (const item of BIBLE_BOOK_MAP) {
+    for (const al of item.aliases) {
+      if (normalizeBibleStr(al) === cleanQ) {
+        return allBooks.find(b => b.id_livro === item.id) || null;
+      }
+    }
+  }
+
+  // 2. Busca exata pelo nome do livro no banco
+  for (const b of allBooks) {
+    if (normalizeBibleStr(b.nome_livro) === cleanQ) {
+      return b;
+    }
+  }
+
+  // 3. Busca por correspondência de prefixo
+  for (const item of BIBLE_BOOK_MAP) {
+    for (const al of item.aliases) {
+      const na = normalizeBibleStr(al);
+      if (na.length >= 2 && (cleanQ === na || cleanQ.startsWith(na) || na.startsWith(cleanQ))) {
+        return allBooks.find(b => b.id_livro === item.id) || null;
+      }
+    }
+  }
+
+  // 4. Busca parcial no nome do banco
+  for (const b of allBooks) {
+    const nb = normalizeBibleStr(b.nome_livro);
+    if (nb.includes(cleanQ) || cleanQ.includes(nb)) {
+      return b;
+    }
+  }
+
+  return null;
+}
+
+function parseBiblicalRef(refStr) {
+  if (!refStr || typeof refStr !== 'string') return null;
+
+  // 1. Remove notas litúrgicas de resposta como (R. 11), (R. 1a) ou (ou ...)
+  let clean = refStr.replace(/\(\s*r\.?\s*\d+[^)]*\)/gi, '').trim();
+  clean = clean.replace(/\(\s*ou\s+[^)]+\)/gi, '').trim();
+
+  // 2. Trata numeração dupla de Salmos: "Sl 90(91)" -> "Sl 90"
+  clean = clean.replace(/(\d+)\s*\(\s*\d+\s*\)/g, (m, p1) => p1);
+
+  // 3. Captura Livro, Capítulo e Versículo inicial
+  // Ex: "Êx 23, 20-23" -> Book: "Êx", Cap: 23, Ver: 20
+  // Ex: "1Pd 5, 5b-14" -> Book: "1Pd", Cap: 5, Ver: 5
+  // Ex: "Mt 18, 1-5"   -> Book: "Mt", Cap: 18, Ver: 1
+  const regex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)(?:[,\s:]+(\d+))?/;
+  const match = clean.match(regex);
+
+  if (match) {
+    const rawBook = match[1].trim();
+    const cap = parseInt(match[2], 10) || 1;
+    const ver = match[3] ? parseInt(match[3], 10) : null;
+    return { rawBook, cap, ver, cleanRef: clean };
+  }
+
+  // 4. Fallback para livros de capítulo único (ex: Fm 9-10, Jd 17-25)
+  const singleCapRegex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)/;
+  const singleMatch = clean.match(singleCapRegex);
+  if (singleMatch) {
+    const rawBook = singleMatch[1].trim();
+    const num = parseInt(singleMatch[2], 10) || 1;
+    return { rawBook, cap: 1, ver: num, cleanRef: clean };
+  }
+
+  return null;
+}
+
+// Abrir livro e capítulo diretamente pela referência da leitura litúrgica
 window.openBibleByRef = async function (refStr) {
   if (!refStr) return;
-  const clean = refStr.replace(/\(.*\)/g, '').trim();
-  const match = clean.match(/^([0-9\s]*[A-Za-zÀ-ÿ]+)\s+([0-9]+)/);
-  if (!match) {
-    showToast(`Referência: ${refStr}`);
+
+  // Garante que a lista de livros esteja carregada
+  if (!allBooks || !allBooks.length) {
+    try {
+      allBooks = await db.getLivros() || [];
+    } catch (e) {
+      console.warn('[openBibleByRef] Erro ao carregar livros:', e);
+    }
+  }
+
+  const parsed = parseBiblicalRef(refStr);
+  if (!parsed) {
+    showToast(`Referência bíblica: ${refStr}`);
     return;
   }
-  const bookNameMatch = match[1].trim().toLowerCase();
-  const cap = parseInt(match[2]) || 1;
 
-  const targetBook = allBooks.find(b => b.nome_livro.toLowerCase().includes(bookNameMatch) || bookNameMatch.includes(b.nome_livro.toLowerCase()));
+  const targetBook = findBiblicalBook(parsed.rawBook);
   if (targetBook) {
-    openBook(targetBook.id_livro, targetBook.nome_livro, targetBook.total_capitulos);
-    setTimeout(() => selectChapter(cap), 150);
+    const cap = Math.max(1, Math.min(targetBook.total_capitulos, parsed.cap));
+    console.log(`[openBibleByRef] Abrindo ${targetBook.nome_livro} capítulo ${cap} (ref: ${refStr})`);
+    
+    // Abre diretamente o livro e o capítulo correto
+    await openBook(targetBook.id_livro, targetBook.nome_livro, targetBook.total_capitulos, cap);
+    
+    showToast(`📖 ${targetBook.nome_livro} ${cap}${parsed.ver ? ', ' + parsed.ver : ''}`);
+
+    // Se houver versículo inicial específico, rola suavemente até ele e destaca
+    if (parsed.ver) {
+      setTimeout(() => {
+        const vEl = document.getElementById(`v-${parsed.ver}`);
+        if (vEl) {
+          vEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          vEl.classList.add('reading');
+          setTimeout(() => vEl.classList.remove('reading'), 2500);
+        }
+      }, 250);
+    }
   } else {
-    showToast(`Buscando ${clean}...`);
-    doSearchWithQuery(clean);
+    console.warn(`[openBibleByRef] Livro não reconhecido para "${parsed.rawBook}" (ref: ${refStr})`);
+    showToast(`Livro não localizado: ${refStr}`);
   }
 };
 
