@@ -4425,6 +4425,7 @@ async function loadLiturgiaData() {
     if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
 
     renderLiturgiaView(currentLiturgiaData);
+    autoFetchAiHomilyForLiturgia(currentLiturgiaData);
   } catch (err) {
     console.error("Liturgia error:", err);
     container.innerHTML = `
@@ -4516,26 +4517,31 @@ function renderLiturgiaView(data) {
         <span class="liturgia-section-ref" style="background: rgba(212, 175, 55, 0.15); color: var(--gold-300);">${data.evangelho?.referencia || ''}</span>
       </div>
       <p class="liturgia-reading-text" style="font-weight: 500;">${data.evangelho?.texto || ''}</p>
-      <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+      <div style="display:flex; justify-content: flex-end; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+        <button class="hero-donate-btn pulse-animation" style="padding: 7px 15px; font-size: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer;" onclick="gerarHomiliaEvangelhoIA()">
+          <i class="fas fa-church"></i> Homilia com Padre de IA
+        </button>
         <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.evangelho?.referencia || '').replace(/'/g, "\\'")}')">
-          <i class="fas fa-bible"></i> Ler Evangelho na Bíblia
+          <i class="fas fa-bible"></i> Ler na Bíblia
         </button>
       </div>
     </div>
 
     <!-- Homilia Teológica do Santo Evangelho -->
-    ${data.homilia ? `
-    <div class="liturgia-section-card homilia-evangelho-card" style="border: 1px solid rgba(212, 175, 55, 0.45); background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.1) 0%, var(--bg-card) 75%);">
-      <div class="liturgia-section-header" style="border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+    <div class="liturgia-section-card homilia-evangelho-card" style="border: 1px solid rgba(16, 185, 129, 0.35); background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.08) 0%, var(--bg-card) 75%);">
+      <div class="liturgia-section-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.2); padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
-          <h3 class="liturgia-section-title" style="color: var(--gold-400); font-family: 'Cinzel', serif; font-size: 16px; margin: 0;">
-            <i class="fas fa-cross" style="color: var(--gold-400); margin-right: 6px;"></i> Homilia do Evangelho
+          <h3 class="liturgia-section-title" style="color: #10b981; font-family: 'Cinzel', serif; font-size: 16px; margin: 0; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-church" style="color: #10b981;"></i> Homilia do Evangelho
           </h3>
           <span style="font-size: 11px; color: var(--gold-300); display: block; margin-top: 2px;">
-            <i class="fas fa-church"></i> Tradição, Doutrina & Patrística Católica
+            <i class="fas fa-cross"></i> Padre de IA & Tradição Católica
           </span>
         </div>
-        <div style="display: flex; gap: 6px;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="upload-btn-secondary" style="padding: 5px 11px; font-size: 11.5px; border-color: rgba(16, 185, 129, 0.45); color: #10b981; background: rgba(16, 185, 129, 0.1);" onclick="gerarHomiliaEvangelhoIA()" title="Gerar ou Recarregar Homilia com Padre de IA">
+            <i class="fas fa-redo"></i> Gerar com Padre de IA
+          </button>
           <button type="button" class="upload-btn-secondary" id="btnSpeakHomiliaLiturgia" style="padding: 5px 11px; font-size: 11.5px;" onclick="toggleSpeakHomiliaLiturgia()" title="Ouvir Homilia do Evangelho">
             <i class="fas fa-volume-up"></i> Ouvir Homilia
           </button>
@@ -4544,18 +4550,10 @@ function renderLiturgiaView(data) {
           </button>
         </div>
       </div>
-      <div class="homilia-content-body" style="font-size: 14.5px; line-height: 1.68; color: var(--text-primary);">
-        ${data.homilia.html || `<p>${data.reflexao || ''}</p>`}
+      <div class="homilia-content-body" id="homiliaEvangelhoBody" style="font-size: 14.5px; line-height: 1.68; color: var(--text-primary);">
+        ${data.homilia ? (data.homilia.html || `<p>${data.reflexao || ''}</p>`) : `<p>${data.reflexao || ''}</p>`}
       </div>
     </div>
-    ` : (data.reflexao ? `
-    <div class="liturgia-section-card" style="background: rgba(0,0,0,0.18);">
-      <div class="liturgia-section-header">
-        <h3 class="liturgia-section-title"><i class="fas fa-cross"></i> Homilia do Evangelho</h3>
-      </div>
-      <p class="liturgia-reading-text" style="font-style: italic; font-size: 15.5px;">“${data.reflexao}”</p>
-    </div>
-    ` : '')}
 
     <!-- Santo do Dia -->
     ${data.santo ? `
@@ -4639,6 +4637,112 @@ window.toggleSpeakLiturgia = async function () {
     stopLiturgiaSpeech();
   }
 };
+
+// ===== HOMILIA DO EVANGELHO COM PADRE DE IA =====
+window.gerarHomiliaEvangelhoIA = function () {
+  if (!currentLiturgiaData || !currentLiturgiaData.evangelho) {
+    showToast("Evangelho não disponível no momento.");
+    return;
+  }
+  const ev = currentLiturgiaData.evangelho;
+  const refStr = ev.referencia || 'Evangelho';
+  const texto = ev.texto || '';
+
+  let book = 'São Mateus';
+  let chap = 1;
+  let verses = 'completo';
+
+  const combined = (refStr + ' ' + (ev.titulo || '')).toLowerCase();
+  if (combined.includes('luc') || combined.includes('lc')) book = 'São Lucas';
+  else if (combined.includes('mar') || combined.includes('mc')) book = 'São Marcos';
+  else if (combined.includes('jo')) book = 'São João';
+  else if (combined.includes('mat') || combined.includes('mt')) book = 'São Mateus';
+
+  const match = refStr.match(/(\d+)[\s,:]+(\d+.*)?/);
+  if (match) {
+    chap = parseInt(match[1]) || 1;
+    if (match[2]) verses = match[2].trim();
+  }
+
+  generateHomily(book, chap, verses, texto);
+};
+
+async function autoFetchAiHomilyForLiturgia(liturgiaData) {
+  const apiKey = getAiApiKey();
+  if (!apiKey || !liturgiaData || !liturgiaData.evangelho) return;
+  const ev = liturgiaData.evangelho;
+  const dateKey = liturgiaData.data || new Date().toISOString().split('T')[0];
+
+  // 1. Se já temos a homilia com IA salva para esta data, aplica imediatamente
+  const cachedAiHomily = localStorage.getItem(`liturgia_ai_homilia_${dateKey}`);
+  if (cachedAiHomily) {
+    try {
+      const parsed = JSON.parse(cachedAiHomily);
+      if (parsed && parsed.html) {
+        liturgiaData.homilia = parsed;
+        liturgiaData.homiliaIsAi = true;
+        const bodyEl = document.getElementById('homiliaEvangelhoBody');
+        if (bodyEl) bodyEl.innerHTML = parsed.html;
+        return;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Se não tem em cache, busca na IA (Groq) em background
+  try {
+    const refStr = ev.referencia || 'Evangelho';
+    const cleanText = (ev.texto || '').trim();
+    const promptText = cleanText.length > 2000 ? cleanText.substring(0, 2000) + '...' : cleanText;
+    const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
+Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para o Santo Evangelho do dia na Liturgia da Igreja Católica:
+${refStr} - "${promptText}"
+
+Instruções para a homilia:
+1. Comece com uma saudação cristã paternal e calorosa.
+2. Explique o sentido espiritual profundo e teológico desta passagem no contexto do Evangelho.
+3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, São Tomás de Aquino, São João Crisóstomo ou Santa Teresa).
+4. Dê 3 ensinamentos ou compromissos práticos para a vida diária do fiel moderno (família, trabalho, oração).
+5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
+Destaque frases e conceitos espirituais centrais em negrito.`;
+
+    const result = await callAiAPI(prompt);
+    const homilyRaw = typeof result === 'string' ? result : result.text;
+    const modelUsed = (typeof result === 'object' && result.model) ? result.model : 'Groq IA';
+
+    const formattedHtml = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700;">
+          <i class="fas fa-church"></i> Padre de IA • Homilia do Evangelho (${modelUsed})
+        </span>
+        <span style="font-size: 11px; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
+          <i class="fas fa-check-circle"></i> Sacerdócio Católico & Tradição
+        </span>
+      </div>
+    ` + homilyRaw
+      .split('\n\n')
+      .map(p => `<p style="margin-bottom: 12px; line-height: 1.68;">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`)
+      .join('');
+
+    const aiHomilyObj = {
+      html: formattedHtml,
+      textToSpeak: homilyRaw.replace(/\*/g, ''),
+      themeTitle: `Evangelho (${refStr})`
+    };
+
+    liturgiaData.homilia = aiHomilyObj;
+    liturgiaData.homiliaIsAi = true;
+    try {
+      localStorage.setItem(`liturgia_ai_homilia_${dateKey}`, JSON.stringify(aiHomilyObj));
+    } catch (e) {}
+
+    const bodyEl = document.getElementById('homiliaEvangelhoBody');
+    if (bodyEl) {
+      bodyEl.innerHTML = formattedHtml;
+    }
+  } catch (err) {
+    console.warn("[autoFetchAiHomilyForLiturgia] Homilia offline nativa mantida:", err.message || err);
+  }
+}
 
 // Ouvir Homilia do Evangelho Separadamente (TTS)
 let isHomiliaLiturgiaSpeaking = false;
