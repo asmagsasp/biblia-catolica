@@ -3226,7 +3226,52 @@ export async function updateHomeFraternalCard() {
       return;
     }
 
-    // 3. Caso tenha concluído o compromisso trimestral com louvor
+    // 3. Caso tenha completado o ciclo e esteja no 4º mês (hora da renovação fraterna)
+    if (pledge && pledge.completed && !pledge.renewalDeclined && Date.now() >= (pledge.nextRenewalDate || 0)) {
+      const amountStr = pledge.amount > 0 ? `R$ ${pledge.amount},00/mês` : 'valor livre';
+      card.classList.add('donated-mode');
+      card.onclick = () => showPledgeRenewalModal(pledge);
+      card.innerHTML = `
+        <div class="fraternal-card-glow" style="background: radial-gradient(circle, rgba(212,175,55,0.35) 0%, transparent 70%);"></div>
+        <div class="fraternal-card-icon" style="background: rgba(212, 175, 55, 0.25); border-color: var(--gold-400); color: var(--gold-300);">
+          <i class="fas fa-crown pulse-animation"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-star"></i> Renovação Fraterna (Novo Ciclo)</span>
+            <span class="fraternal-card-cta" style="color: var(--gold-400); font-weight: 800;">Renovar (${amountStr}) <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Você concluiu seu ciclo de apoio com louvor! Toque aqui para renovar seu compromisso ou concluir sua missão com honra.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // 4. Caso tenha concluído o compromisso trimestral e optado por concluir / não renovar
+    if (pledge && pledge.completed && pledge.renewalDeclined) {
+      card.classList.add('donated-mode');
+      card.onclick = () => showDonateModal();
+      card.innerHTML = `
+        <div class="fraternal-card-glow"></div>
+        <div class="fraternal-card-icon" style="background: rgba(212, 175, 55, 0.25); border-color: var(--gold-400); color: var(--gold-300);">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-dove"></i> Benfeitor Consagrado de Honra</span>
+            <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Gratidão perpétua pela sua contribuição à Palavra de Deus. Nossas orações e bênçãos estão com você e sua família!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // 5. Caso tenha concluído o ciclo recentemente (aguardando o 4º mês)
     if (pledge && pledge.completed) {
       card.classList.add('donated-mode');
       card.onclick = () => showDonateModal();
@@ -3389,6 +3434,8 @@ async function checkAndStartDonateTimer() {
 export async function checkPledgeReminder() {
   try {
     const pledge = await getPledgeData();
+
+    // 1. Verifica lembrete fraterno durante o ciclo ativo (2º ou 3º mês)
     if (pledge && pledge.active && !pledge.completed) {
       if (Date.now() >= pledge.nextReminderDate) {
         console.log('[Pledge] Lembrete fraterno de 30 dias atingido. Exibindo modal.');
@@ -3398,15 +3445,21 @@ export async function checkPledgeReminder() {
         return true;
       }
     }
+
+    // 2. Verifica renovação fraterna no 4º mês (após concluir o ciclo de 3 meses)
+    if (pledge && pledge.completed && !pledge.renewalDeclined && Date.now() >= (pledge.nextRenewalDate || 0)) {
+      console.log('[Pledge] Momento de renovação fraterna (4º mês) atingido. Exibindo modal de renovação.');
+      setTimeout(() => {
+        showPledgeRenewalModal(pledge);
+      }, 1500);
+      return true;
+    }
   } catch (err) {
-    console.error('[Pledge] Erro ao verificar lembrete:', err);
+    console.error('[Pledge] Erro ao verificar lembretes e renovação:', err);
   }
   return false;
 }
 
-/**
- * Exibe o modal de lembrete fraterno aos 30 ou 60 dias
- */
 /**
  * Exibe o modal de lembrete fraterno aos 30 ou 60 dias
  */
@@ -3449,6 +3502,107 @@ window.closePledgeReminderModal = function () {
 };
 
 /**
+ * Exibe o modal de renovação fraterna (4º Mês / Pós-Ciclo)
+ */
+window.showPledgeRenewalModal = async function (pledgeData = null) {
+  const modal = document.getElementById('pledgeRenewalModal');
+  if (!modal) return;
+
+  const pledge = pledgeData || (await getPledgeData()) || { totalMonths: 3, amount: selectedDonateAmount || 5 };
+  const amount = pledge.amount !== undefined ? Number(pledge.amount) : (selectedDonateAmount || 5);
+  const amountStr = amount > 0 ? `R$ ${amount},00/mês` : 'valor livre';
+  const totalMonths = pledge.totalMonths || 3;
+
+  const amtSpan = document.getElementById('pledgeRenewalAmountText');
+  if (amtSpan) {
+    amtSpan.innerText = amountStr;
+  }
+
+  const btnSpan = document.getElementById('btnRenewPledgeText');
+  if (btnSpan) {
+    btnSpan.innerText = `🔄 Renovar Compromisso Fraterno (+${totalMonths} Meses)`;
+  }
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+/**
+ * Fecha o modal de renovação fraterna
+ */
+window.closePledgeRenewalModal = function () {
+  const modal = document.getElementById('pledgeRenewalModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+};
+
+/**
+ * Renova o compromisso fraterno por mais um ciclo completo
+ */
+window.renewPledgeCycle = async function () {
+  try {
+    const pledge = (await getPledgeData()) || { amount: selectedDonateAmount || 5, totalMonths: 3 };
+    pledge.active = true;
+    pledge.completed = false;
+    pledge.renewalDeclined = false;
+    pledge.currentCycle = 1;
+    pledge.startDate = Date.now();
+    pledge.lastPaymentDate = Date.now();
+    pledge.nextReminderDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    delete pledge.nextRenewalDate;
+    pledge.history = pledge.history || [];
+    pledge.history.push({ cycle: 1, date: Date.now(), amount: pledge.amount, isRenewal: true });
+
+    await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+
+    closePledgeRenewalModal();
+
+    selectedDonateAmount = Number(pledge.amount || 5);
+    selectedDonateFrequency = Number(pledge.totalMonths || 3);
+    await showDonateModal();
+
+    updateHomeFraternalCard();
+    showToast('🕊️ Que bênção! Seu compromisso de benfeitor foi renovado. Deus abençoe sua generosidade!');
+  } catch (err) {
+    console.error('[PledgeRenewal] Erro ao renovar ciclo:', err);
+  }
+};
+
+/**
+ * Declina a renovação (Concluir Missão / Não contribuir mais)
+ */
+window.declinePledgeRenewal = async function () {
+  try {
+    const pledge = (await getPledgeData()) || {};
+    pledge.renewalDeclined = true;
+    delete pledge.nextRenewalDate;
+
+    await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+
+    closePledgeRenewalModal();
+    updateHomeFraternalCard();
+    showToast('🙏 Deus abençoe imensamente tudo o que você fez por esta missão! Nossas orações estão com você.');
+  } catch (err) {
+    console.error('[PledgeRenewal] Erro ao declinar renovação:', err);
+  }
+};
+
+/**
+ * Adia a decisão de renovação por alguns dias (ex: 7 dias)
+ */
+window.snoozePledgeRenewal = async function (days = 7) {
+  try {
+    const pledge = (await getPledgeData()) || {};
+    pledge.nextRenewalDate = Date.now() + days * 24 * 60 * 60 * 1000;
+    await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+  } catch (e) {}
+  closePledgeRenewalModal();
+  showToast('🕊️ Combinado! Te lembraremos em alguns dias com muito carinho.');
+};
+
+/**
  * Avança para a realização da 2ª ou 3ª contribuição mantendo exatamente o valor da 1ª
  */
 window.fulfillPledgeNow = async function () {
@@ -3480,6 +3634,8 @@ export async function advancePledgeCycle() {
     if (pledge.currentCycle >= pledge.totalMonths) {
       pledge.active = false;
       pledge.completed = true;
+      pledge.renewalDeclined = false;
+      pledge.nextRenewalDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // 4º Mês (30 dias após a 3ª)
       showToast('👑 Parabéns! Você concluiu seu compromisso fraterno de evangelização! Que Deus te cubra de bênçãos.');
     } else {
       pledge.nextReminderDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
@@ -3518,6 +3674,7 @@ window.completeOrCancelPledge = async function () {
     if (pledge) {
       pledge.active = false;
       pledge.completed = true;
+      pledge.renewalDeclined = true;
       await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
     }
   } catch (e) {}
@@ -3541,6 +3698,23 @@ window.testPledgeReminderModalNow = async function () {
   };
   setTimeout(() => {
     showPledgeReminderModal(pledge);
+  }, 100);
+};
+
+/**
+ * Função de teste para pré-visualizar o modal de renovação do 4º mês a qualquer momento
+ */
+window.testPledgeRenewalModalNow = async function () {
+  if (typeof window.closeAdminModal === 'function') {
+    window.closeAdminModal();
+  }
+  const pledge = (await getPledgeData()) || {
+    totalMonths: 3,
+    amount: selectedDonateAmount || 5,
+    completed: true
+  };
+  setTimeout(() => {
+    showPledgeRenewalModal(pledge);
   }, 100);
 };
 

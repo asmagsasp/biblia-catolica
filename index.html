@@ -1270,6 +1270,51 @@
     </div>
   </div>
 
+  <!-- MODAL: RENOVAÇÃO FRATERNA DE BENFEITOR (4º MÊS / PÓS-CICLO) -->
+  <div id="pledgeRenewalModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pledgeRenewalTitle" onclick="if(event.target===this) closePledgeRenewalModal()">
+    <div class="donate-modal-content" style="max-width: 520px; text-align: center;">
+      <button class="donate-close-btn" onclick="closePledgeRenewalModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+      
+      <div class="donate-header">
+        <div class="donate-icon-container pulse-animation" style="background: rgba(212,175,55,0.22); border: 2px solid var(--gold-400);">
+          <i class="fas fa-crown donate-icon" style="color: var(--gold-300);"></i>
+        </div>
+        <h2 id="pledgeRenewalTitle" style="color: var(--gold-300); font-size: 19px;">Missão Cumprida com Louvor!</h2>
+        <p id="pledgeRenewalSubtitle" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+          Você concluiu com fidelidade o seu compromisso de sustentação desta obra.
+        </p>
+      </div>
+
+      <div class="pledge-reminder-card" style="border-color: rgba(212,175,55,0.4); background: rgba(0,0,0,0.35);">
+        <div class="pledge-reminder-badge" style="background: rgba(212,175,55,0.2); border-color: var(--gold-400);">
+          <i class="fas fa-star" style="color: var(--gold-300);"></i> <span id="pledgeRenewalBadgeText">Benfeitor Consagrado</span>
+        </div>
+        <p class="pledge-reminder-message" id="pledgeRenewalMessage" style="font-size: 13.5px; line-height: 1.6;">
+          A Paz de Jesus esteja com você! Graças à sua generosidade constante, milhares de irmãos e famílias continuaram recebendo a Palavra de Deus, a Liturgia e as Orações de forma 100% gratuita.
+          <br><br>
+          Gostaria de <strong>renovar seu compromisso fraterno por mais um ciclo</strong> (<span id="pledgeRenewalAmountText">R$ 5,00/mês</span>) e continuar sendo um pilar desta evangelização?
+        </p>
+      </div>
+
+      <div class="pledge-reminder-actions" style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+        <!-- BOTAO 1: RENOVAR CICLO -->
+        <button type="button" class="pix-main-copy-btn pulse-ready" onclick="renewPledgeCycle()" style="margin: 0; padding: 14px; font-size: 15px;">
+          <i class="fas fa-rotate-right"></i> <span id="btnRenewPledgeText">🔄 Renovar Compromisso Fraterno (+3 Meses)</span>
+        </button>
+
+        <!-- BOTAO 2: CONCLUIR / NAO CONTRIBUIR MAIS -->
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button type="button" class="donate-already-btn" style="flex: 1; padding: 11px 8px; font-size: 12.5px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2);" onclick="declinePledgeRenewal()">
+            <i class="fas fa-dove"></i> Não contribuir mais (Concluir Missão)
+          </button>
+          <button type="button" class="donate-remind-btn" style="flex: 1; padding: 11px 8px; font-size: 12.5px;" onclick="snoozePledgeRenewal(7)">
+            <i class="fas fa-clock"></i> Lembrar em 7 dias
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- GALLERY LIGHTBOX MODAL -->
   <div id="galleryLightboxModal" class="gallery-lightbox-overlay hidden" role="dialog" aria-modal="true" aria-label="Visualizador de Imagem Sagrada">
     <div class="gallery-lightbox-backdrop" onclick="closeGalleryLightbox()"></div>
@@ -1695,7 +1740,10 @@
               <i class="fas fa-eye"></i> Abrir Agora (Teste)
             </button>
             <button type="button" class="upload-btn-secondary" onclick="closeAdminModal(); testPledgeReminderModalNow()" style="padding: 8px 12px; font-size: 12px; flex: 1;">
-              <i class="fas fa-calendar-check" style="color: var(--gold-400);"></i> Testar Lembrete (30d)
+              <i class="fas fa-calendar-check" style="color: var(--gold-400);"></i> Lembrete (30d)
+            </button>
+            <button type="button" class="upload-btn-secondary" onclick="closeAdminModal(); testPledgeRenewalModalNow()" style="padding: 8px 12px; font-size: 12px; flex: 1;">
+              <i class="fas fa-crown" style="color: var(--gold-300);"></i> Renovação (4º Mês)
             </button>
             <button type="button" class="upload-btn-secondary" onclick="resetDonateStatusAndTimer()" style="padding: 8px 12px; font-size: 12px; width: 100%;">
               <i class="fas fa-redo-alt"></i> Reiniciar Contagem & Compromissos
