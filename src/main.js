@@ -2761,21 +2761,29 @@ window.selectDonateFrequency = function (months, btnEl) {
 /**
  * Atualiza o texto informativo da frequência selecionada
  */
-function updateDonateFrequencyInfo() {
+async function updateDonateFrequencyInfo() {
   const infoEl = document.getElementById('donateFrequencyInfo');
   const textEl = document.getElementById('donateFrequencyInfoText');
   if (!infoEl || !textEl) return;
 
+  const pledge = await getPledgeData();
   const valStr = selectedDonateAmount > 0 ? `R$ ${selectedDonateAmount},00` : 'valor livre';
+
+  if (pledge && pledge.active && !pledge.completed) {
+    infoEl.classList.remove('hidden');
+    const nextCycle = (pledge.currentCycle || 1) + 1;
+    textEl.innerHTML = `🕊️ <strong>Compromisso de Benfeitor Ativo:</strong> Valor de <strong>${valStr}</strong> fixado conforme sua 1ª contribuição (${nextCycle}ª de ${pledge.totalMonths} meses). Que Deus abençoe sua fidelidade!`;
+    return;
+  }
 
   if (selectedDonateFrequency === 1) {
     infoEl.classList.add('hidden');
   } else if (selectedDonateFrequency === 2) {
     infoEl.classList.remove('hidden');
-    textEl.innerHTML = `🕊️ <strong>Guardião (2 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e um lembrete fraterno no app daqui a 30 dias para a 2ª. Sem cartão e sem cobrança automática!`;
+    textEl.innerHTML = `🕊️ <strong>Guardião (2 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e um lembrete fraterno no app daqui a 30 dias para a 2ª com este mesmo valor. Sem cobrança automática!`;
   } else if (selectedDonateFrequency === 3) {
     infoEl.classList.remove('hidden');
-    textEl.innerHTML = `👑 <strong>Benfeitor Trimestral (3 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e lembretes fraternos aos 30 e 60 dias no app. Você no controle total!`;
+    textEl.innerHTML = `👑 <strong>Benfeitor Trimestral (3 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e lembretes fraternos aos 30 e 60 dias no app com este mesmo valor. Você no controle total!`;
   }
 }
 
@@ -3399,19 +3407,27 @@ export async function checkPledgeReminder() {
 /**
  * Exibe o modal de lembrete fraterno aos 30 ou 60 dias
  */
-window.showPledgeReminderModal = function (pledgeData = null) {
+/**
+ * Exibe o modal de lembrete fraterno aos 30 ou 60 dias
+ */
+window.showPledgeReminderModal = async function (pledgeData = null) {
   const modal = document.getElementById('pledgeReminderModal');
   if (!modal) return;
 
-  const pledge = pledgeData || { currentCycle: 1, totalMonths: 3, amount: 2 };
+  const pledge = pledgeData || (await getPledgeData()) || { currentCycle: 1, totalMonths: 3, amount: selectedDonateAmount || 2 };
   const nextCycle = (pledge.currentCycle || 1) + 1;
   const total = pledge.totalMonths || 3;
-  const amount = pledge.amount !== undefined ? pledge.amount : 2;
+  const amount = pledge.amount !== undefined ? Number(pledge.amount) : (selectedDonateAmount || 2);
   const amountStr = amount > 0 ? `R$ ${amount},00` : 'Valor Livre';
 
   const badge = document.getElementById('pledgeCycleText');
   if (badge) {
     badge.innerText = `${nextCycle}ª Contribuição Fraterna (Mês ${nextCycle} de ${total})`;
+  }
+
+  const msg = document.getElementById('pledgeReminderMessage');
+  if (msg) {
+    msg.innerHTML = `Sua fidelidade mantém o Santo Terço, a Liturgia e a Bíblia Sagrada acessíveis e 100% gratuitos para milhares de lares. Toque abaixo para gerar o Pix no valor do seu compromisso (<strong>${amountStr}</strong>):`;
   }
 
   const btnText = document.getElementById('btnFulfillPledgeText');
@@ -3433,27 +3449,18 @@ window.closePledgeReminderModal = function () {
 };
 
 /**
- * Avança para a realização da 2ª ou 3ª contribuição
+ * Avança para a realização da 2ª ou 3ª contribuição mantendo exatamente o valor da 1ª
  */
 window.fulfillPledgeNow = async function () {
   closePledgeReminderModal();
   const pledge = await getPledgeData();
   if (pledge && pledge.amount !== undefined) {
-    selectedDonateAmount = pledge.amount;
+    selectedDonateAmount = Number(pledge.amount);
   }
-  showDonateModal();
-
-  // Seleciona o chip de valor correto
-  const chips = document.querySelectorAll('.donate-value-chip');
-  chips.forEach(chip => {
-    if (Number(chip.dataset.amount) === selectedDonateAmount) {
-      chip.classList.add('active');
-    } else {
-      chip.classList.remove('active');
-    }
-  });
-
-  updatePixDisplay();
+  if (pledge && pledge.totalMonths !== undefined) {
+    selectedDonateFrequency = Number(pledge.totalMonths);
+  }
+  await showDonateModal();
   await advancePledgeCycle();
 };
 
@@ -3522,17 +3529,18 @@ window.completeOrCancelPledge = async function () {
 /**
  * Função de teste para pré-visualizar o modal de lembrete de 30 dias a qualquer momento
  */
-window.testPledgeReminderModalNow = function () {
+window.testPledgeReminderModalNow = async function () {
   if (typeof window.closeAdminModal === 'function') {
     window.closeAdminModal();
   }
+  const pledge = (await getPledgeData()) || {
+    currentCycle: 1,
+    totalMonths: selectedDonateFrequency > 1 ? selectedDonateFrequency : 3,
+    amount: selectedDonateAmount || 5,
+    active: true
+  };
   setTimeout(() => {
-    showPledgeReminderModal({
-      currentCycle: 1,
-      totalMonths: 3,
-      amount: 2,
-      active: true
-    });
+    showPledgeReminderModal(pledge);
   }, 100);
 };
 
@@ -3599,15 +3607,44 @@ window.toggleAdminDonatePopupState = async function () {
   }
 };
 
-window.showDonateModal = function () {
+window.showDonateModal = async function () {
   const modal = document.getElementById('donateModal');
   if (modal) {
+    // Recupera valor e frequência fixados pelo compromisso de benfeitor se houver
+    const pledge = await getPledgeData();
+    if (pledge && pledge.active && !pledge.completed) {
+      if (pledge.amount !== undefined) {
+        selectedDonateAmount = Number(pledge.amount);
+      }
+      if (pledge.totalMonths !== undefined) {
+        selectedDonateFrequency = Number(pledge.totalMonths);
+      }
+    }
+
+    // Atualiza chips visuais de valor
+    document.querySelectorAll('.donate-value-chip').forEach(chip => {
+      if (Number(chip.dataset.amount) === selectedDonateAmount) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+
+    // Atualiza chips visuais de frequência
+    document.querySelectorAll('.donate-freq-chip').forEach(chip => {
+      if (Number(chip.dataset.months) === selectedDonateFrequency) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 
     // Atualiza QR Code e valores
     updatePixDisplay();
-    updateDonateFrequencyInfo();
+    await updateDonateFrequencyInfo();
 
     clearDonateAutoCloseTimer();
 
