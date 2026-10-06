@@ -17,8 +17,11 @@ dist-ssr
 
 # Databases & local build binaries
 server/data/*.db
+*.sqlite
 *.zip
 *.apk
+*.old
+scratch/
 
 # Editor directories and files
 .vscode/*
