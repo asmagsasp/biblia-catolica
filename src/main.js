@@ -3523,12 +3523,17 @@ window.completeOrCancelPledge = async function () {
  * Função de teste para pré-visualizar o modal de lembrete de 30 dias a qualquer momento
  */
 window.testPledgeReminderModalNow = function () {
-  showPledgeReminderModal({
-    currentCycle: 1,
-    totalMonths: 3,
-    amount: 2,
-    active: true
-  });
+  if (typeof window.closeAdminModal === 'function') {
+    window.closeAdminModal();
+  }
+  setTimeout(() => {
+    showPledgeReminderModal({
+      currentCycle: 1,
+      totalMonths: 3,
+      amount: 2,
+      active: true
+    });
+  }, 100);
 };
 
 // Ao voltar para a aba ou desbloquear celular, verifica tempo decorrido com salvaguarda
@@ -3700,7 +3705,12 @@ window.resetDonateStatusAndTimer = async function () {
 window.resetDonateStatus = window.resetDonateStatusAndTimer;
 
 window.testDonateModalNow = function () {
-  showDonateModal();
+  if (typeof window.closeAdminModal === 'function') {
+    window.closeAdminModal();
+  }
+  setTimeout(() => {
+    showDonateModal();
+  }, 100);
 };
 
 window.triggerDonateBtnShimmer = function () {
