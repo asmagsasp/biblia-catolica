@@ -107,8 +107,9 @@ function updateChapterReadBtnState(reading) {
 async function init() {
   const splashStartTime = performance.now();
 
-  // Inicia timer de doação e brilho periódico a cada 1 minuto
+  // Inicia timer de doação, compromissos de benfeitor e brilho periódico a cada 1 minuto
   checkAndStartDonateTimer();
+  checkPledgeReminder();
   initDonateButtonShimmer();
   updateHomeFraternalCard();
 
@@ -2682,6 +2683,9 @@ const PIX_MERCHANT_CITY = 'SAO PAULO';
 // Valor selecionado atualmente (2, 5, 10 ou 0 para Livre)
 let selectedDonateAmount = 2;
 
+// Frequência do compromisso (1 = Única, 2 = 2 Meses, 3 = 3 Meses Trimestral)
+let selectedDonateFrequency = 1;
+
 /**
  * Formata um campo no padrão EMV / Pix do Banco Central (ID + Tamanho 2 dígitos + Conteúdo)
  */
@@ -2739,7 +2743,78 @@ window.selectDonateValue = function (amount, btnEl) {
     btnEl.classList.add('active');
   }
   updatePixDisplay();
+  updateDonateFrequencyInfo();
 };
+
+/**
+ * Seleciona a frequência do compromisso fraterno (1, 2 ou 3 meses)
+ */
+window.selectDonateFrequency = function (months, btnEl) {
+  selectedDonateFrequency = Number(months);
+  document.querySelectorAll('.donate-freq-chip').forEach(btn => btn.classList.remove('active'));
+  if (btnEl) {
+    btnEl.classList.add('active');
+  }
+  updateDonateFrequencyInfo();
+};
+
+/**
+ * Atualiza o texto informativo da frequência selecionada
+ */
+function updateDonateFrequencyInfo() {
+  const infoEl = document.getElementById('donateFrequencyInfo');
+  const textEl = document.getElementById('donateFrequencyInfoText');
+  if (!infoEl || !textEl) return;
+
+  const valStr = selectedDonateAmount > 0 ? `R$ ${selectedDonateAmount},00` : 'valor livre';
+
+  if (selectedDonateFrequency === 1) {
+    infoEl.classList.add('hidden');
+  } else if (selectedDonateFrequency === 2) {
+    infoEl.classList.remove('hidden');
+    textEl.innerHTML = `🕊️ <strong>Guardião (2 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e um lembrete fraterno no app daqui a 30 dias para a 2ª. Sem cartão e sem cobrança automática!`;
+  } else if (selectedDonateFrequency === 3) {
+    infoEl.classList.remove('hidden');
+    textEl.innerHTML = `👑 <strong>Benfeitor Trimestral (3 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e lembretes fraternos aos 30 e 60 dias no app. Você no controle total!`;
+  }
+}
+
+/**
+ * Salva o compromisso de doação (2x ou 3x)
+ */
+export async function saveDonatePledge(amount, months) {
+  try {
+    const pledge = {
+      active: true,
+      totalMonths: Number(months),
+      currentCycle: 1,
+      amount: Number(amount),
+      startDate: Date.now(),
+      lastPaymentDate: Date.now(),
+      nextReminderDate: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      completed: false,
+      history: [{ cycle: 1, date: Date.now(), amount: Number(amount) }]
+    };
+    await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+    console.log('[Pledge] Compromisso de Benfeitor registrado:', pledge);
+  } catch (err) {
+    console.error('[Pledge] Erro ao salvar compromisso fraterno:', err);
+  }
+}
+
+/**
+ * Recupera o compromisso de doação salvo
+ */
+export async function getPledgeData() {
+  try {
+    const res = await Preferences.get({ key: 'biblia_donate_pledge' });
+    if (res && res.value) {
+      return JSON.parse(res.value);
+    }
+  } catch (e) {}
+  return null;
+}
 
 /**
  * Atualiza visualmente o QR Code e os textos do modal conforme o valor selecionado
@@ -2801,7 +2876,14 @@ window.copyCurrentPixSelection = async function () {
     }
 
     const valStr = selectedDonateAmount > 0 ? `R$ ${selectedDonateAmount},00` : 'Valor Livre';
-    showToast(`📋 Pix Copia e Cola (${valStr}) copiado com sucesso! Abra o app do seu banco.`);
+    
+    if (selectedDonateFrequency > 1) {
+      await saveDonatePledge(selectedDonateAmount, selectedDonateFrequency);
+      const freqName = selectedDonateFrequency === 2 ? 'Guardião (2 meses)' : 'Benfeitor (3 meses)';
+      showToast(`🕊️ Pix Copiado! Seu compromisso como ${freqName} foi registrado no coração. Muito obrigado!`);
+    } else {
+      showToast(`📋 Pix Copia e Cola (${valStr}) copiado com sucesso! Abra o app do seu banco.`);
+    }
 
     const copyBtn = document.getElementById('pixCopyBtn');
     if (copyBtn) {
@@ -3081,11 +3163,87 @@ export async function updateHomeFraternalCard() {
   if (!card) return;
 
   try {
+    const pledge = await getPledgeData();
     const res = await Preferences.get({ key: 'biblia_already_donated' });
     const already = res && (res.value === 'true' || res.value === true);
 
+    // 1. Caso tenha compromisso de benfeitor ativo e esteja na hora do lembrete de 30 dias
+    if (pledge && pledge.active && !pledge.completed && Date.now() >= pledge.nextReminderDate) {
+      const nextCycle = (pledge.currentCycle || 1) + 1;
+      const amountStr = pledge.amount > 0 ? `R$ ${pledge.amount},00` : 'valor livre';
+
+      card.classList.add('donated-mode');
+      card.onclick = () => showPledgeReminderModal(pledge);
+      card.innerHTML = `
+        <div class="fraternal-card-glow" style="background: radial-gradient(circle, rgba(212,175,55,0.3) 0%, transparent 70%);"></div>
+        <div class="fraternal-card-icon" style="background: rgba(212, 175, 55, 0.2); border-color: var(--gold-400); color: var(--gold-300);">
+          <i class="fas fa-dove pulse-animation"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-heart"></i> Lembrete Fraterno (${nextCycle}ª de ${pledge.totalMonths})</span>
+            <span class="fraternal-card-cta" style="color: var(--gold-400); font-weight: 800;">Contribuir (${amountStr}) <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Completam-se 30 dias do seu abençoado compromisso. Toque aqui para realizar a sua contribuição e manter esta obra viva!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // 2. Caso tenha compromisso de benfeitor em andamento (aguardando próximo mês)
+    if (pledge && pledge.active && !pledge.completed) {
+      const cycle = pledge.currentCycle || 1;
+      const total = pledge.totalMonths || 3;
+      const tagTitle = total === 2 ? `Guardião da Palavra (Mês ${cycle} de 2)` : `Benfeitor Trimestral (Mês ${cycle} de 3)`;
+
+      card.classList.add('donated-mode');
+      card.onclick = () => showDonateModal();
+      card.innerHTML = `
+        <div class="fraternal-card-glow"></div>
+        <div class="fraternal-card-icon" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: #10b981;"><i class="fas fa-dove"></i> ${tagTitle}</span>
+            <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Seu compromisso de evangelização está ativo. Que Deus derrame bênçãos abundantes sobre a sua casa e sua família!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // 3. Caso tenha concluído o compromisso trimestral com louvor
+    if (pledge && pledge.completed) {
+      card.classList.add('donated-mode');
+      card.onclick = () => showDonateModal();
+      card.innerHTML = `
+        <div class="fraternal-card-glow"></div>
+        <div class="fraternal-card-icon" style="background: rgba(212, 175, 55, 0.25); border-color: var(--gold-400); color: var(--gold-300);">
+          <i class="fas fa-crown"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-star"></i> Benfeitor Consagrado</span>
+            <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text">
+            Você concluiu seu compromisso de sustentação desta obra de evangelização! Muito obrigado por caminhar conosco.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // 4. Caso tenha doado de forma pontual
     if (already) {
       card.classList.add('donated-mode');
+      card.onclick = () => showDonateModal();
       card.innerHTML = `
         <div class="fraternal-card-glow"></div>
         <div class="fraternal-card-icon" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
@@ -3103,6 +3261,7 @@ export async function updateHomeFraternalCard() {
       `;
     } else {
       card.classList.remove('donated-mode');
+      card.onclick = () => showDonateModal();
       card.innerHTML = `
         <div class="fraternal-card-glow"></div>
         <div class="fraternal-card-icon">
@@ -3119,7 +3278,9 @@ export async function updateHomeFraternalCard() {
         </div>
       `;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('[HomeFraternalCard] Erro ao atualizar:', e);
+  }
 }
 
 async function checkAndStartDonateTimer() {
@@ -3214,9 +3375,167 @@ async function checkAndStartDonateTimer() {
   }
 }
 
+/**
+ * Verifica se há um lembrete de compromisso fraterno (30 ou 60 dias) pendente
+ */
+export async function checkPledgeReminder() {
+  try {
+    const pledge = await getPledgeData();
+    if (pledge && pledge.active && !pledge.completed) {
+      if (Date.now() >= pledge.nextReminderDate) {
+        console.log('[Pledge] Lembrete fraterno de 30 dias atingido. Exibindo modal.');
+        setTimeout(() => {
+          showPledgeReminderModal(pledge);
+        }, 1500);
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error('[Pledge] Erro ao verificar lembrete:', err);
+  }
+  return false;
+}
+
+/**
+ * Exibe o modal de lembrete fraterno aos 30 ou 60 dias
+ */
+window.showPledgeReminderModal = function (pledgeData = null) {
+  const modal = document.getElementById('pledgeReminderModal');
+  if (!modal) return;
+
+  const pledge = pledgeData || { currentCycle: 1, totalMonths: 3, amount: 2 };
+  const nextCycle = (pledge.currentCycle || 1) + 1;
+  const total = pledge.totalMonths || 3;
+  const amount = pledge.amount !== undefined ? pledge.amount : 2;
+  const amountStr = amount > 0 ? `R$ ${amount},00` : 'Valor Livre';
+
+  const badge = document.getElementById('pledgeCycleText');
+  if (badge) {
+    badge.innerText = `${nextCycle}ª Contribuição Fraterna (Mês ${nextCycle} de ${total})`;
+  }
+
+  const btnText = document.getElementById('btnFulfillPledgeText');
+  if (btnText) {
+    btnText.innerText = `Realizar ${nextCycle}ª Contribuição (${amountStr})`;
+  }
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+/**
+ * Fecha o modal de lembrete fraterno
+ */
+window.closePledgeReminderModal = function () {
+  const modal = document.getElementById('pledgeReminderModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+};
+
+/**
+ * Avança para a realização da 2ª ou 3ª contribuição
+ */
+window.fulfillPledgeNow = async function () {
+  closePledgeReminderModal();
+  const pledge = await getPledgeData();
+  if (pledge && pledge.amount !== undefined) {
+    selectedDonateAmount = pledge.amount;
+  }
+  showDonateModal();
+
+  // Seleciona o chip de valor correto
+  const chips = document.querySelectorAll('.donate-value-chip');
+  chips.forEach(chip => {
+    if (Number(chip.dataset.amount) === selectedDonateAmount) {
+      chip.classList.add('active');
+    } else {
+      chip.classList.remove('active');
+    }
+  });
+
+  updatePixDisplay();
+  await advancePledgeCycle();
+};
+
+/**
+ * Avança o ciclo do compromisso fraterno no armazenamento
+ */
+export async function advancePledgeCycle() {
+  try {
+    const pledge = await getPledgeData();
+    if (!pledge) return;
+
+    pledge.currentCycle = (pledge.currentCycle || 1) + 1;
+    pledge.lastPaymentDate = Date.now();
+    pledge.history = pledge.history || [];
+    pledge.history.push({ cycle: pledge.currentCycle, date: Date.now(), amount: pledge.amount });
+
+    if (pledge.currentCycle >= pledge.totalMonths) {
+      pledge.active = false;
+      pledge.completed = true;
+      showToast('👑 Parabéns! Você concluiu seu compromisso fraterno de evangelização! Que Deus te cubra de bênçãos.');
+    } else {
+      pledge.nextReminderDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      showToast(`🕊️ ${pledge.currentCycle}ª Contribuição iniciada! Próximo lembrete em 30 dias. Obrigado por perseverar conosco!`);
+    }
+
+    await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+    updateHomeFraternalCard();
+  } catch (e) {
+    console.error('[Pledge] Erro ao avançar ciclo:', e);
+  }
+}
+
+/**
+ * Adia o lembrete por alguns dias (ex: 1 dia)
+ */
+window.snoozePledgeReminder = async function (days = 1) {
+  try {
+    const pledge = await getPledgeData();
+    if (pledge) {
+      pledge.nextReminderDate = Date.now() + days * 24 * 60 * 60 * 1000;
+      await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    }
+  } catch (e) {}
+  closePledgeReminderModal();
+  showToast('🕊️ Combinado! Te lembraremos amanhã com muito carinho.');
+};
+
+/**
+ * Conclui ou encerra o compromisso fraterno em paz
+ */
+window.completeOrCancelPledge = async function () {
+  try {
+    const pledge = await getPledgeData();
+    if (pledge) {
+      pledge.active = false;
+      pledge.completed = true;
+      await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
+    }
+  } catch (e) {}
+  closePledgeReminderModal();
+  updateHomeFraternalCard();
+  showToast('🙏 Agradecemos de coração por todo o seu apoio. Que a Paz de Cristo guarde você e sua família!');
+};
+
+/**
+ * Função de teste para pré-visualizar o modal de lembrete de 30 dias a qualquer momento
+ */
+window.testPledgeReminderModalNow = function () {
+  showPledgeReminderModal({
+    currentCycle: 1,
+    totalMonths: 3,
+    amount: 2,
+    active: true
+  });
+};
+
 // Ao voltar para a aba ou desbloquear celular, verifica tempo decorrido com salvaguarda
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
+    checkPledgeReminder();
+
     const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     if (disabledByAdmin) return;
 
@@ -3264,6 +3583,7 @@ window.toggleAdminDonatePopupState = async function () {
       await Preferences.remove({ key: 'biblia_already_donated' });
       await Preferences.remove({ key: 'biblia_donate_snooze_date' });
       await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
+      await Preferences.remove({ key: 'biblia_donate_pledge' });
       lastDonateTime = Date.now();
       await checkAndStartDonateTimer();
       showToast('🔔 Banner de apoio ATIVADO (a cada 20 min de uso)!');
@@ -3282,6 +3602,7 @@ window.showDonateModal = function () {
 
     // Atualiza QR Code e valores
     updatePixDisplay();
+    updateDonateFrequencyInfo();
 
     clearDonateAutoCloseTimer();
 
@@ -3299,7 +3620,7 @@ window.showDonateModal = function () {
     }
 
     const onModalFirstTouch = (e) => {
-      if (e.target.closest('.donate-close-btn') || e.target.closest('.donate-already-btn') || e.target.closest('.donate-remind-btn') || e.target.closest('.pix-key-box') || e.target.closest('.donate-value-chip')) {
+      if (e.target.closest('.donate-close-btn') || e.target.closest('.donate-already-btn') || e.target.closest('.donate-remind-btn') || e.target.closest('.pix-key-box') || e.target.closest('.donate-value-chip') || e.target.closest('.donate-freq-chip')) {
         return;
       }
       if (!isDonateAudioSpeaking) {
@@ -3323,7 +3644,15 @@ window.closeDonateModal = function () {
 window.markAsDonated = async function () {
   try {
     stopDonateAudio();
-    await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+    if (selectedDonateFrequency > 1) {
+      await saveDonatePledge(selectedDonateAmount, selectedDonateFrequency);
+      const freqName = selectedDonateFrequency === 2 ? 'Guardião (2 meses)' : 'Benfeitor Trimestral (3 meses)';
+      showToast(`🕊️ Deus abençoe imensamente! Seu compromisso como ${freqName} foi registrado no coração.`);
+    } else {
+      await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
+      showToast('🙏 Deus abençoe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
+    }
+    
     if (donateHeartbeatInterval) {
       clearInterval(donateHeartbeatInterval);
       donateHeartbeatInterval = null;
@@ -3331,7 +3660,6 @@ window.markAsDonated = async function () {
     closeDonateModal();
     updateAdminDonateBadge();
     updateHomeFraternalCard();
-    showToast('🙏 Deus abençoe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
   } catch (err) {
     console.error("[Donate] Erro ao salvar status de doação:", err);
     closeDonateModal();
@@ -3357,11 +3685,12 @@ window.resetDonateStatusAndTimer = async function () {
     await Preferences.remove({ key: 'biblia_already_donated' });
     await Preferences.remove({ key: 'biblia_donate_snooze_date' });
     await Preferences.remove({ key: 'biblia_last_donate_popup_date' });
+    await Preferences.remove({ key: 'biblia_donate_pledge' });
     await Preferences.set({ key: 'biblia_admin_disable_donate_popup', value: 'false' });
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
     updateHomeFraternalCard();
-    showToast('✨ Timer de apoio reiniciado: ativo a cada 20 minutos.');
+    showToast('✨ Status e compromissos reiniciados com sucesso.');
     updateAdminDonateBadge();
   } catch (e) {
     console.error(e);

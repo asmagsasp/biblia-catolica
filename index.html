@@ -1162,6 +1162,33 @@
         </div>
       </div>
 
+      <!-- SELETOR DE FREQUÊNCIA / COMPROMISSO FRATERNO (1x, 2x, 3x) -->
+      <div class="donate-frequency-container">
+        <div class="donate-frequency-label">
+          <i class="fas fa-calendar-check"></i> <span>Frequência do Compromisso Fraterno:</span>
+        </div>
+        <div class="donate-frequency-grid">
+          <button type="button" class="donate-freq-chip active" data-months="1" onclick="selectDonateFrequency(1, this)">
+            <span class="freq-title">1x Única</span>
+            <span class="freq-desc">Apoio Pontual</span>
+          </button>
+          <button type="button" class="donate-freq-chip" data-months="2" onclick="selectDonateFrequency(2, this)">
+            <span class="freq-badge">2 Meses</span>
+            <span class="freq-title">2x Guardião</span>
+            <span class="freq-desc">1ª hoje + 30 dias</span>
+          </button>
+          <button type="button" class="donate-freq-chip" data-months="3" onclick="selectDonateFrequency(3, this)">
+            <span class="freq-badge gold">Trimestral</span>
+            <span class="freq-title">3x Benfeitor</span>
+            <span class="freq-desc">1ª hoje + 30d e 60d</span>
+          </button>
+        </div>
+        <div id="donateFrequencyInfo" class="donate-frequency-info hidden">
+          <i class="fas fa-dove"></i>
+          <span id="donateFrequencyInfoText">Lembrete fraterno no app daqui a 30 dias para a 2ª contribuição. Sem cobrança automática, você no controle!</span>
+        </div>
+      </div>
+
       <div class="donate-body">
         <div class="pix-container" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
           <div class="pix-header-row">
@@ -1197,6 +1224,46 @@
           </button>
           <button class="donate-remind-btn" onclick="remindDonateLater()">
             <i class="fas fa-clock"></i> Lembrar outro dia
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LEMBRETE FRATERNO DE BENFEITOR / COMPROMISSO (30 / 60 DIAS) -->
+  <div id="pledgeReminderModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pledgeReminderTitle" onclick="if(event.target===this) closePledgeReminderModal()">
+    <div class="donate-modal-content" style="max-width: 500px; text-align: center;">
+      <button class="donate-close-btn" onclick="closePledgeReminderModal()" aria-label="Fechar modal"><i class="fas fa-times"></i></button>
+      
+      <div class="donate-header">
+        <div class="donate-icon-container pulse-animation" style="background: rgba(212,175,55,0.18); border: 2px solid var(--gold-400);">
+          <i class="fas fa-dove donate-icon" style="color: var(--gold-400);"></i>
+        </div>
+        <h2 id="pledgeReminderTitle" style="color: var(--gold-300);">Paz e Bem, Guardião da Palavra!</h2>
+        <p id="pledgeReminderSubtitle" style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+          Completam-se 30 dias do seu abençoado compromisso de apoio a esta evangelização.
+        </p>
+      </div>
+
+      <div class="pledge-reminder-card">
+        <div class="pledge-reminder-badge" id="pledgeReminderBadge">
+          <i class="fas fa-heart" style="color: #ef4444;"></i> <span id="pledgeCycleText">2ª Contribuição Fraterna (Mês 2 de 3)</span>
+        </div>
+        <p class="pledge-reminder-message" id="pledgeReminderMessage">
+          Sua fidelidade mantém o Santo Terço, a Liturgia e a Bíblia Sagrada acessíveis e 100% gratuitos para milhares de lares. Se você puder realizar a sua contribuição deste mês, gere o Pix com 1 toque abaixo:
+        </p>
+      </div>
+
+      <div class="pledge-reminder-actions" style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+        <button type="button" class="pix-main-copy-btn pulse-ready" onclick="fulfillPledgeNow()" style="margin: 0; padding: 14px; font-size: 15px;">
+          <i class="fas fa-hand-holding-heart"></i> <span id="btnFulfillPledgeText">Realizar 2ª Contribuição (R$ 2,00)</span>
+        </button>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button type="button" class="donate-remind-btn" style="flex: 1;" onclick="snoozePledgeReminder(1)">
+            <i class="fas fa-clock"></i> Lembrar amanhã
+          </button>
+          <button type="button" class="donate-already-btn" style="flex: 1;" onclick="completeOrCancelPledge()">
+            <i class="fas fa-check"></i> Concluir compromisso
           </button>
         </div>
       </div>
@@ -1627,11 +1694,11 @@
             <button type="button" class="upload-btn-secondary" onclick="testDonateModalNow()" style="padding: 8px 12px; font-size: 12px; flex: 1;">
               <i class="fas fa-eye"></i> Abrir Agora (Teste)
             </button>
-            <button type="button" class="upload-btn-secondary" onclick="triggerDonateBtnShimmer(); closeAdminModal();" style="padding: 8px 12px; font-size: 12px; flex: 1;">
-              <i class="fas fa-sparkles" style="color: var(--gold-400);"></i> Testar Brilho (1 min)
+            <button type="button" class="upload-btn-secondary" onclick="testPledgeReminderModalNow()" style="padding: 8px 12px; font-size: 12px; flex: 1;">
+              <i class="fas fa-calendar-check" style="color: var(--gold-400);"></i> Testar Lembrete (30d)
             </button>
             <button type="button" class="upload-btn-secondary" onclick="resetDonateStatusAndTimer()" style="padding: 8px 12px; font-size: 12px; width: 100%;">
-              <i class="fas fa-redo-alt"></i> Reiniciar Contagem (20m)
+              <i class="fas fa-redo-alt"></i> Reiniciar Contagem & Compromissos
             </button>
           </div>
         </div>
