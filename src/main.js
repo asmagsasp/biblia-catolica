@@ -2669,7 +2669,7 @@ function primeSpeechForIos() {
 });
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
-const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria esteja contigo! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
+const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria estejam com você! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
 let isDonateAudioSpeaking = false;
 let activeDonateUtterance = null;
 let donateHeartbeatResumeTimer = null;
@@ -3680,7 +3680,7 @@ window.completeOrCancelPledge = async function () {
   } catch (e) {}
   closePledgeReminderModal();
   updateHomeFraternalCard();
-  showToast('🙏 Agradecemos de coração por todo o seu apoio. Que a Paz de Cristo guarde você e sua família!');
+  showToast('🙏 Agradecemos de coração por todo o seu apoio. Que a Paz de Jesus e o amor de Maria estejam sempre com você e sua família!');
 };
 
 /**
@@ -3893,7 +3893,7 @@ window.remindDonateLater = async function () {
   }
   closeDonateModal();
   updateAdminDonateBadge();
-  showToast('🕊️ Que a paz de Jesus esteja com você! Lembraremos em outro dia.');
+  showToast('🕊️ Que a Paz de Jesus e o amor de Maria estejam com você! Lembraremos em outro dia.');
 };
 
 window.resetDonateStatusAndTimer = async function () {
