@@ -135,7 +135,7 @@
         </div>
       </div>
 
-      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, SANTO ROSÁRIO, DEVOÇÃO A MARIA, EXAME DE CONSCIÊNCIA, NOVENAS, DIÁRIO, VELAS, TEOLOGIA, LECTIO, CARTAS -->
+      <!-- CARDS DE ACESSO RÁPIDO: LITURGIA, PLANO, TERÇO, VELAS, GALERIA, RÁDIOS, ORAÇÕES, DIRETOR, ETC. -->
       <div class="home-quick-grid">
         <!-- 1. Liturgia Diária -->
         <div class="home-quick-card liturgia-card" onclick="showLiturgia()">
@@ -150,7 +150,20 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 2. Santo Rosário -->
+        <!-- 2. Plano de Leitura Bíblica -->
+        <div class="home-quick-card plano-card" onclick="showPlan()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(14, 165, 233, 0.18); color: #0ea5e9;">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">Cronograma 365 Dias</div>
+            <h3 class="quick-card-title">Plano de Leitura Bíblica</h3>
+            <p class="quick-card-desc">Guia diário para ler a Bíblia completa em 1 ano</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 3. Santo Rosário -->
         <div class="home-quick-card rosario-card" onclick="showRosario()">
           <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
             <i class="fas fa-praying-hands"></i>
@@ -163,7 +176,33 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- Rádios & Podcasts Católicos 24h -->
+        <!-- 4. Acenda uma Vela Virtual -->
+        <div class="home-quick-card velas-card" onclick="showVelas()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.18); color: var(--gold-400);">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
+            <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
+            <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 5. Galeria de Imagens Sacras -->
+        <div class="home-quick-card galeria-card" onclick="showGallery()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(217, 70, 239, 0.18); color: #d946ef;">
+            <i class="fas fa-images"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(217, 70, 239, 0.15); color: #d946ef;">Arte & Devoção</div>
+            <h3 class="quick-card-title">Galeria de Imagens Sacras</h3>
+            <p class="quick-card-desc">Acervo de arte sacra, santos, Jesus e Nossa Senhora</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- 6. Rádios & Podcasts Católicos 24h -->
         <div class="home-quick-card radios-card" onclick="showRadiosPodcasts()">
           <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.2); color: #eab308;">
             <i class="fas fa-radio"></i>
@@ -178,7 +217,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- Livro de Orações Católicas & Santos (Salvai Almas) -->
+        <!-- 7. Livro de Orações Católicas & Santos (Salvai Almas) -->
         <div class="home-quick-card oracoes-card" onclick="showLivroOracoes()">
           <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">
             <i class="fas fa-book-bible"></i>
@@ -191,7 +230,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- Diretor Espiritual & Palavra Amiga (IA Católica) -->
+        <!-- 8. Diretor Espiritual & Palavra Amiga (IA Católica) -->
         <div class="home-quick-card diretor-espiritual-card" onclick="showDiretorEspiritual()">
           <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">
             <i class="fas fa-dove"></i>
@@ -206,7 +245,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 3. Devoção a Maria -->
+        <!-- 9. Devoção a Maria -->
         <div class="home-quick-card maria-card" onclick="showMariaDevocao()">
           <div class="quick-card-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
             <i class="fas fa-crown"></i>
@@ -219,7 +258,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 4. Exame de Consciência -->
+        <!-- 10. Exame de Consciência -->
         <div class="home-quick-card confissao-card" onclick="showConfissao()">
           <div class="quick-card-icon-wrapper" style="background: rgba(244, 63, 94, 0.18); color: #f43f5e;">
             <i class="fas fa-cross"></i>
@@ -232,7 +271,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 5. Novenas Tradicionais -->
+        <!-- 11. Novenas Tradicionais -->
         <div class="home-quick-card novenas-card" onclick="showNovenas()">
           <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
             <i class="fas fa-hands-praying"></i>
@@ -245,7 +284,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 6. Diário Espiritual -->
+        <!-- 12. Diário Espiritual -->
         <div class="home-quick-card diario-card" onclick="showDiario()">
           <div class="quick-card-icon-wrapper" style="background: rgba(16, 185, 129, 0.18); color: #10b981;">
             <i class="fas fa-book-bookmark"></i>
@@ -258,20 +297,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 7. Acenda uma Vela Virtual -->
-        <div class="home-quick-card velas-card" onclick="showVelas()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.18); color: var(--gold-400);">
-            <i class="fas fa-fire"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" id="homeVelasBadge">Mural de Oração</div>
-            <h3 class="quick-card-title">Acenda uma Vela Virtual</h3>
-            <p class="quick-card-desc">Faça sua prece e reze em comunidade</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <!-- 8. IA Teológica Católica -->
+        <!-- 13. IA Teológica Católica -->
         <div class="home-quick-card teologia-card" onclick="showTeologia()">
           <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.18); color: #c084fc;">
             <i class="fas fa-feather-pointed"></i>
@@ -284,7 +310,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 9. Lectio Divina Guiada -->
+        <!-- 14. Lectio Divina Guiada -->
         <div class="home-quick-card lectio-card" onclick="showLectio()">
           <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8;">
             <i class="fas fa-dove"></i>
@@ -297,7 +323,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 10. Cartas Apostólicas -->
+        <!-- 15. Cartas Apostólicas -->
         <div class="home-quick-card cartas-card" onclick="showCartasApostolicas()">
           <div class="quick-card-icon-wrapper" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-400);">
             <i class="fas fa-scroll"></i>
@@ -310,7 +336,7 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 11. Meus Versículos Favoritos -->
+        <!-- 16. Meus Versículos Favoritos -->
         <div class="home-quick-card favoritos-card" onclick="showFavorites()">
           <div class="quick-card-icon-wrapper" style="background: rgba(239, 68, 68, 0.18); color: #ef4444;">
             <i class="fas fa-heart"></i>
@@ -319,32 +345,6 @@
             <div class="quick-card-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">Salvos & Marcados</div>
             <h3 class="quick-card-title">Meus Versículos Favoritos</h3>
             <p class="quick-card-desc">Versículos salvos para oração, meditação e estudo</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <!-- 12. Plano de Leitura Bíblica -->
-        <div class="home-quick-card plano-card" onclick="showPlan()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(14, 165, 233, 0.18); color: #0ea5e9;">
-            <i class="fas fa-calendar-alt"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">Cronograma 365 Dias</div>
-            <h3 class="quick-card-title">Plano de Leitura Bíblica</h3>
-            <p class="quick-card-desc">Guia diário para ler a Bíblia completa em 1 ano</p>
-          </div>
-          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <!-- 13. Galeria de Imagens Sacras -->
-        <div class="home-quick-card galeria-card" onclick="showGallery()">
-          <div class="quick-card-icon-wrapper" style="background: rgba(217, 70, 239, 0.18); color: #d946ef;">
-            <i class="fas fa-images"></i>
-          </div>
-          <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(217, 70, 239, 0.15); color: #d946ef;">Arte & Devoção</div>
-            <h3 class="quick-card-title">Galeria de Imagens Sacras</h3>
-            <p class="quick-card-desc">Acervo de arte sacra, santos, Jesus e Nossa Senhora</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -2497,6 +2497,36 @@
       </div>
     </div>
   </div>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (CARDS/BOTÕES INFERIORES) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-inner">
+      <button class="bottom-nav-btn active" id="bnHome" onclick="goHome()" title="Início">
+        <i class="fas fa-home"></i>
+        <span>Início</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnLiturgia" onclick="showLiturgia()" title="Liturgia">
+        <i class="fas fa-calendar-day"></i>
+        <span>Liturgia</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnPlan" onclick="showPlan()" title="Plano">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Plano</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnRosario" onclick="showRosario()" title="Terço">
+        <i class="fas fa-praying-hands"></i>
+        <span>Terço</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnVelas" onclick="showVelas()" title="Velas">
+        <i class="fas fa-fire"></i>
+        <span>Velas</span>
+      </button>
+      <button class="bottom-nav-btn" id="bnGallery" onclick="showGallery()" title="Galeria">
+        <i class="fas fa-images"></i>
+        <span>Galeria</span>
+      </button>
+    </div>
+  </nav>
 
   <script type="module" src="src/main.js"></script>
 </body>

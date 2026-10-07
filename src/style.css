@@ -1913,38 +1913,42 @@ mark,
   -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid var(--border-color);
   display: none;
-  padding: 0 12px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 12px) + 8px);
-  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.4);
+  padding: 0 4px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 4px);
+  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.45);
 }
 
 .bottom-nav-inner {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  height: 58px;
+  height: 56px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .bottom-nav-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 6px 12px;
+  gap: 3px;
+  padding: 4px 2px;
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   transition: var(--transition);
   font-family: var(--font-ui);
 }
 
 .bottom-nav-btn i {
-  font-size: 18px;
+  font-size: 17px;
   transition: var(--transition);
 }
 
