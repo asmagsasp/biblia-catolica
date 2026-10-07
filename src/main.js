@@ -18,6 +18,7 @@ import { NOVENAS_LIST, getNovenasComProgresso, iniciarNovena, marcarDiaNovenaCon
 import { CARTAS_APOSTOLICAS, getCartasPorCategoria, getCartaPorId } from './cartasService.js';
 import { getMariaTitulos, getMariaOracoes, getMariaDogmas, getMariaPraticas, getMariaItemPorId } from './mariaService.js';
 import { audioService, CATHOLIC_RADIOS, CATHOLIC_PODCASTS } from './podcastService.js';
+import { LIVRO_ORACOES, ORACOES_CATEGORIAS, getOracaoPorId, getOracoesFiltradas } from './oracoesService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -2597,7 +2598,8 @@ function showView(id) {
   stopTeologiaSpeech();
   stopNovenaSpeech();
   stopMariaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView'].forEach(v => {
+  stopOracaoAudio();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -8533,6 +8535,290 @@ window.shareRadiosWhatsApp = function (specificName = '') {
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
+
+// ==========================================================================
+// LIVRO DE ORAÇÕES CATÓLICAS & DEVOCIONÁRIO (SALVAI ALMAS) - CONTROLLER
+// ==========================================================================
+let currentOracaoTab = 'all';
+let currentOracoesSearch = '';
+let currentActiveOracao = null;
+let isOracaoAudioSpeaking = false;
+let oracaoFontSize = 15.5;
+
+window.showLivroOracoes = function () {
+  showView('oracoesLivroView');
+  renderOracoesGrid();
+};
+
+window.filterOracaoTab = function (tab, btnEl) {
+  currentOracaoTab = tab;
+  document.querySelectorAll('#oracoesLivroView .nav-tab').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderOracoesGrid();
+};
+
+window.handleOracoesSearch = function (query) {
+  currentOracoesSearch = (query || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('oracoesSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !currentOracoesSearch);
+  renderOracoesGrid();
+};
+
+window.clearOracoesSearch = function () {
+  currentOracoesSearch = '';
+  const input = document.getElementById('oracoesSearchInput');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('oracoesSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  renderOracoesGrid();
+};
+
+window.setOracoesQuickSearch = function (term) {
+  const input = document.getElementById('oracoesSearchInput');
+  if (input) input.value = term;
+  handleOracoesSearch(term);
+};
+
+window.renderOracoesGrid = function () {
+  const container = document.getElementById('oracoesContentGrid');
+  if (!container) return;
+
+  const list = getOracoesFiltradas(currentOracaoTab, currentOracoesSearch);
+
+  // Atualiza contador total
+  const countAll = document.getElementById('countOracaoAll');
+  if (countAll) countAll.textContent = LIVRO_ORACOES.length;
+
+  if (!list || list.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--text-secondary);">
+        <i class="fas fa-hands-praying" style="font-size: 42px; color: #c084fc; margin-bottom: 14px; opacity: 0.7;"></i>
+        <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma oração encontrada</h3>
+        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Salvai Almas", "São Bento", "São Miguel", "cura", "proteção" ou "Gertrudes".</p>
+        <button class="hero-share-btn" onclick="clearOracoesSearch()" style="display: inline-flex; padding: 8px 18px; font-size: 13px;">
+          <i class="fas fa-rotate-left"></i> Ver Todas as Orações
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const categoryIcons = {
+    almas: 'fas fa-fire',
+    santos: 'fas fa-dove',
+    manha_noite: 'fas fa-sun',
+    jesus: 'fas fa-cross',
+    maria: 'fas fa-crown',
+    protecao: 'fas fa-shield-halved',
+    familia_cura: 'fas fa-heart',
+    espiritosanto: 'fas fa-feather-pointed'
+  };
+
+  const categoryLabels = {
+    almas: '🕯️ Salvai Almas',
+    santos: '🕊️ Santo',
+    manha_noite: '☀️ Cotidiana',
+    jesus: '✝️ Jesus',
+    maria: '🌹 Mariana',
+    protecao: '🛡️ Proteção',
+    familia_cura: '🏠 Família & Cura',
+    espiritosanto: '🕊️ Espírito Santo'
+  };
+
+  let html = '';
+
+  for (const o of list) {
+    const icon = categoryIcons[o.categoria] || 'fas fa-hands-praying';
+    const catLabel = categoryLabels[o.categoria] || 'Oração';
+
+    html += `
+      <div class="oracao-card" onclick="openOracaoModal('${o.id}')">
+        <div class="oracao-card-top">
+          <span class="oracao-badge-cat">${catLabel}</span>
+          ${o.latim ? `<span class="oracao-badge-latim">${o.latim.slice(0, 30)}...</span>` : ''}
+        </div>
+        <div class="oracao-card-header-main">
+          <div class="oracao-card-icon-box">
+            <i class="${icon}"></i>
+          </div>
+          <div class="oracao-card-titles">
+            <h3 class="oracao-card-title">${o.titulo}</h3>
+            <div class="oracao-card-subtitle">${o.subtitulo}</div>
+          </div>
+        </div>
+        <p class="oracao-card-intro">${o.introducao || o.texto.slice(0, 140)}...</p>
+        <div class="oracao-card-actions" onclick="event.stopPropagation()">
+          <button class="oracao-btn-read" onclick="openOracaoModal('${o.id}')">
+            <i class="fas fa-book-open"></i> Rezar Oração
+          </button>
+          <button class="oracao-btn-icon" onclick="copyCurrentOracao('${o.id}')" title="Copiar oração">
+            <i class="fas fa-copy"></i>
+          </button>
+          <button class="oracao-btn-icon" onclick="shareCurrentOracaoWhatsApp('${o.id}')" title="Compartilhar no WhatsApp" style="color: #22c55e;">
+            <i class="fab fa-whatsapp"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+};
+
+window.openOracaoModal = function (id) {
+  const o = getOracaoPorId(id);
+  if (!o) return;
+
+  currentActiveOracao = o;
+  stopOracaoAudio();
+
+  const modal = document.getElementById('oracaoModal');
+  const badgeEl = document.getElementById('oracaoModalBadge');
+  const titleEl = document.getElementById('oracaoModalTitle');
+  const subtitleEl = document.getElementById('oracaoModalSubtitle');
+  const introEl = document.getElementById('oracaoModalIntro');
+  const textEl = document.getElementById('oracaoModalText');
+
+  if (badgeEl) {
+    badgeEl.textContent = o.autor || 'Tradição Católica';
+  }
+  if (titleEl) {
+    titleEl.textContent = o.titulo;
+  }
+  if (subtitleEl) {
+    subtitleEl.textContent = o.subtitulo + (o.promessa ? ` • ${o.promessa}` : '');
+  }
+  if (introEl) {
+    if (o.introducao) {
+      introEl.classList.remove('hidden');
+      introEl.innerHTML = `<i class="fas fa-quote-left" style="margin-right: 6px; opacity: 0.8;"></i> ${o.introducao}`;
+    } else {
+      introEl.classList.add('hidden');
+    }
+  }
+  if (textEl) {
+    textEl.style.fontSize = `${oracaoFontSize}px`;
+    textEl.textContent = o.texto;
+  }
+
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeOracaoModal = function () {
+  stopOracaoAudio();
+  const modal = document.getElementById('oracaoModal');
+  if (modal) modal.classList.add('hidden');
+  currentActiveOracao = null;
+};
+
+window.adjustOracaoFontSize = function (delta) {
+  oracaoFontSize = Math.max(13, Math.min(26, oracaoFontSize + delta));
+  const textEl = document.getElementById('oracaoModalText');
+  if (textEl) textEl.style.fontSize = `${oracaoFontSize}px`;
+};
+
+window.toggleOracaoAudio = function () {
+  if (isOracaoAudioSpeaking) {
+    stopOracaoAudio();
+    return;
+  }
+
+  if (!currentActiveOracao) return;
+
+  const fullTextToRead = `${currentActiveOracao.titulo}. ${currentActiveOracao.subtitulo}. ${currentActiveOracao.texto}`;
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(fullTextToRead);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.92;
+
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.includes('pt') || v.lang.includes('BR'));
+    if (ptVoice) utterance.voice = ptVoice;
+
+    utterance.onstart = () => {
+      isOracaoAudioSpeaking = true;
+      updateOracaoAudioBtn(true);
+    };
+
+    utterance.onend = () => {
+      isOracaoAudioSpeaking = false;
+      updateOracaoAudioBtn(false);
+    };
+
+    utterance.onerror = () => {
+      isOracaoAudioSpeaking = false;
+      updateOracaoAudioBtn(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  } else {
+    showToast('Leitura em voz alta não suportada neste dispositivo.');
+  }
+};
+
+window.stopOracaoAudio = function () {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  isOracaoAudioSpeaking = false;
+  updateOracaoAudioBtn(false);
+};
+
+function updateOracaoAudioBtn(speaking) {
+  const icon = document.getElementById('oracaoAudioIcon');
+  const text = document.getElementById('oracaoAudioText');
+  const btn = document.getElementById('btnOracaoAudio');
+
+  if (speaking) {
+    if (icon) icon.className = 'fas fa-stop';
+    if (text) text.textContent = 'Parar Áudio';
+    if (btn) btn.style.background = '#ef4444';
+  } else {
+    if (icon) icon.className = 'fas fa-volume-up';
+    if (text) text.textContent = 'Ouvir Oração';
+    if (btn) btn.style.background = '';
+  }
+}
+
+window.copyCurrentOracao = async function (optionalId = null) {
+  const o = optionalId ? getOracaoPorId(optionalId) : currentActiveOracao;
+  if (!o) return;
+
+  const textToCopy = `✝️ *${o.titulo}*\n_${o.subtitulo}_\n\n${o.texto}\n\n📲 *Livro de Orações - Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+
+  const ok = await copyToClipboard(textToCopy);
+  if (ok) {
+    showToast('✨ Oração copiada com sucesso!');
+  } else {
+    showToast('❌ Não foi possível copiar.');
+  }
+};
+
+window.shareCurrentOracaoWhatsApp = function (optionalId = null) {
+  const o = optionalId ? getOracaoPorId(optionalId) : currentActiveOracao;
+  if (!o) return;
+
+  let msg = `✝️ *${o.titulo}*\n`;
+  msg += `_${o.subtitulo}_\n\n`;
+  if (o.promessa) {
+    msg += `✨ *Promessa:* ${o.promessa}\n\n`;
+  }
+  msg += `🙏 *Oração:*\n${o.texto}\n\n`;
+  msg += `📲 *Reze mais no App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.shareLivroOracoesWhatsApp = function () {
+  let msg = `📖 *Livro de Orações Católicas Tradicionais & Salvai Almas*\n\n`;
+  msg += `✨ Encontrei no aplicativo da Bíblia Sagrada uma coletânea completa com as orações dos Santos (São Bento, São Miguel, Santa Rita, Santo Expedito, Padre Pio), clamores de libertação e súplicas pelas almas do Purgatório!\n\n`;
+  msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
 
 
 

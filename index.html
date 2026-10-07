@@ -56,6 +56,8 @@
     <div class="header-actions">
       <button class="header-btn" onclick="showRadiosPodcasts()" title="Rádios & Podcasts Católicos" style="color: #eab308;"><i
           class="fas fa-radio"></i></button>
+      <button class="header-btn desktop-only" onclick="showLivroOracoes()" title="Livro de Orações & Santos" style="color: #c084fc;"><i
+          class="fas fa-book-bible"></i></button>
       <button class="header-btn desktop-only" onclick="showLiturgia()" title="Liturgia Diária"><i
           class="fas fa-calendar-day"></i></button>
       <button class="header-btn desktop-only" onclick="showRosario()" title="Santo Terço"><i
@@ -170,6 +172,19 @@
             </div>
             <h3 class="quick-card-title">Rádios & Podcasts Católicos</h3>
             <p class="quick-card-desc">Anunciação FM 87.7, Aparecida, Canção Nova, Evangelizar & Mais</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Livro de Orações Católicas & Santos (Salvai Almas) -->
+        <div class="home-quick-card oracoes-card" onclick="showLivroOracoes()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">
+            <i class="fas fa-book-bible"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Devocionário dos Santos</div>
+            <h3 class="quick-card-title">Livro de Orações Católicas</h3>
+            <p class="quick-card-desc">Salvai Almas, São Bento, São Miguel, Chagas & Cura</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -1144,6 +1159,77 @@
       </div>
     </div>
 
+    <!-- LIVRO DE ORAÇÕES CATÓLICAS & DEVOCIONÁRIO (SALVAI ALMAS) -->
+    <div id="oracoesLivroView" class="hidden">
+      <div class="oracoes-view-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()" title="Voltar ao início"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-book-bible" style="color: #c084fc;"></i>
+                Livro de Orações Católicas
+              </h2>
+              <p class="chapter-subtitle">Devocionário Tradicional, Santos da Igreja & Salvai Almas</p>
+            </div>
+          </div>
+          <div class="oracoes-header-actions">
+            <button class="hero-share-btn" onclick="shareLivroOracoesWhatsApp()" title="Compartilhar Livro de Orações" style="padding: 7px 12px; font-size: 13px;">
+              <i class="fab fa-whatsapp"></i> Compartilhar
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Sacro Devocional -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(168, 85, 247, 0.2) 0%, var(--bg-card) 70%); border-color: rgba(168, 85, 247, 0.4); margin: 0 16px 14px 16px;">
+          <div class="confissao-banner-icon" style="color: #c084fc;"><i class="fas fa-hands-praying"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: #d8b4fe;">“Pedi e vos será dado; buscai e achareis; batei e abrir-se-vos-á” (Mt 7, 7)</h4>
+            <p>Compilação sagrada de orações tradicionais dos Santos, súplicas pelas Almas do Purgatório (Salvai Almas), proteção espiritual, curas e bênção para o seu lar.</p>
+          </div>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="cartas-filters-wrap">
+          <div class="cartas-search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="oracoesSearchInput" placeholder="Buscar por santo, intenção, almas, cura, proteção ou tema..." oninput="handleOracoesSearch(this.value)" autocomplete="off">
+            <button id="oracoesSearchClear" class="hidden" onclick="clearOracoesSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
+          </div>
+
+          <!-- Sugestões Rápidas de Busca -->
+          <div class="cartas-quick-chips">
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Salvai Almas')"><i class="fas fa-fire" style="color: #f59e0b;"></i> Salvai Almas</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('São Bento')"><i class="fas fa-cross" style="color: #60a5fa;"></i> São Bento</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('São Miguel')"><i class="fas fa-shield-halved" style="color: #ef4444;"></i> São Miguel</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Gertrudes')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Santa Gertrudes</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Sangue de Jesus')"><i class="fas fa-droplet" style="color: #f43f5e;"></i> Sangue de Cristo</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Santo Expedito')"><i class="fas fa-bolt" style="color: #eab308;"></i> Santo Expedito</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Padre Pio')"><i class="fas fa-heart" style="color: #ec4899;"></i> Padre Pio</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Cura')"><i class="fas fa-hand-holding-medical" style="color: #10b981;"></i> Cura & Saúde</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Família')"><i class="fas fa-house" style="color: #a855f7;"></i> Lar & Família</button>
+          </div>
+
+          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
+            <button class="nav-tab active" id="tabOracaoAll" onclick="filterOracaoTab('all', this)">🌟 Todas (<span id="countOracaoAll">25</span>)</button>
+            <button class="nav-tab" id="tabOracaoAlmas" onclick="filterOracaoTab('almas', this)">🕯️ Salvai Almas</button>
+            <button class="nav-tab" id="tabOracaoSantos" onclick="filterOracaoTab('santos', this)">🕊️ Santos da Igreja</button>
+            <button class="nav-tab" id="tabOracaoManha" onclick="filterOracaoTab('manha_noite', this)">☀️ Manhã & Noite</button>
+            <button class="nav-tab" id="tabOracaoJesus" onclick="filterOracaoTab('jesus', this)">✝️ Jesus & Chagas</button>
+            <button class="nav-tab" id="tabOracaoMaria" onclick="filterOracaoTab('maria', this)">🌹 Marianas</button>
+            <button class="nav-tab" id="tabOracaoProtecao" onclick="filterOracaoTab('protecao', this)">🛡️ Proteção</button>
+            <button class="nav-tab" id="tabOracaoFamilia" onclick="filterOracaoTab('familia_cura', this)">🏠 Família & Cura</button>
+            <button class="nav-tab" id="tabOracaoEspirito" onclick="filterOracaoTab('espiritosanto', this)">🕊️ Espírito Santo</button>
+          </div>
+        </div>
+
+        <!-- Grid de Conteúdo -->
+        <div id="oracoesContentGrid" class="oracoes-grid-container">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- FLOATING PERSISTENT AUDIO MINI-PLAYER BAR -->
@@ -1202,7 +1288,43 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <!-- HOMILY MODAL -->
+  <!-- MODAL DE ORAÇÃO SAGRADA (DEVOCIONÁRIO & ÁUDIO) -->
+  <div id="oracaoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="oracaoModalTitle" onclick="if(event.target===this) closeOracaoModal()">
+    <div class="donate-modal-content oracao-modal-box" style="max-width: 600px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeOracaoModal()" aria-label="Fechar oração"><i class="fas fa-times"></i></button>
+      
+      <div class="oracao-modal-header" style="text-align: center; margin-bottom: 14px;">
+        <div class="oracao-modal-badge" id="oracaoModalBadge" style="display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #c084fc; background: rgba(168, 85, 247, 0.15); padding: 3px 10px; border-radius: 20px; margin-bottom: 6px;">🕊️ Oração Tradicional</div>
+        <h2 id="oracaoModalTitle" style="color: var(--gold-300); font-family: 'Cinzel', serif; font-size: 20px; margin: 4px 0;">Título da Oração</h2>
+        <p id="oracaoModalSubtitle" style="color: var(--text-secondary); font-size: 13px; margin: 0;"></p>
+      </div>
+
+      <div class="oracao-modal-toolbar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border-color);">
+        <div class="oracao-font-adjuster" style="display: flex; gap: 4px;">
+          <button type="button" class="header-btn" onclick="adjustOracaoFontSize(-1)" title="Diminuir texto" style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">A-</button>
+          <button type="button" class="header-btn" onclick="adjustOracaoFontSize(1)" title="Aumentar texto" style="width: 32px; height: 32px; font-size: 14px; font-weight: bold;">A+</button>
+        </div>
+        <button type="button" class="hero-share-btn" id="btnOracaoAudio" onclick="toggleOracaoAudio()" style="padding: 6px 14px; font-size: 13px;">
+          <i class="fas fa-volume-up" id="oracaoAudioIcon"></i> <span id="oracaoAudioText">Ouvir Oração</span>
+        </button>
+      </div>
+
+      <div class="oracao-modal-body" id="oracaoModalBody" style="max-height: 52vh; overflow-y: auto; padding-right: 6px;">
+        <div class="oracao-intro-box" id="oracaoModalIntro" style="font-size: 13px; font-style: italic; color: var(--gold-400); margin-bottom: 14px; padding: 8px 12px; border-left: 3px solid var(--gold-400); background: rgba(212, 175, 55, 0.08); border-radius: 0 8px 8px 0;"></div>
+        <div class="oracao-text-content" id="oracaoModalText" style="font-size: 15.5px; line-height: 1.7; color: var(--text-primary); white-space: pre-line;"></div>
+      </div>
+
+      <div class="oracao-modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <button type="button" class="hero-share-btn" onclick="copyCurrentOracao()" style="padding: 9px 14px; font-size: 13px;">
+          <i class="fas fa-copy"></i> Copiar
+        </button>
+        <button type="button" class="hero-share-btn" onclick="shareCurrentOracaoWhatsApp()" style="background: #22c55e; border-color: #22c55e; color: #fff; padding: 9px 14px; font-size: 13px;">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- HOMILY MODAL -->
   <div id="homilyModal" class="donate-modal-overlay hidden">
     <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
