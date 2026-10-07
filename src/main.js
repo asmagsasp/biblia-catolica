@@ -8185,6 +8185,9 @@ function initAudioStreamingListener() {
   audioService.subscribe((state) => {
     updateMiniPlayerUI(state);
     updateRadioCardsUI(state);
+    if (state.error) {
+      showToast(`⚠️ ${state.error}`);
+    }
   });
 }
 

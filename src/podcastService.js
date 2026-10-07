@@ -152,10 +152,46 @@ export const CATHOLIC_RADIOS = [
 // Catálogo de Podcasts & Meditações em Áudio (Acervo dos Grandes Padres & Pregadores)
 export const CATHOLIC_PODCASTS = [
   {
+    id: 'padre_paulo_ricardo',
+    name: 'Homilia Diária & Espiritualidade - Pe. Paulo Ricardo',
+    author: 'Padre Paulo Ricardo (Christo Nihil Praeponere)',
+    feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
+    type: 'podcast',
+    genre: 'Homilias & Formação Clássica',
+    icon: 'fas fa-shield-halved',
+    accentColor: '#b45309',
+    category: 'padres',
+    description: 'Homilias diárias, aprofundamento bíblico, teologia dos santos, combate espiritual e a busca autêntica da santidade.',
+    tags: ['paulo ricardo', 'padre paulo ricardo', 'homilia', 'teologia', 'espiritualidade', 'santidade', 'evangelho', 'padres'],
+    episodes: [
+      {
+        title: 'Homilia Diária: A Virgem do Rosário e a Batalha Espiritual',
+        author: 'Pe. Paulo Ricardo',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433430993-44100-2-5a3fb4a21c266.mp3',
+        duration: '6 min',
+        pubDate: 'Homilia Diária'
+      },
+      {
+        title: 'Homilia Diária: Um Grande Amor Leva ao Desapego',
+        author: 'Pe. Paulo Ricardo',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126896735/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433423848-44100-2-9982783257cd8.mp3',
+        duration: '6 min',
+        pubDate: 'Formação Cristã'
+      },
+      {
+        title: 'Homilia Dominical: Três Passos para se Configurar à Vontade de Deus',
+        author: 'Pe. Paulo Ricardo',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126711684/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-2%2F433195447-44100-2-f152f7ff1a21a.mp3',
+        duration: '25 min',
+        pubDate: 'Combate Espiritual'
+      }
+    ]
+  },
+  {
     id: 'padre_fabio_melo',
     name: 'Reflexões de Vida & Fé - Pe. Fábio de Melo',
     author: 'Padre Fábio de Melo',
-    feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
+    feedUrl: 'https://anchor.fm/s/cb9d4650/podcast/rss',
     type: 'podcast',
     genre: 'Reflexões & Sabedoria',
     icon: 'fas fa-heart-circle-check',
@@ -167,23 +203,52 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'A Graça do Recomeço e a Misericórdia de Deus',
         author: 'Pe. Fábio de Melo',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '14 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '18 min',
         pubDate: 'Reflexão de Vida'
       },
       {
-        title: 'Cura das Feridas Interiores e Paz na Alma',
+        title: 'Cura das Feridas Interiores e a Paz da Alma',
         author: 'Pe. Fábio de Melo',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '18 min',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '22 min',
         pubDate: 'Mensagem de Fé'
       },
       {
-        title: 'Como Vencer o Medo e Confiar nos Planos de Deus',
+        title: 'Como Vencer a Ansiedade e Confiar nos Planos de Deus',
         author: 'Pe. Fábio de Melo',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71747860/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2F658caee4-015a-af01-14f7-23948c2430a2.mp3',
         duration: '16 min',
         pubDate: 'Esperança Cristã'
+      }
+    ]
+  },
+  {
+    id: 'padre_reginaldo_manzotti',
+    name: 'Experiência de Deus & Santas Chagas - Pe. Manzotti',
+    author: 'Padre Reginaldo Manzotti',
+    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
+    type: 'podcast',
+    genre: 'Oração & Santas Chagas',
+    icon: 'fas fa-hands-praying',
+    accentColor: '#f59e0b',
+    category: 'padres',
+    description: 'A oração que abençoa o seu lar, Santo Terço das Santas Chagas de Jesus, bênção das famílias e preces de libertação.',
+    tags: ['reginaldo manzotti', 'manzotti', 'experiencia de deus', 'santas chagas', 'cura', 'libertacao', 'bencao', 'oracao', 'padres'],
+    episodes: [
+      {
+        title: 'Experiência de Deus: Oração e Bênção das Famílias',
+        author: 'Pe. Reginaldo Manzotti',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '50 min',
+        pubDate: 'Experiência de Deus'
+      },
+      {
+        title: 'Terço das Santas Chagas de Jesus e Clamor por Cura',
+        author: 'Pe. Reginaldo Manzotti',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '22 min',
+        pubDate: 'Santas Chagas'
       }
     ]
   },
@@ -203,23 +268,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Palavra de Sabedoria: Amar, Educar e Perdoar Sempre',
         author: 'Pe. Zezinho, scj',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '12 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '25 min',
         pubDate: 'Sabedoria da Fé'
       },
       {
         title: 'Oração pela Paz na Família e no Matrimônio',
         author: 'Pe. Zezinho, scj',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '15 min',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '30 min',
         pubDate: 'Bênção do Lar'
-      },
-      {
-        title: 'Caminho com Maria: Um Canto e Prece à Mãe de Deus',
-        author: 'Pe. Zezinho, scj',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '10 min',
-        pubDate: 'Canto & Oração'
       }
     ]
   },
@@ -239,95 +297,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'A Luz do Evangelho no Dia a Dia e a Força da Palavra',
         author: 'Pe. Joãozinho, scj',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '15 min',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433347483-44100-2-0c900470c770e.m4a',
+        duration: '35 min',
         pubDate: 'Luz da Palavra'
       },
       {
         title: 'Como Ler e Entender a Bíblia com o Coração Aberto',
         author: 'Pe. Joãozinho, scj',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '18 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71747842/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2F3206659f-8daa-90b7-2360-4252f16c9698.mp3',
+        duration: '28 min',
         pubDate: 'Estudo Bíblico'
-      },
-      {
-        title: 'O Sentido dos Sacramentos e da Missa Dominical',
-        author: 'Pe. Joãozinho, scj',
-        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
-        duration: '14 min',
-        pubDate: 'Liturgia Viva'
-      }
-    ]
-  },
-  {
-    id: 'padre_reginaldo_manzotti',
-    name: 'Experiência de Deus & Santas Chagas - Pe. Manzotti',
-    author: 'Padre Reginaldo Manzotti',
-    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
-    type: 'podcast',
-    genre: 'Oração & Santas Chagas',
-    icon: 'fas fa-hands-praying',
-    accentColor: '#f59e0b',
-    category: 'padres',
-    description: 'A oração que abençoa o seu lar, Santo Terço das Santas Chagas de Jesus, bênção das famílias e preces de libertação.',
-    tags: ['reginaldo manzotti', 'manzotti', 'experiencia de deus', 'santas chagas', 'cura', 'libertacao', 'bencao', 'oracao', 'padres'],
-    episodes: [
-      {
-        title: 'Momento de Bênção e Oração pelas Famílias e Filhos',
-        author: 'Pe. Reginaldo Manzotti',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '25 min',
-        pubDate: 'Experiência de Deus'
-      },
-      {
-        title: 'Terço das Santas Chagas de Jesus por Cura e Proteção',
-        author: 'Pe. Reginaldo Manzotti',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '20 min',
-        pubDate: 'Santas Chagas'
-      },
-      {
-        title: 'A Força da Oração nas Horas de Aflição e Doença',
-        author: 'Pe. Reginaldo Manzotti',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '22 min',
-        pubDate: 'Momento de Fé'
-      }
-    ]
-  },
-  {
-    id: 'padre_paulo_ricardo',
-    name: 'Homilia Diária & Espiritualidade - Pe. Paulo Ricardo',
-    author: 'Padre Paulo Ricardo (Christo Nihil Praeponere)',
-    feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
-    type: 'podcast',
-    genre: 'Homilias & Formação Clássica',
-    icon: 'fas fa-shield-halved',
-    accentColor: '#b45309',
-    category: 'padres',
-    description: 'Homilias diárias, aprofundamento bíblico, teologia dos santos, combate espiritual e a busca autêntica da santidade.',
-    tags: ['paulo ricardo', 'padre paulo ricardo', 'homilia', 'teologia', 'espiritualidade', 'santidade', 'evangelho', 'padres'],
-    episodes: [
-      {
-        title: 'Homilia Diária: O Evangelho e a Batalha Espiritual',
-        author: 'Pe. Paulo Ricardo',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '12 min',
-        pubDate: 'Homilia Diária'
-      },
-      {
-        title: 'Meditação: O Santíssimo Sacramento e a Graça Eucarística',
-        author: 'Pe. Paulo Ricardo',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '15 min',
-        pubDate: 'Teologia Sacra'
-      },
-      {
-        title: 'A Vida Interior e a Necessidade da Oração Diária Contínua',
-        author: 'Pe. Paulo Ricardo',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '18 min',
-        pubDate: 'Combate Espiritual'
       }
     ]
   },
@@ -347,23 +326,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Oração da Manhã e Bênção da Água e das Famílias',
         author: 'Pe. Marcelo Rossi',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '15 min',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '20 min',
         pubDate: 'Momento de Fé'
       },
       {
         title: 'Oração do Terço Bizantino de Cura e Libertação',
         author: 'Pe. Marcelo Rossi',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '18 min',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '22 min',
         pubDate: 'Terço Bizantino'
-      },
-      {
-        title: 'Ágape: O Amor de Deus que Vence Toda Depressão e Dor',
-        author: 'Pe. Marcelo Rossi',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '16 min',
-        pubDate: 'Amor Ágape'
       }
     ]
   },
@@ -383,23 +355,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Buscai as Coisas do Alto e Curai vosso Coração',
         author: 'Pe. Léo, scj',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '28 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '35 min',
         pubDate: 'Coisas do Alto'
       },
       {
         title: 'A Família: O Maior Tesouro que Deus nos Deu na Terra',
         author: 'Pe. Léo, scj',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '32 min',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '40 min',
         pubDate: 'Cura da Família'
-      },
-      {
-        title: 'Cura do Ressentimento e a Força Restauradora do Perdão',
-        author: 'Pe. Léo, scj',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '26 min',
-        pubDate: 'Perdão & Paz'
       }
     ]
   },
@@ -419,23 +384,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Segredos para um Casamento Feliz, Maduro e Abençoado',
         author: 'Pe. Chrystian Shankar',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '22 min',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2020-06-07%2F3e6a3671f3e9f08956ee272d17a03aaa.m4a',
+        duration: '30 min',
         pubDate: 'Casamento Abençoado'
       },
       {
         title: 'Como Superar as Crises Familiares com Paciência e Oração',
         author: 'Pe. Chrystian Shankar',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '20 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71747860/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2F658caee4-015a-af01-14f7-23948c2430a2.mp3',
+        duration: '25 min',
         pubDate: 'Luz no Lar'
-      },
-      {
-        title: 'A Arte de Dialogar e Reacender o Amor e Respeito no Lar',
-        author: 'Pe. Chrystian Shankar',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '18 min',
-        pubDate: 'Diálogo Santo'
       }
     ]
   },
@@ -455,23 +413,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Oração com Nossa Senhora e Bênção Sacerdotal do Lar',
         author: 'Pe. Antônio Maria',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '15 min',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '22 min',
         pubDate: 'Colo de Maria'
       },
       {
         title: 'Cânticos e Preces Devocionais à Rainha dos Anjos',
         author: 'Pe. Antônio Maria',
-        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
-        duration: '12 min',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433347483-44100-2-0c900470c770e.m4a',
+        duration: '28 min',
         pubDate: 'Canção à Mãe'
-      },
-      {
-        title: 'A Proteção Maternal de Maria em Nossas Vidas e Famílias',
-        author: 'Pe. Antônio Maria',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '16 min',
-        pubDate: 'Prece Mariana'
       }
     ]
   },
@@ -491,23 +442,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Meditação sobre a Verdadeira Fé Católica e a Cruz de Cristo',
         author: 'Dom Henrique Soares',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '24 min',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126711684/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-2%2F433195447-44100-2-f152f7ff1a21a.mp3',
+        duration: '25 min',
         pubDate: 'Teologia Viva'
       },
       {
         title: 'O Mistério da Santa Eucaristia e a Presença Real do Senhor',
         author: 'Dom Henrique Soares',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '26 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '30 min',
         pubDate: 'Eucaristia'
-      },
-      {
-        title: 'O Sentido Eterno da Esperança e a Glória do Céu',
-        author: 'Dom Henrique Soares',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '20 min',
-        pubDate: 'Vida Eterna'
       }
     ]
   },
@@ -527,23 +471,16 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Santo Rosário da Madrugada e Clamor de Proteção e Cura',
         author: 'Frei Gilson',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '30 min',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '35 min',
         pubDate: 'Vigília da Fé'
       },
       {
         title: 'Direção Espiritual: O Combate da Fé nas Tribulações',
         author: 'Frei Gilson',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
-        duration: '22 min',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433430993-44100-2-5a3fb4a21c266.mp3',
+        duration: '18 min',
         pubDate: 'Combate Espiritual'
-      },
-      {
-        title: 'Vigília de Adoração e Cânticos de Entrega a Deus',
-        author: 'Frei Gilson',
-        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
-        duration: '25 min',
-        pubDate: 'Adoração Viva'
       }
     ]
   },
@@ -563,15 +500,15 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Instrução sobre o Escudo da Fé e Proteção de São Miguel Arcanjo',
         author: 'Pe. Duarte Lara',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '18 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '22 min',
         pubDate: 'Batalha Espiritual'
       },
       {
         title: 'A Força Invencível da Oração do Rosário contra Todo o Mal',
         author: 'Pe. Gabriel Vila Verde',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '16 min',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '20 min',
         pubDate: 'Escudo Mariano'
       }
     ]
@@ -595,6 +532,13 @@ export const CATHOLIC_PODCASTS = [
         audioUrl: 'https://media.vaticannews.va/media2/audio/program/2805/brasiliano_3_061026.mp3',
         duration: '20 min',
         pubDate: 'Edição Atual'
+      },
+      {
+        title: 'Programa Brasileiro - Edição Matutina',
+        author: 'Vatican News',
+        audioUrl: 'https://media.vaticannews.va/media2/audio/program/1384/brasiliano_1_061026.mp3',
+        duration: '15 min',
+        pubDate: 'Edição Especial'
       }
     ]
   },
@@ -614,9 +558,37 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Santo Rosário Completo com Contemplações Marianas',
         author: 'Devoção Mariana',
-        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
-        duration: '22 min',
-        pubDate: 'Devocional Completo'
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876534-44100-2-177f02e3bd4b6.m4a',
+        duration: '65 min',
+        pubDate: 'Rosário Completo'
+      },
+      {
+        title: 'Mistérios Luminosos (Quinta-feira)',
+        author: 'Devoção Mariana',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/66524592/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876350-44100-2-9c8dc53ca192e.m4a',
+        duration: '18 min',
+        pubDate: 'Quintas-feiras'
+      },
+      {
+        title: 'Mistérios Gloriosos (Quarta-feira e Domingo)',
+        author: 'Devoção Mariana',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/66524422/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876324-44100-2-6c028a386e64f.m4a',
+        duration: '18 min',
+        pubDate: 'Quartas e Domingos'
+      },
+      {
+        title: 'Mistérios Dolorosos (Terça-feira e Sexta-feira)',
+        author: 'Devoção Mariana',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/66523571/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876277-44100-2-bed6b07376f0e.m4a',
+        duration: '18 min',
+        pubDate: 'Terças e Sextas'
+      },
+      {
+        title: 'Mistérios Gozosos (Segunda-feira e Sábado)',
+        author: 'Devoção Mariana',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/50529400/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-1-26%2F418876229-44100-2-266a314806fe5.m4a',
+        duration: '18 min',
+        pubDate: 'Segundas e Sábados'
       }
     ]
   },
@@ -634,11 +606,18 @@ export const CATHOLIC_PODCASTS = [
     tags: ['catequese', 'doutrina', 'sacramentos', 'santos', 'formacao', 'devocional'],
     episodes: [
       {
-        title: 'Catequese: Uma, Santa, Católica e Apostólica',
+        title: 'Catequese: Uma, Santa, Católica e Apostólica Igreja',
         author: 'Devoto Mariano',
-        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
-        duration: '18 min',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2Fb4b3670c-8222-5e17-ea6d-f7850ba3f18c.mp3',
+        duration: '60 min',
         pubDate: 'Formação na Fé'
+      },
+      {
+        title: 'Catequese: O Espírito Santo e os Sacramentos',
+        author: 'Devoto Mariano',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71747860/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-7%2F658caee4-015a-af01-14f7-23948c2430a2.mp3',
+        duration: '55 min',
+        pubDate: 'Sacramentos'
       }
     ]
   },
@@ -658,8 +637,8 @@ export const CATHOLIC_PODCASTS = [
       {
         title: 'Música Católica para Oração e Adoração Eucarística',
         author: 'Ministério Crux Sacra',
-        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
-        duration: '45 min',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-5%2F433347483-44100-2-0c900470c770e.m4a',
+        duration: '65 min',
         pubDate: 'Adoração Contínua'
       }
     ]
