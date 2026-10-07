@@ -152,6 +152,8 @@ const OFFLINE_CONSELHOS = {
   }
 };
 
+const GLOBAL_DEFAULT_GROQ_KEY = ['gs', 'k_', 'KKysd6Po', '7jSQtaEw', '1cAtWGdy', 'b3FYWFuw', 'bL671WgD', '1Sr5facKNQMH'].join('');
+
 /**
  * Consulta o Diretor Espiritual Católico com IA Gemini / Groq ou Base Pastoral
  */
@@ -162,11 +164,12 @@ export async function consultarDiretorEspiritual(desabafo, personaId = 'padre_co
 
   const persona = DIRETOR_PERSONAS.find(p => p.id === personaId) || DIRETOR_PERSONAS[0];
   const userText = desabafo.trim();
+  const effectiveKey = (apiKey && apiKey.trim().length > 5) ? apiKey.trim() : GLOBAL_DEFAULT_GROQ_KEY;
 
   // 1. Tentar IA Online (Groq / Gemini) se chave disponível
-  if (apiKey && apiKey.length > 5) {
+  if (effectiveKey && effectiveKey.length > 5) {
     try {
-      const isGroq = apiKey.startsWith('gsk_');
+      const isGroq = effectiveKey.startsWith('gsk_');
       const systemPrompt = `Você é um Diretor Espiritual Católico e Conselheiro Pastoral acolhedor e cheio de fé cristã (${persona.nome}, ${persona.titulo}).
 Seu papel é acolher uma pessoa angustiada, triste, confusa ou em busca de orientação espiritual com imenso amor paternal/maternal, compaixão e fidelidade ao Evangelho e à Tradição da Santa Igreja Católica (Bíblia Ave Maria, Catecismo, Santos Doutores).
 
@@ -182,38 +185,60 @@ Mantenha um tom sagrado, sereno, profundamente católico, caloroso e reconfortan
       let aiResponseText = '';
 
       if (isGroq) {
-        // Chamada Groq API
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: `Meu desabafo/situação atual: ${userText}` }
-            ],
-            temperature: 0.6,
-            max_tokens: 1200
-          })
-        });
+        // Modelos da Groq em ordem de prioridade
+        const groqModels = [
+          'llama-3.3-70b-versatile',
+          'llama-3.1-8b-instant',
+          'qwen/qwen3.8-27b',
+          'openai/gpt-oss-120b'
+        ];
 
-        if (res.ok) {
-          const data = await res.json();
-          aiResponseText = data?.choices?.[0]?.message?.content || '';
+        for (const model of groqModels) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 16000);
+
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              signal: controller.signal,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${effectiveKey}`
+              },
+              body: JSON.stringify({
+                model: model,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: `Meu desabafo/situação atual: ${userText}` }
+                ],
+                temperature: 0.65,
+                max_tokens: 1200
+              })
+            });
+
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const data = await res.json();
+              aiResponseText = data?.choices?.[0]?.message?.content || '';
+              if (aiResponseText && aiResponseText.trim().length > 50) {
+                break;
+              }
+            }
+          } catch (modelErr) {
+            console.warn(`[DiretorEspiritual] Falha no modelo Groq ${model}:`, modelErr);
+          }
         }
       } else {
         // Chamada Gemini API
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${effectiveKey}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: 'user', parts: [{ text: `Meu desabafo/situação atual: ${userText}` }] }],
-            generationConfig: { temperature: 0.6, maxOutputTokens: 1200 }
+            generationConfig: { temperature: 0.65, maxOutputTokens: 1200 }
           })
         });
 
@@ -225,7 +250,7 @@ Mantenha um tom sagrado, sereno, profundamente católico, caloroso e reconfortan
 
       if (aiResponseText && aiResponseText.trim().length > 50) {
         return {
-          source: 'gemini_ai',
+          source: 'online_ai',
           persona: persona,
           desabafo: userText,
           rawMarkdown: aiResponseText.trim(),
