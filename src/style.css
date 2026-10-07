@@ -7585,3 +7585,514 @@ mark,
   background: #9333ea;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   DIRETOR ESPIRITUAL & PALAVRA AMIGA (IA CATÓLICA) — STYLES
+   ========================================================================== */
+
+.diretor-view-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.diretor-main-layout {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.diretor-box-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s ease;
+}
+
+.diretor-box-section:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.diretor-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.diretor-step-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  flex-shrink: 0;
+}
+
+.diretor-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.diretor-section-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+/* Personas Grid */
+.diretor-personas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.diretor-persona-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.diretor-persona-card:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+}
+
+.diretor-persona-card.active {
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.2) 0%, rgba(2, 132, 199, 0.08) 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.3);
+}
+
+.diretor-persona-card.active::after {
+  content: "✓";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #38bdf8;
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diretor-persona-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.diretor-persona-card:hover .diretor-persona-avatar {
+  transform: scale(1.08);
+}
+
+.diretor-persona-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+  line-height: 1.25;
+}
+
+.diretor-persona-title {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+/* Persona Speech Bubble */
+.diretor-persona-speech {
+  background: rgba(56, 189, 248, 0.07);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-left: 4px solid #38bdf8;
+  border-radius: 0 14px 14px 0;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.diretor-speech-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.diretor-speech-body {
+  flex: 1;
+}
+
+.diretor-speech-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #7dd3fc;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.diretor-speech-text {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Topic Chips */
+.diretor-topics-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.diretor-topic-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diretor-topic-chip:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  color: #7dd3fc;
+  transform: translateY(-1px);
+}
+
+/* Input Area */
+.diretor-input-wrapper {
+  margin-bottom: 14px;
+}
+
+.diretor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  resize: vertical;
+  font-family: var(--font-ui);
+  transition: all 0.2s ease;
+  min-height: 100px;
+}
+
+.diretor-textarea:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.diretor-input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.diretor-privacy-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.diretor-submit-btn {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%);
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.diretor-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.5);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+/* Result Box & Response Card */
+.diretor-card-response {
+  background: linear-gradient(180deg, rgba(28, 16, 28, 0.8) 0%, rgba(14, 8, 16, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.15);
+  animation: fadeIn 0.4s ease;
+}
+
+.diretor-response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.diretor-response-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.diretor-section-subcard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.diretor-subcard-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--gold-300);
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+}
+
+.diretor-subcard-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-line;
+}
+
+.diretor-subcard-text.scripture {
+  font-family: var(--font-scripture);
+  font-size: 17.5px;
+  font-style: italic;
+  color: var(--gold-200);
+  background: rgba(212, 175, 55, 0.07);
+  border-left: 3px solid var(--gold-400);
+  padding: 10px 14px;
+  border-radius: 0 10px 10px 0;
+}
+
+.diretor-subcard-text.prayer {
+  font-family: var(--font-scripture);
+  font-size: 16.5px;
+  line-height: 1.75;
+  color: #e0f2fe;
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
+  padding: 12px 16px;
+  border-radius: 0 12px 12px 0;
+}
+
+.diretor-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.diretor-btn-audio {
+  flex: 1.3;
+  min-width: 150px;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diretor-btn-audio:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+}
+
+.diretor-btn-audio.speaking {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+/* History Modal items */
+.diretor-history-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diretor-history-card:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.diretor-history-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.diretor-history-prompt {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diretor-history-prayer {
+  font-size: 12px;
+  color: var(--gold-300);
+  font-style: italic;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .diretor-box-section {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.09);
+}
+
+[data-theme="light"] .diretor-persona-card {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .diretor-persona-card.active {
+  background: #f0f9ff;
+  border-color: #0284c7;
+}
+
+[data-theme="light"] .diretor-persona-speech {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  border-left-color: #0284c7;
+}
+
+[data-theme="light"] .diretor-speech-name {
+  color: #0369a1;
+}
+
+[data-theme="light"] .diretor-textarea {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+[data-theme="light"] .diretor-card-response {
+  background: #ffffff;
+  border-color: #bae6fd;
+}
+
+[data-theme="light"] .diretor-section-subcard {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .diretor-subcard-text.scripture {
+  background: #fefce8;
+  color: #854d0e;
+}
+
+[data-theme="light"] .diretor-subcard-text.prayer {
+  background: #f0f9ff;
+  color: #0c4a6e;
+}

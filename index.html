@@ -56,6 +56,8 @@
     <div class="header-actions">
       <button class="header-btn" onclick="showRadiosPodcasts()" title="Rádios & Podcasts Católicos" style="color: #eab308;"><i
           class="fas fa-radio"></i></button>
+      <button class="header-btn desktop-only" onclick="showDiretorEspiritual()" title="Diretor Espiritual & Palavra Amiga (IA Católica)" style="color: #38bdf8;"><i
+          class="fas fa-dove"></i></button>
       <button class="header-btn desktop-only" onclick="showLivroOracoes()" title="Livro de Orações & Santos" style="color: #c084fc;"><i
           class="fas fa-book-bible"></i></button>
       <button class="header-btn desktop-only" onclick="showLiturgia()" title="Liturgia Diária"><i
@@ -185,6 +187,21 @@
             <div class="quick-card-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Devocionário dos Santos</div>
             <h3 class="quick-card-title">Livro de Orações Católicas</h3>
             <p class="quick-card-desc">Salvai Almas, São Bento, São Miguel, Chagas & Cura</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Diretor Espiritual & Palavra Amiga (IA Católica) -->
+        <div class="home-quick-card diretor-espiritual-card" onclick="showDiretorEspiritual()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">
+            <i class="fas fa-dove"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+              <i class="fas fa-sparkles"></i> IA Católica & Acolhimento
+            </div>
+            <h3 class="quick-card-title">Diretor Espiritual & Palavra Amiga</h3>
+            <p class="quick-card-desc">Desabafe suas dores, receba consolo pastoral, versículo, santos & oração</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -1240,6 +1257,129 @@
       </div>
     </div>
 
+    <!-- DIRETOR ESPIRITUAL & PALAVRA AMIGA (IA CATÓLICA) -->
+    <div id="diretorEspiritualView" class="hidden">
+      <div class="diretor-view-container">
+        <!-- Header -->
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()" title="Voltar ao início"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-dove" style="color: #38bdf8;"></i>
+                Diretor Espiritual & Palavra Amiga
+              </h2>
+              <p class="chapter-subtitle">Acolhimento Pastoral, Consolo Bíblico, Sabedoria dos Santos & Oração</p>
+            </div>
+          </div>
+          <div class="diretor-header-actions">
+            <button type="button" class="upload-btn-secondary" onclick="openDiretorHistoricoModal()" title="Minhas consultas anteriores" style="padding: 7px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fas fa-clock-rotate-left"></i> <span>Histórico</span>
+            </button>
+            <button type="button" class="hero-share-btn" onclick="compartilharDiretorAppWhatsApp()" title="Convidar amigo para desabafar" style="padding: 7px 12px; font-size: 13px;">
+              <i class="fab fa-whatsapp"></i> Convidar
+            </button>
+          </div>
+        </div>
+
+        <!-- Devotional Welcome Banner -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18) 0%, var(--bg-card) 70%); border-color: rgba(56, 189, 248, 0.35); margin: 0 16px 14px 16px;">
+          <div class="confissao-banner-icon" style="color: #38bdf8;"><i class="fas fa-dove"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: #7dd3fc;">“Vinde a mim, todos vós que estais cansados e sobrecarregados, e Eu vos aliviarei” (Mt 11, 28)</h4>
+            <p>Este é um espaço sagrado e sigiloso para você abrir seu coração sem julgamentos. Escolha com quem deseja conversar, escreva sua aflição e receba uma orientação iluminada pelo Evangelho e pela Tradição da Igreja.</p>
+          </div>
+        </div>
+
+        <!-- Main Form & Content Area -->
+        <div class="diretor-main-layout">
+          <!-- 1. Persona Selector -->
+          <div class="diretor-box-section">
+            <div class="diretor-section-header">
+              <span class="diretor-step-badge">1</span>
+              <div>
+                <h3 class="diretor-section-title">Escolha seu Conselheiro Espiritual</h3>
+                <p class="diretor-section-subtitle">Selecione quem você gostaria que acolhesse o seu desabafo</p>
+              </div>
+            </div>
+
+            <div class="diretor-personas-grid" id="diretorPersonasContainer">
+              <!-- Renderizado dinamicamente -->
+            </div>
+
+            <!-- Active Persona Welcome Speech Bubble -->
+            <div class="diretor-persona-speech" id="diretorPersonaSpeech">
+              <div class="diretor-speech-avatar" id="diretorSpeechAvatar">
+                <i class="fas fa-hands-praying"></i>
+              </div>
+              <div class="diretor-speech-body">
+                <div class="diretor-speech-name" id="diretorSpeechName">Padre Conselheiro & Pároco</div>
+                <p class="diretor-speech-text" id="diretorSpeechText">A paz de Nosso Senhor Jesus Cristo esteja com você, meu filho(a). Eu estou aqui para escutar o seu coração com todo o amor da Igreja. O que está angustiando ou afligindo a sua alma hoje?</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Quick Crisis / Topic Chips -->
+          <div class="diretor-box-section">
+            <div class="diretor-section-header">
+              <span class="diretor-step-badge">2</span>
+              <div>
+                <h3 class="diretor-section-title">Temas & Aflições Rápidas (Opcional)</h3>
+                <p class="diretor-section-subtitle">Toque em um tema comum ou escreva com suas próprias palavras abaixo</p>
+              </div>
+            </div>
+
+            <div class="diretor-topics-scroll" id="diretorTopicsContainer">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+
+          <!-- 3. Textarea / Desabafo -->
+          <div class="diretor-box-section">
+            <div class="diretor-section-header">
+              <span class="diretor-step-badge">3</span>
+              <div>
+                <h3 class="diretor-section-title">Abra o seu Coração</h3>
+                <p class="diretor-section-subtitle">Conte seus medos, dores, dúvidas ou pedidos de oração</p>
+              </div>
+            </div>
+
+            <div class="diretor-input-wrapper">
+              <textarea id="diretorDesabafoInput" class="diretor-textarea" rows="4" placeholder="Escreva aqui o que está pesando no seu peito, um sofrimento na família, medo do futuro, tentação ou agradecimento a Deus..."></textarea>
+              <div class="diretor-input-footer">
+                <span class="diretor-privacy-hint"><i class="fas fa-lock"></i> 100% Privado & Seguro</span>
+                <button type="button" class="upload-btn-secondary" onclick="limparDiretorDesabafo()" style="font-size: 11.5px; padding: 4px 10px;">
+                  <i class="fas fa-eraser"></i> Limpar
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="button" id="btnSubmitDiretor" class="hero-donate-btn pulse-animation diretor-submit-btn" onclick="submitDiretorConsulta()">
+              <i class="fas fa-dove"></i>
+              <span>Receber Conselho & Oração Pastoral</span>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div id="diretorLoadingContainer" class="ai-loading-container hidden" style="margin: 20px 0; padding: 32px 16px;">
+            <div class="ai-spinner-ring" style="border-top-color: #38bdf8;"></div>
+            <div class="ai-loading-cross" style="color: #38bdf8;">✝</div>
+            <p class="ai-loading-text" id="diretorLoadingStatus" style="color: #38bdf8;">Acolhendo seu desabafo na presença do Senhor...</p>
+            <span class="ai-loading-sub">Preparando consolo pastoral, versículo sagrado e oração de entrega</span>
+          </div>
+
+          <!-- Result Card Container -->
+          <div id="diretorResultContainer" class="diretor-result-box hidden">
+            <!-- Dynamic Result Card -->
+            <div class="diretor-card-response" id="diretorCardResponse">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- FLOATING PERSISTENT AUDIO MINI-PLAYER BAR -->
@@ -2289,6 +2429,32 @@
         <button type="button" class="hero-share-btn" onclick="compartilharOracaoAtualWhatsApp()" title="Compartilhar no WhatsApp" style="padding: 10px 14px;">
           <i class="fab fa-whatsapp"></i> Compartilhar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: HISTÓRICO DE CONSULTAS DO DIRETOR ESPIRITUAL -->
+  <div id="diretorHistoricoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeDiretorHistoricoModal()">
+    <div class="donate-modal-content" style="max-width: 620px; max-height: 90vh; display: flex; flex-direction: column; text-align: left; padding: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="donate-icon-container" style="width: 38px; height: 38px; border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); margin: 0;">
+            <i class="fas fa-clock-rotate-left donate-icon" style="color: #38bdf8; font-size: 16px;"></i>
+          </div>
+          <div>
+            <h3 style="font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold-300); margin: 0;">Histórico de Direção Espiritual</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Suas conversas e orações recebidas (100% no seu aparelho)</p>
+          </div>
+        </div>
+        <button class="donate-close-btn" onclick="closeDiretorHistoricoModal()" style="position: static;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div id="diretorHistoricoList" style="flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Renderizado dinamicamente -->
+      </div>
+
+      <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
+        <button type="button" class="upload-btn-secondary" onclick="closeDiretorHistoricoModal()">Fechar</button>
       </div>
     </div>
   </div>

@@ -19,6 +19,7 @@ import { CARTAS_APOSTOLICAS, getCartasPorCategoria, getCartaPorId } from './cart
 import { getMariaTitulos, getMariaOracoes, getMariaDogmas, getMariaPraticas, getMariaItemPorId } from './mariaService.js';
 import { audioService, CATHOLIC_RADIOS, CATHOLIC_PODCASTS, getPodcastById } from './podcastService.js';
 import { LIVRO_ORACOES, ORACOES_CATEGORIAS, getOracaoPorId, getOracoesFiltradas } from './oracoesService.js';
+import { DIRETOR_PERSONAS, DIRETOR_TOPICOS_RAPIDOS, consultarDiretorEspiritual, getDiretorHistorico, salvarConsultaDiretorHistorico, excluirItemDiretorHistorico } from './diretorEspiritualService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -2599,7 +2600,8 @@ function showView(id) {
   stopNovenaSpeech();
   stopMariaSpeech();
   stopOracaoAudio();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView'].forEach(v => {
+  stopDiretorAudio();
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView', 'diretorEspiritualView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -3143,7 +3145,7 @@ export async function isDonateSnoozedToday() {
  */
 export function isUserInDeepPrayer() {
   // Áudios devocionais ativos controlados pela aplicação
-  if (isSpeaking || isChapterReading || isRosarioSpeaking || isDonateAudioSpeaking) return true;
+  if (isSpeaking || isChapterReading || isRosarioSpeaking || isDonateAudioSpeaking || isDiretorSpeaking) return true;
   if (typeof isLiturgiaSpeaking !== 'undefined' && isLiturgiaSpeaking) return true;
   if (typeof isHomilySpeaking !== 'undefined' && isHomilySpeaking) return true;
   if (typeof isHomiliaLiturgiaSpeaking !== 'undefined' && isHomiliaLiturgiaSpeaking) return true;
@@ -3152,7 +3154,7 @@ export function isUserInDeepPrayer() {
   if (typeof isTeologiaSpeaking !== 'undefined' && isTeologiaSpeaking) return true;
 
   // Telas devocionais que não devem ser interrompidas
-  const prayerViews = ['rosarioView', 'novenasView', 'lectioView', 'confissaoView'];
+  const prayerViews = ['rosarioView', 'novenasView', 'lectioView', 'confissaoView', 'diretorEspiritualView'];
   for (const vId of prayerViews) {
     const el = document.getElementById(vId);
     if (el && !el.classList.contains('hidden')) {
@@ -8955,6 +8957,478 @@ window.shareLivroOracoesWhatsApp = function () {
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
+
+// ==========================================================================
+// DIRETOR ESPIRITUAL & PALAVRA AMIGA (IA CATÓLICA) — CONTROLLER
+// ==========================================================================
+let currentDiretorPersonaId = 'padre_conselheiro';
+let currentDiretorResult = null;
+let isDiretorSpeaking = false;
+
+window.showDiretorEspiritual = function () {
+  showView('diretorEspiritualView');
+  initDiretorUI();
+};
+
+window.initDiretorUI = function () {
+  renderDiretorPersonas();
+  renderDiretorTopicos();
+  updateDiretorPersonaSpeech();
+};
+
+function renderDiretorPersonas() {
+  const container = document.getElementById('diretorPersonasContainer');
+  if (!container) return;
+
+  container.innerHTML = DIRETOR_PERSONAS.map(p => {
+    const isActive = p.id === currentDiretorPersonaId;
+    return `
+      <div class="diretor-persona-card ${isActive ? 'active' : ''}" onclick="selectDiretorPersona('${p.id}')">
+        <div class="diretor-persona-avatar" style="background: ${p.cor}22; color: ${p.cor}; border-color: ${p.cor}44;">
+          <i class="fas ${p.icone}"></i>
+        </div>
+        <div class="diretor-persona-name">${p.nome}</div>
+        <div class="diretor-persona-title">${p.titulo}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDiretorTopicos() {
+  const container = document.getElementById('diretorTopicsContainer');
+  if (!container) return;
+
+  container.innerHTML = DIRETOR_TOPICOS_RAPIDOS.map(t => {
+    return `
+      <button type="button" class="diretor-topic-chip" onclick="selectDiretorTopico('${t.prompt.replace(/'/g, "\\'")}')">
+        ${t.titulo}
+      </button>
+    `;
+  }).join('');
+}
+
+window.selectDiretorPersona = function (personaId) {
+  currentDiretorPersonaId = personaId;
+  renderDiretorPersonas();
+  updateDiretorPersonaSpeech();
+};
+
+function updateDiretorPersonaSpeech() {
+  const p = DIRETOR_PERSONAS.find(item => item.id === currentDiretorPersonaId) || DIRETOR_PERSONAS[0];
+  const avatarEl = document.getElementById('diretorSpeechAvatar');
+  const nameEl = document.getElementById('diretorSpeechName');
+  const textEl = document.getElementById('diretorSpeechText');
+
+  if (avatarEl) {
+    avatarEl.innerHTML = `<i class="fas ${p.icone}"></i>`;
+    avatarEl.style.color = p.cor;
+    avatarEl.style.background = `${p.cor}22`;
+  }
+  if (nameEl) {
+    nameEl.textContent = p.nome;
+    nameEl.style.color = p.cor;
+  }
+  if (textEl) {
+    textEl.textContent = `“${p.saudacao}”`;
+  }
+}
+
+window.selectDiretorTopico = function (promptText) {
+  const input = document.getElementById('diretorDesabafoInput');
+  if (input) {
+    input.value = promptText;
+    input.focus();
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
+
+window.limparDiretorDesabafo = function () {
+  const input = document.getElementById('diretorDesabafoInput');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+};
+
+window.submitDiretorConsulta = async function () {
+  const input = document.getElementById('diretorDesabafoInput');
+  const text = (input?.value || '').trim();
+
+  if (!text) {
+    showToast('Por favor, escreva o que você está sentindo ou passando.');
+    input?.focus();
+    return;
+  }
+
+  const btnSubmit = document.getElementById('btnSubmitDiretor');
+  const loadingContainer = document.getElementById('diretorLoadingContainer');
+  const resultContainer = document.getElementById('diretorResultContainer');
+
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Escutando com Amor Pastoral...</span>';
+  }
+  if (loadingContainer) loadingContainer.classList.remove('hidden');
+  if (resultContainer) resultContainer.classList.add('hidden');
+  stopDiretorAudio();
+
+  try {
+    const apiKey = getAiApiKey();
+    const result = await consultarDiretorEspiritual(text, currentDiretorPersonaId, apiKey);
+    currentDiretorResult = result;
+
+    // Salva no histórico local
+    salvarConsultaDiretorHistorico({
+      personaId: result.persona?.id || currentDiretorPersonaId,
+      personaNome: result.persona?.nome || 'Diretor Espiritual',
+      desabafo: text,
+      rawMarkdown: result.rawMarkdown,
+      conselhoObj: result.conselhoObj || null
+    });
+
+    renderDiretorResponseCard(result);
+
+    if (resultContainer) {
+      resultContainer.classList.remove('hidden');
+      resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (err) {
+    console.error('[DiretorEspiritual] Erro na consulta:', err);
+    showToast(err.message || 'Erro ao consultar o Diretor Espiritual. Tente novamente.');
+  } finally {
+    if (loadingContainer) loadingContainer.classList.add('hidden');
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<i class="fas fa-dove"></i> <span>Receber Conselho & Oração Pastoral</span>';
+    }
+  }
+};
+
+window.renderDiretorResponseCard = function (result) {
+  const cardEl = document.getElementById('diretorCardResponse');
+  if (!cardEl || !result) return;
+
+  const p = result.persona || DIRETOR_PERSONAS[0];
+  const markdown = result.rawMarkdown || '';
+
+  let acolhimento = '';
+  let versiculo = '';
+  let sabedoria = '';
+  let oracao = '';
+  let proposito = '';
+
+  if (result.conselhoObj) {
+    acolhimento = result.conselhoObj.acolhimento || '';
+    versiculo = result.conselhoObj.versiculo || '';
+    sabedoria = result.conselhoObj.sabedoria || '';
+    oracao = result.conselhoObj.oracao || '';
+    proposito = result.conselhoObj.proposito || '';
+  } else {
+    const sections = markdown.split(/\n(?=(?:\d+\.|\#{1,3})\s*(?:\*\*|🕊️|📖|⚜️|🙏|✨))/gi);
+    sections.forEach(sec => {
+      const lower = sec.toLowerCase();
+      if (lower.includes('acolhimento') || lower.includes('conforto') || lower.includes('palavra de acolhimento')) {
+        acolhimento = sec.replace(/^.*?[:\n]/, '').trim();
+      } else if (lower.includes('palavra de deus') || lower.includes('versículo') || lower.includes('escritura')) {
+        versiculo = sec.replace(/^.*?[:\n]/, '').trim();
+      } else if (lower.includes('sabedoria') || lower.includes('santos') || lower.includes('doutor')) {
+        sabedoria = sec.replace(/^.*?[:\n]/, '').trim();
+      } else if (lower.includes('oração') || lower.includes('oracao') || lower.includes('entrega')) {
+        oracao = sec.replace(/^.*?[:\n]/, '').trim();
+      } else if (lower.includes('propósito') || lower.includes('proposito') || lower.includes('pequeno propósito')) {
+        proposito = sec.replace(/^.*?[:\n]/, '').trim();
+      }
+    });
+
+    if (!acolhimento && !versiculo) {
+      acolhimento = markdown;
+    }
+  }
+
+  const fmt = (str) => {
+    if (!str) return '';
+    return str
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n\n/g, '<br><br>');
+  };
+
+  cardEl.innerHTML = `
+    <div class="diretor-response-header">
+      <div class="diretor-response-badge" style="background: ${p.cor}22; color: ${p.cor}; border-color: ${p.cor}44;">
+        <i class="fas ${p.icone}"></i>
+        <span>Conselho Pastoral de ${p.nome}</span>
+      </div>
+      <span style="font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+        <i class="fas fa-clock"></i> ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+      </span>
+    </div>
+
+    <!-- Desabafo do Usuário -->
+    <div style="background: rgba(0,0,0,0.25); border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">
+        <i class="fas fa-heart"></i> O que você entregou a Deus:
+      </div>
+      <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-style: italic;">“${result.desabafo}”</p>
+    </div>
+
+    <!-- Seção 1: Palavra de Acolhimento -->
+    ${acolhimento ? `
+      <div class="diretor-section-subcard">
+        <h4 class="diretor-subcard-title" style="color: #7dd3fc;"><i class="fas fa-dove"></i> Palavra de Acolhimento & Conforto Pastoral:</h4>
+        <div class="diretor-subcard-text">${fmt(acolhimento)}</div>
+      </div>
+    ` : ''}
+
+    <!-- Seção 2: Palavra de Deus -->
+    ${versiculo ? `
+      <div class="diretor-section-subcard">
+        <h4 class="diretor-subcard-title" style="color: var(--gold-300);"><i class="fas fa-book-bible"></i> A Palavra de Deus para o seu Coração:</h4>
+        <div class="diretor-subcard-text scripture">${fmt(versiculo)}</div>
+      </div>
+    ` : ''}
+
+    <!-- Seção 3: Sabedoria dos Santos -->
+    ${sabedoria ? `
+      <div class="diretor-section-subcard">
+        <h4 class="diretor-subcard-title" style="color: #c084fc;"><i class="fas fa-shield-halved"></i> Sabedoria dos Santos:</h4>
+        <div class="diretor-subcard-text">${fmt(sabedoria)}</div>
+      </div>
+    ` : ''}
+
+    <!-- Seção 4: Oração de Paz & Entrega -->
+    ${oracao ? `
+      <div class="diretor-section-subcard" style="border-color: rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1) 0%, transparent 80%);">
+        <h4 class="diretor-subcard-title" style="color: #38bdf8;"><i class="fas fa-hands-praying"></i> Oração de Paz & Entrega:</h4>
+        <div class="diretor-subcard-text prayer">${fmt(oracao)}</div>
+      </div>
+    ` : ''}
+
+    <!-- Seção 5: Propósito para Hoje -->
+    ${proposito ? `
+      <div class="diretor-section-subcard" style="background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.3);">
+        <h4 class="diretor-subcard-title" style="color: #4ade80;"><i class="fas fa-sparkles"></i> Um Pequeno Propósito para Hoje:</h4>
+        <div class="diretor-subcard-text" style="color: #bbf7d0; font-weight: 500;">${fmt(proposito)}</div>
+      </div>
+    ` : ''}
+
+    <!-- Botões de Ação -->
+    <div class="diretor-actions-row">
+      <button type="button" id="btnDiretorAudio" class="diretor-btn-audio" onclick="toggleDiretorAudio()">
+        <i class="fas fa-volume-up" id="diretorAudioIcon"></i>
+        <span id="diretorAudioText">Ouvir Conselho & Oração</span>
+      </button>
+      <button type="button" class="upload-btn-secondary" onclick="salvarDiretorNoDiario()" title="Guardar no Diário Espiritual" style="padding: 10px 14px; font-size: 13px;">
+        <i class="fas fa-book-bookmark" style="color: #10b981;"></i> Diário
+      </button>
+      <button type="button" class="upload-btn-secondary" onclick="copiarDiretorResposta()" title="Copiar texto" style="padding: 10px 14px; font-size: 13px;">
+        <i class="fas fa-copy"></i> Copiar
+      </button>
+      <button type="button" class="hero-share-btn" onclick="compartilharDiretorWhatsApp()" title="Compartilhar no WhatsApp" style="padding: 10px 14px; font-size: 13px;">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </button>
+    </div>
+  `;
+};
+
+window.toggleDiretorAudio = function () {
+  if (isDiretorSpeaking) {
+    stopDiretorAudio();
+    return;
+  }
+
+  if (!currentDiretorResult) return;
+
+  const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
+  const raw = currentDiretorResult.rawMarkdown || '';
+  const cleanToSpeak = `${p.nome}. Direção Espiritual Católica. ` + raw.replace(/[\*\_#]/g, '').replace(/---/g, '');
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanToSpeak);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 0.92;
+
+    const voices = window.speechSynthesis.getVoices();
+    const ptVoice = voices.find(v => v.lang.includes('pt') || v.lang.includes('BR'));
+    if (ptVoice) utterance.voice = ptVoice;
+
+    utterance.onstart = () => {
+      isDiretorSpeaking = true;
+      updateDiretorAudioBtnState(true);
+    };
+    utterance.onend = () => {
+      isDiretorSpeaking = false;
+      updateDiretorAudioBtnState(false);
+    };
+    utterance.onerror = () => {
+      isDiretorSpeaking = false;
+      updateDiretorAudioBtnState(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  } else {
+    showToast('Leitura em áudio não suportada neste dispositivo.');
+  }
+};
+
+window.stopDiretorAudio = function () {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  isDiretorSpeaking = false;
+  updateDiretorAudioBtnState(false);
+};
+
+function updateDiretorAudioBtnState(speaking) {
+  const btn = document.getElementById('btnDiretorAudio');
+  const icon = document.getElementById('diretorAudioIcon');
+  const text = document.getElementById('diretorAudioText');
+
+  if (speaking) {
+    if (btn) btn.classList.add('speaking');
+    if (icon) icon.className = 'fas fa-stop';
+    if (text) text.textContent = 'Parar Áudio';
+  } else {
+    if (btn) btn.classList.remove('speaking');
+    if (icon) icon.className = 'fas fa-volume-up';
+    if (text) text.textContent = 'Ouvir Conselho & Oração';
+  }
+}
+
+window.copiarDiretorResposta = async function () {
+  if (!currentDiretorResult) return;
+  const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
+  const textToCopy = `🕊️ *Diretor Espiritual & Palavra Amiga (${p.nome})*\n\n${currentDiretorResult.rawMarkdown}\n\n📲 *App da Bíblia Sagrada Católica (Edição Ave Maria):*\nhttps://bibliasagradaavemaria.com.br`;
+
+  const ok = await copyToClipboard(textToCopy);
+  if (ok) {
+    showToast('✨ Conselho e oração copiados com sucesso!');
+  } else {
+    showToast('Erro ao copiar texto.');
+  }
+};
+
+window.compartilharDiretorWhatsApp = function () {
+  if (!currentDiretorResult) return;
+  const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
+  let msg = `🕊️ *Palavra Amiga & Direção Espiritual*\n`;
+  msg += `👤 *Com:* ${p.nome}\n\n`;
+  msg += `${currentDiretorResult.rawMarkdown}\n\n`;
+  msg += `📲 *Receba orientação espiritual no app da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.compartilharDiretorAppWhatsApp = function () {
+  let msg = `🕊️ *Diretor Espiritual & Palavra Amiga (IA Católica)*\n\n`;
+  msg += `✨ Está passando por um momento difícil, ansiedade, luto ou dúvida na família? No aplicativo da Bíblia Sagrada Católica você pode desabafar e receber uma palavra de conforto iluminada pelos Santos (Padre Pio, Sta. Teresa de Calcutá, São João Paulo II), consolo bíblico e uma oração personalizada!\n\n`;
+  msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.salvarDiretorNoDiario = async function () {
+  if (!currentDiretorResult) return;
+  const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
+
+  try {
+    await salvarNovoItemDiario({
+      titulo: `🕊️ Conselho Espiritual (${p.nome})`,
+      categoria: 'protecao',
+      versiculo: 'Bíblia Ave Maria',
+      pedido: `Desabafo: "${currentDiretorResult.desabafo}"\n\nConselho & Oração:\n${currentDiretorResult.rawMarkdown.slice(0, 450)}...`
+    });
+    showToast('📖 Conselho guardado no seu Diário Espiritual com sucesso!');
+  } catch (err) {
+    console.warn('[DiretorEspiritual] Erro ao salvar no diário:', err);
+    showToast('Não foi possível salvar no Diário.');
+  }
+};
+
+window.openDiretorHistoricoModal = function () {
+  const modal = document.getElementById('diretorHistoricoModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    renderDiretorHistorico();
+  }
+};
+
+window.closeDiretorHistoricoModal = function () {
+  const modal = document.getElementById('diretorHistoricoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.renderDiretorHistorico = function () {
+  const listEl = document.getElementById('diretorHistoricoList');
+  if (!listEl) return;
+
+  const history = getDiretorHistorico();
+
+  if (!history || history.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+        <i class="fas fa-dove" style="font-size: 36px; color: #38bdf8; margin-bottom: 12px; opacity: 0.6;"></i>
+        <h4 style="color: var(--text-primary); margin: 0 0 6px 0;">Nenhuma consulta anterior</h4>
+        <p style="font-size: 13px; margin: 0;">Faça um desabafo na tela anterior para guardar suas orientações aqui.</p>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = history.map(item => {
+    return `
+      <div class="diretor-history-card" onclick="carregarConsultaHistorico('${item.id}')">
+        <div class="diretor-history-meta">
+          <span style="font-weight: 700; color: #38bdf8;"><i class="fas fa-user-check"></i> ${item.personaNome || 'Diretor Espiritual'}</span>
+          <span>${item.data || ''} às ${item.hora || ''}</span>
+        </div>
+        <p class="diretor-history-prompt">“${item.desabafo}”</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+          <span style="font-size: 11.5px; color: var(--gold-400);"><i class="fas fa-envelope-open-text"></i> Toque para reabrir resposta</span>
+          <button type="button" onclick="deletarItemHistoricoDiretor('${item.id}', event)" style="background: none; border: none; color: #ef4444; font-size: 12px; cursor: pointer; padding: 4px 8px;" title="Excluir">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+window.carregarConsultaHistorico = function (id) {
+  const history = getDiretorHistorico();
+  const item = history.find(i => i.id === id);
+  if (!item) return;
+
+  currentDiretorPersonaId = item.personaId || 'padre_conselheiro';
+  currentDiretorResult = {
+    persona: DIRETOR_PERSONAS.find(p => p.id === currentDiretorPersonaId) || DIRETOR_PERSONAS[0],
+    desabafo: item.desabafo,
+    rawMarkdown: item.rawMarkdown,
+    conselhoObj: item.conselhoObj || null,
+    dataHora: item.dataHora || new Date().toISOString()
+  };
+
+  closeDiretorHistoricoModal();
+  renderDiretorResponseCard(currentDiretorResult);
+
+  const resultContainer = document.getElementById('diretorResultContainer');
+  if (resultContainer) {
+    resultContainer.classList.remove('hidden');
+    resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  const input = document.getElementById('diretorDesabafoInput');
+  if (input) input.value = item.desabafo;
+};
+
+window.deletarItemHistoricoDiretor = function (id, event) {
+  if (event) event.stopPropagation();
+  excluirItemDiretorHistorico(id);
+  renderDiretorHistorico();
+  showToast('Registro excluído do histórico.');
+};
+
 
 
 
