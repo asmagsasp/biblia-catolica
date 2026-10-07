@@ -1199,27 +1199,29 @@
 
           <!-- Sugestões Rápidas de Busca -->
           <div class="cartas-quick-chips">
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Ladainha')"><i class="fas fa-scroll" style="color: #c084fc;"></i> Ladainhas Solenes</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Lágrimas')"><i class="fas fa-droplet" style="color: #38bdf8;"></i> Terço das Lágrimas</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Misericórdia')"><i class="fas fa-cross" style="color: #f43f5e;"></i> Divina Misericórdia</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('São Miguel')"><i class="fas fa-shield-halved" style="color: #ef4444;"></i> São Miguel 9 Coros</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Montfort')"><i class="fas fa-crown" style="color: #d4af37;"></i> Consagração Montfort</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Patrício')"><i class="fas fa-shield-cat" style="color: #10b981;"></i> Couraça de São Patrício</button>
             <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Salvai Almas')"><i class="fas fa-fire" style="color: #f59e0b;"></i> Salvai Almas</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Humildade')"><i class="fas fa-dove" style="color: #a855f7;"></i> Ladainha da Humildade</button>
             <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('São Bento')"><i class="fas fa-cross" style="color: #60a5fa;"></i> São Bento</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('São Miguel')"><i class="fas fa-shield-halved" style="color: #ef4444;"></i> São Miguel</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Gertrudes')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Santa Gertrudes</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Sangue de Jesus')"><i class="fas fa-droplet" style="color: #f43f5e;"></i> Sangue de Cristo</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Santo Expedito')"><i class="fas fa-bolt" style="color: #eab308;"></i> Santo Expedito</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Padre Pio')"><i class="fas fa-heart" style="color: #ec4899;"></i> Padre Pio</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Cura')"><i class="fas fa-hand-holding-medical" style="color: #10b981;"></i> Cura & Saúde</button>
-            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Família')"><i class="fas fa-house" style="color: #a855f7;"></i> Lar & Família</button>
+            <button type="button" class="cartas-chip" onclick="setOracoesQuickSearch('Gertrudes')"><i class="fas fa-feather" style="color: #ec4899;"></i> Santa Gertrudes</button>
           </div>
 
           <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
-            <button class="nav-tab active" id="tabOracaoAll" onclick="filterOracaoTab('all', this)">🌟 Todas (<span id="countOracaoAll">25</span>)</button>
-            <button class="nav-tab" id="tabOracaoAlmas" onclick="filterOracaoTab('almas', this)">🕯️ Salvai Almas</button>
+            <button class="nav-tab active" id="tabOracaoAll" onclick="filterOracaoTab('all', this)">🌟 Todas (<span id="countOracaoAll">30</span>)</button>
+            <button class="nav-tab" id="tabOracaoLongas" onclick="filterOracaoTab('longas', this)">📜 Grandes Ladainhas & Terços (<span id="countOracaoLongas">9</span>)</button>
+            <button class="nav-tab" id="tabOracaoAlmas" onclick="filterOracaoTab('almas', this)">🕯️ Salvai Almas (Purgatório)</button>
             <button class="nav-tab" id="tabOracaoSantos" onclick="filterOracaoTab('santos', this)">🕊️ Santos da Igreja</button>
             <button class="nav-tab" id="tabOracaoManha" onclick="filterOracaoTab('manha_noite', this)">☀️ Manhã & Noite</button>
-            <button class="nav-tab" id="tabOracaoJesus" onclick="filterOracaoTab('jesus', this)">✝️ Jesus & Chagas</button>
+            <button class="nav-tab" id="tabOracaoJesus" onclick="filterOracaoTab('jesus', this)">✝️ Jesus & Misericórdia</button>
             <button class="nav-tab" id="tabOracaoMaria" onclick="filterOracaoTab('maria', this)">🌹 Marianas</button>
-            <button class="nav-tab" id="tabOracaoProtecao" onclick="filterOracaoTab('protecao', this)">🛡️ Proteção</button>
-            <button class="nav-tab" id="tabOracaoFamilia" onclick="filterOracaoTab('familia_cura', this)">🏠 Família & Cura</button>
-            <button class="nav-tab" id="tabOracaoEspirito" onclick="filterOracaoTab('espiritosanto', this)">🕊️ Espírito Santo</button>
+            <button class="nav-tab" id="tabOracaoProtecao" onclick="filterOracaoTab('protecao', this)">🛡️ Proteção & Batalha</button>
+            <button class="nav-tab" id="tabOracaoFamilia" onclick="filterOracaoTab('familia_cura', this)">🏠 Família, Cura & Trabalho</button>
+            <button class="nav-tab" id="tabOracaoEspirito" onclick="filterOracaoTab('espiritosanto', this)">🕊️ Espírito Santo & Missa</button>
           </div>
         </div>
 

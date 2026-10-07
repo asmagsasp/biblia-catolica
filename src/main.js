@@ -8585,16 +8585,18 @@ window.renderOracoesGrid = function () {
 
   const list = getOracoesFiltradas(currentOracaoTab, currentOracoesSearch);
 
-  // Atualiza contador total
+  // Atualiza contadores
   const countAll = document.getElementById('countOracaoAll');
+  const countLongas = document.getElementById('countOracaoLongas');
   if (countAll) countAll.textContent = LIVRO_ORACOES.length;
+  if (countLongas) countLongas.textContent = LIVRO_ORACOES.filter(o => o.categoria === 'longas' || o.tipoBadge?.includes('Completo') || o.tipoBadge?.includes('Ladainha') || o.tipoBadge?.includes('Coroa')).length;
 
   if (!list || list.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--text-secondary);">
         <i class="fas fa-hands-praying" style="font-size: 42px; color: #c084fc; margin-bottom: 14px; opacity: 0.7;"></i>
         <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma oração encontrada</h3>
-        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Salvai Almas", "São Bento", "São Miguel", "cura", "proteção" ou "Gertrudes".</p>
+        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Ladainha", "Terço", "Salvai Almas", "São Bento", "São Miguel" ou "Montfort".</p>
         <button class="hero-share-btn" onclick="clearOracoesSearch()" style="display: inline-flex; padding: 8px 18px; font-size: 13px;">
           <i class="fas fa-rotate-left"></i> Ver Todas as Orações
         </button>
@@ -8604,6 +8606,7 @@ window.renderOracoesGrid = function () {
   }
 
   const categoryIcons = {
+    longas: 'fas fa-scroll',
     almas: 'fas fa-fire',
     santos: 'fas fa-dove',
     manha_noite: 'fas fa-sun',
@@ -8615,10 +8618,11 @@ window.renderOracoesGrid = function () {
   };
 
   const categoryLabels = {
+    longas: '📜 Grande Devoção',
     almas: '🕯️ Salvai Almas',
-    santos: '🕊️ Santo',
+    santos: '🕊️ Santo da Igreja',
     manha_noite: '☀️ Cotidiana',
-    jesus: '✝️ Jesus',
+    jesus: '✝️ Jesus & Misericórdia',
     maria: '🌹 Mariana',
     protecao: '🛡️ Proteção',
     familia_cura: '🏠 Família & Cura',
@@ -8629,13 +8633,16 @@ window.renderOracoesGrid = function () {
 
   for (const o of list) {
     const icon = categoryIcons[o.categoria] || 'fas fa-hands-praying';
-    const catLabel = categoryLabels[o.categoria] || 'Oração';
+    const catLabel = o.tipoBadge || categoryLabels[o.categoria] || 'Oração';
 
     html += `
       <div class="oracao-card" onclick="openOracaoModal('${o.id}')">
         <div class="oracao-card-top">
           <span class="oracao-badge-cat">${catLabel}</span>
-          ${o.latim ? `<span class="oracao-badge-latim">${o.latim.slice(0, 30)}...</span>` : ''}
+          <div style="display: flex; align-items: center; gap: 6px;">
+            ${o.tempo ? `<span class="oracao-badge-latim" style="color: var(--gold-300); font-weight: 700;">${o.tempo}</span>` : ''}
+            ${o.latim ? `<span class="oracao-badge-latim">${o.latim.slice(0, 24)}...</span>` : ''}
+          </div>
         </div>
         <div class="oracao-card-header-main">
           <div class="oracao-card-icon-box">
