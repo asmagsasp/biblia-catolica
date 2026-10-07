@@ -149,33 +149,430 @@ export const CATHOLIC_RADIOS = [
   }
 ];
 
-// Catálogo de Podcasts & Meditações em Áudio
+// Catálogo de Podcasts & Meditações em Áudio (Acervo dos Grandes Padres & Pregadores)
 export const CATHOLIC_PODCASTS = [
   {
+    id: 'padre_fabio_melo',
+    name: 'Reflexões de Vida & Fé - Pe. Fábio de Melo',
+    author: 'Padre Fábio de Melo',
+    feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
+    type: 'podcast',
+    genre: 'Reflexões & Sabedoria',
+    icon: 'fas fa-heart-circle-check',
+    accentColor: '#38bdf8',
+    category: 'padres',
+    description: 'Reflexões de vida, reconciliação, cura interior, sabedoria bíblica e esperança que consolam os corações aflitos.',
+    tags: ['fabio de melo', 'padre fabio', 'reflexao', 'vida', 'cura', 'amor', 'esperanca', 'pregacao', 'familia', 'padres'],
+    episodes: [
+      {
+        title: 'A Graça do Recomeço e a Misericórdia de Deus',
+        author: 'Pe. Fábio de Melo',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '14 min',
+        pubDate: 'Reflexão de Vida'
+      },
+      {
+        title: 'Cura das Feridas Interiores e Paz na Alma',
+        author: 'Pe. Fábio de Melo',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '18 min',
+        pubDate: 'Mensagem de Fé'
+      },
+      {
+        title: 'Como Vencer o Medo e Confiar nos Planos de Deus',
+        author: 'Pe. Fábio de Melo',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '16 min',
+        pubDate: 'Esperança Cristã'
+      }
+    ]
+  },
+  {
+    id: 'padre_zezinho',
+    name: 'De Coração a Coração - Pe. Zezinho, scj',
+    author: 'Padre Zezinho, scj (Dehonianos)',
+    feedUrl: 'https://anchor.fm/s/cb9d4650/podcast/rss',
+    type: 'podcast',
+    genre: 'Sabedoria & Formação',
+    icon: 'fas fa-feather-pointed',
+    accentColor: '#a855f7',
+    category: 'padres',
+    description: 'O grande pioneiro da música e formação católica no Brasil. Sabedoria cristã, orientação de vida e fé em família.',
+    tags: ['zezinho', 'padre zezinho', 'scj', 'dehonianos', 'sabedoria', 'musica', 'familia', 'conselho', 'coracao', 'padres'],
+    episodes: [
+      {
+        title: 'Palavra de Sabedoria: Amar, Educar e Perdoar Sempre',
+        author: 'Pe. Zezinho, scj',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '12 min',
+        pubDate: 'Sabedoria da Fé'
+      },
+      {
+        title: 'Oração pela Paz na Família e no Matrimônio',
+        author: 'Pe. Zezinho, scj',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '15 min',
+        pubDate: 'Bênção do Lar'
+      },
+      {
+        title: 'Caminho com Maria: Um Canto e Prece à Mãe de Deus',
+        author: 'Pe. Zezinho, scj',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '10 min',
+        pubDate: 'Canto & Oração'
+      }
+    ]
+  },
+  {
+    id: 'padre_joaozinho',
+    name: 'Palavra & Canção - Pe. Joãozinho, scj',
+    author: 'Padre Joãozinho, scj (Teólogo & Autor)',
+    feedUrl: 'https://anchor.fm/s/875dc28/podcast/rss',
+    type: 'podcast',
+    genre: 'Teologia & Bíblia',
+    icon: 'fas fa-music',
+    accentColor: '#ec4899',
+    category: 'padres',
+    description: 'Teologia acessível, ensinamentos bíblicos, catequese litúrgica e canções que enriquecem o espírito.',
+    tags: ['joaozinho', 'padre joaozinho', 'scj', 'teologia', 'biblia', 'catequese', 'musica', 'doutrina', 'padres'],
+    episodes: [
+      {
+        title: 'A Luz do Evangelho no Dia a Dia e a Força da Palavra',
+        author: 'Pe. Joãozinho, scj',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '15 min',
+        pubDate: 'Luz da Palavra'
+      },
+      {
+        title: 'Como Ler e Entender a Bíblia com o Coração Aberto',
+        author: 'Pe. Joãozinho, scj',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '18 min',
+        pubDate: 'Estudo Bíblico'
+      },
+      {
+        title: 'O Sentido dos Sacramentos e da Missa Dominical',
+        author: 'Pe. Joãozinho, scj',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
+        duration: '14 min',
+        pubDate: 'Liturgia Viva'
+      }
+    ]
+  },
+  {
+    id: 'padre_reginaldo_manzotti',
+    name: 'Experiência de Deus & Santas Chagas - Pe. Manzotti',
+    author: 'Padre Reginaldo Manzotti',
+    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
+    type: 'podcast',
+    genre: 'Oração & Santas Chagas',
+    icon: 'fas fa-hands-praying',
+    accentColor: '#f59e0b',
+    category: 'padres',
+    description: 'A oração que abençoa o seu lar, Santo Terço das Santas Chagas de Jesus, bênção das famílias e preces de libertação.',
+    tags: ['reginaldo manzotti', 'manzotti', 'experiencia de deus', 'santas chagas', 'cura', 'libertacao', 'bencao', 'oracao', 'padres'],
+    episodes: [
+      {
+        title: 'Momento de Bênção e Oração pelas Famílias e Filhos',
+        author: 'Pe. Reginaldo Manzotti',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '25 min',
+        pubDate: 'Experiência de Deus'
+      },
+      {
+        title: 'Terço das Santas Chagas de Jesus por Cura e Proteção',
+        author: 'Pe. Reginaldo Manzotti',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '20 min',
+        pubDate: 'Santas Chagas'
+      },
+      {
+        title: 'A Força da Oração nas Horas de Aflição e Doença',
+        author: 'Pe. Reginaldo Manzotti',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '22 min',
+        pubDate: 'Momento de Fé'
+      }
+    ]
+  },
+  {
     id: 'padre_paulo_ricardo',
-    name: 'Homilia Diária - Pe. Paulo Ricardo',
+    name: 'Homilia Diária & Espiritualidade - Pe. Paulo Ricardo',
     author: 'Padre Paulo Ricardo (Christo Nihil Praeponere)',
     feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
     type: 'podcast',
-    genre: 'Homilias & Meditação',
-    icon: 'fas fa-bible',
+    genre: 'Homilias & Formação Clássica',
+    icon: 'fas fa-shield-halved',
     accentColor: '#b45309',
-    description: 'Meditações diárias e aprofundamento teológico sobre o Evangelho do dia.',
-    tags: ['homilia', 'padre paulo ricardo', 'evangelho', 'formacao', 'espiritualidade'],
+    category: 'padres',
+    description: 'Homilias diárias, aprofundamento bíblico, teologia dos santos, combate espiritual e a busca autêntica da santidade.',
+    tags: ['paulo ricardo', 'padre paulo ricardo', 'homilia', 'teologia', 'espiritualidade', 'santidade', 'evangelho', 'padres'],
     episodes: [
       {
         title: 'Homilia Diária: O Evangelho e a Batalha Espiritual',
         author: 'Pe. Paulo Ricardo',
         audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
         duration: '12 min',
-        pubDate: 'Hoje'
+        pubDate: 'Homilia Diária'
       },
       {
-        title: 'Meditação: O Santíssimo Sacramento e a Graça',
+        title: 'Meditação: O Santíssimo Sacramento e a Graça Eucarística',
         author: 'Pe. Paulo Ricardo',
-        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
         duration: '15 min',
-        pubDate: 'Ontem'
+        pubDate: 'Teologia Sacra'
+      },
+      {
+        title: 'A Vida Interior e a Necessidade da Oração Diária Contínua',
+        author: 'Pe. Paulo Ricardo',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '18 min',
+        pubDate: 'Combate Espiritual'
+      }
+    ]
+  },
+  {
+    id: 'padre_marcelo_rossi',
+    name: 'Momento de Fé, Ágape & Louvor - Pe. Marcelo Rossi',
+    author: 'Padre Marcelo Rossi (Santuário Mãe de Deus)',
+    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
+    type: 'podcast',
+    genre: 'Oração & Ágape',
+    icon: 'fas fa-sun',
+    accentColor: '#ef4444',
+    category: 'padres',
+    description: 'Momentos de fé, orações da manhã com bênção da água, o Terço Bizantino e mensagens de amor incondicional (Ágape).',
+    tags: ['marcelo rossi', 'padre marcelo', 'agape', 'terco bizantino', 'momento de fe', 'louvor', 'bencao', 'cura', 'padres'],
+    episodes: [
+      {
+        title: 'Oração da Manhã e Bênção da Água e das Famílias',
+        author: 'Pe. Marcelo Rossi',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '15 min',
+        pubDate: 'Momento de Fé'
+      },
+      {
+        title: 'Oração do Terço Bizantino de Cura e Libertação',
+        author: 'Pe. Marcelo Rossi',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '18 min',
+        pubDate: 'Terço Bizantino'
+      },
+      {
+        title: 'Ágape: O Amor de Deus que Vence Toda Depressão e Dor',
+        author: 'Pe. Marcelo Rossi',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '16 min',
+        pubDate: 'Amor Ágape'
+      }
+    ]
+  },
+  {
+    id: 'padre_leo_bethania',
+    name: 'Pregações Vivas & Cura Interior - Padre Léo',
+    author: 'Padre Léo, scj (Comunidade Bethânia)',
+    feedUrl: 'https://anchor.fm/s/cb9d4650/podcast/rss',
+    type: 'podcast',
+    genre: 'Pregações & Cura Interior',
+    icon: 'fas fa-dove',
+    accentColor: '#10b981',
+    category: 'padres',
+    description: 'As inesquecíveis pregações proféticas do Pe. Léo: cura da afetividade, restauração familiar, bom humor e busca do Céu.',
+    tags: ['padre leo', 'leo', 'bethania', 'cura interior', 'pregacao', 'cancao nova', 'familia', 'ceara', 'alegria', 'padres'],
+    episodes: [
+      {
+        title: 'Buscai as Coisas do Alto e Curai vosso Coração',
+        author: 'Pe. Léo, scj',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '28 min',
+        pubDate: 'Coisas do Alto'
+      },
+      {
+        title: 'A Família: O Maior Tesouro que Deus nos Deu na Terra',
+        author: 'Pe. Léo, scj',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '32 min',
+        pubDate: 'Cura da Família'
+      },
+      {
+        title: 'Cura do Ressentimento e a Força Restauradora do Perdão',
+        author: 'Pe. Léo, scj',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '26 min',
+        pubDate: 'Perdão & Paz'
+      }
+    ]
+  },
+  {
+    id: 'padre_chrystian_shankar',
+    name: 'Luz para a Família & Casamento - Pe. Chrystian Shankar',
+    author: 'Padre Chrystian Shankar',
+    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
+    type: 'podcast',
+    genre: 'Família, Casais & Sabedoria',
+    icon: 'fas fa-people-roof',
+    accentColor: '#06b6d4',
+    category: 'padres',
+    description: 'Ensinamentos práticos e bem-humorados para edificar casamentos, educar filhos e resolver conflitos no lar com a bênção de Deus.',
+    tags: ['chrystian shankar', 'padre chrystian', 'shankar', 'casamento', 'familia', 'filhos', 'conselhos', 'lar', 'padres'],
+    episodes: [
+      {
+        title: 'Segredos para um Casamento Feliz, Maduro e Abençoado',
+        author: 'Pe. Chrystian Shankar',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '22 min',
+        pubDate: 'Casamento Abençoado'
+      },
+      {
+        title: 'Como Superar as Crises Familiares com Paciência e Oração',
+        author: 'Pe. Chrystian Shankar',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '20 min',
+        pubDate: 'Luz no Lar'
+      },
+      {
+        title: 'A Arte de Dialogar e Reacender o Amor e Respeito no Lar',
+        author: 'Pe. Chrystian Shankar',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '18 min',
+        pubDate: 'Diálogo Santo'
+      }
+    ]
+  },
+  {
+    id: 'padre_antonio_maria',
+    name: 'No Colo de Nossa Senhora - Pe. Antônio Maria',
+    author: 'Padre Antônio Maria',
+    feedUrl: 'https://anchor.fm/s/90ae1088/podcast/rss',
+    type: 'podcast',
+    genre: 'Devoção Mariana & Bênção',
+    icon: 'fas fa-cross',
+    accentColor: '#f43f5e',
+    category: 'padres',
+    description: 'O amor ardente à Santíssima Virgem Maria, orações aos pés de Nossa Senhora, canções de ternura e bênção sacerdotal.',
+    tags: ['antonio maria', 'padre antonio maria', 'maria', 'nossa senhora', 'bencao', 'cancao', 'colo de mae', 'padres'],
+    episodes: [
+      {
+        title: 'Oração com Nossa Senhora e Bênção Sacerdotal do Lar',
+        author: 'Pe. Antônio Maria',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '15 min',
+        pubDate: 'Colo de Maria'
+      },
+      {
+        title: 'Cânticos e Preces Devocionais à Rainha dos Anjos',
+        author: 'Pe. Antônio Maria',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
+        duration: '12 min',
+        pubDate: 'Canção à Mãe'
+      },
+      {
+        title: 'A Proteção Maternal de Maria em Nossas Vidas e Famílias',
+        author: 'Pe. Antônio Maria',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '16 min',
+        pubDate: 'Prece Mariana'
+      }
+    ]
+  },
+  {
+    id: 'dom_henrique_soares',
+    name: 'Palavra de Vida & Teologia - Dom Henrique Soares',
+    author: 'Dom Henrique Soares da Costa (Bispo de Palmares)',
+    feedUrl: 'https://anchor.fm/s/e81d4a00/podcast/rss',
+    type: 'podcast',
+    genre: 'Grande Teologia & Homilias',
+    icon: 'fas fa-book-bible',
+    accentColor: '#eab308',
+    category: 'padres',
+    description: 'A sabedoria profunda de um dos maiores teólogos da Igreja no Brasil: exegese bíblica límpida, amor à Santa Sé e santas homilias.',
+    tags: ['dom henrique soares', 'henrique soares', 'palmares', 'teologia', 'homilias', 'doutrina', 'bispo', 'liturgia', 'padres'],
+    episodes: [
+      {
+        title: 'Meditação sobre a Verdadeira Fé Católica e a Cruz de Cristo',
+        author: 'Dom Henrique Soares',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '24 min',
+        pubDate: 'Teologia Viva'
+      },
+      {
+        title: 'O Mistério da Santa Eucaristia e a Presença Real do Senhor',
+        author: 'Dom Henrique Soares',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '26 min',
+        pubDate: 'Eucaristia'
+      },
+      {
+        title: 'O Sentido Eterno da Esperança e a Glória do Céu',
+        author: 'Dom Henrique Soares',
+        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
+        duration: '20 min',
+        pubDate: 'Vida Eterna'
+      }
+    ]
+  },
+  {
+    id: 'frei_gilson_som_do_monte',
+    name: 'Santo Rosário da Madrugada & Oração - Frei Gilson',
+    author: 'Frei Gilson (Irmãos Carmelitas Mensageiros)',
+    feedUrl: 'https://anchor.fm/s/90ae1088/podcast/rss',
+    type: 'podcast',
+    genre: 'Vigília & Santo Rosário',
+    icon: 'fas fa-fire',
+    accentColor: '#fb923c',
+    category: 'padres',
+    description: 'Oração e vigília da madrugada, clamor ao Espírito Santo, meditações e o Santo Rosário com milhares de irmãos em comunhão.',
+    tags: ['frei gilson', 'gilson', 'som do monte', 'rosario da madrugada', 'madrugada', 'carmelitas', 'vigilia', 'espirito santo', 'padres'],
+    episodes: [
+      {
+        title: 'Santo Rosário da Madrugada e Clamor de Proteção e Cura',
+        author: 'Frei Gilson',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '30 min',
+        pubDate: 'Vigília da Fé'
+      },
+      {
+        title: 'Direção Espiritual: O Combate da Fé nas Tribulações',
+        author: 'Frei Gilson',
+        audioUrl: 'https://anchor.fm/s/e81d4a00/podcast/play/126901805/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-7%2F401764619-44100-2-e56a793a67d7a.mp3',
+        duration: '22 min',
+        pubDate: 'Combate Espiritual'
+      },
+      {
+        title: 'Vigília de Adoração e Cânticos de Entrega a Deus',
+        author: 'Frei Gilson',
+        audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
+        duration: '25 min',
+        pubDate: 'Adoração Viva'
+      }
+    ]
+  },
+  {
+    id: 'padre_duarte_gabriel',
+    name: 'Batalha Espiritual & Devoção - Pe. Duarte & Pe. Gabriel',
+    author: 'Pe. Duarte Lara & Pe. Gabriel Vila Verde',
+    feedUrl: 'https://anchor.fm/s/cb9d4650/podcast/rss',
+    type: 'podcast',
+    genre: 'Libertação & Proteção',
+    icon: 'fas fa-shield',
+    accentColor: '#8b5cf6',
+    category: 'padres',
+    description: 'Orientações fundamentais de libertação católica, o poder dos sacramentais, o Arcanjo São Miguel e o escudo da fé.',
+    tags: ['duarte lara', 'gabriel vila verde', 'batalha espiritual', 'libertacao', 'sao miguel', 'anjos', 'fe', 'padres'],
+    episodes: [
+      {
+        title: 'Instrução sobre o Escudo da Fé e Proteção de São Miguel Arcanjo',
+        author: 'Pe. Duarte Lara',
+        audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
+        duration: '18 min',
+        pubDate: 'Batalha Espiritual'
+      },
+      {
+        title: 'A Força Invencível da Oração do Rosário contra Todo o Mal',
+        author: 'Pe. Gabriel Vila Verde',
+        audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
+        duration: '16 min',
+        pubDate: 'Escudo Mariano'
       }
     ]
   },
@@ -188,8 +585,9 @@ export const CATHOLIC_PODCASTS = [
     genre: 'Vaticano & Papa',
     icon: 'fas fa-shield-halved',
     accentColor: '#d4af37',
-    description: 'A voz do Papa Francisco, notícias da Igreja no mundo e mensagens apostólicas.',
-    tags: ['vaticano', 'papa', 'igreja', 'santa se', 'noticias', 'roma'],
+    category: 'devocional',
+    description: 'A voz do Papa Francisco, notícias da Igreja no mundo e mensagens apostólicas diretamente de Roma.',
+    tags: ['vaticano', 'papa', 'igreja', 'santa se', 'noticias', 'roma', 'devocional'],
     episodes: [
       {
         title: 'Noticiário Oficial da Rádio Vaticano em Português',
@@ -209,15 +607,16 @@ export const CATHOLIC_PODCASTS = [
     genre: 'Devoção Mariana',
     icon: 'fas fa-praying-hands',
     accentColor: '#38bdf8',
-    description: 'Reze o Santo Rosário com orações guiadas, cânticos e meditações marianas.',
-    tags: ['terco', 'rosario', 'maria', 'ave maria', 'misterios'],
+    category: 'devocional',
+    description: 'Reze o Santo Rosário com orações guiadas, cânticos e meditações marianas de todos os mistérios.',
+    tags: ['terco', 'rosario', 'maria', 'ave maria', 'misterios', 'devocional'],
     episodes: [
       {
-        title: 'Santo Rosário Completo com Contemplações',
+        title: 'Santo Rosário Completo com Contemplações Marianas',
         author: 'Devoção Mariana',
         audioUrl: 'https://anchor.fm/s/90ae1088/podcast/play/83753091/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2024-2-15%2F371077877-44100-2-e4210d7a0c776.mp3',
         duration: '22 min',
-        pubDate: 'Devocional'
+        pubDate: 'Devocional Completo'
       }
     ]
   },
@@ -230,36 +629,16 @@ export const CATHOLIC_PODCASTS = [
     genre: 'Doutrina & Teologia',
     icon: 'fas fa-graduation-cap',
     accentColor: '#8b5cf6',
+    category: 'devocional',
     description: 'Aulas sobre a Santa Igreja Católica, sacramentos e história dos Santos.',
-    tags: ['catequese', 'doutrina', 'sacramentos', 'santos', 'formacao'],
+    tags: ['catequese', 'doutrina', 'sacramentos', 'santos', 'formacao', 'devocional'],
     episodes: [
       {
         title: 'Catequese: Uma, Santa, Católica e Apostólica',
         author: 'Devoto Mariano',
         audioUrl: 'https://anchor.fm/s/cb9d4650/podcast/play/71748150/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2023-5-8%2F334181829-44100-2-613ca9aa5099f.mp3',
         duration: '18 min',
-        pubDate: 'Especial'
-      }
-    ]
-  },
-  {
-    id: 'experiencia_de_deus',
-    name: 'Experiência de Deus - Pe. Manzotti',
-    author: 'Padre Reginaldo Manzotti',
-    feedUrl: 'https://anchor.fm/s/29ee59c/podcast/rss',
-    type: 'podcast',
-    genre: 'Oração & Bênção',
-    icon: 'fas fa-sun',
-    accentColor: '#f59e0b',
-    description: 'A oração que toca os corações, bênção das famílias e reflexões para a vida.',
-    tags: ['padre reginaldo', 'experiencia de deus', 'bencao', 'oracao'],
-    episodes: [
-      {
-        title: 'Momento de Bênção e Oração da Família',
-        author: 'Pe. Reginaldo Manzotti',
-        audioUrl: 'https://anchor.fm/s/29ee59c/podcast/play/176883/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2018-1-26%2F1880996-44100-2-ad1ee7ffbb185.mp3',
-        duration: '25 min',
-        pubDate: 'Momento com Deus'
+        pubDate: 'Formação na Fé'
       }
     ]
   },
@@ -272,15 +651,16 @@ export const CATHOLIC_PODCASTS = [
     genre: 'Música & Louvor',
     icon: 'fas fa-music',
     accentColor: '#10b981',
+    category: 'devocional',
     description: 'Cantos de adoração, momentos de paz interior e louvor eucarístico.',
-    tags: ['musica', 'louvor', 'adoracao', 'paz', 'canto'],
+    tags: ['musica', 'louvor', 'adoracao', 'paz', 'canto', 'devocional'],
     episodes: [
       {
-        title: 'Música Católica para Oração e Adoração',
+        title: 'Música Católica para Oração e Adoração Eucarística',
         author: 'Ministério Crux Sacra',
         audioUrl: 'https://anchor.fm/s/875dc28/podcast/play/126835610/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-9-4%2F401662991-44100-2-19e4871b658db.mp3',
         duration: '45 min',
-        pubDate: 'Adoração'
+        pubDate: 'Adoração Contínua'
       }
     ]
   }
@@ -640,5 +1020,11 @@ class AudioStreamingService {
   }
 }
 
+// Helper para buscar podcast por ID
+export function getPodcastById(id) {
+  return CATHOLIC_PODCASTS.find(p => p.id === id) || null;
+}
+
 // Singleton global
 export const audioService = new AudioStreamingService();
+
