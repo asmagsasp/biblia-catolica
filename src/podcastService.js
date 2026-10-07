@@ -8,6 +8,20 @@ import { trackEvent } from './analytics.js';
 // Catálogo de Rádios Católicas 24h Ao Vivo
 export const CATHOLIC_RADIOS = [
   {
+    id: 'anunciacao_fm',
+    name: 'Rádio Anunciação 87.7 FM',
+    city: "Santa Bárbara d'Oeste - SP",
+    diocese: "Diocese de Piracicaba • Santa Bárbara d'Oeste",
+    streamUrl: 'https://servidor22.brlogic.com:7172/live',
+    type: 'live',
+    genre: 'Evangelização & Comunidade',
+    icon: 'fas fa-bullhorn',
+    accentColor: '#0ea5e9',
+    freq: '87.7 FM',
+    description: 'A voz católica de Santa Bárbara d\'Oeste e região. Fé, oração, santas missas e músicas que tocam a alma.',
+    tags: ['anunciacao', 'santa barbara', 'santa barbara d oeste', 'piracicaba', 'sp', 'oracao', 'missa', 'louvor', 'comunidade', 'fm']
+  },
+  {
     id: 'aparecida',
     name: 'Rádio Aparecida 104.3 FM',
     city: 'Aparecida - SP',
