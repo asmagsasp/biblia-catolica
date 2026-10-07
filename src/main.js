@@ -238,6 +238,9 @@ window.stopSpeech = async function () {
   if ('speechSynthesis' in window) {
     try { window.speechSynthesis.cancel(); } catch (e) {}
   }
+  if (typeof stopDiretorAudio === 'function') {
+    try { stopDiretorAudio(); } catch (e) {}
+  }
   document.querySelectorAll('.verse.reading, .search-result-item.reading').forEach(v => v.classList.remove('reading'));
   document.querySelectorAll('.search-speak-btn.speaking').forEach(b => {
     b.classList.remove('speaking');
@@ -8964,6 +8967,7 @@ window.shareLivroOracoesWhatsApp = function () {
 let currentDiretorPersonaId = 'padre_conselheiro';
 let currentDiretorResult = null;
 let isDiretorSpeaking = false;
+let diretorSpeechHeartbeat = null;
 
 window.showDiretorEspiritual = function () {
   showView('diretorEspiritualView');
@@ -9108,6 +9112,10 @@ window.renderDiretorResponseCard = function (result) {
   const cardEl = document.getElementById('diretorCardResponse');
   if (!cardEl || !result) return;
 
+  // Garante que o resultado atual está salvo globalmente para o áudio e ações
+  currentDiretorResult = result;
+  stopDiretorAudio();
+
   const p = result.persona || DIRETOR_PERSONAS[0];
   const markdown = result.rawMarkdown || '';
 
@@ -9169,7 +9177,7 @@ window.renderDiretorResponseCard = function (result) {
       <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">
         <i class="fas fa-heart"></i> O que você entregou a Deus:
       </div>
-      <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-style: italic;">“${result.desabafo}”</p>
+      <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-style: italic;">“${result.desabafo || ''}”</p>
     </div>
 
     <!-- Seção 1: Palavra de Acolhimento -->
@@ -9231,52 +9239,189 @@ window.renderDiretorResponseCard = function (result) {
   `;
 };
 
-window.toggleDiretorAudio = function () {
+function getDiretorSpeechCleanText(result) {
+  if (!result) return '';
+  const p = result.persona || DIRETOR_PERSONAS[0];
+  let parts = [`Direção espiritual católica com ${p.nome}.`];
+
+  if (result.conselhoObj) {
+    const c = result.conselhoObj;
+    if (c.acolhimento) parts.push(`Palavra de acolhimento: ${c.acolhimento}`);
+    if (c.versiculo) parts.push(`Palavra de Deus: ${c.versiculo}`);
+    if (c.sabedoria) parts.push(`Sabedoria dos santos: ${c.sabedoria}`);
+    if (c.oracao) parts.push(`Oração: ${c.oracao}`);
+    if (c.proposito) parts.push(`Propósito para hoje: ${c.proposito}`);
+  } else if (result.rawMarkdown) {
+    const cleanMd = result.rawMarkdown
+      .replace(/###\s*/g, '')
+      .replace(/---/g, '')
+      .replace(/[\*_`#~]/g, '')
+      .replace(/\[.*?\]\(.*?\)/g, '')
+      .trim();
+    parts.push(cleanMd);
+  }
+
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+window.toggleDiretorAudio = async function () {
   if (isDiretorSpeaking) {
-    stopDiretorAudio();
+    await stopDiretorAudio();
     return;
   }
 
-  if (!currentDiretorResult) return;
+  if (!currentDiretorResult) {
+    showToast('Nenhum conselho carregado no momento.');
+    return;
+  }
 
-  const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
-  const raw = currentDiretorResult.rawMarkdown || '';
-  const cleanToSpeak = `${p.nome}. Direção Espiritual Católica. ` + raw.replace(/[\*\_#]/g, '').replace(/---/g, '');
+  // Interrompe outros reprodutores de áudio/leitura ativos
+  if (typeof stopSpeech === 'function') {
+    try { await stopSpeech(); } catch (e) {}
+  }
+  if (typeof stopLiturgiaSpeech === 'function') {
+    try { stopLiturgiaSpeech(); } catch (e) {}
+  }
 
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(cleanToSpeak);
-    utterance.lang = 'pt-BR';
-    utterance.rate = 0.92;
+  const cleanToSpeak = getDiretorSpeechCleanText(currentDiretorResult);
+  if (!cleanToSpeak) {
+    showToast('Texto para leitura não disponível.');
+    return;
+  }
 
-    const voices = window.speechSynthesis.getVoices();
-    const ptVoice = voices.find(v => v.lang.includes('pt') || v.lang.includes('BR'));
-    if (ptVoice) utterance.voice = ptVoice;
+  // 1. Verificação de suporte nativo Capacitor (Android / iOS)
+  const isNative = (typeof Capacitor !== 'undefined' && Capacitor?.isNativePlatform && Capacitor.isNativePlatform()) ||
+                   (window.Capacitor && window.Capacitor?.isNativePlatform && window.Capacitor.isNativePlatform());
+  const ttsPlugin = (typeof TextToSpeech !== 'undefined' && TextToSpeech) ||
+                    (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech);
 
-    utterance.onstart = () => {
+  if (isNative && ttsPlugin) {
+    try {
       isDiretorSpeaking = true;
       updateDiretorAudioBtnState(true);
-    };
-    utterance.onend = () => {
+      try { await ttsPlugin.stop(); } catch (e) {}
+      await ttsPlugin.speak({
+        text: cleanToSpeak,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
       isDiretorSpeaking = false;
       updateDiretorAudioBtnState(false);
-    };
-    utterance.onerror = () => {
-      isDiretorSpeaking = false;
-      updateDiretorAudioBtnState(false);
-    };
+      return;
+    } catch (e) {
+      console.warn('[Diretor Native TTS] Erro no plugin, tentando WebSpeech:', e);
+    }
+  }
 
-    window.speechSynthesis.speak(utterance);
+  // 2. Web Speech Synthesis (Navegadores Web / PWA / Safari / Chrome / Edge)
+  if ('speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+
+      const sentences = cleanToSpeak
+        .split(/(?<=[.?!:])\s+|\n+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      if (!sentences.length) {
+        updateDiretorAudioBtnState(false);
+        return;
+      }
+
+      isDiretorSpeaking = true;
+      updateDiretorAudioBtnState(true);
+
+      let sentenceIdx = 0;
+      const ptVoice = typeof getBestPortugueseVoice === 'function' ? getBestPortugueseVoice() : null;
+
+      if (diretorSpeechHeartbeat) clearInterval(diretorSpeechHeartbeat);
+      diretorSpeechHeartbeat = setInterval(() => {
+        if (isDiretorSpeaking && 'speechSynthesis' in window) {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        } else {
+          clearInterval(diretorSpeechHeartbeat);
+          diretorSpeechHeartbeat = null;
+        }
+      }, 3000);
+
+      function speakNextSentence() {
+        if (!isDiretorSpeaking || sentenceIdx >= sentences.length) {
+          stopDiretorAudio();
+          return;
+        }
+
+        const sentence = sentences[sentenceIdx++];
+        const utterance = new SpeechSynthesisUtterance(sentence);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        if (ptVoice) utterance.voice = ptVoice;
+
+        utterance.onstart = () => {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        };
+
+        utterance.onend = () => {
+          if (isDiretorSpeaking) {
+            speakNextSentence();
+          }
+        };
+
+        utterance.onerror = (err) => {
+          console.warn('[Diretor WebSpeech] Erro na sentença:', err);
+          if (isDiretorSpeaking) {
+            speakNextSentence();
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      }
+
+      speakNextSentence();
+    } catch (err) {
+      console.error('[Diretor WebSpeech] Exceção:', err);
+      stopDiretorAudio();
+      showToast('Erro ao iniciar áudio.');
+    }
   } else {
     showToast('Leitura em áudio não suportada neste dispositivo.');
+    updateDiretorAudioBtnState(false);
   }
 };
 
-window.stopDiretorAudio = function () {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
+window.stopDiretorAudio = async function () {
   isDiretorSpeaking = false;
+  if (diretorSpeechHeartbeat) {
+    clearInterval(diretorSpeechHeartbeat);
+    diretorSpeechHeartbeat = null;
+  }
+
+  const ttsPlugin = (typeof TextToSpeech !== 'undefined' && TextToSpeech) ||
+                    (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech);
+  if (ttsPlugin) {
+    try { await ttsPlugin.stop(); } catch (e) {}
+  }
+
+  if ('speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
+  }
+
   updateDiretorAudioBtnState(false);
 };
 
