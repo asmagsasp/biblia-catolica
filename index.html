@@ -54,6 +54,8 @@
       <button type="button" class="search-clear-btn hidden" id="searchClearBtn" onmousedown="event.preventDefault()" onclick="clearMainSearch(event)" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
     </div>
     <div class="header-actions">
+      <button class="header-btn" onclick="showRadiosPodcasts()" title="Rádios & Podcasts Católicos" style="color: #eab308;"><i
+          class="fas fa-radio"></i></button>
       <button class="header-btn desktop-only" onclick="showLiturgia()" title="Liturgia Diária"><i
           class="fas fa-calendar-day"></i></button>
       <button class="header-btn desktop-only" onclick="showRosario()" title="Santo Terço"><i
@@ -153,6 +155,21 @@
             <div class="quick-card-badge" id="homeRosarioBadge">Mistérios de Hoje</div>
             <h3 class="quick-card-title">Santo Rosário & Terço</h3>
             <p class="quick-card-desc">Rezar passo a passo com áudio e comunhão</p>
+          </div>
+          <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Rádios & Podcasts Católicos 24h -->
+        <div class="home-quick-card radios-card" onclick="showRadiosPodcasts()">
+          <div class="quick-card-icon-wrapper" style="background: rgba(234, 179, 8, 0.2); color: #eab308;">
+            <i class="fas fa-radio"></i>
+          </div>
+          <div class="quick-card-content">
+            <div class="quick-card-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+              <span class="live-dot-mini"></span> Ao Vivo 24h & Podcasts
+            </div>
+            <h3 class="quick-card-title">Rádios & Podcasts Católicos</h3>
+            <p class="quick-card-desc">Aparecida, Canção Nova, Evangelizar, Homilias & Louvores</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -1063,7 +1080,111 @@
       </div>
     </div>
 
+    <!-- RÁDIOS & PODCASTS CATÓLICOS 24H -->
+    <div id="radiosPodcastsView" class="hidden">
+      <div class="radios-view-container">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()" title="Voltar ao início"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-radio" style="color: #eab308;"></i>
+                Rádios & Podcasts Católicos
+              </h2>
+              <p class="chapter-subtitle">Emissoras 24h ao vivo, homilias diárias, terços e louvores</p>
+            </div>
+          </div>
+          <div class="radios-header-actions">
+            <button class="hero-share-btn" onclick="shareRadiosWhatsApp()" title="Compartilhar no WhatsApp" style="padding: 7px 12px; font-size: 13px;">
+              <i class="fab fa-whatsapp"></i> Convidar Família
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Devocional de Áudio -->
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(234, 179, 8, 0.2) 0%, var(--bg-card) 70%); border-color: rgba(234, 179, 8, 0.4); margin: 0 16px 14px 16px;">
+          <div class="confissao-banner-icon" style="color: #eab308;"><i class="fas fa-tower-broadcast"></i></div>
+          <div class="confissao-banner-text">
+            <h4 style="color: #fde047;">“A fé vem pela escuta da Palavra de Cristo” (Rm 10, 17)</h4>
+            <p>Ouça ao vivo Aparecida, Canção Nova, Evangelizar com Pe. Manzotti, homilias e Santo Terço com áudio contínuo enquanto você navega e reza.</p>
+          </div>
+        </div>
+
+        <!-- Filtros e Busca -->
+        <div class="cartas-filters-wrap">
+          <div class="cartas-search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="radioSearchInput" placeholder="Buscar por rádio, cidade, padre, terço ou tema..." oninput="handleRadioSearch(this.value)" autocomplete="off">
+            <button id="radioSearchClear" class="hidden" onclick="clearRadioSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
+          </div>
+
+          <!-- Sugestões Rápidas de Busca -->
+          <div class="cartas-quick-chips">
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Aparecida')"><i class="fas fa-church" style="color: #60a5fa;"></i> Aparecida</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Canção Nova')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Canção Nova</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Reginaldo Manzotti')"><i class="fas fa-hands-praying" style="color: #f59e0b;"></i> Pe. Manzotti</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Paulo Ricardo')"><i class="fas fa-bible" style="color: #d97706;"></i> Pe. Paulo Ricardo</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Vaticano')"><i class="fas fa-shield-halved" style="color: #d4af37;"></i> Vaticano</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Terço')"><i class="fas fa-praying-hands" style="color: #ec4899;"></i> Santo Terço</button>
+            <button type="button" class="cartas-chip" onclick="setRadioQuickSearch('Gregoriano')"><i class="fas fa-cross" style="color: #8b5cf6;"></i> Gregoriano</button>
+          </div>
+
+          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
+            <button class="nav-tab active" id="tabRadioAll" onclick="filterRadioTab('all', this)">🌟 Todos (<span id="countRadioAll">15</span>)</button>
+            <button class="nav-tab" id="tabRadioLive" onclick="filterRadioTab('live', this)">📻 Rádios 24h Ao Vivo (<span id="countRadioLive">9</span>)</button>
+            <button class="nav-tab" id="tabRadioPodcasts" onclick="filterRadioTab('podcast', this)">🎙️ Podcasts & Homilias (<span id="countRadioPodcasts">6</span>)</button>
+          </div>
+        </div>
+
+        <!-- Grid de Conteúdo -->
+        <div id="radiosContentGrid" class="radios-grid-container">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
   </main>
+
+  <!-- FLOATING PERSISTENT AUDIO MINI-PLAYER BAR -->
+  <div id="audioMiniPlayer" class="audio-mini-player hidden" role="region" aria-label="Reprodutor de Áudio Católico">
+    <div class="mini-player-progress-bar" id="miniPlayerProgressBar">
+      <div class="mini-player-progress-fill" id="miniPlayerProgressFill" style="width: 0%;"></div>
+    </div>
+    <div class="mini-player-inner">
+      <div class="mini-player-left" onclick="showRadiosPodcasts()">
+        <div class="mini-player-icon-box" id="miniPlayerIconBox">
+          <i class="fas fa-radio" id="miniPlayerIcon"></i>
+          <div class="mini-equalizer-bars hidden" id="miniEqualizer">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+            <span class="eq-bar bar-4"></span>
+          </div>
+        </div>
+        <div class="mini-player-info">
+          <div class="mini-player-title-row">
+            <span class="mini-player-title" id="miniPlayerTitle">Rádio Aparecida 104.3 FM</span>
+            <span class="mini-live-tag" id="miniLiveTag">🔴 AO VIVO</span>
+          </div>
+          <div class="mini-player-subtitle" id="miniPlayerSubtitle">Santuário Nacional de Nossa Senhora</div>
+        </div>
+      </div>
+      <div class="mini-player-controls">
+        <div class="mini-volume-control desktop-only">
+          <button class="mini-btn-vol" onclick="toggleMiniMute()" title="Ajustar Volume">
+            <i class="fas fa-volume-up" id="miniVolIcon"></i>
+          </button>
+          <input type="range" class="mini-vol-slider" id="miniVolSlider" min="0" max="1" step="0.05" value="0.9" oninput="changeMiniVolume(this.value)">
+        </div>
+        <button class="mini-player-btn mini-btn-play" id="miniBtnPlay" onclick="toggleAudioServicePlay()" title="Reproduzir / Pausar">
+          <i class="fas fa-play" id="miniPlayIcon"></i>
+        </button>
+        <button class="mini-player-btn mini-btn-stop" onclick="stopAudioService()" title="Parar transmissão">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- BOTTOM NAV (MOBILE) -->
   <nav class="bottom-nav">

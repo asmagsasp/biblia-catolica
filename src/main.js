@@ -17,6 +17,7 @@ import { DIARIO_CATEGORIAS, getDiarioItens, salvarNovoItemDiario, marcarGracaAlc
 import { NOVENAS_LIST, getNovenasComProgresso, iniciarNovena, marcarDiaNovenaConcluido, reiniciarNovena } from './novenasService.js';
 import { CARTAS_APOSTOLICAS, getCartasPorCategoria, getCartaPorId } from './cartasService.js';
 import { getMariaTitulos, getMariaOracoes, getMariaDogmas, getMariaPraticas, getMariaItemPorId } from './mariaService.js';
+import { audioService, CATHOLIC_RADIOS, CATHOLIC_PODCASTS } from './podcastService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -112,6 +113,7 @@ async function init() {
   checkPledgeReminder();
   initDonateButtonShimmer();
   updateHomeFraternalCard();
+  initAudioStreamingListener();
 
   // Restore theme & font
   const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
@@ -2595,7 +2597,7 @@ function showView(id) {
   stopTeologiaSpeech();
   stopNovenaSpeech();
   stopMariaSpeech();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView'].forEach(v => {
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -8168,6 +8170,370 @@ window.shareMariaWhatsApp = function (id, tipo) {
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
+
+// ==========================================================================
+// RÁDIOS & PODCASTS CATÓLICOS - CONTROLLER & UI MANAGEMENT
+// ==========================================================================
+let currentRadioTab = 'all';
+let currentRadioSearch = '';
+let isRadioGridRendered = false;
+let previousMiniVolume = 0.9;
+
+function initAudioStreamingListener() {
+  audioService.subscribe((state) => {
+    updateMiniPlayerUI(state);
+    updateRadioCardsUI(state);
+  });
+}
+
+function updateMiniPlayerUI(state) {
+  const miniPlayer = document.getElementById('audioMiniPlayer');
+  if (!miniPlayer) return;
+
+  if (!state.currentTrack) {
+    miniPlayer.classList.add('hidden');
+    return;
+  }
+
+  miniPlayer.classList.remove('hidden');
+
+  const titleEl = document.getElementById('miniPlayerTitle');
+  const subtitleEl = document.getElementById('miniPlayerSubtitle');
+  const liveTagEl = document.getElementById('miniLiveTag');
+  const iconEl = document.getElementById('miniPlayerIcon');
+  const iconBox = document.getElementById('miniPlayerIconBox');
+  const equalizerEl = document.getElementById('miniEqualizer');
+  const playIcon = document.getElementById('miniPlayIcon');
+  const progressFill = document.getElementById('miniPlayerProgressFill');
+  const volSlider = document.getElementById('miniVolSlider');
+  const volIcon = document.getElementById('miniVolIcon');
+
+  if (titleEl) titleEl.textContent = state.currentTrack.title;
+  if (subtitleEl) subtitleEl.textContent = state.currentTrack.subtitle || (state.currentTrack.isLive ? 'Ao vivo' : 'Podcast');
+  
+  if (liveTagEl) {
+    if (state.currentTrack.isLive) {
+      liveTagEl.textContent = '🔴 AO VIVO';
+      liveTagEl.style.color = '#ef4444';
+      liveTagEl.style.background = 'rgba(239, 68, 68, 0.15)';
+    } else {
+      liveTagEl.textContent = '🎙️ PODCAST';
+      liveTagEl.style.color = '#c084fc';
+      liveTagEl.style.background = 'rgba(139, 92, 246, 0.18)';
+    }
+  }
+
+  if (iconEl && state.currentTrack.icon) {
+    iconEl.className = state.currentTrack.icon;
+  }
+  if (iconBox && state.currentTrack.color) {
+    iconBox.style.background = `${state.currentTrack.color}25`;
+    iconBox.style.borderColor = `${state.currentTrack.color}50`;
+    iconBox.style.color = state.currentTrack.color;
+  }
+
+  if (equalizerEl) {
+    if (state.isPlaying) {
+      equalizerEl.classList.remove('hidden');
+    } else {
+      equalizerEl.classList.add('hidden');
+    }
+  }
+
+  if (playIcon) {
+    if (state.isLoading) {
+      playIcon.className = 'fas fa-spinner fa-spin';
+    } else if (state.isPlaying) {
+      playIcon.className = 'fas fa-pause';
+    } else {
+      playIcon.className = 'fas fa-play';
+    }
+  }
+
+  if (progressFill) {
+    if (!state.currentTrack.isLive && state.duration > 0) {
+      const pct = Math.min(100, (state.currentTime / state.duration) * 100);
+      progressFill.style.width = `${pct}%`;
+    } else {
+      progressFill.style.width = state.isPlaying ? '100%' : '0%';
+    }
+  }
+
+  if (volSlider) {
+    volSlider.value = state.volume;
+  }
+
+  if (volIcon) {
+    if (state.volume === 0) {
+      volIcon.className = 'fas fa-volume-mute';
+    } else if (state.volume < 0.5) {
+      volIcon.className = 'fas fa-volume-down';
+    } else {
+      volIcon.className = 'fas fa-volume-up';
+    }
+  }
+}
+
+function updateRadioCardsUI(state) {
+  const cards = document.querySelectorAll('.radio-card');
+  if (!cards.length) return;
+
+  const currentId = state.currentTrack ? state.currentTrack.raw?.id || state.currentTrack.id : null;
+
+  cards.forEach(card => {
+    const cardId = card.getAttribute('data-id');
+    const playBtn = card.querySelector('.radio-btn-play');
+    const isThisPlaying = currentId && (cardId === currentId || currentId.startsWith(cardId));
+
+    if (isThisPlaying) {
+      card.classList.add('is-playing');
+      if (playBtn) {
+        if (state.isLoading) {
+          playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+        } else if (state.isPlaying) {
+          playBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
+        } else {
+          playBtn.innerHTML = '<i class="fas fa-play"></i> Continuar';
+        }
+      }
+    } else {
+      card.classList.remove('is-playing');
+      if (playBtn) {
+        playBtn.innerHTML = '<i class="fas fa-play"></i> Ouvir Agora';
+      }
+    }
+  });
+}
+
+window.showRadiosPodcasts = function () {
+  showView('radiosPodcastsView');
+  renderRadiosGrid();
+};
+
+window.filterRadioTab = function (tab, btnEl) {
+  currentRadioTab = tab;
+  document.querySelectorAll('#radiosPodcastsView .nav-tab').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderRadiosGrid();
+};
+
+window.handleRadioSearch = function (query) {
+  currentRadioSearch = (query || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('radioSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !currentRadioSearch);
+  renderRadiosGrid();
+};
+
+window.clearRadioSearch = function () {
+  currentRadioSearch = '';
+  const input = document.getElementById('radioSearchInput');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('radioSearchClear');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  renderRadiosGrid();
+};
+
+window.setRadioQuickSearch = function (term) {
+  const input = document.getElementById('radioSearchInput');
+  if (input) input.value = term;
+  handleRadioSearch(term);
+};
+
+window.renderRadiosGrid = function () {
+  const container = document.getElementById('radiosContentGrid');
+  if (!container) return;
+
+  const audioState = audioService.getState();
+  const currentId = audioState.currentTrack ? audioState.currentTrack.raw?.id || audioState.currentTrack.id : null;
+
+  // Filtra rádios
+  const filteredRadios = CATHOLIC_RADIOS.filter(r => {
+    if (currentRadioTab === 'podcast') return false;
+    if (currentRadioTab === 'terco' && !r.tags.some(t => t.includes('terco') || t.includes('rosario') || t.includes('maria'))) return false;
+    if (!currentRadioSearch) return true;
+    const matchName = r.name.toLowerCase().includes(currentRadioSearch);
+    const matchCity = r.city.toLowerCase().includes(currentRadioSearch);
+    const matchDiocese = r.diocese.toLowerCase().includes(currentRadioSearch);
+    const matchDesc = r.description.toLowerCase().includes(currentRadioSearch);
+    const matchTags = r.tags.some(t => t.toLowerCase().includes(currentRadioSearch));
+    return matchName || matchCity || matchDiocese || matchDesc || matchTags;
+  });
+
+  // Filtra podcasts
+  const filteredPodcasts = CATHOLIC_PODCASTS.filter(p => {
+    if (currentRadioTab === 'live') return false;
+    if (currentRadioTab === 'terco' && !p.tags.some(t => t.includes('terco') || t.includes('rosario') || t.includes('maria'))) return false;
+    if (!currentRadioSearch) return true;
+    const matchName = p.name.toLowerCase().includes(currentRadioSearch);
+    const matchAuthor = p.author.toLowerCase().includes(currentRadioSearch);
+    const matchDesc = p.description.toLowerCase().includes(currentRadioSearch);
+    const matchTags = p.tags.some(t => t.toLowerCase().includes(currentRadioSearch));
+    return matchName || matchAuthor || matchDesc || matchTags;
+  });
+
+  // Atualiza contadores
+  const countAll = document.getElementById('countRadioAll');
+  const countLive = document.getElementById('countRadioLive');
+  const countPods = document.getElementById('countRadioPodcasts');
+  if (countAll) countAll.textContent = CATHOLIC_RADIOS.length + CATHOLIC_PODCASTS.length;
+  if (countLive) countLive.textContent = CATHOLIC_RADIOS.length;
+  if (countPods) countPods.textContent = CATHOLIC_PODCASTS.length;
+
+  if (filteredRadios.length === 0 && filteredPodcasts.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--text-secondary);">
+        <i class="fas fa-radio" style="font-size: 42px; color: var(--gold-400); margin-bottom: 14px; opacity: 0.7;"></i>
+        <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma emissora ou podcast encontrado</h3>
+        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Aparecida", "Canção Nova", "Manzotti", "Paulo Ricardo" ou "Terço".</p>
+        <button class="hero-share-btn" onclick="clearRadioSearch()" style="display: inline-flex; padding: 8px 18px; font-size: 13px;">
+          <i class="fas fa-rotate-left"></i> Limpar Filtro
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+
+  // Renderiza Rádios 24h
+  for (const r of filteredRadios) {
+    const isPlayingThis = currentId === r.id;
+    const btnContent = isPlayingThis
+      ? (audioState.isLoading ? '<i class="fas fa-spinner fa-spin"></i> Conectando...' : (audioState.isPlaying ? '<i class="fas fa-pause"></i> Pausar' : '<i class="fas fa-play"></i> Continuar'))
+      : '<i class="fas fa-play"></i> Ouvir Agora';
+
+    html += `
+      <div class="radio-card ${isPlayingThis ? 'is-playing' : ''}" data-id="${r.id}" data-type="live">
+        <div class="radio-card-header">
+          <span class="radio-badge-live"><span class="live-dot-mini"></span> AO VIVO 24H</span>
+          <span class="radio-genre-tag">${r.genre}</span>
+        </div>
+        <div class="radio-card-body">
+          <div class="radio-card-icon-box" style="background: ${r.accentColor}22; color: ${r.accentColor}; border: 1px solid ${r.accentColor}44;">
+            <i class="${r.icon}"></i>
+          </div>
+          <div class="radio-card-details">
+            <h3 class="radio-card-name">${r.name}</h3>
+            <div class="radio-card-location"><i class="fas fa-location-dot"></i> ${r.city} • ${r.freq}</div>
+            <p class="radio-card-desc">${r.description}</p>
+          </div>
+        </div>
+        <div class="radio-card-actions">
+          <button class="radio-btn-play" onclick="playAudioStation('${r.id}')">
+            ${btnContent}
+          </button>
+          <button class="radio-btn-share" onclick="shareRadiosWhatsApp('${r.name}')" title="Compartilhar no WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Renderiza Podcasts & Homilias
+  for (const p of filteredPodcasts) {
+    const isPlayingThis = currentId && (currentId === p.id || currentId.startsWith(`${p.id}_`));
+    const btnContent = isPlayingThis
+      ? (audioState.isLoading ? '<i class="fas fa-spinner fa-spin"></i> Carregando...' : (audioState.isPlaying ? '<i class="fas fa-pause"></i> Pausar' : '<i class="fas fa-play"></i> Continuar'))
+      : '<i class="fas fa-play"></i> Ouvir Agora';
+
+    const epTitle = p.episodes && p.episodes[0] ? p.episodes[0].title : p.description;
+
+    html += `
+      <div class="radio-card ${isPlayingThis ? 'is-playing' : ''}" data-id="${p.id}" data-type="podcast">
+        <div class="radio-card-header">
+          <span class="radio-badge-podcast"><i class="fas fa-podcast"></i> PODCAST</span>
+          <span class="radio-genre-tag">${p.genre}</span>
+        </div>
+        <div class="radio-card-body">
+          <div class="radio-card-icon-box" style="background: ${p.accentColor}22; color: ${p.accentColor}; border: 1px solid ${p.accentColor}44;">
+            <i class="${p.icon}"></i>
+          </div>
+          <div class="radio-card-details">
+            <h3 class="radio-card-name">${p.name}</h3>
+            <div class="radio-card-location"><i class="fas fa-user-tie"></i> ${p.author}</div>
+            <p class="radio-card-desc"><strong>Episódio:</strong> ${epTitle}</p>
+          </div>
+        </div>
+        <div class="radio-card-actions">
+          <button class="radio-btn-play" onclick="playAudioPodcast('${p.id}', 0)">
+            ${btnContent}
+          </button>
+          <button class="radio-btn-share" onclick="shareRadiosWhatsApp('${p.name}')" title="Compartilhar no WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+};
+
+window.playAudioStation = function (stationId) {
+  stopSpeech();
+  stopLiturgiaSpeech();
+  stopHomiliaLiturgiaSpeech();
+  stopRosarioSpeech();
+  stopTeologiaSpeech();
+  stopNovenaSpeech();
+  stopMariaSpeech();
+
+  audioService.playRadio(stationId);
+  showToast('📻 Conectando à transmissão ao vivo...');
+};
+
+window.playAudioPodcast = function (podcastId, epIndex = 0) {
+  stopSpeech();
+  stopLiturgiaSpeech();
+  stopHomiliaLiturgiaSpeech();
+  stopRosarioSpeech();
+  stopTeologiaSpeech();
+  stopNovenaSpeech();
+  stopMariaSpeech();
+
+  audioService.playPodcast(podcastId, epIndex);
+  showToast('🎙️ Iniciando áudio devocional...');
+};
+
+window.toggleAudioServicePlay = function () {
+  audioService.togglePlayPause();
+};
+
+window.stopAudioService = function () {
+  audioService.stop();
+  showToast('Áudio encerrado.');
+};
+
+window.toggleMiniMute = function () {
+  const currentVol = audioService.getState().volume;
+  if (currentVol > 0) {
+    previousMiniVolume = currentVol;
+    audioService.setVolume(0);
+  } else {
+    audioService.setVolume(previousMiniVolume || 0.9);
+  }
+};
+
+window.changeMiniVolume = function (val) {
+  audioService.setVolume(parseFloat(val));
+};
+
+window.shareRadiosWhatsApp = function (specificName = '') {
+  let msg = '';
+  if (specificName) {
+    msg = `📻 *Estou ouvindo ${specificName}* no aplicativo da Bíblia Sagrada Católica!\n\n`;
+    msg += `✨ Ouça ao vivo as melhores rádios católicas do Brasil (Canção Nova, Aparecida, Evangelizar com Pe. Manzotti, Homilias e Terço) gratuitamente:\n\n`;
+    msg += `📲 *Acesse agora:*\nhttps://bibliasagradaavemaria.com.br`;
+  } else {
+    msg = `📻 *Rádios e Podcasts Católicos 24h Ao Vivo!*\n\n`;
+    msg += `✨ Venha rezar e ouvir a Rádio Canção Nova, Rádio Aparecida, Rádio Evangelizar (Pe. Reginaldo Manzotti), homilias diárias e o Santo Terço direto no app da Bíblia Sagrada:\n\n`;
+    msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  }
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
 
 
 
