@@ -231,21 +231,41 @@ function setTheme(theme) {
   stopSpeech();
 }
 
-window.stopSpeech = async function () {
+window.stopSpeech = function () {
   stopRequested = true;
   isSpeaking = false;
   updateChapterReadBtnState(false);
-  try { await TextToSpeech.stop(); } catch (e) { }
+  try { 
+    if (Capacitor?.isNativePlatform() && TextToSpeech) {
+      TextToSpeech.stop().catch(() => {}); 
+    }
+  } catch (e) { }
   if ('speechSynthesis' in window) {
     try { window.speechSynthesis.cancel(); } catch (e) {}
   }
+  if (typeof cleanupVerseSpeech === 'function') {
+    try { cleanupVerseSpeech(); } catch (e) {}
+  }
   if (typeof stopDiretorAudio === 'function') {
     try { stopDiretorAudio(); } catch (e) {}
+  }
+  if (typeof stopLiturgiaSpeech === 'function') {
+    try { stopLiturgiaSpeech(); } catch (e) {}
+  }
+  if (typeof stopEvangelhoLiturgiaSpeech === 'function') {
+    try { stopEvangelhoLiturgiaSpeech(); } catch (e) {}
+  }
+  if (typeof stopHomiliaLiturgiaSpeech === 'function') {
+    try { stopHomiliaLiturgiaSpeech(); } catch (e) {}
   }
   document.querySelectorAll('.verse.reading, .search-result-item.reading').forEach(v => v.classList.remove('reading'));
   document.querySelectorAll('.search-speak-btn.speaking').forEach(b => {
     b.classList.remove('speaking');
     b.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+  });
+  document.querySelectorAll('.verse-action-btn.speak-btn.speaking').forEach(b => {
+    b.classList.remove('speaking');
+    b.innerHTML = '<i class="fas fa-volume-up"></i>';
   });
 };
 
@@ -452,7 +472,7 @@ async function loadVerses() {
                     <span class="verse-text">${v.texto}</span>
                 </div>
                 <div class="verse-actions">
-                    <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Ouvir"><i class="fas fa-volume-up"></i></button>
+                    <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
                     <button class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
@@ -534,118 +554,326 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   if (speakBtn) {
     e.stopPropagation();
     const verseDiv = speakBtn.closest('.verse');
-    const text = speakBtn.dataset.txt;
-    const vNum = verseDiv.dataset.v;
-    speakText(text, vNum);
+    const text = speakBtn.dataset.txt || verseDiv?.querySelector('.verse-text')?.textContent || '';
+    const vNum = verseDiv?.dataset?.v;
+    if (verseDiv && (verseDiv.classList.contains('reading') || speakBtn.classList.contains('speaking'))) {
+      stopSpeech();
+      return;
+    }
+    speakText(text, vNum, verseDiv);
     return;
   }
 });
 
 let activeVerseUtterance = null;
-async function speakSingleVerseText(text) {
-  if (!text || stopRequested) return;
+let verseHeartbeatInterval = null;
+
+function cleanupVerseSpeech() {
+  if (verseHeartbeatInterval) {
+    clearInterval(verseHeartbeatInterval);
+    verseHeartbeatInterval = null;
+  }
+  activeVerseUtterance = null;
+  window._activeVerseUtterance = null;
+}
+
+function speakSingleVerseText(text) {
+  if (!text || stopRequested) return Promise.resolve();
+
+  // Limpa tags HTML (mark, etc.), asteriscos de notas bíblicas e pontuações especiais para leitura natural
+  const cleanText = (text || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, ' e ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/[*_#`~«»]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleanText) return Promise.resolve();
 
   // 1. Capacitor Native TTS (Android / iOS app compilado)
   if (Capacitor?.isNativePlatform() && TextToSpeech) {
-    try {
-      await TextToSpeech.speak({
-        text: text,
-        lang: 'pt-BR',
-        rate: 0.95,
-        pitch: 1.0,
-        volume: 1.0,
-        category: 'ambient'
-      });
-      return;
-    } catch (e) {
+    return TextToSpeech.speak({
+      text: cleanText,
+      lang: 'pt-BR',
+      rate: 0.95,
+      pitch: 1.0,
+      volume: 1.0,
+      category: 'ambient'
+    }).catch(e => {
       console.warn('[TTS Native] Falha, tentando Web Speech:', e);
-    }
-  }
-
-  // 2. Web Speech Synthesis (iPhone Safari / Web Browser)
-  if ('speechSynthesis' in window && !stopRequested) {
-    return new Promise((resolve) => {
-      try {
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        const ptVoice = getBestPortugueseVoice();
-        if (ptVoice) {
-          utterance.voice = ptVoice;
-        }
-
-        activeVerseUtterance = utterance;
-
-        utterance.onstart = () => {
-          if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-          }
-        };
-
-        utterance.onend = () => {
-          activeVerseUtterance = null;
-          resolve();
-        };
-        utterance.onerror = (e) => {
-          console.warn('[WebSpeech] Erro no versículo:', e);
-          activeVerseUtterance = null;
-          resolve();
-        };
-
-        window.speechSynthesis.speak(utterance);
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-      } catch (err) {
-        console.error('[WebSpeech] Exceção ao falar versículo:', err);
-        resolve();
-      }
+      return speakWebSpeechDirect(cleanText);
     });
   }
+
+  // 2. Web Speech Synthesis (Navegador Desktop, Chrome, Safari, Edge, Mobile)
+  return speakWebSpeechDirect(cleanText);
+}
+
+function speakWebSpeechDirect(cleanText) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Seu navegador não suporta leitura por voz.');
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    try {
+      cleanupVerseSpeech();
+
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e) {}
+      }
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      const ptVoice = getBestPortugueseVoice();
+      if (ptVoice) {
+        utterance.voice = ptVoice;
+      }
+
+      activeVerseUtterance = utterance;
+      window._activeVerseUtterance = utterance; // Evita Garbage Collection do Chrome/Safari Mobile
+
+      let started = false;
+      let finished = false;
+      let retryCount = 0;
+
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        cleanupVerseSpeech();
+        resolve();
+      };
+
+      utterance.onstart = () => {
+        started = true;
+        if (window.speechSynthesis.paused) {
+          try { window.speechSynthesis.resume(); } catch (e) {}
+        }
+        if (verseHeartbeatInterval) clearInterval(verseHeartbeatInterval);
+        verseHeartbeatInterval = setInterval(() => {
+          if (window.speechSynthesis.paused) {
+            try { window.speechSynthesis.resume(); } catch (e) {}
+          }
+        }, 1500);
+      };
+
+      utterance.onend = () => {
+        finish();
+      };
+
+      utterance.onerror = (e) => {
+        const errType = e?.error;
+        console.warn('[WebSpeech Utterance Error/Status]:', errType, e);
+        // Se foi cancelado antes mesmo de iniciar (colisão de cancel do SO) e o usuário não pediu para parar
+        if (!started && !stopRequested && retryCount === 0 && (errType === 'canceled' || errType === 'interrupted' || !errType)) {
+          retryCount++;
+          setTimeout(() => {
+            if (!stopRequested && !finished) {
+              try {
+                if (window.speechSynthesis.paused) {
+                  try { window.speechSynthesis.resume(); } catch (err) {}
+                }
+                window.speechSynthesis.speak(utterance);
+              } catch (retryErr) {
+                finish();
+              }
+            } else {
+              finish();
+            }
+          }, 60);
+          return;
+        }
+        finish();
+      };
+
+      // Dispara diretamente no mesmo frame do clique do usuário
+      window.speechSynthesis.speak(utterance);
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e) {}
+      }
+    } catch (err) {
+      console.error('[WebSpeech Exceção]:', err);
+      cleanupVerseSpeech();
+      resolve();
+    }
+  });
 }
 
 window.speakText = async function (text, vNum = null, customEl = null) {
-  await stopSpeech();
   if (!text) return;
+
+  // Se já estiver tocando este elemento exato, para imediatamente
+  if (customEl && (customEl.classList.contains('reading') || customEl.querySelector?.('.speaking') || (customEl.classList.contains('speaking')))) {
+    stopSpeech();
+    return;
+  }
+  if (vNum) {
+    const existingEl = document.getElementById(`v-${vNum}`);
+    if (existingEl && (existingEl.classList.contains('reading') || existingEl.querySelector?.('.speaking'))) {
+      stopSpeech();
+      return;
+    }
+  }
+
+  // Interrompe qualquer áudio anterior sincronamente
+  stopSpeech();
 
   isSpeaking = true;
   stopRequested = false;
 
+  let el = null;
+  let verseSpeakBtn = null;
   if (vNum) {
-    const el = document.getElementById(`v-${vNum}`);
-    if (el) el.classList.add('reading');
+    el = document.getElementById(`v-${vNum}`);
+    if (el) {
+      el.classList.add('reading');
+      verseSpeakBtn = el.querySelector('.speak-btn');
+      if (verseSpeakBtn) {
+        verseSpeakBtn.classList.add('speaking');
+        verseSpeakBtn.innerHTML = '<i class="fas fa-stop"></i>';
+      }
+    }
   }
+
+  let customSpeakBtn = null;
   if (customEl) {
     customEl.classList.add('reading');
-    const speakBtn = customEl.querySelector('.search-speak-btn');
-    if (speakBtn) {
-      speakBtn.classList.add('speaking');
-      speakBtn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar</span>';
+    customSpeakBtn = customEl.querySelector('.search-speak-btn') || customEl.querySelector('.speak-btn') || (customEl.classList?.contains('search-speak-btn') ? customEl : null);
+    if (customSpeakBtn && customSpeakBtn.classList) {
+      customSpeakBtn.classList.add('speaking');
+      if (customSpeakBtn.classList.contains('search-speak-btn')) {
+        customSpeakBtn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar</span>';
+      } else {
+        customSpeakBtn.innerHTML = '<i class="fas fa-stop"></i>';
+      }
     }
   }
 
   try {
     await speakSingleVerseText(text);
+  } catch (err) {
+    console.warn('[speakText Exception]:', err);
   } finally {
-    if (vNum) {
-      const el = document.getElementById(`v-${vNum}`);
-      if (el) el.classList.remove('reading');
+    if (el) {
+      el.classList.remove('reading');
+      if (verseSpeakBtn) {
+        verseSpeakBtn.classList.remove('speaking');
+        verseSpeakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      }
     }
     if (customEl) {
       customEl.classList.remove('reading');
-      const speakBtn = customEl.querySelector('.search-speak-btn');
-      if (speakBtn) {
-        speakBtn.classList.remove('speaking');
-        speakBtn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+      if (customSpeakBtn && customSpeakBtn.classList) {
+        customSpeakBtn.classList.remove('speaking');
+        if (customSpeakBtn.classList.contains('search-speak-btn')) {
+          customSpeakBtn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
+        } else {
+          customSpeakBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
       }
     }
     isSpeaking = false;
+  }
+};
+
+window.toggleVerseSpeech = function (btn) {
+  if (!btn) return;
+  const verseDiv = btn.closest('.verse');
+  const text = btn.dataset.txt || verseDiv?.querySelector('.verse-text')?.innerText || verseDiv?.querySelector('.verse-text')?.textContent || '';
+  const vNum = verseDiv?.dataset?.v;
+
+  if (verseDiv && (verseDiv.classList.contains('reading') || btn.classList.contains('speaking'))) {
+    stopSpeech();
+    return;
+  }
+
+  speakText(text, vNum, verseDiv);
+};
+
+window.toggleSearchResultSpeech = function (buttonEl) {
+  if (!buttonEl) return;
+  const btn = buttonEl.closest('.search-speak-btn') || buttonEl;
+  const item = btn.closest('.search-result-item');
+  const text = btn.dataset.txt || item?.querySelector('.search-result-text')?.innerText || item?.querySelector('.search-result-text')?.textContent || '';
+
+  if (!text) {
+    showToast('Texto do versículo não encontrado.');
+    return;
+  }
+
+  if (btn.classList.contains('speaking') || item?.classList.contains('reading')) {
+    stopSpeech();
+    return;
+  }
+
+  speakText(text, null, item || btn);
+};
+
+window.toggleSearchResultFavorite = async function (btn) {
+  if (!btn) return;
+  try {
+    const livroId = parseInt(btn.dataset.livro);
+    const cap = parseInt(btn.dataset.cap);
+    const ver = parseInt(btn.dataset.ver);
+    const result = await db.toggleFavorito(livroId, cap, ver);
+    btn.classList.toggle('favorited', result === 1);
+    btn.title = result === 1 ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
+
+    const item = btn.closest('.search-result-item');
+    if (result === 0 && item && document.getElementById('favoritesView')?.classList.contains('active')) {
+      item.style.opacity = '0.35';
+    } else if (item) {
+      item.style.opacity = '1';
+    }
+
+    showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
+    const favContainer = document.getElementById('favoritesContainer');
+    if (favContainer) delete favContainer.dataset.loaded;
+    await updateFavCountOnly();
+  } catch (err) {
+    console.error("Erro ao favoritar:", err);
+  }
+};
+
+window.copySearchResultVerse = function (btn) {
+  if (!btn) return;
+  const text = btn.dataset.txt || '';
+  const livro = btn.dataset.livro || '';
+  const cap = btn.dataset.cap || '';
+  const ver = btn.dataset.ver || '';
+  const verseText = `"${text}" — ${livro} ${cap},${ver}`;
+  copyToClipboard(verseText).then(ok => {
+    if (ok) showToast('📋 Versículo copiado!');
+    else showToast('Erro ao copiar versículo');
+  });
+};
+
+window.shareSearchResultWhatsApp = function (btn) {
+  if (!btn) return;
+  const text = btn.dataset.txt || '';
+  const livro = btn.dataset.livro || '';
+  const cap = btn.dataset.cap || '';
+  const ver = btn.dataset.ver || '';
+  const msg = `“${text}”\n\n— ${livro} ${cap},${ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.openSearchResultCard = function (itemEl) {
+  if (!itemEl) return;
+  const cap = parseInt(itemEl.dataset.cap);
+  const livroId = parseInt(itemEl.dataset.livro);
+  const nome = itemEl.dataset.nome;
+  if (!isNaN(livroId) && !isNaN(cap)) {
+    openBook(livroId, nome, 0);
+    setTimeout(() => selectChapter(cap), 100);
   }
 };
 
@@ -804,19 +1032,22 @@ function doSearch() {
         resultados.forEach(r => {
           const hl = highlightSearchTerms(r.texto, t);
           const isFav = r.favorito === 1 || db.isFavorito(r.id_livro, r.id_capitulo, r.id_versiculo);
-          const rawTextEscaped = (r.texto || '').replace(/"/g, '&quot;');
+          const rawTextEscaped = (r.texto || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
-          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}">
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="openSearchResultCard(this)">
                   <div class="search-result-header">
                     <div class="search-result-ref">
                       <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
                       <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
                     </div>
-                    <div class="search-result-actions">
-                      <button class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
-                      <button class="search-action-btn search-fav-btn ${isFav ? 'favorited' : ''}" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" title="${isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
-                      <button class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
-                      <button class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <div class="search-result-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button type="button" class="search-action-btn search-fav-btn ${isFav ? 'favorited' : ''}" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="${isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
+                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     </div>
                   </div>
                   <div class="search-result-text">${hl}</div>
@@ -829,80 +1060,6 @@ function doSearch() {
     }
   }, 10);
 }
-
-document.getElementById('searchResults').addEventListener('click', async e => {
-  // 1. Favoritar
-  const favBtn = e.target.closest('.search-fav-btn');
-  if (favBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const livroId = parseInt(favBtn.dataset.livro);
-      const cap = parseInt(favBtn.dataset.cap);
-      const ver = parseInt(favBtn.dataset.ver);
-      const result = await db.toggleFavorito(livroId, cap, ver);
-      favBtn.classList.toggle('favorited', result === 1);
-      favBtn.title = result === 1 ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos';
-
-      showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
-      const favContainer = document.getElementById('favoritesContainer');
-      if (favContainer) delete favContainer.dataset.loaded;
-      await updateFavCountOnly();
-    } catch (err) {
-      console.error("Erro ao favoritar na busca:", err);
-    }
-    return;
-  }
-
-  // 2. Ouvir Trecho
-  const speakBtn = e.target.closest('.search-speak-btn');
-  if (speakBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const item = speakBtn.closest('.search-result-item');
-    const text = speakBtn.dataset.txt;
-
-    if (speakBtn.classList.contains('speaking')) {
-      await stopSpeech();
-      return;
-    }
-
-    await stopSpeech();
-    speakText(text, null, item);
-    return;
-  }
-
-  // 3. Copiar
-  const copyBtn = e.target.closest('.search-copy-btn');
-  if (copyBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
-    copyToClipboard(verseText).then(ok => {
-      if (ok) showToast('📋 Versículo copiado!');
-      else showToast('Erro ao copiar versículo');
-    });
-    return;
-  }
-
-  // 4. WhatsApp
-  const waBtn = e.target.closest('.search-wa-btn');
-  if (waBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    return;
-  }
-
-  // 5. Clicar no card para abrir o livro e capítulo
-  const item = e.target.closest('.search-result-item');
-  if (item) {
-    const cap = parseInt(item.dataset.cap);
-    openBook(parseInt(item.dataset.livro), item.dataset.nome, 0);
-    setTimeout(() => selectChapter(cap), 100);
-  }
-});
 
 // ===== FAVORITES =====
 window.showFavorites = function () {
@@ -921,18 +1078,21 @@ window.showFavorites = function () {
         h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado.</p></div>`;
       } else {
         d.forEach(r => {
-          const rawTextEscaped = (r.texto || '').replace(/"/g, '&quot;');
-          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}">
+          const rawTextEscaped = (r.texto || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+          h += `<div class="search-result-item" data-livro="${r.id_livro}" data-nome="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="openSearchResultCard(this)">
                   <div class="search-result-header">
                     <div class="search-result-ref">
                       <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
                       <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
                     </div>
-                    <div class="search-result-actions">
-                      <button class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
-                      <button class="search-action-btn search-fav-btn favorited" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" title="Remover dos Favoritos" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
-                      <button class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
-                      <button class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <div class="search-result-actions" onclick="event.stopPropagation()">
+                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button type="button" class="search-action-btn search-fav-btn favorited" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="Remover dos Favoritos" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
+                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     </div>
                   </div>
                   <div class="search-result-text">${r.texto}</div>
@@ -947,83 +1107,7 @@ window.showFavorites = function () {
   });
 };
 
-document.getElementById('favoritesContainer').addEventListener('click', async e => {
-  // 1. Favoritar (remover dos favoritos)
-  const favBtn = e.target.closest('.search-fav-btn');
-  if (favBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const livroId = parseInt(favBtn.dataset.livro);
-      const cap = parseInt(favBtn.dataset.cap);
-      const ver = parseInt(favBtn.dataset.ver);
-      const result = await db.toggleFavorito(livroId, cap, ver);
-      favBtn.classList.toggle('favorited', result === 1);
 
-      const item = favBtn.closest('.search-result-item');
-      if (result === 0 && item) {
-        item.style.opacity = '0.35';
-      } else if (item) {
-        item.style.opacity = '1';
-      }
-
-      showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
-      await updateFavCountOnly();
-    } catch (err) {
-      console.error("Erro ao favoritar nos favoritos:", err);
-    }
-    return;
-  }
-
-  // 2. Ouvir Trecho
-  const speakBtn = e.target.closest('.search-speak-btn');
-  if (speakBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const item = speakBtn.closest('.search-result-item');
-    const text = speakBtn.dataset.txt;
-
-    if (speakBtn.classList.contains('speaking')) {
-      await stopSpeech();
-      return;
-    }
-
-    await stopSpeech();
-    speakText(text, null, item);
-    return;
-  }
-
-  // 3. Copiar
-  const copyBtn = e.target.closest('.search-copy-btn');
-  if (copyBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
-    copyToClipboard(verseText).then(ok => {
-      if (ok) showToast('📋 Versículo copiado!');
-      else showToast('Erro ao copiar versículo');
-    });
-    return;
-  }
-
-  // 4. WhatsApp
-  const waBtn = e.target.closest('.search-wa-btn');
-  if (waBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    return;
-  }
-
-  // 5. Clicar no card para abrir o livro e capítulo
-  const item = e.target.closest('.search-result-item');
-  if (item) {
-    const cap = parseInt(item.dataset.cap);
-    openBook(parseInt(item.dataset.livro), item.dataset.nome, 0);
-    setTimeout(() => selectChapter(cap), 100);
-  }
-});
 
 // ===== GALLERY & SACRED STUDIO =====
 let allGalleryItems = [];
@@ -2695,30 +2779,11 @@ function getBestPortugueseVoice() {
   if (!cachedSpeechVoices.length && 'speechSynthesis' in window) {
     updateSpeechVoices();
   }
-  return cachedSpeechVoices.find(v => v.lang === 'pt-BR' || v.lang === 'pt_BR') ||
-         cachedSpeechVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt')) || null;
+  const voices = (cachedSpeechVoices && cachedSpeechVoices.length) ? cachedSpeechVoices : (window.speechSynthesis?.getVoices() || []);
+  return voices.find(v => v.lang === 'pt-BR' || v.lang === 'pt_BR') ||
+         voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt')) || null;
 }
 
-// Unlocks iOS WebKit audio/speech synthesis restriction on first user interaction anywhere in the app
-let isSpeechSynthesizerPrimed = false;
-function primeSpeechForIos() {
-  if (isSpeechSynthesizerPrimed) return;
-  isSpeechSynthesizerPrimed = true;
-  if ('speechSynthesis' in window) {
-    try {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-      const silentUtterance = new SpeechSynthesisUtterance(' ');
-      silentUtterance.volume = 0.01;
-      silentUtterance.rate = 10;
-      window.speechSynthesis.speak(silentUtterance);
-    } catch (e) {}
-  }
-}
-['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
-  document.addEventListener(evt, primeSpeechForIos, { once: true, passive: true });
-});
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
 const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria estejam com você! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
@@ -5120,6 +5185,9 @@ function renderLiturgiaView(data) {
       </div>
       <p class="liturgia-reading-text" style="font-weight: 500;">${data.evangelho?.texto || ''}</p>
       <div style="display:flex; justify-content: flex-end; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="upload-btn-secondary" id="btnSpeakEvangelhoLiturgia" style="padding: 6px 13px; font-size: 11.5px; border-color: rgba(212, 175, 55, 0.45); color: var(--gold-300);" onclick="toggleSpeakEvangelhoLiturgia()" title="Ouvir Evangelho do Dia">
+          <i class="fas fa-volume-up"></i> Ouvir Evangelho
+        </button>
         <button class="hero-donate-btn pulse-animation" style="padding: 7px 15px; font-size: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; font-weight: 700; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer;" onclick="gerarHomiliaEvangelhoIA()">
           <i class="fas fa-church"></i> Homilia com Padre de IA
         </button>
@@ -5203,6 +5271,7 @@ window.toggleSpeakLiturgia = async function () {
     return;
   }
   stopHomiliaLiturgiaSpeech();
+  stopEvangelhoLiturgiaSpeech();
   if (!currentLiturgiaData) return;
 
   const btn = document.getElementById('btnReadLiturgia');
@@ -5227,12 +5296,17 @@ window.toggleSpeakLiturgia = async function () {
       stopLiturgiaSpeech();
     } else if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(fullText);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 0.95;
-      utterance.onend = () => stopLiturgiaSpeech();
-      utterance.onerror = () => stopLiturgiaSpeech();
-      window.speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        if (!isLiturgiaSpeaking) return;
+        const utterance = new SpeechSynthesisUtterance(fullText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        const ptVoice = getBestPortugueseVoice();
+        if (ptVoice) utterance.voice = ptVoice;
+        utterance.onend = () => stopLiturgiaSpeech();
+        utterance.onerror = () => stopLiturgiaSpeech();
+        window.speechSynthesis.speak(utterance);
+      }, 50);
     }
   } catch (e) {
     console.error("Liturgia TTS Error:", e);
@@ -5346,6 +5420,75 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
   }
 }
 
+// Ouvir Evangelho do Dia Separadamente (TTS)
+let isEvangelhoLiturgiaSpeaking = false;
+
+function stopEvangelhoLiturgiaSpeech() {
+  isEvangelhoLiturgiaSpeaking = false;
+  const btn = document.getElementById('btnSpeakEvangelhoLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Evangelho';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+    try { window.Capacitor.Plugins.TextToSpeech.stop(); } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+window.toggleSpeakEvangelhoLiturgia = async function () {
+  if (isEvangelhoLiturgiaSpeaking) {
+    stopEvangelhoLiturgiaSpeech();
+    return;
+  }
+  stopLiturgiaSpeech();
+  stopHomiliaLiturgiaSpeech();
+  if (!currentLiturgiaData || !currentLiturgiaData.evangelho) return;
+
+  const btn = document.getElementById('btnSpeakEvangelhoLiturgia');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-stop"></i> Parar';
+    btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)';
+    btn.style.color = '#ffffff';
+  }
+  isEvangelhoLiturgiaSpeaking = true;
+
+  const ev = currentLiturgiaData.evangelho;
+  const evangelhoText = `Evangelho de Nosso Senhor Jesus Cristo segundo ${ev.titulo || 'o Evangelho'}. ${ev.referencia || ''}. ${ev.texto || ''}`;
+
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
+      await window.Capacitor.Plugins.TextToSpeech.speak({
+        text: evangelhoText,
+        lang: 'pt-BR',
+        rate: 0.95,
+        pitch: 1.0,
+        category: 'ambient'
+      });
+      stopEvangelhoLiturgiaSpeech();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setTimeout(() => {
+        if (!isEvangelhoLiturgiaSpeaking) return;
+        const utterance = new SpeechSynthesisUtterance(evangelhoText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        const ptVoice = getBestPortugueseVoice();
+        if (ptVoice) utterance.voice = ptVoice;
+        utterance.onend = () => stopEvangelhoLiturgiaSpeech();
+        utterance.onerror = () => stopEvangelhoLiturgiaSpeech();
+        window.speechSynthesis.speak(utterance);
+      }, 50);
+    }
+  } catch (e) {
+    console.error("Evangelho TTS Error:", e);
+    stopEvangelhoLiturgiaSpeech();
+  }
+};
+
 // Ouvir Homilia do Evangelho Separadamente (TTS)
 let isHomiliaLiturgiaSpeaking = false;
 
@@ -5371,6 +5514,7 @@ window.toggleSpeakHomiliaLiturgia = async function () {
     return;
   }
   stopLiturgiaSpeech();
+  stopEvangelhoLiturgiaSpeech();
   if (!currentLiturgiaData || !currentLiturgiaData.homilia) return;
 
   const btn = document.getElementById('btnSpeakHomiliaLiturgia');
@@ -5395,12 +5539,17 @@ window.toggleSpeakHomiliaLiturgia = async function () {
       stopHomiliaLiturgiaSpeech();
     } else if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(homilyText);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 0.95;
-      utterance.onend = () => stopHomiliaLiturgiaSpeech();
-      utterance.onerror = () => stopHomiliaLiturgiaSpeech();
-      window.speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        if (!isHomiliaLiturgiaSpeaking) return;
+        const utterance = new SpeechSynthesisUtterance(homilyText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.95;
+        const ptVoice = getBestPortugueseVoice();
+        if (ptVoice) utterance.voice = ptVoice;
+        utterance.onend = () => stopHomiliaLiturgiaSpeech();
+        utterance.onerror = () => stopHomiliaLiturgiaSpeech();
+        window.speechSynthesis.speak(utterance);
+      }, 50);
     }
   } catch (e) {
     console.error("Homilia TTS Error:", e);
