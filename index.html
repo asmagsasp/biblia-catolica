@@ -249,15 +249,17 @@
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
 
-        <!-- 9. Devoção a Maria -->
-        <div class="home-quick-card maria-card" onclick="showMariaDevocao()">
+        <!-- 9. As Aparições da Virgem & Devoção a Maria -->
+        <div class="home-quick-card maria-card" onclick="showAparicoesVirgem()">
           <div class="quick-card-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
             <i class="fas fa-crown"></i>
           </div>
           <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Rainha do Céu</div>
-            <h3 class="quick-card-title">Devoção a Maria</h3>
-            <p class="quick-card-desc">Aparições, Orações, Dogmas & Consagração</p>
+            <div class="quick-card-badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+              <i class="fas fa-sparkles"></i> Histórias Narradas & Fotos
+            </div>
+            <h3 class="quick-card-title">As Aparições da Virgem</h3>
+            <p class="quick-card-desc">Fátima, Lourdes, Guadalupe, Anguera, Kibeho, Akita, Medjugorje & Mais</p>
           </div>
           <div class="quick-card-arrow"><i class="fas fa-chevron-right"></i></div>
         </div>
@@ -1094,28 +1096,33 @@
       </div>
     </div>
 
-    <!-- DEVOÇÃO A MARIA (SANTÍSSIMA VIRGEM) -->
+    <!-- AS APARIÇÕES DA VIRGEM MARIA & DEVOÇÃO -->
     <div id="mariaView" class="hidden">
       <div class="maria-container">
         <div class="chapter-header">
           <div class="chapter-header-left">
-            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <button class="btn-back" onclick="goHome()" title="Voltar ao início"><i class="fas fa-arrow-left"></i></button>
             <div>
               <h2 class="chapter-title" style="display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-crown" style="color: #60a5fa;"></i>
-                Devoção a Maria
+                As Aparições da Virgem
               </h2>
-              <p class="chapter-subtitle">Aparições, Orações Tradicionais, Dogmas & Consagração</p>
+              <p class="chapter-subtitle">Fotos Sacras, Histórias Narradas em Áudio, Segredos & Profecias</p>
             </div>
+          </div>
+          <div class="radios-header-actions">
+            <button class="hero-share-btn" onclick="shareMariaWhatsApp('fatima', 'aparicao')" title="Compartilhar no WhatsApp" style="padding: 7px 12px; font-size: 13px;">
+              <i class="fab fa-whatsapp"></i> Compartilhar
+            </button>
           </div>
         </div>
 
         <!-- Banner Sacro Mariano -->
-        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.2) 0%, var(--bg-card) 70%); border-color: rgba(96, 165, 250, 0.4); margin: 0 16px 14px 16px;">
+        <div class="confissao-status-banner" style="background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.22) 0%, var(--bg-card) 70%); border-color: rgba(96, 165, 250, 0.45); margin: 0 16px 14px 16px;">
           <div class="confissao-banner-icon" style="color: #60a5fa;"><i class="fas fa-crown"></i></div>
           <div class="confissao-banner-text">
             <h4 style="color: #93c5fd;">“Fazei tudo o que Ele vos disser” (Jo 2, 5)</h4>
-            <p>Conheça as santas aparições, reze as orações tradicionais da Igreja, aprofunde-se nos 4 dogmas marianos e consagre a sua vida ao Imaculado Coração de Maria.</p>
+            <p>Conheça as santas aparições da Virgem Maria no mundo e no Brasil (Fátima, Lourdes, Guadalupe, Anguera/BA, Akita, Kibeho, Garabandal), escute suas histórias narradas em áudio, descubra os segredos e profecias e reze as orações da Tradição da Igreja.</p>
           </div>
         </div>
 
@@ -1123,28 +1130,44 @@
         <div class="cartas-filters-wrap">
           <div class="cartas-search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="mariaSearchInput" placeholder="Buscar por aparição, oração, intenção ou dogma..." oninput="handleMariaSearch(this.value)" onkeyup="handleMariaSearch(this.value)" onchange="handleMariaSearch(this.value)" onsearch="handleMariaSearch(this.value)" autocomplete="off">
+            <input type="text" id="mariaSearchInput" placeholder="Buscar por aparição, vidente, cidade, segredo ou profecia..." oninput="handleMariaSearch(this.value)" onkeyup="handleMariaSearch(this.value)" onchange="handleMariaSearch(this.value)" onsearch="handleMariaSearch(this.value)" autocomplete="off">
             <button id="mariaSearchClear" class="hidden" onclick="clearMariaSearch()" title="Limpar busca"><i class="fas fa-times"></i></button>
           </div>
 
           <!-- Sugestões Rápidas de Busca -->
           <div class="cartas-quick-chips">
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Aparecida')"><i class="fas fa-crown" style="color: #d4af37;"></i> Aparecida</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Fátima')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Fátima</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Guadalupe')"><i class="fas fa-sun" style="color: #10b981;"></i> Guadalupe</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Lourdes')"><i class="fas fa-droplet" style="color: #0ea5e9;"></i> Lourdes</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Desatadora')"><i class="fas fa-hands-holding" style="color: #ec4899;"></i> Desatadora dos Nós</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Ângelus')"><i class="fas fa-bell" style="color: #38bdf8;"></i> Ângelus</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Consagração')"><i class="fas fa-hands-praying" style="color: #d4af37;"></i> Consagração</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Dogmas')"><i class="fas fa-certificate" style="color: #8b5cf6;"></i> Dogmas</button>
-            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Escapulário')"><i class="fas fa-shield-halved" style="color: #b45309;"></i> Escapulário</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Anguera')"><i class="fas fa-shield-heart" style="color: #eab308;"></i> Anguera (Bahia)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Fátima')"><i class="fas fa-dove" style="color: #38bdf8;"></i> Fátima (Portugal)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Guadalupe')"><i class="fas fa-sun" style="color: #10b981;"></i> Guadalupe (México)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Lourdes')"><i class="fas fa-droplet" style="color: #0ea5e9;"></i> Lourdes (França)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Akita')"><i class="fas fa-fire-flame-curved" style="color: #ef4444;"></i> Akita (Japão)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Kibeho')"><i class="fas fa-globe-africa" style="color: #f59e0b;"></i> Kibeho (África)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Medjugorje')"><i class="fas fa-peace" style="color: #06b6d4;"></i> Medjugorje</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Garabandal')"><i class="fas fa-mountain" style="color: #b45309;"></i> Garabandal</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Rosa Mística')"><i class="fas fa-fan" style="color: #ec4899;"></i> Rosa Mística</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Bom Sucesso')"><i class="fas fa-church" style="color: #d97706;"></i> Bom Sucesso (Quito)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Aparecida')"><i class="fas fa-crown" style="color: #d4af37;"></i> Aparecida (Brasil)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Zeitoun')"><i class="fas fa-lightbulb" style="color: #3b82f6;"></i> Zeitoun (Egito)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Knock')"><i class="fas fa-clover" style="color: #059669;"></i> Knock (Irlanda)</button>
+            <button type="button" class="cartas-chip" onclick="setMariaQuickSearch('Pilar')"><i class="fas fa-monument" style="color: #dc2626;"></i> Pilar (Espanha)</button>
           </div>
 
-          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 4px;">
-            <button class="nav-tab active" id="tabMariaTitulos" onclick="filterMariaAba('titulos', this)">🌹 Títulos e Aparições (12)</button>
+          <!-- Abas Principais -->
+          <div class="nav-tabs" style="margin-top: 10px; margin-bottom: 8px;">
+            <button class="nav-tab active" id="tabMariaAparicoes" onclick="filterMariaAba('aparicoes', this)">🌹 As Aparições da Virgem (22)</button>
             <button class="nav-tab" id="tabMariaOracoes" onclick="filterMariaAba('oracoes', this)">📿 Orações Marianas (8)</button>
             <button class="nav-tab" id="tabMariaDogmas" onclick="filterMariaAba('dogmas', this)">🕊️ Dogmas da Igreja (4)</button>
             <button class="nav-tab" id="tabMariaPraticas" onclick="filterMariaAba('praticas', this)">📜 Devoções & Escapulário</button>
+          </div>
+
+          <!-- Sub-Filtros para Aparições -->
+          <div id="mariaSubFilterContainer" class="cartas-quick-chips" style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-color);">
+            <div id="mariaSubFilterChips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="cartas-chip active" onclick="filterAparicoesSubcategoria('todas', this)"><i class="fas fa-star" style="color: var(--gold-400);"></i> Todas as Aparições (22)</button>
+              <button type="button" class="cartas-chip" onclick="filterAparicoesSubcategoria('aprovadas', this)"><i class="fas fa-check-circle" style="color: #10b981;"></i> Aprovadas pela Santa Sé</button>
+              <button type="button" class="cartas-chip" onclick="filterAparicoesSubcategoria('profecias', this)"><i class="fas fa-shield-heart" style="color: #eab308;"></i> Profecias, Segredos & Nihil Obstat</button>
+              <button type="button" class="cartas-chip" onclick="filterAparicoesSubcategoria('latinoamerica', this)"><i class="fas fa-earth-americas" style="color: #38bdf8;"></i> Brasil & América Latina</button>
+            </div>
           </div>
         </div>
 
@@ -2498,6 +2521,16 @@
 
       <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
         <button type="button" class="upload-btn-secondary" onclick="closeDiretorHistoricoModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALHES DA APARIÇÃO DA VIRGEM / ORAÇÃO / DOGMA -->
+  <div id="mariaDetailModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeMariaModal()">
+    <div class="donate-modal-content" style="max-width: 680px; max-height: 92vh; overflow-y: auto; text-align: left; padding: 20px; position: relative;">
+      <button class="donate-close-btn" onclick="closeMariaModal()" style="z-index: 10;"><i class="fas fa-times"></i></button>
+      <div id="mariaModalContent">
+        <!-- Renderizado dinamicamente -->
       </div>
     </div>
   </div>

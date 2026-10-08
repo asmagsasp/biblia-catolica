@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Executivo & Histórico de Engenharia - Bíblia Sagrada Católica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @page {
+      size: A4;
+      margin: 12mm 14mm 12mm 14mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1e1b18;
+      background: #ffffff;
+      line-height: 1.45;
+      font-size: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        padding-top: 0 !important;
+      }
+    }
+
+    .toolbar-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #1e0d16 0%, #3b1127 100%);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      border-bottom: 2px solid #d4af37;
+    }
+
+    .toolbar-sticky .btn-print {
+      background: linear-gradient(135deg, #d4af37 0%, #aa820a 100%);
+      color: #1a0f00;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .toolbar-sticky .btn-print:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.6);
+      filter: brightness(1.1);
+    }
+
+    .toolbar-sticky .tip {
+      font-size: 12px;
+      color: #e5d5b5;
+    }
+
+    /* CAPA */
+    .cover-page {
+      page-break-after: always;
+      height: 96vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      padding: 36px 20px;
+      background: radial-gradient(circle at center top, #1e0d16 0%, #0c050a 100%);
+      color: #fdfaf3;
+      border: 3px solid #d4af37;
+      border-radius: 12px;
+    }
+
+    .cover-header {
+      margin-top: 15px;
+    }
+
+    .cover-cross {
+      font-size: 52px;
+      color: #d4af37;
+      margin-bottom: 12px;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    }
+
+    .cover-title {
+      font-family: 'Cinzel', serif;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #fff9ed;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+    }
+
+    .cover-subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      color: #e5c378;
+      letter-spacing: 1px;
+      margin: 0 0 20px 0;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 5px 16px;
+      background: rgba(212, 175, 55, 0.18);
+      border: 1px solid #d4af37;
+      border-radius: 30px;
+      color: #f7e7c4;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .cover-body {
+      padding: 24px 30px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 14px;
+      margin: 0 20px;
+    }
+
+    .cover-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 19px;
+      font-style: italic;
+      color: #fdfaf3;
+      line-height: 1.55;
+      margin: 0 0 8px 0;
+    }
+
+    .cover-quote-ref {
+      font-size: 12px;
+      color: #d4af37;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .cover-footer {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      border-top: 1px solid rgba(212, 175, 55, 0.3);
+      padding-top: 20px;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .cover-stat-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    .cover-stat-num {
+      font-family: 'Cinzel', serif;
+      font-size: 19px;
+      font-weight: 800;
+      color: #d4af37;
+    }
+
+    .cover-stat-lbl {
+      font-size: 10.5px;
+      color: #d4c3ac;
+      text-transform: uppercase;
+    }
+
+    .cover-meta {
+      font-size: 10.5px;
+      color: #8e7a69;
+      margin-top: 12px;
+    }
+
+    /* PÁGINAS */
+    .page {
+      page-break-after: always;
+      padding: 4px 0;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #d4af37;
+      padding-bottom: 6px;
+      margin-top: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-icon {
+      width: 28px;
+      height: 28px;
+      background: #1e0d16;
+      color: #d4af37;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border: 1px solid #d4af37;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1e0d16;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card {
+      background: #faf8f5;
+      border: 1px solid #e7dfd5;
+      border-left: 4px solid #d4af37;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* GRID DE MÉTRICAS */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .metric-box {
+      background: #faf7f2;
+      border: 1px solid #e5dccf;
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+
+    .metric-icon {
+      font-size: 16px;
+      color: #9e7815;
+      margin-bottom: 2px;
+    }
+
+    .metric-val {
+      font-family: 'Cinzel', serif;
+      font-size: 15.5px;
+      font-weight: 800;
+      color: #1e0d16;
+    }
+
+    .metric-label {
+      font-size: 10px;
+      color: #6b5c50;
+      font-weight: 600;
+    }
+
+    /* TIMELINE */
+    .timeline {
+      position: relative;
+      margin: 10px 0 10px 0;
+      padding-left: 20px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: #d4af37;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 10px;
+      page-break-inside: avoid;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -20px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #1e0d16;
+      border: 2.5px solid #d4af37;
+    }
+
+    .timeline-content {
+      background: #ffffff;
+      border: 1px solid #e8e2d8;
+      border-radius: 8px;
+      padding: 9px 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .timeline-title {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e0d16;
+      margin: 0;
+    }
+
+    .timeline-badge {
+      font-size: 9.5px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: #f1ebe1;
+      color: #785a1a;
+      font-weight: 700;
+    }
+
+    .timeline-desc {
+      font-size: 11.5px;
+      color: #4a3e35;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .timeline-tags {
+      margin-top: 4px;
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-tag {
+      font-size: 9px;
+      padding: 1px 5px;
+      background: #fdf5e2;
+      border: 1px solid #ecd89d;
+      color: #825e0c;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* TABELAS */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 11px;
+    }
+
+    th {
+      background: #1e0d16;
+      color: #f7e7c4;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 8px;
+      border-top: 2px solid #d4af37;
+      border-bottom: 2px solid #d4af37;
+    }
+
+    td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #ede7df;
+      color: #2b2520;
+    }
+
+    tr:nth-child(even) td {
+      background: #faf8f5;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .tag-ai { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .tag-audio { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .tag-prayer { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .tag-bible { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+    /* CARDS DE MÓDULOS */
+    .module-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .module-card {
+      background: #ffffff;
+      border: 1px solid #e7e0d4;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.02);
+      page-break-inside: avoid;
+    }
+
+    .module-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .module-card-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .module-card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      font-weight: 800;
+      color: #1e0d16;
+      margin: 0;
+    }
+
+    .module-card-desc {
+      font-size: 10.5px;
+      color: #574b42;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    /* FOOTER */
+    .report-footer {
+      border-top: 1px solid #d4af37;
+      padding-top: 8px;
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #8c7d70;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE AÇÕES (VISÍVEL APENAS NA TELA) -->
+  <div class="toolbar-sticky no-print">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <i class="fas fa-file-pdf" style="font-size: 26px; color: #d4af37;"></i>
+      <div>
+        <div style="font-weight: 800; font-size: 15px; font-family: 'Cinzel', serif; letter-spacing: 0.5px;">Bíblia Sagrada Católica — Relatório Executivo</div>
+        <div class="tip"><i class="fas fa-info-circle"></i> Para salvar em PDF: clique no botão ao lado ou use <kbd style="background:#333; padding:2px 5px; border-radius:4px;">Ctrl + P</kbd> e escolha <strong>"Salvar como PDF"</strong>.</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Salvar em PDF / Imprimir</button>
+      <a href="./Relatorio_Completo_Biblia_Sagrada_Catolica.pdf" download="Relatorio_Completo_Biblia_Sagrada_Catolica.pdf" class="btn-print" style="background: #2a1320; color: #d4af37; border: 1px solid #d4af37;">
+        <i class="fas fa-download"></i> Baixar PDF Pré-Gerado
+      </a>
+    </div>
+  </div>
+
+  <!-- CAPA -->
+  <div class="cover-page">
+    <div class="cover-header">
+      <div class="cover-cross">✝</div>
+      <h1 class="cover-title">Relatório Executivo & de Engenharia</h1>
+      <div class="cover-subtitle">Aplicativo Bíblia Sagrada Católica (Edição Ave Maria)</div>
+      <div class="cover-badge"><i class="fas fa-certificate"></i> Histórico Completo de Implantação</div>
+    </div>
+
+    <div class="cover-body">
+      <p class="cover-quote">
+        “Ide por todo o mundo e pregai o Evangelho a toda criatura. Aquele que crer e for batizado será salvo.”
+      </p>
+      <div class="cover-quote-ref">São Marcos 16, 15-16</div>
+    </div>
+
+    <div>
+      <div class="cover-footer">
+        <div class="cover-stat-item">
+          <div class="cover-stat-num">73</div>
+          <div class="cover-stat-lbl">Livros Canônicos</div>
+        </div>
+        <div class="cover-stat-item">
+          <div class="cover-stat-num">35.000+</div>
+          <div class="cover-stat-lbl">Versículos Indexados</div>
+        </div>
+        <div class="cover-stat-item">
+          <div class="cover-stat-num">100%</div>
+          <div class="cover-stat-lbl">Livre de Anúncios</div>
+        </div>
+      </div>
+      <div class="cover-meta">
+        <strong>Ecossistema:</strong> Android APK • Web PWA • Vercel CDN • Cloud AI • Firebase Sync<br>
+        <strong>Emissão:</strong> Outubro de 2026 • <strong>Versão:</strong> 2.8.0 Release Final
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 1: SUMÁRIO EXECUTIVO & PILARES -->
+  <div class="page">
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-crown"></i></div>
+      <h2 class="section-title">1. Sumário Executivo & Visão Geral</h2>
+    </div>
+
+    <div class="summary-card">
+      <strong>Propósito e Missão da Plataforma:</strong> O aplicativo da <strong>Bíblia Sagrada Católica</strong> foi concebido como um ecossistema digital sagrado, robusto e livre de propagandas comerciais, desenhado especificamente para nutrir a fé, a oração diária e o estudo bíblico em comunhão com o <strong>Magistério da Igreja Católica Apostólica Romana</strong>. O sistema combina uma base de dados bíblica 100% offline com tecnologias de ponta em <strong>Inteligência Artificial Pastoral</strong>, streaming contínuo de rádios católicas e acervo dos grandes padres evangelizadores do Brasil.
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-book-bible"></i></div>
+        <div class="metric-val">73 Livros</div>
+        <div class="metric-label">Cânon Católico</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-dove"></i></div>
+        <div class="metric-val">5 Personas</div>
+        <div class="metric-label">Diretor Espiritual IA</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-radio"></i></div>
+        <div class="metric-val">10 Emissoras</div>
+        <div class="metric-label">Rádios 24h Ao Vivo</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-headphones"></i></div>
+        <div class="metric-val">16 Podcasts</div>
+        <div class="metric-label">Acervo dos Padres</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-scroll"></i></div>
+        <div class="metric-val">30+ Orações</div>
+        <div class="metric-label">Devocionário & Santos</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-cross"></i></div>
+        <div class="metric-val">9 Novenas</div>
+        <div class="metric-label">Guias de 9 Dias</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-fire"></i></div>
+        <div class="metric-val">Velas Virtuais</div>
+        <div class="metric-label">Intercessão Comunitária</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="metric-val">365 Dias</div>
+        <div class="metric-label">Plano de Leitura</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+      <h2 class="section-title">2. Pilares de Engenharia & Arquitetura</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Camada / Pilar</th>
+          <th>Tecnologia Principal</th>
+          <th>Objetivo / Benefício ao Fiel</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Motor Bíblico Offline</strong></td>
+          <td>SQLite / IndexedDB + Cache</td>
+          <td>Leitura imediata de todos os 35k versículos sem consumir internet móvel.</td>
+        </tr>
+        <tr>
+          <td><strong>Inteligência Artificial</strong></td>
+          <td>Groq (Llama 3.3 70B) & Gemini</td>
+          <td>Homilias, teologia dos santos e direção espiritual com respostas em &lt; 2s.</td>
+        </tr>
+        <tr>
+          <td><strong>Streaming de Áudio</strong></td>
+          <td>HTML5 Audio + Mini-Player Persistente</td>
+          <td>Reprodução ininterrupta de rádios e podcasts enquanto o fiel lê e reza.</td>
+        </tr>
+        <tr>
+          <td><strong>Acessibilidade & Narração</strong></td>
+          <td>Capacitor TTS & Web Speech Synthesis</td>
+          <td>Leitura em voz alta de capítulos inteiros, liturgia, homilias e orações.</td>
+        </tr>
+        <tr>
+          <td><strong>Multiplataforma</strong></td>
+          <td>Capacitor Native (Android) + PWA</td>
+          <td>Execução perfeita no celular, tablet, computador e instalação como app.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="report-footer">
+      <span>Bíblia Sagrada Católica • Relatório de Engenharia</span>
+      <span>Página 1</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: LINHA DO TEMPO COMPLETA -->
+  <div class="page">
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-clock-rotate-left"></i></div>
+      <h2 class="section-title">3. Linha do Tempo & Evolução das Implantações</h2>
+    </div>
+
+    <div class="timeline">
+      <!-- FASE 1 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 1: Fundação, Motor Bíblico & Blindagem Android</h3>
+            <span class="timeline-badge">Março de 2026</span>
+          </div>
+          <p class="timeline-desc">
+            Estruturação do banco canônico com 73 livros (Edição Ave Maria). Desenvolvimento do motor de busca rápida, favoritos com persistência atômica via <code>Capacitor Preferences</code>, controle de tamanho de fontes, modo noturno e renderização assíncrona por blocos sem congelamentos no Android.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">SQLite Nativo</span>
+            <span class="timeline-tag">Plano 365 Dias</span>
+            <span class="timeline-tag">Splash Screen Nativa</span>
+            <span class="timeline-tag">Zoom de Letra</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 2 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 2: Liturgia Diária, Santo Rosário & Devoções Tradicionais</h3>
+            <span class="timeline-badge">1º a 2 de Outubro de 2026</span>
+          </div>
+          <p class="timeline-desc">
+            Implementação da Liturgia Diária oficial com Santo do Dia, Santo Rosário passo a passo com contas dinâmicas e orações completas, Mural de Velas Virtuais com chamas animadas, Lectio Divina dos monges, Exame de Consciência com 10 Mandamentos e Diário Espiritual com testemunhos no WhatsApp.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">Liturgia Diária</span>
+            <span class="timeline-tag">Santo Rosário</span>
+            <span class="timeline-tag">Velas Virtuais</span>
+            <span class="timeline-tag">Confissão & Penitência</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 3 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 3: Novenas da Igreja, Devoção a Maria & Cartas Apostólicas</h3>
+            <span class="timeline-badge">2 a 3 de Outubro de 2026</span>
+          </div>
+          <p class="timeline-desc">
+            Criação do módulo de Novenas Tradicionais (9 dias com rastreamento), Devoção à Virgem Maria (Aparições de Aparecida, Fátima, Guadalupe, Dogmas e Consagração de Montfort) e biblioteca temática de todas as Epístolas do Novo Testamento.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">Novenas 9 Dias</span>
+            <span class="timeline-tag">Devoção Mariana</span>
+            <span class="timeline-tag">Cartas Apostólicas</span>
+            <span class="timeline-tag">Busca por Sinônimos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 4 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 4: Revolução da IA Católica — Padre de IA & Homilias</h3>
+            <span class="timeline-badge">3 a 6 de Outubro de 2026</span>
+          </div>
+          <p class="timeline-desc">
+            Integração do motor de Inteligência Artificial de altíssima velocidade (Groq Llama 3.3 70B e Google Gemini) gerando homilias exegéticas profundas e teologia católica dos Doutores da Igreja (São Tomás de Aquino, Santo Agostinho) com resposta em menos de 2 segundos.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">Padre de IA</span>
+            <span class="timeline-tag">Groq Llama 3.3 70B</span>
+            <span class="timeline-tag">IA Teológica</span>
+            <span class="timeline-tag">Homilia do Evangelho</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 5 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 5: Rádios 24h, Podcasts dos Grandes Padres & Livro de Orações</h3>
+            <span class="timeline-badge">6 a 7 de Outubro de 2026</span>
+          </div>
+          <p class="timeline-desc">
+            Lançamento do reprodutor contínuo de 10 rádios católicas ao vivo (Canção Nova, Aparecida, Evangelizar, Anunciação 87.7 FM) com Mini-Player flutuante persistente, acervo completo de podcasts de 12 grandes padres e compilação do Livro de Orações dos Santos e Salvai Almas.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">Rádios Ao Vivo 24h</span>
+            <span class="timeline-tag">Acervo dos Padres</span>
+            <span class="timeline-tag">Mini-Player Flutuante</span>
+            <span class="timeline-tag">Livro Salvai Almas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 6 -->
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h3 class="timeline-title">Fase 6: Diretor Espiritual & Palavra Amiga (IA Pastoral Católica)</h3>
+            <span class="timeline-badge">7 de Outubro de 2026 (Atual)</span>
+          </div>
+          <p class="timeline-desc">
+            Criação do módulo confidencial de acolhimento pastoral onde o usuário desabafa e recebe consolo bíblico, sabedoria dos santos (São Padre Pio, Sta. Teresa de Calcutá, São João Paulo II, Sta. Teresinha), oração personalizada em áudio e salvamento no Diário Espiritual.
+          </p>
+          <div class="timeline-tags">
+            <span class="timeline-tag">Diretor Espiritual</span>
+            <span class="timeline-tag">5 Personas Santas</span>
+            <span class="timeline-tag">Acolhimento Pastoral</span>
+            <span class="timeline-tag">Áudio & Diário</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <span>Bíblia Sagrada Católica • Relatório de Engenharia</span>
+      <span>Página 2</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 3: CATÁLOGO DE MÓDULOS -->
+  <div class="page">
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-boxes-stacked"></i></div>
+      <h2 class="section-title">4. Catálogo Detalhado de Módulos & Recursos</h2>
+    </div>
+
+    <div class="module-grid">
+      <!-- 1. Diretor Espiritual -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(56, 189, 248, 0.15); color: #0284c7;">
+            <i class="fas fa-dove"></i>
+          </div>
+          <h4 class="module-card-title">Diretor Espiritual & Palavra Amiga</h4>
+        </div>
+        <p class="module-card-desc">
+          Acolhimento com IA sob a ótica de 5 grandes Santos e Padres da Igreja. Retorna acolhimento amoroso, versículo bíblico, sabedoria dos santos, oração de entrega e propósito do dia, com áudio TTS e histórico local.
+        </p>
+      </div>
+
+      <!-- 2. Rádios & Podcasts -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(234, 179, 8, 0.15); color: #b45309;">
+            <i class="fas fa-radio"></i>
+          </div>
+          <h4 class="module-card-title">Rádios 24h & Podcasts Católicos</h4>
+        </div>
+        <p class="module-card-desc">
+          Transmissões ao vivo das maiores emissoras católicas do Brasil e episódios de Pe. Fábio de Melo, Pe. Zezinho, Pe. Manzotti, Pe. Paulo Ricardo, Pe. Marcelo Rossi, Pe. Léo, Frei Gilson e outros com Mini-Player flutuante.
+        </p>
+      </div>
+
+      <!-- 3. Livro de Orações -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce;">
+            <i class="fas fa-book-bible"></i>
+          </div>
+          <h4 class="module-card-title">Livro de Orações & Salvai Almas</h4>
+        </div>
+        <p class="module-card-desc">
+          Coletânea monumental com Ladainha da Humildade, São Bento, São Miguel Arcanjo, Terço das Lágrimas, Consagração de Montfort, orações pelas Almas do Purgatório, súplicas de cura e bênção do lar com áudio.
+        </p>
+      </div>
+
+      <!-- 4. Liturgia Diária -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(34, 197, 94, 0.15); color: #15803d;">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <h4 class="module-card-title">Liturgia Diária & Santo do Dia</h4>
+        </div>
+        <p class="module-card-desc">
+          Leituras completas do dia da CNBB, salmo cantado/lido, Evangelho, homilia católica em áudio e texto, biografia do Santo do dia e botão direto para abrir a passagem no texto bíblico.
+        </p>
+      </div>
+
+      <!-- 5. Santo Rosário -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(212, 175, 55, 0.15); color: #9e7815;">
+            <i class="fas fa-praying-hands"></i>
+          </div>
+          <h4 class="module-card-title">Santo Rosário & Terço Virtual</h4>
+        </div>
+        <p class="module-card-desc">
+          Guia de oração passo a passo com identificação automática dos mistérios do dia da semana (Gozosos, Dolorosos, Gloriosos, Luminosos), contas virtuais clicáveis, jaculatórias e Salve Rainha.
+        </p>
+      </div>
+
+      <!-- 6. Mural de Velas Virtuais -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(239, 68, 68, 0.15); color: #b91c1c;">
+            <i class="fas fa-fire"></i>
+          </div>
+          <h4 class="module-card-title">Mural de Velas & Intenções</h4>
+        </div>
+        <p class="module-card-desc">
+          Espaço comunitário onde o fiel acende sua vela virtual com chama em animação procedural por 7 dias. Outros fiéis de todo o Brasil podem clicar em "Rezei por você" para multiplicar as intercessões.
+        </p>
+      </div>
+
+      <!-- 7. Exame de Consciência -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(244, 63, 94, 0.15); color: #be123c;">
+            <i class="fas fa-cross"></i>
+          </div>
+          <h4 class="module-card-title">Exame de Consciência & Confissão</h4>
+        </div>
+        <p class="module-card-desc">
+          Preparação penitencial com base nos 10 Mandamentos da Lei de Deus, 5 Mandamentos da Igreja e 7 Pecados Capitais, com resumo 100% privado para levar ao confessionário e ato de contrição.
+        </p>
+      </div>
+
+      <!-- 8. Diário Espiritual -->
+      <div class="module-card">
+        <div class="module-card-header">
+          <div class="module-card-icon" style="background: rgba(16, 185, 129, 0.15); color: #047857;">
+            <i class="fas fa-book-bookmark"></i>
+          </div>
+          <h4 class="module-card-title">Diário Espiritual & Graças</h4>
+        </div>
+        <p class="module-card-desc">
+          Livro de gratidão pessoal onde o fiel anota pedidos de oração, promessas e celebra graças alcançadas com testemunho, versículo de agradecimento e compartilhamento formatado no WhatsApp.
+        </p>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-shield-halved"></i></div>
+      <h2 class="section-title">5. Sustentabilidade & Painel Administrativo</h2>
+    </div>
+
+    <p style="font-size: 11.5px; line-height: 1.5; color: #3a322c; margin: 0 0 10px 0;">
+      Para manter o projeto <strong>100% livre de propagandas comerciais invasivas</strong>, foi criado o sistema de <strong>Compromisso Fraterno de Benfeitor</strong> integrado ao Pix do Banco Central do Brasil (BACEN Copia e Cola e QR Code). O aplicativo conta com salvaguardas que impedem interrupções durante a oração e um <strong>Painel Administrativo protegido por PIN</strong> para gerenciamento de chaves de IA (Groq / Gemini) e diagnósticos.
+    </p>
+
+    <div class="report-footer">
+      <span>Bíblia Sagrada Católica • Relatório de Engenharia</span>
+      <span>Página 3</span>
+    </div>
+  </div>
+
+  <!-- PÁGINA 4: INVENTÁRIO TÉCNICO & CONCLUSÃO -->
+  <div class="page">
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-code"></i></div>
+      <h2 class="section-title">6. Inventário dos Arquivos-Fonte & Módulos</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Arquivo / Módulo</th>
+          <th>Responsabilidade Técnica</th>
+          <th>Tecnologias</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>src/diretorEspiritualService.js</code></td>
+          <td>Direção Espiritual, Personas Santas, Groq AI & Base Pastoral Offline</td>
+          <td><span class="tag-pill tag-ai">IA Groq/Gemini</span></td>
+        </tr>
+        <tr>
+          <td><code>src/podcastService.js</code></td>
+          <td>Engine de Rádios 24h, Acervo de 16 Podcasts & Mini-Player</td>
+          <td><span class="tag-pill tag-audio">HTML5 Audio</span></td>
+        </tr>
+        <tr>
+          <td><code>src/oracoesService.js</code></td>
+          <td>Livro de 30+ Grandes Orações Católicas, Ladainhas & Salvai Almas</td>
+          <td><span class="tag-pill tag-prayer">Devocionário</span></td>
+        </tr>
+        <tr>
+          <td><code>src/liturgiaService.js</code></td>
+          <td>Extração de Leituras da Liturgia Diária, Santo do Dia & Homilia</td>
+          <td><span class="tag-pill tag-bible">Liturgia CNBB</span></td>
+        </tr>
+        <tr>
+          <td><code>src/rosarioService.js</code></td>
+          <td>Algoritmo do Santo Rosário, cálculo de mistérios e jaculatórias</td>
+          <td><span class="tag-pill tag-prayer">Rosário</span></td>
+        </tr>
+        <tr>
+          <td><code>src/teologiaService.js</code></td>
+          <td>IA Teológica com Doutores da Igreja & Exegese Patrística</td>
+          <td><span class="tag-pill tag-ai">Doutores CIC</span></td>
+        </tr>
+        <tr>
+          <td><code>src/novenasService.js</code></td>
+          <td>Guia de Novenas de 9 Dias, acompanhamento diário & bênçãos</td>
+          <td><span class="tag-pill tag-prayer">Novenas</span></td>
+        </tr>
+        <tr>
+          <td><code>src/mariaService.js</code></td>
+          <td>Aparições Marianas, Dogmas, Orações e Consagração Montfort</td>
+          <td><span class="tag-pill tag-prayer">Mariologia</span></td>
+        </tr>
+        <tr>
+          <td><code>src/confissaoService.js</code></td>
+          <td>Exame de Consciência, 10 Mandamentos e Resumo Confessionário</td>
+          <td><span class="tag-pill tag-bible">Penitencial</span></td>
+        </tr>
+        <tr>
+          <td><code>src/diarioService.js</code></td>
+          <td>Diário de Orações, Graças Alcançadas & Sincronização Cloud</td>
+          <td><span class="tag-pill tag-bible">Firebase Sync</span></td>
+        </tr>
+        <tr>
+          <td><code>src/cartasService.js</code></td>
+          <td>Todas as Epístolas do NT, busca temática e insights</td>
+          <td><span class="tag-pill tag-bible">Novo Testamento</span></td>
+        </tr>
+        <tr>
+          <td><code>src/db.js</code></td>
+          <td>Banco de dados com 73 Livros, 35k versículos e motor de busca</td>
+          <td><span class="tag-pill tag-bible">SQLite / IndexedDB</span></td>
+        </tr>
+        <tr>
+          <td><code>src/main.js</code></td>
+          <td>Controlador mestre, roteamento de views, áudio TTS e eventos UI</td>
+          <td><span class="tag-pill tag-bible">Vite / ES6+</span></td>
+        </tr>
+        <tr>
+          <td><code>src/style.css</code></td>
+          <td>Design System "Lux Divina", glassmorphism, tipografia e dark mode</td>
+          <td><span class="tag-pill tag-bible">CSS3 Moderno</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-header">
+      <div class="section-icon"><i class="fas fa-flag-checkered"></i></div>
+      <h2 class="section-title">7. Conclusão & Prontidão de Produção</h2>
+    </div>
+
+    <div class="summary-card" style="border-left-color: #16a34a; background: #f0fdf4; margin-bottom: 8px;">
+      <strong style="color: #166534;"><i class="fas fa-check-circle"></i> Status de Homologação: Aprovado para Distribuição Global</strong><br>
+      O aplicativo encontra-se em estado de <strong>excelência e maturidade técnica</strong>:
+      <ul style="margin: 4px 0 6px 18px; padding: 0;">
+        <li>Deploy Web / PWA automatizado via GitHub e Vercel CDN.</li>
+        <li>Sincronização nativa completa para o ecossistema Android (Capacitor).</li>
+        <li>Zero propagandas comerciais invasivas, honrando a sacralidade da oração.</li>
+        <li>Motor de IA de última geração respondendo em tempo recorde (&lt; 2 segundos).</li>
+      </ul>
+      <em>“Tudo para a maior glória de Deus e salvação das almas!”</em>
+    </div>
+
+    <div class="report-footer">
+      <span>Bíblia Sagrada Católica • Relatório de Engenharia</span>
+      <span>Página 4 (Fim do Documento)</span>
+    </div>
+  </div>
+
+</body>
+</html>

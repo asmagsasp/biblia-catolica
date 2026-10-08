@@ -6232,7 +6232,7 @@ mark,
 }
 
 /* ==========================================================================
-   DEVOÇÃO A MARIA (SANTÍSSIMA VIRGEM)
+   AS APARIÇÕES DA VIRGEM MARIA & DEVOÇÕES MARIANAS - STYLES
    ========================================================================== */
 
 .home-quick-card.maria-card:hover {
@@ -6241,55 +6241,145 @@ mark,
 }
 
 .maria-container {
-  padding-bottom: 90px;
-  animation: fadeIn 0.3s ease-out;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-bottom: 120px;
 }
 
 .maria-grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-  padding: 0 16px;
-  margin-top: 14px;
+  gap: 20px;
+  padding: 12px 16px;
 }
 
 @media (max-width: 640px) {
   .maria-grid-container {
     grid-template-columns: 1fr;
-    padding: 0 12px;
+    padding: 8px 12px;
+    gap: 16px;
   }
 }
 
 .maria-item-card {
-  background: linear-gradient(145deg, rgba(20, 24, 38, 0.95) 0%, rgba(13, 17, 28, 0.98) 100%);
-  border: 1px solid rgba(96, 165, 250, 0.25);
-  border-radius: 16px;
-  padding: 18px;
+  background: var(--bg-card, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  position: relative;
+  justify-content: space-between;
   overflow: hidden;
-}
-
-[data-theme="light"] .maria-item-card {
-  background: linear-gradient(145deg, #ffffff 0%, #f4f8ff 100%);
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.24s ease, box-shadow 0.24s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
 .maria-item-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   border-color: rgba(96, 165, 250, 0.5);
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(96, 165, 250, 0.15);
+}
+
+.maria-item-card.is-speaking-active {
+  border-color: var(--gold-400);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, var(--bg-card) 100%);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.35);
+  animation: mariaSpeakingPulse 2s ease-in-out infinite;
+}
+
+@keyframes mariaSpeakingPulse {
+  0%, 100% { border-color: rgba(212, 175, 55, 0.5); }
+  50% { border-color: rgba(212, 175, 55, 0.95); box-shadow: 0 0 28px rgba(212, 175, 55, 0.45); }
+}
+
+/* Photo Wrapper & Image */
+.maria-card-photo-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #0f121d;
+  overflow: hidden;
+}
+
+.maria-card-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.maria-item-card:hover .maria-card-photo {
+  transform: scale(1.06);
+}
+
+.maria-photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(15, 18, 29, 0.85) 100%);
+  pointer-events: none;
+}
+
+/* Eclesial Status Pills */
+.maria-eclesial-pill {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: auto;
+  max-width: calc(100% - 24px);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.3px;
+}
+
+.maria-eclesial-pill.status-aprovada {
+  background: rgba(16, 185, 129, 0.88);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.maria-eclesial-pill.status-nihil {
+  background: rgba(6, 182, 212, 0.88);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.maria-eclesial-pill.status-profetica {
+  background: rgba(245, 158, 11, 0.92);
+  color: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.maria-eclesial-pill.status-tradicao {
+  background: rgba(225, 29, 72, 0.88);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.maria-card-body-content {
+  padding: 16px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .maria-card-top {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .maria-icon-box {
@@ -6324,18 +6414,18 @@ mark,
 }
 
 .maria-card-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 16.5px;
+  font-weight: 800;
   color: var(--text-primary);
   line-height: 1.25;
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
 }
 
 .maria-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   font-size: 11.5px;
   color: var(--text-secondary);
 }
@@ -6346,15 +6436,28 @@ mark,
   gap: 4px;
 }
 
+.maria-videntes-badge {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin: 6px 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .maria-quote-box {
   background: rgba(59, 130, 246, 0.08);
   border-left: 3px solid #60a5fa;
   border-radius: 0 10px 10px 0;
-  padding: 10px 12px;
-  margin: 10px 0;
+  padding: 9px 12px;
+  margin: 8px 0;
   font-size: 12.5px;
   font-style: italic;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   line-height: 1.45;
 }
 
@@ -6388,11 +6491,26 @@ mark,
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
-  margin: 8px 0 12px 0;
+  margin: 8px 0 10px 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.maria-prophecies-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  align-self: flex-start;
 }
 
 .maria-prayer-preview {
@@ -6469,6 +6587,13 @@ mark,
   transform: translateY(-1px);
 }
 
+.maria-action-icon-btn.playing {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
 .maria-action-icon-btn.whatsapp-btn:hover {
   background: rgba(34, 197, 94, 0.18);
   border-color: #22c55e;
@@ -6506,7 +6631,7 @@ mark,
 }
 
 .maria-dogma-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display, 'Cinzel', serif);
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
@@ -6548,45 +6673,144 @@ mark,
 }
 
 /* Modal detail styling */
-.maria-modal-header-banner {
-  display: flex;
-  gap: 14px;
-  align-items: center;
+.maria-modal-hero {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
   margin-bottom: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-color);
 }
 
-.maria-modal-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+.maria-modal-photo-container {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+}
+
+.maria-modal-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.maria-modal-photo-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(18, 20, 29, 0.95) 100%);
+}
+
+.maria-modal-hero-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.maria-modal-hero-badge.status-aprovada {
+  background: rgba(16, 185, 129, 0.92);
+  color: #fff;
+}
+.maria-modal-hero-badge.status-nihil {
+  background: rgba(6, 182, 212, 0.92);
+  color: #fff;
+}
+.maria-modal-hero-badge.status-profetica {
+  background: rgba(245, 158, 11, 0.95);
+  color: #111;
+}
+.maria-modal-hero-badge.status-tradicao {
+  background: rgba(225, 29, 72, 0.92);
+  color: #fff;
+}
+
+.maria-modal-header-info {
+  padding: 16px 18px;
+}
+
+.maria-modal-title {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--gold-300);
+  margin: 4px 0 3px 0;
+}
+
+.maria-modal-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.maria-modal-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.maria-modal-section {
+  margin: 16px 0;
+}
+
+.maria-modal-sec-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold-400);
+  text-transform: uppercase;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.maria-modal-title-wrap h3 {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 4px 0;
-}
-
-.maria-modal-subtitle {
-  font-size: 12.5px;
-  color: var(--text-secondary);
+  gap: 6px;
+  letter-spacing: 0.5px;
 }
 
 .maria-modal-full-text {
   font-size: 14.5px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--text-primary);
   white-space: pre-line;
-  margin: 14px 0;
+}
+
+/* Prophecies and Secrets grid in modal */
+.maria-prophecies-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.maria-prophecy-item {
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 12px 12px 0;
+  padding: 12px 14px;
+}
+
+.maria-prophecy-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.maria-prophecy-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-primary);
 }
 
 .maria-modal-oracao-highlight {
@@ -6594,11 +6818,12 @@ mark,
   border: 1px solid rgba(96, 165, 250, 0.35);
   border-radius: 14px;
   padding: 16px;
-  margin: 16px 0;
+  margin: 10px 0;
   font-style: italic;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 14.5px;
+  line-height: 1.7;
   color: var(--text-primary);
+  white-space: pre-line;
 }
 
 [data-theme="light"] .maria-modal-oracao-highlight {
@@ -6609,8 +6834,39 @@ mark,
 .maria-modal-bottom-actions {
   display: flex;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 20px;
   flex-wrap: wrap;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .maria-item-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.09);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .maria-item-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .maria-quote-box {
+  background: #f0f7ff;
+  color: #1e3a8a;
+}
+
+[data-theme="light"] .maria-theme-box {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+[data-theme="light"] .maria-videntes-badge {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .maria-modal-hero {
+  background: #ffffff;
 }
 
 /* ===== CARD FRATERNO DE APOIO NA HOME (SUTIL & ELEGANTE) ===== */
