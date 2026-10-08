@@ -20,6 +20,7 @@ import { getMariaTitulos, getMariaOracoes, getMariaDogmas, getMariaPraticas, get
 import { audioService, CATHOLIC_RADIOS, CATHOLIC_PODCASTS, getPodcastById } from './podcastService.js';
 import { LIVRO_ORACOES, ORACOES_CATEGORIAS, getOracaoPorId, getOracoesFiltradas } from './oracoesService.js';
 import { DIRETOR_PERSONAS, DIRETOR_TOPICOS_RAPIDOS, consultarDiretorEspiritual, getDiretorHistorico, salvarConsultaDiretorHistorico, excluirItemDiretorHistorico } from './diretorEspiritualService.js';
+import { trackPageView, trackEvent } from './analytics.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -389,6 +390,10 @@ async function openBook(id, nome, total, initialChapter = 1) {
     await loadVerses();
     window.scrollTo(0, 0);
     stopSpeech();
+
+    // Rastreamento no Google Analytics 4
+    trackPageView(`${nome} ${targetCap}`, `/biblia/${id}/${targetCap}`);
+    trackEvent('read_chapter', { livro_id: id, livro_nome: nome, capitulo: targetCap });
   } catch (e) {
     console.error("OpenBook error:", e);
     goHome();
@@ -413,6 +418,12 @@ async function selectChapter(n) {
   await loadVerses();
   window.scrollTo(0, 0);
   stopSpeech();
+
+  // Rastreamento no Google Analytics 4
+  if (currentBook) {
+    trackPageView(`${currentBook.nome} ${n}`, `/biblia/${currentBook.id}/${n}`);
+    trackEvent('read_chapter', { livro_id: currentBook.id, livro_nome: currentBook.nome, capitulo: n });
+  }
 }
 
 async function loadVerses() {
@@ -775,6 +786,9 @@ function doSearch() {
   if (input) input.blur();
 
   showView('searchView');
+  trackPageView(`Busca: "${t}"`, `/busca?q=${encodeURIComponent(t)}`);
+  trackEvent('search', { search_term: t });
+
   const container = document.getElementById('searchResults');
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
@@ -2593,7 +2607,29 @@ function updatePlanProgress() {
   document.getElementById('planProgressText').textContent = `${done} de 365 dias concluídos (${pct}%)`;
 }
 
-// ===== VIEW MANAGEMENT =====
+// ===== VIEW MANAGEMENT & ANALYTICS TRACKING =====
+const VIEW_TRACKING_META = {
+  homeView: { title: 'Início', path: '/' },
+  chapterView: { title: 'Leitura Bíblica', path: '/leitura' },
+  searchView: { title: 'Busca Bíblica', path: '/busca' },
+  favoritesView: { title: 'Meus Favoritos', path: '/favoritos' },
+  galleryView: { title: 'Galeria de Imagens Sacras', path: '/galeria' },
+  planView: { title: 'Plano de Leitura 365 Dias', path: '/plano-leitura' },
+  liturgiaView: { title: 'Liturgia Diária & Santo do Dia', path: '/liturgia' },
+  rosarioView: { title: 'Santo Rosário & Terço', path: '/santo-terco' },
+  velasView: { title: 'Mural de Velas & Intenções', path: '/velas' },
+  teologiaView: { title: 'IA Teológica Católica', path: '/teologia' },
+  lectioView: { title: 'Lectio Divina Guiada', path: '/lectio-divina' },
+  confissaoView: { title: 'Exame de Consciência', path: '/confissao' },
+  diarioView: { title: 'Diário Espiritual', path: '/diario' },
+  novenasView: { title: 'Novenas Tradicionais', path: '/novenas' },
+  cartasView: { title: 'Cartas Apostólicas', path: '/cartas' },
+  mariaView: { title: 'Devoção a Maria', path: '/maria' },
+  radiosPodcastsView: { title: 'Rádios & Podcasts Católicos', path: '/radios-podcasts' },
+  oracoesLivroView: { title: 'Livro de Orações Católicas', path: '/livro-oracoes' },
+  diretorEspiritualView: { title: 'Diretor Espiritual & Palavra Amiga', path: '/diretor-espiritual' }
+};
+
 function showView(id) {
   stopSpeech();
   stopLiturgiaSpeech();
@@ -2612,6 +2648,13 @@ function showView(id) {
   const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', velasView: 'bnVelas', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
   window.scrollTo(0, 0);
+
+  // Registro dinâmico de PageView e Navegação no Google Analytics 4
+  const meta = VIEW_TRACKING_META[id];
+  if (meta && id !== 'chapterView') {
+    trackPageView(meta.title, meta.path);
+    trackEvent('screen_view', { app_screen: id, screen_name: meta.title });
+  }
 }
 
 window.doSearchWithQuery = function (query) {
@@ -8844,6 +8887,10 @@ window.openOracaoModal = function (id) {
   }
 
   if (modal) modal.classList.remove('hidden');
+
+  // Registro de Oração no GA4
+  trackPageView(`Oração: ${o.titulo}`, `/oracao/${o.id}`);
+  trackEvent('read_prayer', { oracao_id: o.id, oracao_titulo: o.titulo, oracao_categoria: o.categoria });
 };
 
 window.closeOracaoModal = function () {
