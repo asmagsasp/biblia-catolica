@@ -1518,7 +1518,43 @@ mark,
   text-align: center;
   font-size: 12px;
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 14px;
+}
+
+.plan-nav-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.plan-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.plan-nav-btn:hover {
+  border-color: var(--gold-400);
+  color: var(--gold-300);
+  background: var(--bg-card-hover);
+}
+
+.plan-nav-btn.active {
+  background: var(--gold-gradient-subtle);
+  border-color: var(--gold-400);
+  color: var(--gold-300);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
 }
 
 .plan-day {
@@ -1540,12 +1576,26 @@ mark,
 }
 
 .plan-day.completed {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .plan-day.today {
+  border-color: rgba(14, 165, 233, 0.45);
+  box-shadow: 0 0 16px rgba(14, 165, 233, 0.12);
+}
+
+.plan-day.next-day {
   border-color: var(--gold-400);
-  box-shadow: 0 0 20px rgba(196, 149, 42, 0.15);
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.25);
+  position: relative;
+}
+
+.plan-day.next-day .plan-day-num {
+  background: var(--gold-gradient);
+  color: #1a1005;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
 }
 
 .plan-day-num {
@@ -1561,11 +1611,13 @@ mark,
   border-radius: 10px;
   background: rgba(196, 149, 42, 0.08);
   flex-shrink: 0;
+  transition: var(--transition);
 }
 
 .plan-day.completed .plan-day-num {
   background: rgba(46, 204, 113, 0.15);
   color: #2ecc71;
+  box-shadow: none;
 }
 
 .plan-day-content {
@@ -1577,32 +1629,106 @@ mark,
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 3px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.plan-badge-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--gold-gradient);
+  color: #1a1005;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.plan-badge-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-family: var(--font-ui);
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(14, 165, 233, 0.16);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  font-weight: 700;
 }
 
 .plan-day-desc {
-  font-size: 11px;
-  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.plan-leitura-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+  user-select: none;
+}
+
+.plan-leitura-tag:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--gold-400);
+  color: var(--gold-200);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.plan-leitura-tag i {
+  font-size: 10px;
+  color: var(--gold-400);
+}
+
+.plan-day.completed .plan-leitura-tag {
+  opacity: 0.7;
 }
 
 .plan-day-check {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   color: transparent;
-  font-size: 12px;
+  font-size: 13px;
   transition: var(--transition);
   flex-shrink: 0;
+}
+
+.plan-day-check:hover {
+  border-color: var(--gold-400);
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .plan-day.completed .plan-day-check {
   border-color: #2ecc71;
   color: #2ecc71;
-  background: rgba(46, 204, 113, 0.1);
+  background: rgba(46, 204, 113, 0.15);
 }
 
 /* ==========================================================================

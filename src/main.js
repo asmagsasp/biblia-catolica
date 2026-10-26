@@ -129,6 +129,7 @@ async function init() {
   // Restore Plan
   const { value: savedPlan } = await Preferences.get({ key: 'biblia_plan_days' });
   readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
+  updatePlanProgress();
 
   // Load data
   try {
@@ -396,6 +397,7 @@ window.shareHeroWhatsApp = function () {
 
 // ===== OPEN BOOK =====
 async function openBook(id, nome, total, initialChapter = 1) {
+  window.openBook = openBook;
   if (!db.isReady()) return;
   try {
     if (!total) { const l = allBooks.find(b => b.id_livro === id); total = l ? l.total_capitulos : 1; }
@@ -2628,10 +2630,87 @@ window.saveStudioCardToGallery = async function () {
 };
 
 // ===== READING PLAN =====
+function getNextPlanDayNumber() {
+  let nextDia = 1;
+  while (nextDia <= 365 && readingPlanDays[nextDia]) {
+    nextDia++;
+  }
+  return nextDia <= 365 ? nextDia : 365;
+}
+
+window.scrollToNextPlanDay = function (smooth = true) {
+  const scrollAction = () => {
+    const nextEl = document.querySelector('.plan-day.next-day') ||
+                   document.querySelector('.plan-day:not(.completed)') ||
+                   document.querySelector('.plan-day');
+    if (nextEl) {
+      nextEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    }
+  };
+  requestAnimationFrame(() => {
+    setTimeout(scrollAction, 60);
+  });
+};
+
+window.scrollToTodayPlanDay = function (smooth = true) {
+  const scrollAction = () => {
+    const todayEl = document.querySelector('.plan-day.today') ||
+                    document.querySelector('.plan-day');
+    if (todayEl) {
+      todayEl.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    }
+  };
+  requestAnimationFrame(() => {
+    setTimeout(scrollAction, 60);
+  });
+};
+
+function updateNextPlanDayMarker() {
+  const nextDia = getNextPlanDayNumber();
+  const c = document.getElementById('planContainer');
+  if (!c) return nextDia;
+
+  c.querySelectorAll('.plan-day').forEach(el => {
+    const d = parseInt(el.dataset.dia);
+    const isDone = !!readingPlanDays[d];
+    const isNext = (d === nextDia && !isDone);
+
+    el.classList.toggle('next-day', isNext);
+    el.classList.toggle('completed', isDone);
+
+    const checkEl = el.querySelector('.plan-day-check');
+    if (checkEl) {
+      checkEl.title = isDone ? 'Marcar como não lido' : 'Marcar como concluído';
+    }
+
+    const titleEl = el.querySelector('.plan-day-title');
+    if (titleEl) {
+      const badge = titleEl.querySelector('.plan-badge-next');
+      if (isNext && !badge) {
+        titleEl.insertAdjacentHTML('beforeend', '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>');
+      } else if (!isNext && badge) {
+        badge.remove();
+      }
+    }
+  });
+
+  const nextBtn = document.getElementById('btnPlanGoNext');
+  if (nextBtn) {
+    nextBtn.innerHTML = `<i class="fas fa-play"></i> Próxima Leitura (Dia ${nextDia})`;
+  }
+
+  return nextDia;
+}
+
 window.showPlan = function () {
   showView('planView');
   const c = document.getElementById('planContainer');
-  if (c.dataset.loaded === '1') { updatePlanProgress(); return; }
+  if (c.dataset.loaded === '1') {
+    updatePlanProgress();
+    updateNextPlanDayMarker();
+    scrollToNextPlanDay(false);
+    return;
+  }
 
   c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
@@ -2640,27 +2719,38 @@ window.showPlan = function () {
       const plan = await db.getPlanoLeitura();
       const now = new Date();
       const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+      const nextDia = getNextPlanDayNumber();
 
       let h = '';
       plan.forEach(d => {
         const isToday = d.dia === dayOfYear;
-        const done = readingPlanDays[d.dia] || false;
-        const leituras = d.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''}" data-dia="${d.dia}">
+        const done = !!readingPlanDays[d.dia];
+        const isNext = (d.dia === nextDia && !done);
+        
+        const leiturasHtml = d.leituras.map(l => 
+          `<span class="plan-leitura-tag" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+        ).join('');
+
+        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
                 <div class="plan-day-num">${d.dia}</div>
                 <div class="plan-day-content">
-                    <div class="plan-day-title">${isToday ? '\uD83D\uDCD6 Hoje' : `Dia ${d.dia}`}</div>
-                    <div class="plan-day-desc">${leituras}</div>
+                    <div class="plan-day-title">
+                      Dia ${d.dia}
+                      ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
+                      ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
+                    </div>
+                    <div class="plan-day-desc">${leiturasHtml}</div>
                 </div>
-                <div class="plan-day-check"><i class="fas fa-check"></i></div>
+                <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
             </div>`;
       });
       c.innerHTML = h;
       c.dataset.loaded = '1';
       updatePlanProgress();
+      updateNextPlanDayMarker();
 
-      const todayEl = document.querySelector('.plan-day.today');
-      if (todayEl) todayEl.scrollIntoView({ block: 'center' });
+      // Rola automaticamente para o próximo dia a ser executado
+      scrollToNextPlanDay(false);
     } catch (e) {
       console.error("Plan Error:", e);
     }
@@ -2668,6 +2758,18 @@ window.showPlan = function () {
 };
 
 document.getElementById('planContainer').addEventListener('click', async e => {
+  const leituraTag = e.target.closest('.plan-leitura-tag');
+  if (leituraTag) {
+    e.stopPropagation();
+    const livroId = parseInt(leituraTag.dataset.livro);
+    const livroNome = leituraTag.dataset.nome;
+    const cap = parseInt(leituraTag.dataset.cap);
+    if (livroId && cap) {
+      openBook(livroId, livroNome, 0, cap);
+    }
+    return;
+  }
+
   const day = e.target.closest('.plan-day');
   if (day) {
     const dia = parseInt(day.dataset.dia);
@@ -2680,15 +2782,37 @@ document.getElementById('planContainer').addEventListener('click', async e => {
 
     day.classList.toggle('completed', readingPlanDays[dia]);
     updatePlanProgress();
-    if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! \uD83D\uDE4F');
+    updateNextPlanDayMarker();
+    if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! 🙏');
   }
 });
 
 function updatePlanProgress() {
   const done = Object.values(readingPlanDays).filter(Boolean).length;
   const pct = Math.round((done / 365) * 100);
-  document.getElementById('planProgress').style.width = pct + '%';
-  document.getElementById('planProgressText').textContent = `${done} de 365 dias concluídos (${pct}%)`;
+  const nextDia = getNextPlanDayNumber();
+
+  const fillEl = document.getElementById('planProgress');
+  if (fillEl) fillEl.style.width = pct + '%';
+
+  const textEl = document.getElementById('planProgressText');
+  if (textEl) {
+    if (done >= 365) {
+      textEl.innerHTML = `<strong>365 de 365 dias concluídos (100%)</strong> • Parabéns! Você concluiu a Bíblia inteira! 🎉`;
+    } else {
+      textEl.innerHTML = `<strong>${done} de 365</strong> dias concluídos (${pct}%) • Próxima leitura: <strong>Dia ${nextDia}</strong>`;
+    }
+  }
+
+  const homeBadge = document.getElementById('homePlanBadge');
+  if (homeBadge) {
+    homeBadge.textContent = done >= 365 ? '100% Concluído 🎉' : `Próximo: Dia ${nextDia}`;
+  }
+
+  const nextBtn = document.getElementById('btnPlanGoNext');
+  if (nextBtn) {
+    nextBtn.innerHTML = `<i class="fas fa-play"></i> Próxima Leitura (Dia ${nextDia})`;
+  }
 }
 
 // ===== VIEW MANAGEMENT & ANALYTICS TRACKING =====
@@ -2714,6 +2838,8 @@ const VIEW_TRACKING_META = {
   diretorEspiritualView: { title: 'Diretor Espiritual & Palavra Amiga', path: '/diretor-espiritual' }
 };
 
+let lastViewBeforeChapter = 'homeView';
+
 function showView(id) {
   stopSpeech();
   stopLiturgiaSpeech();
@@ -2733,6 +2859,10 @@ function showView(id) {
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
   window.scrollTo(0, 0);
 
+  if (id !== 'chapterView') {
+    lastViewBeforeChapter = id;
+  }
+
   // Registro dinâmico de PageView e Navegação no Google Analytics 4
   const meta = VIEW_TRACKING_META[id];
   if (meta && id !== 'chapterView') {
@@ -2745,6 +2875,14 @@ window.doSearchWithQuery = function (query) {
   const input = document.getElementById('searchInput');
   if (input) input.value = query;
   doSearch();
+};
+
+window.handleChapterBack = function () {
+  if (lastViewBeforeChapter === 'planView') {
+    showPlan();
+  } else {
+    goHome();
+  }
 };
 
 window.goHome = function () {

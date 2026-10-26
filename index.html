@@ -160,7 +160,7 @@
             <i class="fas fa-calendar-alt"></i>
           </div>
           <div class="quick-card-content">
-            <div class="quick-card-badge" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">Cronograma 365 Dias</div>
+            <div class="quick-card-badge" id="homePlanBadge" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">Cronograma 365 Dias</div>
             <h3 class="quick-card-title">Plano de Leitura Bíblica</h3>
             <p class="quick-card-desc">Guia diário para ler a Bíblia completa em 1 ano</p>
           </div>
@@ -370,7 +370,7 @@
       <div class="chapter-view">
         <div class="chapter-header">
           <div class="chapter-header-left">
-            <button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <button class="btn-back" onclick="handleChapterBack()"><i class="fas fa-arrow-left"></i></button>
             <div>
               <h2 class="chapter-title" id="chapterTitle"></h2>
               <p class="chapter-subtitle" id="chapterSubtitle"></p>
@@ -494,6 +494,14 @@
           <div class="plan-progress-fill" id="planProgress" style="width:0%"></div>
         </div>
         <div class="plan-progress-text" id="planProgressText">Carregando...</div>
+        <div class="plan-nav-actions" id="planNavActions">
+          <button class="plan-nav-btn active" id="btnPlanGoNext" onclick="scrollToNextPlanDay(true)" title="Ir para a próxima leitura a ser realizada">
+            <i class="fas fa-play"></i> Próxima Leitura
+          </button>
+          <button class="plan-nav-btn" id="btnPlanGoToday" onclick="scrollToTodayPlanDay(true)" title="Ir para o dia correspondente a hoje no calendário">
+            <i class="fas fa-calendar-day"></i> Hoje
+          </button>
+        </div>
         <div id="planContainer">
           <div class="loading">
             <div class="loading-spinner"></div>
