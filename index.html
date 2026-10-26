@@ -1489,61 +1489,78 @@
 
   </main>
 
-  <!-- FLOATING PERSISTENT AUDIO MINI-PLAYER BAR -->
-  <div id="audioMiniPlayer" class="audio-mini-player hidden" role="region" aria-label="Reprodutor de Áudio Católico">
-    <div class="mini-player-progress-bar" id="miniPlayerProgressBar">
-      <div class="mini-player-progress-fill" id="miniPlayerProgressFill" style="width: 0%;"></div>
-    </div>
-    <div class="mini-player-inner">
-      <div class="mini-player-left" onclick="showRadiosPodcasts()">
-        <div class="mini-player-icon-box" id="miniPlayerIconBox">
-          <i class="fas fa-radio" id="miniPlayerIcon"></i>
-          <div class="mini-equalizer-bars hidden" id="miniEqualizer">
-            <span class="eq-bar bar-1"></span>
-            <span class="eq-bar bar-2"></span>
-            <span class="eq-bar bar-3"></span>
-            <span class="eq-bar bar-4"></span>
-          </div>
-        </div>
-        <div class="mini-player-info">
-          <div class="mini-player-title-row">
-            <span class="mini-player-title" id="miniPlayerTitle">Rádio Aparecida 104.3 FM</span>
-            <span class="mini-live-tag" id="miniLiveTag">🔴 AO VIVO</span>
-          </div>
-          <div class="mini-player-subtitle" id="miniPlayerSubtitle">Santuário Nacional de Nossa Senhora</div>
-        </div>
-      </div>
-      <div class="mini-player-controls">
-        <div class="mini-volume-control desktop-only">
-          <button class="mini-btn-vol" onclick="toggleMiniMute()" title="Ajustar Volume">
-            <i class="fas fa-volume-up" id="miniVolIcon"></i>
-          </button>
-          <input type="range" class="mini-vol-slider" id="miniVolSlider" min="0" max="1" step="0.05" value="0.9" oninput="changeMiniVolume(this.value)">
-        </div>
-        <button class="mini-player-btn mini-btn-timer" id="miniBtnTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
-          <i class="fas fa-moon"></i>
-        </button>
-        <button class="mini-player-btn mini-btn-play" id="miniBtnPlay" onclick="toggleAudioServicePlay()" title="Reproduzir / Pausar">
-          <i class="fas fa-play" id="miniPlayIcon"></i>
-        </button>
-        <button class="mini-player-btn mini-btn-stop" onclick="stopAudioService()" title="Parar transmissão">
+  <!-- BARRA FLUTUANTE DE AÇÕES DE VERSÍCULOS SELECIONADOS -->
+  <div id="verseSelectionBar" class="verse-selection-bar hidden" role="region" aria-label="Ações para Versículos Selecionados">
+    <div class="verse-selection-bar-inner">
+      <div class="verse-selection-info">
+        <span class="verse-selection-badge" id="verseSelectionBadge">
+          <i class="fas fa-check-circle"></i> <span>1 versículo selecionado</span>
+        </span>
+        <button type="button" class="verse-selection-clear-btn" onclick="clearVerseSelection()" title="Limpar seleção (Esc)">
           <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="verse-selection-actions">
+        <!-- Ouvir a partir daqui ou selecionados -->
+        <button type="button" class="verse-selection-btn btn-listen-selected" id="btnListenSelected" onclick="playSelectedVersesAudio()" title="Ouvir a partir do versículo selecionado sem pular para o topo">
+          <i class="fas fa-volume-up"></i>
+          <span id="btnListenSelectedText">Ouvir a partir daqui</span>
+        </button>
+
+        <!-- Marca-Texto Litúrgico -->
+        <div class="verse-selection-highlight-group">
+          <button type="button" class="verse-selection-btn btn-hl-picker" id="btnHighlightPicker" onclick="toggleHighlightPalette(event)" title="Destacar Versículo (Marca-Texto Sagrado)">
+            <i class="fas fa-highlighter" style="color: var(--gold-400);"></i>
+            <span>Marca-Texto</span>
+          </button>
+          
+          <div class="verse-highlight-palette hidden" id="verseHighlightPalette">
+            <button type="button" class="hl-color-swatch swatch-gold" onclick="applyHighlightToSelected('gold')" title="Dourado Sagrado (Iluminação)">
+              <span class="swatch-circle" style="background: #eab308;"></span>
+              <span class="swatch-name">Dourado</span>
+            </button>
+            <button type="button" class="hl-color-swatch swatch-blue" onclick="applyHighlightToSelected('blue')" title="Azul Celeste (Mariano)">
+              <span class="swatch-circle" style="background: #38bdf8;"></span>
+              <span class="swatch-name">Azul</span>
+            </button>
+            <button type="button" class="hl-color-swatch swatch-green" onclick="applyHighlightToSelected('green')" title="Verde Esperança (Tempo Comum)">
+              <span class="swatch-circle" style="background: #22c55e;"></span>
+              <span class="swatch-name">Verde</span>
+            </button>
+            <button type="button" class="hl-color-swatch swatch-red" onclick="applyHighlightToSelected('red')" title="Vermelho Martírio & Espírito Santo">
+              <span class="swatch-circle" style="background: #ef4444;"></span>
+              <span class="swatch-name">Vermelho</span>
+            </button>
+            <button type="button" class="hl-color-swatch swatch-remove" onclick="applyHighlightToSelected(null)" title="Remover Destaque">
+              <span class="swatch-circle"><i class="fas fa-ban" style="color: #94a3b8; font-size: 11px;"></i></span>
+              <span class="swatch-name">Remover</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Criar Card para Story / Status -->
+        <button type="button" class="verse-selection-btn" onclick="openStoryCardFromSelection()" title="Criar Card em Imagem HD para Status/Stories">
+          <i class="fas fa-camera"></i>
+          <span>Card Story</span>
+        </button>
+
+        <!-- Copiar Versículos -->
+        <button type="button" class="verse-selection-btn" onclick="copySelectedVerses()" title="Copiar versículos selecionados com referência">
+          <i class="fas fa-copy"></i>
+          <span>Copiar</span>
+        </button>
+
+        <!-- Compartilhar WhatsApp -->
+        <button type="button" class="verse-selection-btn" onclick="shareSelectedVersesWhatsApp()" title="Compartilhar no WhatsApp">
+          <i class="fab fa-whatsapp"></i>
+          <span>WhatsApp</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV (MOBILE) -->
-  <nav class="bottom-nav">
-    <div class="bottom-nav-inner">
-      <button class="bottom-nav-btn active" id="bnHome" onclick="goHome()"><i class="fas fa-book-bible"></i>Início</button>
-      <button class="bottom-nav-btn" id="bnLiturgia" onclick="showLiturgia()"><i class="fas fa-calendar-day"></i>Liturgia</button>
-      <button class="bottom-nav-btn" id="bnRosario" onclick="showRosario()"><i class="fas fa-praying-hands"></i>Terço</button>
-      <button class="bottom-nav-btn" id="bnVelas" onclick="showVelas()"><i class="fas fa-fire"></i>Velas</button>
-      <button class="bottom-nav-btn" id="bnGallery" onclick="showGallery()"><i class="fas fa-images"></i>Galeria</button>
-      <button class="bottom-nav-btn" id="bnPlan" onclick="showPlan()"><i class="fas fa-calendar-alt"></i>Plano</button>
-    </div>
-  </nav>
+  <!-- FLOATING PERSISTENT AUDIO MINI-PLAYER BAR -->
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>

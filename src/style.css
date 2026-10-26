@@ -1063,17 +1063,20 @@ body::before {
   flex-direction: column;
   padding: 16px 18px;
   border-radius: 14px;
-  transition: var(--transition);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   border: 1px solid rgba(212, 175, 55, 0.08);
   background: rgba(255, 255, 255, 0.015);
   margin-bottom: 14px;
   width: 100%;
+  cursor: pointer;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .verse:hover {
   background: rgba(212, 175, 55, 0.04);
-  border-color: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.22);
 }
 
 .verse.reading {
@@ -1081,6 +1084,60 @@ body::before {
   border-color: var(--gold-400);
   box-shadow: 0 0 25px rgba(212, 175, 55, 0.22);
   transform: scale(1.005);
+}
+
+.verse.selected {
+  background: rgba(212, 175, 55, 0.12) !important;
+  border-color: var(--gold-400) !important;
+  box-shadow: 0 0 22px rgba(212, 175, 55, 0.28), inset 0 0 16px rgba(212, 175, 55, 0.08) !important;
+  transform: scale(1.006);
+}
+
+.verse.selected .verse-number {
+  background: var(--gold-400);
+  color: #120A10;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+.verse.selected::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 11px;
+  color: var(--gold-400);
+  background: rgba(212, 175, 55, 0.22);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  pointer-events: none;
+}
+
+/* Marca-Texto Litúrgico */
+.verse.verse-highlight-gold {
+  border-left: 4px solid #eab308 !important;
+  background: rgba(234, 179, 8, 0.09) !important;
+}
+
+.verse.verse-highlight-blue {
+  border-left: 4px solid #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.09) !important;
+}
+
+.verse.verse-highlight-green {
+  border-left: 4px solid #22c55e !important;
+  background: rgba(34, 197, 94, 0.09) !important;
+}
+
+.verse.verse-highlight-red {
+  border-left: 4px solid #ef4444 !important;
+  background: rgba(239, 68, 68, 0.09) !important;
 }
 
 .verse-content {
@@ -1124,6 +1181,8 @@ body::before {
   overflow-wrap: break-word;
   white-space: normal;
   letter-spacing: 0.2px;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .verse-actions {
@@ -1136,6 +1195,7 @@ body::before {
   opacity: 0.9;
   transition: var(--transition);
   flex-wrap: wrap;
+  user-select: none;
 }
 
 .verse:hover .verse-actions {
@@ -1155,6 +1215,7 @@ body::before {
   justify-content: center;
   transition: var(--transition);
   font-size: 13.5px;
+  user-select: none;
 }
 
 .verse-action-btn:hover {
@@ -9534,4 +9595,208 @@ mark,
   border-color: #c084fc !important;
   color: #fff !important;
   box-shadow: 0 0 12px rgba(192, 132, 252, 0.4);
+}
+
+/* ==========================================================================
+   BARRA FLUTUANTE DE VERSÍCULOS SELECIONADOS & MARCA-TEXTO LITÚRGICO
+   ========================================================================== */
+
+.verse-selection-bar {
+  position: fixed;
+  bottom: 74px; /* Logo acima do bottom navigation */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 720px;
+  z-index: 9960;
+  background: linear-gradient(135deg, rgba(22, 11, 28, 0.96) 0%, rgba(13, 6, 18, 0.98) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(212, 175, 55, 0.25);
+  border-radius: 18px;
+  padding: 8px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUpSelectionBar 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpSelectionBar {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.verse-selection-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.verse-selection-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.verse-selection-badge {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold-300);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.verse-selection-clear-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.verse-selection-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #fff;
+}
+
+.verse-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.verse-selection-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.verse-selection-btn:hover {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.45);
+  color: var(--gold-200);
+  transform: translateY(-1px);
+}
+
+.verse-selection-btn.btn-listen-selected {
+  background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%);
+  color: #120A10;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35);
+}
+
+.verse-selection-btn.btn-listen-selected:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* Marca-Texto Palette Popover */
+.verse-selection-highlight-group {
+  position: relative;
+}
+
+.verse-highlight-palette {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(24, 12, 32, 0.98) 0%, rgba(14, 6, 20, 0.99) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+  border-radius: 14px;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  z-index: 9970;
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+}
+
+.hl-color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hl-color-swatch:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(212, 175, 55, 0.3);
+  transform: translateY(-2px);
+}
+
+.hl-color-swatch .swatch-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Light Theme overrides for selection bar */
+[data-theme="light"] .verse-selection-bar {
+  background: linear-gradient(135deg, rgba(255, 253, 248, 0.98) 0%, rgba(248, 243, 230, 0.98) 100%);
+  border-color: rgba(184, 134, 11, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15), 0 0 16px rgba(184, 134, 11, 0.2);
+}
+
+[data-theme="light"] .verse-selection-badge {
+  background: rgba(184, 134, 11, 0.12);
+  border-color: rgba(184, 134, 11, 0.3);
+  color: #854d0e;
+}
+
+[data-theme="light"] .verse-selection-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1f2937;
+}
+
+[data-theme="light"] .verse.selected {
+  background: rgba(212, 175, 55, 0.18) !important;
+  border-color: #b8860b !important;
 }

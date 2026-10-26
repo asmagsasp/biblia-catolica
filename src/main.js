@@ -94,6 +94,27 @@ let heroData = null;
 let planData = null;
 let readingPlanDays = {};
 
+// ===== ESTADO DE SELEÇÃO DE VERSÍCULOS E MARCA-TEXTO LITÚRGICO =====
+let selectedVerses = new Set();
+let savedHighlights = {};
+
+function loadStoredHighlights() {
+  try {
+    const raw = localStorage.getItem('biblia_verse_highlights');
+    if (raw) savedHighlights = JSON.parse(raw) || {};
+  } catch (e) {
+    savedHighlights = {};
+  }
+}
+
+function saveStoredHighlights() {
+  try {
+    localStorage.setItem('biblia_verse_highlights', JSON.stringify(savedHighlights));
+  } catch (e) {}
+}
+
+loadStoredHighlights();
+
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isSpeaking = false;
@@ -490,44 +511,49 @@ async function selectChapter(n) {
 }
 
 async function loadVerses() {
+  clearVerseSelection();
   const c = document.getElementById('versesContainer');
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
     c.innerHTML = `
       <div class="chapter-actions-top" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
+        <button type="button" class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
         </button>
-        <button class="btn-read-all btn-sleep-timer" id="btnChapterSleepTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
+        <button type="button" class="btn-read-all btn-sleep-timer" id="btnChapterSleepTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
           <i class="fas fa-moon"></i> <span id="chapterTimerLabel">Timer</span>
         </button>
-        <button class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
+        <button type="button" class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
           <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
         </button>
-        <button class="btn-read-all" onclick="startLectioDivinaCurrentChapter()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Rezar este Capítulo com Lectio Divina">
+        <button type="button" class="btn-read-all" onclick="startLectioDivinaCurrentChapter()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Rezar este Capítulo com Lectio Divina">
           <i class="fas fa-dove"></i> Lectio Divina
         </button>
-        <button class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
+        <button type="button" class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
           <i class="fas fa-church"></i> Homilia do Capítulo
         </button>
       </div>
-    ` + verses.map(v => `
-            <div class="verse" data-v="${v.id_versiculo}" id="v-${v.id_versiculo}">
+    ` + verses.map(v => {
+      const hlColor = savedHighlights[`${currentBook.id}_${currentChapter}_${v.id_versiculo}`];
+      const hlClass = hlColor ? `verse-highlight-${hlColor}` : '';
+      return `
+            <div class="verse ${hlClass}" data-v="${v.id_versiculo}" id="v-${v.id_versiculo}" onclick="handleVerseClick(this, event)">
                 <div class="verse-content">
                     <span class="verse-number">${v.id_versiculo}</span>
                     <span class="verse-text">${v.texto}</span>
                 </div>
                 <div class="verse-actions">
-                    <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
-                    <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
-                    <button class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
-                    <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                    <button class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
-                    <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
-                    <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
+                    <button type="button" class="verse-action-btn speak-btn" data-v="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this, event)" title="Ouvir este versículo"><i class="fas fa-volume-up"></i></button>
+                    <button type="button" class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
+                    <button type="button" class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
+                    <button type="button" class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button type="button" class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
+                    <button type="button" class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
+                    <button type="button" class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
                 </div>
             </div>
-        `).join('');
+      `;
+    }).join('');
   } else {
     c.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">Nenhum versículo encontrado.</p>';
   }
@@ -567,12 +593,14 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
   const teologiaBtn = e.target.closest('.teologia-btn');
   if (teologiaBtn) {
+    e.preventDefault();
     e.stopPropagation();
     explicarVersiculoTeologia(teologiaBtn.dataset.livro, teologiaBtn.dataset.cap, teologiaBtn.dataset.ver, teologiaBtn.dataset.txt);
     return;
   }
   const waBtn = e.target.closest('.wa-btn');
   if (waBtn) {
+    e.preventDefault();
     e.stopPropagation();
     const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -580,6 +608,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
   const storyBtn = e.target.closest('.story-btn');
   if (storyBtn) {
+    e.preventDefault();
     e.stopPropagation();
     openStoryCardModal({
       livro: storyBtn.dataset.livro,
@@ -591,6 +620,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
   const copyBtn = e.target.closest('.copy-btn');
   if (copyBtn) {
+    e.preventDefault();
     e.stopPropagation();
     const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
     copyToClipboard(verseText).then(ok => {
@@ -604,12 +634,14 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
   const aiBtn = e.target.closest('.ai-btn');
   if (aiBtn) {
+    e.preventDefault();
     e.stopPropagation();
     generateHomily(aiBtn.dataset.livro, aiBtn.dataset.cap, aiBtn.dataset.ver, aiBtn.dataset.txt);
     return;
   }
   const speakBtn = e.target.closest('.speak-btn');
   if (speakBtn) {
+    e.preventDefault();
     e.stopPropagation();
     const verseDiv = speakBtn.closest('.verse');
     const text = speakBtn.dataset.txt || verseDiv?.querySelector('.verse-text')?.textContent || '';
@@ -906,7 +938,13 @@ window.speakText = async function (text, vNum = null, customEl = null) {
   }
 };
 
-window.toggleVerseSpeech = function (btn) {
+window.toggleVerseSpeech = function (btn, event) {
+  if (event) {
+    try {
+      event.preventDefault();
+      event.stopPropagation();
+    } catch (e) {}
+  }
   if (!btn) return;
   const verseDiv = btn.closest('.verse');
   const text = btn.dataset.txt || verseDiv?.querySelector('.verse-text')?.innerText || verseDiv?.querySelector('.verse-text')?.textContent || '';
@@ -999,7 +1037,7 @@ window.openSearchResultCard = function (itemEl) {
   }
 };
 
-window.readVersesRange = async function (verseNumbers = null) {
+window.readVersesRange = async function (verseNumbers = null, startFromVerseNum = null) {
   await stopSpeech();
   stopRequested = false;
   isSpeaking = true;
@@ -1020,7 +1058,7 @@ window.readVersesRange = async function (verseNumbers = null) {
         const text = textEl.textContent.trim();
 
         v.classList.add('reading');
-        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        v.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         try {
           await speakSingleVerseText(text);
@@ -1029,9 +1067,15 @@ window.readVersesRange = async function (verseNumbers = null) {
         }
       }
     } else {
-      // Lê todos os versículos do capítulo
-      const verses = document.querySelectorAll('.verse');
-      for (let i = 0; i < verses.length; i++) {
+      // Lê versículos do capítulo a partir de startFromVerseNum (ou 1 se não informado)
+      const verses = Array.from(document.querySelectorAll('#versesContainer .verse'));
+      let startIdx = 0;
+      if (startFromVerseNum) {
+        const found = verses.findIndex(v => parseInt(v.dataset.v) === parseInt(startFromVerseNum));
+        if (found !== -1) startIdx = found;
+      }
+
+      for (let i = startIdx; i < verses.length; i++) {
         if (stopRequested) break;
         const v = verses[i];
         const textEl = v.querySelector('.verse-text');
@@ -1039,7 +1083,7 @@ window.readVersesRange = async function (verseNumbers = null) {
         const text = textEl.textContent.trim();
 
         v.classList.add('reading');
-        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        v.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         try {
           await speakSingleVerseText(text);
@@ -1064,7 +1108,190 @@ window.readFullChapter = async function () {
     await stopSpeech();
     return;
   }
-  await readVersesRange(null);
+  // Se houver versículos selecionados pelo usuário, começa do primeiro versículo selecionado
+  if (selectedVerses && selectedVerses.size > 0) {
+    const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+    await readVersesRange(null, sorted[0]);
+    return;
+  }
+  await readVersesRange(null, 1);
+};
+
+// ==========================================================================
+// SELEÇÃO INTERATIVA DE VERSÍCULOS & MARCA-TEXTO LITÚRGICO
+// ==========================================================================
+
+window.handleVerseClick = function (verseDiv, event) {
+  if (!verseDiv) return;
+  // Se clicou em botão interno, deixa a ação do botão agir
+  if (event.target.closest('.verse-action-btn') || event.target.closest('.btn-read-all')) {
+    return;
+  }
+  // Se o usuário selecionou texto manualmente para cópia nativa, não interfere
+  const sel = window.getSelection();
+  if (sel && sel.toString().trim().length > 0) {
+    return;
+  }
+
+  toggleVerseSelection(verseDiv);
+};
+
+window.toggleVerseSelection = function (verseDiv) {
+  if (!verseDiv) return;
+  const vNum = parseInt(verseDiv.dataset.v);
+  if (isNaN(vNum)) return;
+
+  if (selectedVerses.has(vNum)) {
+    selectedVerses.delete(vNum);
+    verseDiv.classList.remove('selected');
+  } else {
+    selectedVerses.add(vNum);
+    verseDiv.classList.add('selected');
+  }
+
+  updateVerseSelectionBarUI();
+};
+
+window.clearVerseSelection = function () {
+  selectedVerses.clear();
+  document.querySelectorAll('.verse.selected').forEach(el => el.classList.remove('selected'));
+  updateVerseSelectionBarUI();
+  closeHighlightPalette();
+};
+
+function updateVerseSelectionBarUI() {
+  const bar = document.getElementById('verseSelectionBar');
+  if (!bar) return;
+
+  const count = selectedVerses.size;
+  if (count === 0) {
+    bar.classList.add('hidden');
+    closeHighlightPalette();
+    return;
+  }
+
+  bar.classList.remove('hidden');
+  const badgeEl = document.getElementById('verseSelectionBadge');
+  if (badgeEl) {
+    badgeEl.innerHTML = `<i class="fas fa-check-circle"></i> <span>${count} ${count === 1 ? 'versículo selecionado' : 'versículos selecionados'}</span>`;
+  }
+
+  const listenTextEl = document.getElementById('btnListenSelectedText');
+  if (listenTextEl) {
+    if (count === 1) {
+      const vNum = Array.from(selectedVerses)[0];
+      listenTextEl.textContent = `Ouvir do vers. ${vNum}`;
+    } else {
+      listenTextEl.textContent = `Ouvir ${count} versículos`;
+    }
+  }
+}
+
+window.playSelectedVersesAudio = async function () {
+  if (!selectedVerses || selectedVerses.size === 0) return;
+
+  const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+
+  if (sorted.length === 1) {
+    const startV = sorted[0];
+    showToast(`🔊 Ouvindo a partir do versículo ${startV}...`);
+    await readVersesRange(null, startV);
+  } else {
+    showToast(`🔊 Ouvindo ${sorted.length} versículos selecionados...`);
+    await readVersesRange(sorted);
+  }
+};
+
+window.toggleHighlightPalette = function (e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const palette = document.getElementById('verseHighlightPalette');
+  if (palette) palette.classList.toggle('hidden');
+};
+
+window.closeHighlightPalette = function () {
+  const palette = document.getElementById('verseHighlightPalette');
+  if (palette) palette.classList.add('hidden');
+};
+
+window.applyHighlightToSelected = function (color) {
+  if (!selectedVerses || selectedVerses.size === 0) return;
+  if (!currentBook) return;
+
+  selectedVerses.forEach(vNum => {
+    const key = `${currentBook.id}_${currentChapter}_${vNum}`;
+    const verseEl = document.getElementById(`v-${vNum}`);
+    if (color) {
+      savedHighlights[key] = color;
+      if (verseEl) {
+        verseEl.classList.remove('verse-highlight-gold', 'verse-highlight-blue', 'verse-highlight-green', 'verse-highlight-red');
+        verseEl.classList.add(`verse-highlight-${color}`);
+      }
+    } else {
+      delete savedHighlights[key];
+      if (verseEl) {
+        verseEl.classList.remove('verse-highlight-gold', 'verse-highlight-blue', 'verse-highlight-green', 'verse-highlight-red');
+      }
+    }
+  });
+
+  saveStoredHighlights();
+  closeHighlightPalette();
+  showToast(color ? '🖍️ Versículo(s) destacado(s) com sucesso!' : 'Marcação removida!');
+};
+
+window.openStoryCardFromSelection = function () {
+  if (!selectedVerses || selectedVerses.size === 0) return;
+  if (!currentBook) return;
+
+  const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+  const firstV = sorted[0];
+  const combinedText = sorted.map(vNum => {
+    const vEl = document.getElementById(`v-${vNum}`);
+    return vEl?.querySelector('.verse-text')?.textContent.trim() || '';
+  }).filter(Boolean).join(' ');
+
+  openStoryCardModal({
+    livro: currentBook.nome,
+    cap: currentChapter,
+    ver: firstV,
+    verEnd: sorted.length > 1 ? sorted[sorted.length - 1] : null,
+    texto: combinedText
+  });
+};
+
+window.copySelectedVerses = async function () {
+  if (!selectedVerses || selectedVerses.size === 0) return;
+  if (!currentBook) return;
+
+  const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+  const lines = sorted.map(vNum => {
+    const vEl = document.getElementById(`v-${vNum}`);
+    const txt = vEl?.querySelector('.verse-text')?.textContent.trim() || '';
+    return `${vNum}. ${txt}`;
+  });
+  const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
+  const fullText = `"${lines.join('\n')}"\n\n— ${currentBook.nome} ${currentChapter},${rangeStr}\nBíblia Sagrada Edição Católica\nhttps://bibliasagradaavemaria.com.br`;
+
+  const ok = await copyToClipboard(fullText);
+  showToast(ok ? `📋 ${sorted.length} versículo(s) copiado(s)!` : 'Erro ao copiar versículos');
+};
+
+window.shareSelectedVersesWhatsApp = function () {
+  if (!selectedVerses || selectedVerses.size === 0) return;
+  if (!currentBook) return;
+
+  const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
+  const lines = sorted.map(vNum => {
+    const vEl = document.getElementById(`v-${vNum}`);
+    const txt = vEl?.querySelector('.verse-text')?.textContent.trim() || '';
+    return `*${vNum}* ${txt}`;
+  });
+  const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
+  const msg = `“${lines.join('\n')}”\n\n— *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_Bíblia Sagrada Edição Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 // ===== SEARCH HIGHLIGHTING HELPER =====
@@ -1710,8 +1937,20 @@ window.deleteCurrentLightboxImage = async function () {
   }
 };
 
-// Keyboard navigation for Lightbox
+// Keyboard navigation for Lightbox & Verse Selection
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (selectedVerses && selectedVerses.size > 0) {
+      clearVerseSelection();
+    }
+    const modal = document.getElementById('galleryLightboxModal');
+    if (modal && !modal.classList.contains('hidden')) {
+      closeGalleryLightbox();
+      closeYouTubePlayer();
+    }
+    return;
+  }
+
   const modal = document.getElementById('galleryLightboxModal');
   if (!modal || modal.classList.contains('hidden')) return;
 
@@ -1719,9 +1958,6 @@ document.addEventListener('keydown', (e) => {
     navigateLightbox(-1);
   } else if (e.key === 'ArrowRight') {
     navigateLightbox(1);
-  } else if (e.key === 'Escape') {
-    closeGalleryLightbox();
-    closeYouTubePlayer();
   }
 });
 
@@ -3008,7 +3244,7 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
         const text = textEl.textContent.trim();
 
         v.classList.add('reading');
-        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        v.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         try {
           await speakSingleVerseText(text);
@@ -3171,11 +3407,11 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
               <span class="verse-text">${v.texto}</span>
             </div>
             <div class="verse-actions">
-              <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
-              <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${leitura.id_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
-              <button class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
-              <button class="verse-action-btn whatsapp wa-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-              <button class="verse-action-btn story-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
+              <button type="button" class="verse-action-btn speak-btn" data-v="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this, event)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
+              <button type="button" class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${leitura.id_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
+              <button type="button" class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
+              <button type="button" class="verse-action-btn whatsapp wa-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+              <button type="button" class="verse-action-btn story-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
             </div>
           </div>
         `;
