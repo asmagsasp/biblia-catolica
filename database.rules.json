@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "gallery": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["created_at"]
+    },
+    "deleted_gallery": {
+      ".read": true,
+      ".write": true
+    },
+    "diario_oracoes": {
+      ".read": true,
+      ".write": true
+    },
+    "velas_oracao": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
