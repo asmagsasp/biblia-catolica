@@ -259,7 +259,10 @@ window.stopSpeech = function () {
   if (typeof stopHomiliaLiturgiaSpeech === 'function') {
     try { stopHomiliaLiturgiaSpeech(); } catch (e) {}
   }
-  document.querySelectorAll('.verse.reading, .search-result-item.reading').forEach(v => v.classList.remove('reading'));
+  if (typeof stopPlanDaySpeech === 'function') {
+    try { stopPlanDaySpeech(); } catch (e) {}
+  }
+  document.querySelectorAll('.verse.reading, .search-result-item.reading, .plan-day-verse.reading').forEach(v => v.classList.remove('reading'));
   document.querySelectorAll('.search-speak-btn.speaking').forEach(b => {
     b.classList.remove('speaking');
     b.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir</span>';
@@ -566,6 +569,59 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
     return;
   }
 });
+
+// Event delegation para versículos do Modo Leitura do Dia do Plano
+const planDayContentEl = document.getElementById('planDayContent');
+if (planDayContentEl) {
+  planDayContentEl.addEventListener('click', async e => {
+    const favBtn = e.target.closest('.fav-btn');
+    if (favBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const result = await db.toggleFavorito(
+          parseInt(favBtn.dataset.livro),
+          parseInt(favBtn.dataset.cap),
+          parseInt(favBtn.dataset.ver)
+        );
+        favBtn.classList.toggle('favorited', result === 1);
+        showToast(result ? '❤ Favoritado' : 'Removido');
+        const favContainer = document.getElementById('favoritesContainer');
+        if (favContainer) delete favContainer.dataset.loaded;
+        await updateFavCountOnly();
+      } catch (err) {
+        console.error("Erro no Favorito:", err);
+      }
+      return;
+    }
+    const teologiaBtn = e.target.closest('.teologia-btn');
+    if (teologiaBtn) {
+      e.stopPropagation();
+      explicarVersiculoTeologia(teologiaBtn.dataset.livro, teologiaBtn.dataset.cap, teologiaBtn.dataset.ver, teologiaBtn.dataset.txt);
+      return;
+    }
+    const waBtn = e.target.closest('.wa-btn');
+    if (waBtn) {
+      e.stopPropagation();
+      const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      return;
+    }
+    const speakBtn = e.target.closest('.speak-btn');
+    if (speakBtn) {
+      e.stopPropagation();
+      const verseDiv = speakBtn.closest('.verse');
+      const text = speakBtn.dataset.txt || verseDiv?.querySelector('.verse-text')?.textContent || '';
+      const vNum = verseDiv?.dataset?.v;
+      if (verseDiv && (verseDiv.classList.contains('reading') || speakBtn.classList.contains('speaking'))) {
+        stopSpeech();
+        return;
+      }
+      speakText(text, vNum, verseDiv);
+      return;
+    }
+  });
+}
 
 let activeVerseUtterance = null;
 let verseHeartbeatInterval = null;
@@ -2727,8 +2783,8 @@ window.showPlan = function () {
         const done = !!readingPlanDays[d.dia];
         const isNext = (d.dia === nextDia && !done);
         
-        const leiturasHtml = d.leituras.map(l => 
-          `<span class="plan-leitura-tag" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+        const leiturasHtml = d.leituras.map((l, idx) => 
+          `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
         ).join('');
 
         h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
@@ -2740,6 +2796,11 @@ window.showPlan = function () {
                       ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
                     </div>
                     <div class="plan-day-desc">${leiturasHtml}</div>
+                    <div class="plan-day-card-actions">
+                      <button class="plan-day-open-btn" onclick="event.stopPropagation(); openPlanDay(${d.dia}, 0)" title="Ler e ouvir todas as leituras do Dia ${d.dia}">
+                        <i class="fas fa-play-circle"></i> Ler e Ouvir Dia Completo
+                      </button>
+                    </div>
                 </div>
                 <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
             </div>`;
@@ -2758,14 +2819,33 @@ window.showPlan = function () {
 };
 
 document.getElementById('planContainer').addEventListener('click', async e => {
+  const checkBtn = e.target.closest('.plan-day-check');
+  if (checkBtn) {
+    const day = checkBtn.closest('.plan-day');
+    if (day) {
+      const dia = parseInt(day.dataset.dia);
+      readingPlanDays[dia] = !readingPlanDays[dia];
+
+      await Preferences.set({
+        key: 'biblia_plan_days',
+        value: JSON.stringify(readingPlanDays)
+      });
+
+      day.classList.toggle('completed', readingPlanDays[dia]);
+      updatePlanProgress();
+      updateNextPlanDayMarker();
+      if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! 🙏');
+    }
+    return;
+  }
+
   const leituraTag = e.target.closest('.plan-leitura-tag');
   if (leituraTag) {
     e.stopPropagation();
-    const livroId = parseInt(leituraTag.dataset.livro);
-    const livroNome = leituraTag.dataset.nome;
-    const cap = parseInt(leituraTag.dataset.cap);
-    if (livroId && cap) {
-      openBook(livroId, livroNome, 0, cap);
+    const dia = parseInt(leituraTag.dataset.dia);
+    const idx = parseInt(leituraTag.dataset.idx) || 0;
+    if (dia) {
+      openPlanDay(dia, idx);
     }
     return;
   }
@@ -2773,19 +2853,301 @@ document.getElementById('planContainer').addEventListener('click', async e => {
   const day = e.target.closest('.plan-day');
   if (day) {
     const dia = parseInt(day.dataset.dia);
-    readingPlanDays[dia] = !readingPlanDays[dia];
+    if (dia) {
+      openPlanDay(dia, 0);
+    }
+  }
+});
 
+// ===== MODO LEITURA E ÁUDIO SEQUENCIAL DO DIA =====
+let currentPlanDayData = null;
+let isPlanDaySpeaking = false;
+
+window.stopPlanDaySpeech = function () {
+  isPlanDaySpeaking = false;
+  updatePlanDaySpeechBtnState(false);
+  document.querySelectorAll('.plan-day-verse.reading').forEach(v => v.classList.remove('reading'));
+};
+
+function updatePlanDaySpeechBtnState(speaking) {
+  const btn = document.getElementById('btnTogglePlanDaySpeech');
+  if (btn) {
+    if (speaking) {
+      btn.classList.add('reading');
+      btn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar Áudio</span>';
+    } else {
+      btn.classList.remove('reading');
+      btn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir Dia Completo</span>';
+    }
+  }
+}
+
+window.togglePlanDaySpeech = async function () {
+  if (isPlanDaySpeaking) {
+    await stopSpeech();
+    return;
+  }
+  await speakPlanDayFromIndex(0);
+};
+
+window.speakPlanDayFromIndex = async function (startIndex = 0) {
+  await stopSpeech();
+  stopRequested = false;
+  isSpeaking = true;
+  isPlanDaySpeaking = true;
+  updatePlanDaySpeechBtnState(true);
+
+  const dayData = currentPlanDayData;
+  if (!dayData || !dayData.leituras || !dayData.leituras.length) {
+    updatePlanDaySpeechBtnState(false);
+    return;
+  }
+
+  try {
+    if (startIndex === 0) {
+      const allTitles = dayData.leituras.map(l => `${l.nome_livro} capítulo ${l.capitulo}`).join(', ');
+      await speakSingleVerseText(`Plano de Leitura. Dia ${dayData.dia}. ${allTitles}.`);
+      if (stopRequested) return;
+    }
+
+    for (let rIdx = startIndex; rIdx < dayData.leituras.length; rIdx++) {
+      if (stopRequested) break;
+      const leitura = dayData.leituras[rIdx];
+
+      // Atualiza botões ativos na barra superior
+      document.querySelectorAll('.plan-chapter-jump-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === rIdx);
+      });
+
+      // Rola a tela até o início desta seção
+      const sectionEl = document.getElementById(`plan-chapter-section-${rIdx}`);
+      if (sectionEl) {
+        sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      // Anuncia o capítulo corrente
+      await speakSingleVerseText(`${leitura.nome_livro}, capítulo ${leitura.capitulo}.`);
+      if (stopRequested) break;
+
+      // Percorre todos os versículos deste capítulo
+      const verseEls = document.querySelectorAll(`.plan-day-verse[data-idx="${rIdx}"]`);
+      for (let vIdx = 0; vIdx < verseEls.length; vIdx++) {
+        if (stopRequested) break;
+        const v = verseEls[vIdx];
+        const textEl = v.querySelector('.verse-text');
+        if (!textEl) continue;
+        const text = textEl.textContent.trim();
+
+        v.classList.add('reading');
+        v.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        try {
+          await speakSingleVerseText(text);
+        } finally {
+          v.classList.remove('reading');
+        }
+      }
+    }
+
+    // Se concluiu todas as leituras sem ser interrompido
+    if (!stopRequested && startIndex <= dayData.leituras.length - 1) {
+      await speakSingleVerseText(`Parabéns! Você concluiu todas as leituras do Dia ${dayData.dia}. Deus te abençoe!`);
+
+      if (!readingPlanDays[dayData.dia]) {
+        readingPlanDays[dayData.dia] = true;
+        await Preferences.set({
+          key: 'biblia_plan_days',
+          value: JSON.stringify(readingPlanDays)
+        });
+        updatePlanProgress();
+        updateNextPlanDayMarker();
+        showToast(`🎉 Leituras do Dia ${dayData.dia} concluídas com sucesso!`);
+
+        const topBtn = document.getElementById('btnPlanDayCompleteTop');
+        if (topBtn) {
+          topBtn.classList.add('completed');
+          topBtn.innerHTML = '<i class="fas fa-check"></i> <span>Concluído</span>';
+        }
+        const finishCard = document.getElementById('planDayFinishCard');
+        if (finishCard) finishCard.classList.add('completed');
+        const finishBtn = document.getElementById('btnFinishMarkDay');
+        if (finishBtn) {
+          finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>Dia Concluído (Clique para desmarcar)</span>`;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Plan day speech error:", err);
+  } finally {
+    document.querySelectorAll('.plan-day-verse.reading').forEach(v => v.classList.remove('reading'));
+    isSpeaking = false;
+    isPlanDaySpeaking = false;
+    updatePlanDaySpeechBtnState(false);
+  }
+};
+
+window.scrollToPlanChapter = function (index) {
+  const section = document.getElementById(`plan-chapter-section-${index}`);
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.plan-chapter-jump-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === index);
+    });
+  }
+};
+
+window.togglePlanDayFromView = async function (dia) {
+  readingPlanDays[dia] = !readingPlanDays[dia];
+
+  await Preferences.set({
+    key: 'biblia_plan_days',
+    value: JSON.stringify(readingPlanDays)
+  });
+
+  const isDone = readingPlanDays[dia];
+  updatePlanProgress();
+  updateNextPlanDayMarker();
+
+  const topBtn = document.getElementById('btnPlanDayCompleteTop');
+  if (topBtn) {
+    topBtn.classList.toggle('completed', isDone);
+    topBtn.innerHTML = `<i class="fas fa-check"></i> <span>${isDone ? 'Concluído' : 'Marcar Concluído'}</span>`;
+  }
+
+  const finishCard = document.getElementById('planDayFinishCard');
+  if (finishCard) finishCard.classList.toggle('completed', isDone);
+  const finishBtn = document.getElementById('btnFinishMarkDay');
+  if (finishBtn) {
+    finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Concluído (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Concluído'}</span>`;
+  }
+
+  showToast(isDone ? `Leituras do Dia ${dia} concluídas! Deus te abençoe! 🙏` : `Dia ${dia} marcado como pendente.`);
+};
+
+window.markAndGoNextPlanDay = async function (dia) {
+  if (!readingPlanDays[dia]) {
+    readingPlanDays[dia] = true;
     await Preferences.set({
       key: 'biblia_plan_days',
       value: JSON.stringify(readingPlanDays)
     });
-
-    day.classList.toggle('completed', readingPlanDays[dia]);
     updatePlanProgress();
     updateNextPlanDayMarker();
-    if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! 🙏');
   }
-});
+  const nextDia = dia < 365 ? dia + 1 : 1;
+  openPlanDay(nextDia, 0);
+};
+
+window.openPlanDay = async function (dia, initialReadingIndex = 0) {
+  showView('planDayView');
+  const container = document.getElementById('planDayContent');
+  container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+
+  try {
+    const plan = await db.getPlanoLeitura();
+    const dayData = plan.find(d => d.dia === dia) || { dia, leituras: [] };
+    currentPlanDayData = dayData;
+
+    const leiturasStr = dayData.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
+    document.getElementById('planDayTitle').textContent = `Plano de Leitura • Dia ${dia}`;
+    document.getElementById('planDaySubtitle').textContent = leiturasStr || 'Leituras do dia';
+
+    const isDone = !!readingPlanDays[dia];
+
+    // Barra de navegação rápida entre os capítulos do dia
+    let barHtml = dayData.leituras.map((l, idx) => `
+      <button class="plan-chapter-jump-btn ${idx === initialReadingIndex ? 'active' : ''}" onclick="scrollToPlanChapter(${idx})">
+        <i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}
+      </button>
+    `).join('');
+    barHtml += `
+      <button class="plan-chapter-check-btn ${isDone ? 'completed' : ''}" id="btnPlanDayCompleteTop" onclick="togglePlanDayFromView(${dia})">
+        <i class="fas fa-check"></i> <span>${isDone ? 'Concluído' : 'Marcar Concluído'}</span>
+      </button>
+    `;
+    document.getElementById('planDayChapterBar').innerHTML = barHtml;
+
+    // Carrega todos os capítulos em paralelo para visualização contínua imediata
+    const chaptersData = await Promise.all(
+      dayData.leituras.map(async (l, idx) => {
+        const verses = await db.getVersiculos(l.id_livro, l.capitulo);
+        return { leitura: l, index: idx, verses };
+      })
+    );
+
+    let contentHtml = '';
+    chaptersData.forEach(({ leitura, index, verses }) => {
+      contentHtml += `
+        <div class="plan-day-section" id="plan-chapter-section-${index}" data-idx="${index}">
+          <div class="plan-day-section-header">
+            <div class="plan-day-section-badge">Leitura ${index + 1} de ${dayData.leituras.length} • Dia ${dia}</div>
+            <div class="plan-day-section-title-row">
+              <h3 class="plan-day-section-title">${leitura.nome_livro} ${leitura.capitulo}</h3>
+              <button class="plan-day-listen-section-btn" onclick="speakPlanDayFromIndex(${index})" title="Ouvir a partir de ${leitura.nome_livro} ${leitura.capitulo}">
+                <i class="fas fa-volume-up"></i> Ouvir este capítulo em diante
+              </button>
+            </div>
+          </div>
+          <div class="plan-day-verses">
+      `;
+
+      verses.forEach(v => {
+        contentHtml += `
+          <div class="verse plan-day-verse" id="pv-${index}-${v.id_versiculo}" data-idx="${index}" data-v="${v.id_versiculo}">
+            <div class="verse-content">
+              <span class="verse-number">${v.id_versiculo}</span>
+              <span class="verse-text">${v.texto}</span>
+            </div>
+            <div class="verse-actions">
+              <button class="verse-action-btn speak-btn" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
+              <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${leitura.id_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
+              <button class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
+              <button class="verse-action-btn whatsapp wa-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+            </div>
+          </div>
+        `;
+      });
+
+      contentHtml += `
+          </div>
+        </div>
+      `;
+    });
+
+    const nextDayNum = dia < 365 ? dia + 1 : 1;
+    contentHtml += `
+      <div class="plan-day-finish-card ${isDone ? 'completed' : ''}" id="planDayFinishCard">
+        <div class="plan-day-finish-icon"><i class="fas fa-bible"></i></div>
+        <h3 class="plan-day-finish-title">Conclusão do Dia ${dia}</h3>
+        <p class="plan-day-finish-desc">${leiturasStr}</p>
+        <div class="plan-day-finish-actions">
+          <button class="plan-day-finish-btn btn-finish-mark" id="btnFinishMarkDay" onclick="togglePlanDayFromView(${dia})">
+            <i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Concluído (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Concluído'}</span>
+          </button>
+          ${dia < 365 ? `
+            <button class="plan-day-finish-btn btn-finish-next" onclick="markAndGoNextPlanDay(${dia})">
+              <span>Avançar para o Dia ${nextDayNum}</span> <i class="fas fa-arrow-right"></i>
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = contentHtml;
+
+    if (initialReadingIndex > 0) {
+      setTimeout(() => scrollToPlanChapter(initialReadingIndex), 80);
+    } else {
+      window.scrollTo(0, 0);
+    }
+
+    trackPageView(`Plano Dia ${dia}`, `/plano-leitura/dia/${dia}`);
+    trackEvent('read_plan_day', { dia });
+  } catch (err) {
+    console.error("OpenPlanDay error:", err);
+    showToast("Erro ao abrir leitura do dia");
+  }
+};
 
 function updatePlanProgress() {
   const done = Object.values(readingPlanDays).filter(Boolean).length;
@@ -2823,6 +3185,7 @@ const VIEW_TRACKING_META = {
   favoritesView: { title: 'Meus Favoritos', path: '/favoritos' },
   galleryView: { title: 'Galeria de Imagens Sacras', path: '/galeria' },
   planView: { title: 'Plano de Leitura 365 Dias', path: '/plano-leitura' },
+  planDayView: { title: 'Leitura do Dia - Plano 365', path: '/plano-leitura/dia' },
   liturgiaView: { title: 'Liturgia Diária & Santo do Dia', path: '/liturgia' },
   rosarioView: { title: 'Santo Rosário & Terço', path: '/santo-terco' },
   velasView: { title: 'Mural de Velas & Intenções', path: '/velas' },
@@ -2850,12 +3213,12 @@ function showView(id) {
   stopMariaSpeech();
   stopOracaoAudio();
   stopDiretorAudio();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView', 'diretorEspiritualView'].forEach(v => {
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'planDayView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView', 'diretorEspiritualView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
   document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', velasView: 'bnVelas', galleryView: 'bnGallery', planView: 'bnPlan', favoritesView: 'bnFav' };
+  const map = { homeView: 'bnHome', liturgiaView: 'bnLiturgia', rosarioView: 'bnRosario', velasView: 'bnVelas', galleryView: 'bnGallery', planView: 'bnPlan', planDayView: 'bnPlan', favoritesView: 'bnFav' };
   if (map[id]) { const btn = document.getElementById(map[id]); if (btn) btn.classList.add('active'); }
   window.scrollTo(0, 0);
 
@@ -2878,7 +3241,9 @@ window.doSearchWithQuery = function (query) {
 };
 
 window.handleChapterBack = function () {
-  if (lastViewBeforeChapter === 'planView') {
+  if (lastViewBeforeChapter === 'planDayView') {
+    showView('planDayView');
+  } else if (lastViewBeforeChapter === 'planView') {
     showPlan();
   } else {
     goHome();

@@ -510,6 +510,36 @@
       </div>
     </div>
 
+    <!-- PLAN DAY CONTINUOUS READER (MODO LEITURA SEQUENCIAL DO DIA) -->
+    <div id="planDayView" class="hidden">
+      <div class="chapter-view plan-day-view">
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="showPlan()" title="Voltar ao Cronograma"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title" id="planDayTitle">Plano de Leitura • Dia 1</h2>
+              <p class="chapter-subtitle" id="planDaySubtitle">Carregando leituras do dia...</p>
+            </div>
+          </div>
+          <div class="chapter-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-read-all" id="btnTogglePlanDaySpeech" onclick="togglePlanDaySpeech()">
+              <i class="fas fa-volume-up"></i> <span>Ouvir Dia Completo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra Rápida de Capítulos do Dia -->
+        <div class="plan-day-chapter-bar" id="planDayChapterBar"></div>
+
+        <!-- Conteúdo com todos os capítulos renderizados em sequência contínua -->
+        <div id="planDayContent">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- LITURGIA DIÁRIA & SANTO DO DIA -->
     <div id="liturgiaView" class="hidden">
       <div class="liturgia-view">
