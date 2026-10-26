@@ -20,7 +20,17 @@ import { getAparicoesVirgem, getAparicoesPorCategoria, getAparicaoPorId, getMari
 import { audioService, CATHOLIC_RADIOS, CATHOLIC_PODCASTS, getPodcastById } from './podcastService.js';
 import { LIVRO_ORACOES, ORACOES_CATEGORIAS, getOracaoPorId, getOracoesFiltradas } from './oracoesService.js';
 import { DIRETOR_PERSONAS, DIRETOR_TOPICOS_RAPIDOS, consultarDiretorEspiritual, getDiretorHistorico, salvarConsultaDiretorHistorico, excluirItemDiretorHistorico } from './diretorEspiritualService.js';
-import { trackPageView, trackEvent } from './analytics.js';
+import { openStoryCardModal, closeStoryCardModal, selectStoryTheme, setStoryFontSizeMode, toggleStoryOracao, toggleStoryWatermark, shareStoryCard, downloadStoryCard, copyStoryCardToClipboard } from './storyCardService.js';
+import { 
+  openSleepTimerModal, 
+  closeSleepTimerModal, 
+  startSleepTimer, 
+  cancelSleepTimer, 
+  addSleepTimerMinutes, 
+  handleSleepTimerPresetClick, 
+  handleCustomSleepTimerSubmit, 
+  notifyReadingFinished 
+} from './sleepTimerService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -262,6 +272,9 @@ window.stopSpeech = function () {
   if (typeof stopPlanDaySpeech === 'function') {
     try { stopPlanDaySpeech(); } catch (e) {}
   }
+  if (typeof stopRosarioSpeech === 'function') {
+    try { stopRosarioSpeech(); } catch (e) {}
+  }
   document.querySelectorAll('.verse.reading, .search-result-item.reading, .plan-day-verse.reading').forEach(v => v.classList.remove('reading'));
   document.querySelectorAll('.search-speak-btn.speaking').forEach(b => {
     b.classList.remove('speaking');
@@ -398,6 +411,31 @@ window.shareHeroWhatsApp = function () {
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 };
 
+window.openStoryCardFromHero = function () {
+  if (!heroData || !heroData.texto) return;
+  const nomeLivro = heroData.nome_livro || 'Salmos';
+  const cap = heroData.id_capitulo || 23;
+  const ver = heroData.id_versiculo || 1;
+  openStoryCardModal({
+    livro: nomeLivro,
+    cap,
+    ver,
+    texto: heroData.texto,
+    oracao: heroData.oracao || '',
+    temaId: 'celeste'
+  });
+};
+
+window.openStoryCardFromSearchResult = function (btn) {
+  if (!btn) return;
+  openStoryCardModal({
+    livro: btn.dataset.livro,
+    cap: parseInt(btn.dataset.cap),
+    ver: parseInt(btn.dataset.ver),
+    texto: btn.dataset.txt
+  });
+};
+
 // ===== OPEN BOOK =====
 async function openBook(id, nome, total, initialChapter = 1) {
   window.openBook = openBook;
@@ -460,6 +498,9 @@ async function loadVerses() {
         <button class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
           <i class="fas fa-volume-up"></i> Ouvir Capítulo
         </button>
+        <button class="btn-read-all btn-sleep-timer" id="btnChapterSleepTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
+          <i class="fas fa-moon"></i> <span id="chapterTimerLabel">Timer</span>
+        </button>
         <button class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
           <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
         </button>
@@ -481,6 +522,7 @@ async function loadVerses() {
                     <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
                     <button class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
                     <button class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
                     <button class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
                     <button class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
                 </div>
@@ -534,6 +576,17 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
     e.stopPropagation();
     const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    return;
+  }
+  const storyBtn = e.target.closest('.story-btn');
+  if (storyBtn) {
+    e.stopPropagation();
+    openStoryCardModal({
+      livro: storyBtn.dataset.livro,
+      cap: parseInt(storyBtn.dataset.cap),
+      ver: parseInt(storyBtn.dataset.ver),
+      texto: storyBtn.dataset.txt
+    });
     return;
   }
   const copyBtn = e.target.closest('.copy-btn');
@@ -605,6 +658,17 @@ if (planDayContentEl) {
       e.stopPropagation();
       const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      return;
+    }
+    const storyBtn = e.target.closest('.story-btn');
+    if (storyBtn) {
+      e.stopPropagation();
+      openStoryCardModal({
+        livro: storyBtn.dataset.livro,
+        cap: parseInt(storyBtn.dataset.cap),
+        ver: parseInt(storyBtn.dataset.ver),
+        texto: storyBtn.dataset.txt
+      });
       return;
     }
     const speakBtn = e.target.closest('.speak-btn');
@@ -989,6 +1053,9 @@ window.readVersesRange = async function (verseNumbers = null) {
     isSpeaking = false;
     isChapterReading = false;
     updateChapterReadBtnState(false);
+    if (!stopRequested) {
+      notifyReadingFinished();
+    }
   }
 };
 
@@ -1106,6 +1173,7 @@ function doSearch() {
                       <button type="button" class="search-action-btn search-fav-btn ${isFav ? 'favorited' : ''}" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="${isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
                       <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
                       <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                      <button type="button" class="search-action-btn search-story-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); openStoryCardFromSearchResult(this)" title="Criar Card para Story / Status" aria-label="Criar Card para Story"><i class="fas fa-camera"></i></button>
                     </div>
                   </div>
                   <div class="search-result-text">${hl}</div>
@@ -1151,6 +1219,7 @@ window.showFavorites = function () {
                       <button type="button" class="search-action-btn search-fav-btn favorited" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="Remover dos Favoritos" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
                       <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
                       <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                      <button type="button" class="search-action-btn search-story-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); openStoryCardFromSearchResult(this)" title="Criar Card para Story / Status" aria-label="Criar Card para Story"><i class="fas fa-camera"></i></button>
                     </div>
                   </div>
                   <div class="search-result-text">${r.texto}</div>
@@ -2983,6 +3052,9 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
     isSpeaking = false;
     isPlanDaySpeaking = false;
     updatePlanDaySpeechBtnState(false);
+    if (!stopRequested) {
+      notifyReadingFinished();
+    }
   }
 };
 
@@ -3103,6 +3175,7 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
               <button class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${leitura.id_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
               <button class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
               <button class="verse-action-btn whatsapp wa-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+              <button class="verse-action-btn story-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
             </div>
           </div>
         `;

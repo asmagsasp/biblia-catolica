@@ -112,8 +112,11 @@
             <p class="hero-oracao" id="heroOracao"></p>
           </div>
           <div class="hero-share">
-            <button class="hero-share-btn" onclick="shareHeroWhatsApp()">
-              <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
+            <button class="hero-share-btn" onclick="shareHeroWhatsApp()" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i> WhatsApp
+            </button>
+            <button class="hero-share-btn hero-story-btn" onclick="openStoryCardFromHero()" title="Criar Card em Imagem HD para WhatsApp Status e Instagram Stories">
+              <i class="fas fa-camera"></i> Card para Story / Status
             </button>
             <button class="hero-donate-btn pulse-animation donate-sweep-effect" id="heroDonateBtn" onclick="showDonateModal()">
               <i class="fas fa-hand-holding-heart"></i> Apoiar o Projeto
@@ -1517,6 +1520,9 @@
           </button>
           <input type="range" class="mini-vol-slider" id="miniVolSlider" min="0" max="1" step="0.05" value="0.9" oninput="changeMiniVolume(this.value)">
         </div>
+        <button class="mini-player-btn mini-btn-timer" id="miniBtnTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
+          <i class="fas fa-moon"></i>
+        </button>
         <button class="mini-player-btn mini-btn-play" id="miniBtnPlay" onclick="toggleAudioServicePlay()" title="Reproduzir / Pausar">
           <i class="fas fa-play" id="miniPlayIcon"></i>
         </button>
@@ -2563,12 +2569,217 @@
     </div>
   </div>
 
-  <!-- MODAL: DETALHES DA APARIÇÃO DA VIRGEM / ORAÇÃO / DOGMA -->
-  <div id="mariaDetailModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeMariaModal()">
-    <div class="donate-modal-content" style="max-width: 680px; max-height: 92vh; overflow-y: auto; text-align: left; padding: 20px; position: relative;">
-      <button class="donate-close-btn" onclick="closeMariaModal()" style="z-index: 10;"><i class="fas fa-times"></i></button>
-      <div id="mariaModalContent">
-        <!-- Renderizado dinamicamente -->
+  <!-- MODAL: GERADOR DE CARDS SACROS PARA REDES SOCIAIS (1080x1920) -->
+  <div id="storyCardModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle" onclick="if(event.target===this) closeStoryCardModal()">
+    <div class="story-modal-box">
+      <!-- Cabeçalho -->
+      <div class="story-modal-header">
+        <div class="story-modal-title-wrap">
+          <div class="story-modal-badge-icon">
+            <i class="fas fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="story-modal-title" id="storyModalTitle">Card para Story & Status</h3>
+            <p class="story-modal-sub">Formato vertical HD (1080x1920) perfeito para WhatsApp Status e Instagram Stories</p>
+          </div>
+        </div>
+        <button class="donate-close-btn" onclick="closeStoryCardModal()" title="Fechar"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Corpo -->
+      <div class="story-modal-body">
+        <!-- Coluna Esquerda: Mockup de Celular com Canvas -->
+        <div class="story-preview-column">
+          <div class="story-phone-mockup">
+            <div class="story-phone-camera"></div>
+            <div id="storyCardSpinner" class="loading hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 20; display: flex; align-items: center; justify-content: center;">
+              <div class="loading-spinner"></div>
+            </div>
+            <canvas id="storyPreviewCanvas" width="1080" height="1920"></canvas>
+          </div>
+          <span class="story-preview-badge-live">
+            <i class="fas fa-sparkles"></i> Preview em tempo real (1080x1920)
+          </span>
+        </div>
+
+        <!-- Coluna Direita: Personalização -->
+        <div class="story-controls-column">
+          <!-- Seletor de Fundo / Tema -->
+          <div class="story-control-section">
+            <label class="story-control-label">
+              <i class="fas fa-palette"></i> 1. Escolha o Fundo Sagrado
+            </label>
+            <div class="story-themes-grid" id="storyThemeList">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+
+          <!-- Tamanho da Fonte do Versículo -->
+          <div class="story-control-section">
+            <label class="story-control-label">
+              <i class="fas fa-text-height"></i> 2. Tamanho do Versículo
+            </label>
+            <div class="story-size-btn-group">
+              <button type="button" class="story-size-btn active" data-size-mode="auto" onclick="setStoryFontSizeMode('auto')">
+                <i class="fas fa-magic"></i> Auto
+              </button>
+              <button type="button" class="story-size-btn" data-size-mode="normal" onclick="setStoryFontSizeMode('normal')">
+                Padrão
+              </button>
+              <button type="button" class="story-size-btn" data-size-mode="grande" onclick="setStoryFontSizeMode('grande')">
+                Grande
+              </button>
+              <button type="button" class="story-size-btn" data-size-mode="destaque" onclick="setStoryFontSizeMode('destaque')">
+                Destaque
+              </button>
+            </div>
+          </div>
+
+          <!-- Opções Adicionais -->
+          <div class="story-control-section" style="display: flex; flex-direction: column; gap: 10px;">
+            <label class="story-control-label" style="margin-bottom: 2px;">
+              <i class="fas fa-sliders"></i> 3. Opções Visuais
+            </label>
+
+            <div id="storyOracaoOptionBox" style="display: none;">
+              <label class="story-toggle-row">
+                <input type="checkbox" id="storyToggleOracao" checked onchange="toggleStoryOracao(this.checked)">
+                <span>Incluir Oração / Meditação no rodapé</span>
+              </label>
+            </div>
+
+            <div>
+              <label class="story-toggle-row">
+                <input type="checkbox" id="storyToggleWatermark" checked onchange="toggleStoryWatermark(this.checked)">
+                <span>Assinatura Católica discreta (Evangelização)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé com Botões de Ação -->
+      <div class="story-modal-footer">
+        <button type="button" class="story-btn-share-primary" onclick="shareStoryCard()" title="Compartilhar imagem direto no WhatsApp Status ou Instagram Stories">
+          <i class="fab fa-whatsapp" style="font-size: 17px;"></i>
+          <i class="fab fa-instagram" style="font-size: 17px; margin-right: 2px;"></i>
+          <span>Postar no WhatsApp / Stories</span>
+        </button>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="story-btn-download" onclick="downloadStoryCard()" title="Baixar arquivo PNG em alta resolução">
+            <i class="fas fa-download"></i> Baixar Imagem HD
+          </button>
+          <button type="button" class="story-btn-copy" onclick="copyStoryCardToClipboard()" title="Copiar imagem para colar no WhatsApp Web ou editor">
+            <i class="fas fa-copy"></i> Copiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGE FLUTUANTE DE TIMER DE SONO -->
+  <div id="sleepTimerFloatingBadge" class="sleep-timer-floating-badge hidden" onclick="openSleepTimerModal()" role="button" aria-label="Timer de Sono Ativo">
+    <i class="fas fa-moon"></i>
+    <span id="sleepTimerBadgeText">--:--</span>
+    <button type="button" class="sleep-timer-badge-close" onclick="event.stopPropagation(); cancelSleepTimer()" title="Cancelar Timer">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- MODAL: TIMER DE SONO (SLEEP TIMER) -->
+  <div id="sleepTimerModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="sleepTimerTitle" onclick="if(event.target===this) closeSleepTimerModal()">
+    <div class="sleep-modal-box">
+      <div class="sleep-modal-header">
+        <div class="sleep-modal-title-wrap">
+          <div class="sleep-modal-icon">
+            <i class="fas fa-moon"></i>
+          </div>
+          <div>
+            <h3 class="sleep-modal-title" id="sleepTimerTitle">Timer de Sono (Sleep Timer)</h3>
+            <p class="sleep-modal-sub">Desliga o áudio automaticamente para você adormecer em paz.</p>
+          </div>
+        </div>
+        <button class="donate-close-btn" onclick="closeSleepTimerModal()" title="Fechar"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Card de Timer Ativo (visível se ativo) -->
+      <div id="sleepTimerActiveBox" class="sleep-timer-active-card" style="display: none;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #c084fc; font-weight: 700;">
+          <i class="fas fa-hourglass-half"></i> Tempo Restante
+        </div>
+        <div class="sleep-timer-countdown-display" id="sleepTimerCountdown">00:00</div>
+        <div class="sleep-timer-mode-desc" id="sleepTimerModeText">Desligamento automático programado.</div>
+        <div class="sleep-timer-active-actions">
+          <button type="button" class="sleep-btn-extend" onclick="addSleepTimerMinutes(15)">
+            <i class="fas fa-plus"></i> +15 min
+          </button>
+          <button type="button" class="sleep-btn-cancel" onclick="cancelSleepTimer()">
+            <i class="fas fa-stop"></i> Cancelar Timer
+          </button>
+        </div>
+      </div>
+
+      <!-- Seletor de Presets -->
+      <div id="sleepTimerPresetsBox">
+        <div style="font-size: 12.5px; font-weight: 700; color: #f5d0fe; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-bed"></i> Escolha o tempo desejado
+        </div>
+
+        <div class="sleep-presets-grid">
+          <button type="button" class="sleep-timer-preset-btn" data-minutes="15" onclick="handleSleepTimerPresetClick(this)">
+            <div class="sleep-preset-header">
+              <span class="sleep-preset-time">15 min</span>
+              <i class="fas fa-moon" style="color: #c084fc; font-size: 12px;"></i>
+            </div>
+            <span class="sleep-preset-desc">Soneca rápida ou meditação</span>
+          </button>
+
+          <button type="button" class="sleep-timer-preset-btn" data-minutes="30" onclick="handleSleepTimerPresetClick(this)">
+            <div class="sleep-preset-header">
+              <span class="sleep-preset-time">30 min</span>
+              <span style="font-size: 9.5px; background: rgba(192, 132, 252, 0.25); color: #f5d0fe; padding: 2px 6px; border-radius: 8px;">Recomendado</span>
+            </div>
+            <span class="sleep-preset-desc">Tempo ideal para adormecer</span>
+          </button>
+
+          <button type="button" class="sleep-timer-preset-btn" data-minutes="45" onclick="handleSleepTimerPresetClick(this)">
+            <div class="sleep-preset-header">
+              <span class="sleep-preset-time">45 min</span>
+              <i class="fas fa-moon" style="color: #c084fc; font-size: 12px;"></i>
+            </div>
+            <span class="sleep-preset-desc">Oração da noite e descanso</span>
+          </button>
+
+          <button type="button" class="sleep-timer-preset-btn" data-minutes="60" onclick="handleSleepTimerPresetClick(this)">
+            <div class="sleep-preset-header">
+              <span class="sleep-preset-time">60 min</span>
+              <i class="fas fa-moon" style="color: #c084fc; font-size: 12px;"></i>
+            </div>
+            <span class="sleep-preset-desc">1 hora de áudio contínuo</span>
+          </button>
+
+          <button type="button" class="sleep-timer-preset-btn sleep-preset-recommended" data-mode="end_of_reading" onclick="handleSleepTimerPresetClick(this)">
+            <div class="sleep-preset-header">
+              <span class="sleep-preset-time"><i class="fas fa-book-bible"></i> Ao Fim da Leitura</span>
+              <span style="font-size: 10px; color: var(--gold-400); font-weight: 700;">Capítulo / Dia</span>
+            </div>
+            <span class="sleep-preset-desc">Desliga sozinho ao terminar o último versículo narrado</span>
+          </button>
+        </div>
+
+        <!-- Minutos personalizados -->
+        <div class="sleep-custom-box">
+          <i class="fas fa-clock" style="color: #c084fc;"></i>
+          <span style="font-size: 12px; color: var(--text-secondary); flex: 1;">Outro tempo:</span>
+          <input type="number" id="customSleepTimerInput" class="sleep-custom-input" min="1" max="360" placeholder="Min">
+          <button type="button" class="sleep-custom-btn" onclick="handleCustomSleepTimerSubmit()">Ativar</button>
+        </div>
+
+        <div class="sleep-tip-box">
+          <i class="fas fa-shield-heart" style="color: #22c55e;"></i>
+          <span>O volume é reduzido suavemente nos últimos segundos.</span>
+        </div>
       </div>
     </div>
   </div>

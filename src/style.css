@@ -8739,3 +8739,799 @@ mark,
   background: #f0f9ff;
   color: #0c4a6e;
 }
+
+/* ==========================================================================
+   GERADOR DE CARDS SACROS • STORY & STATUS (1080x1920)
+   ========================================================================== */
+
+.verse-action-btn.story-btn {
+  color: #f472b6;
+}
+
+.verse-action-btn.story-btn:hover {
+  background: rgba(244, 114, 182, 0.18);
+  border-color: rgba(244, 114, 182, 0.45);
+  color: #fb7185;
+  transform: scale(1.08);
+}
+
+.search-action-btn.search-story-btn {
+  color: #f472b6;
+}
+
+.search-action-btn.search-story-btn:hover {
+  background: rgba(244, 114, 182, 0.18);
+  border-color: rgba(244, 114, 182, 0.45);
+  color: #fb7185;
+  transform: scale(1.08);
+}
+
+.hero-story-btn {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(212, 175, 55, 0.28) 100%) !important;
+  border-color: rgba(236, 72, 153, 0.45) !important;
+  color: #fff !important;
+}
+
+.hero-story-btn:hover {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(212, 175, 55, 0.45) 100%) !important;
+  border-color: rgba(236, 72, 153, 0.65) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(236, 72, 153, 0.35);
+}
+
+/* Modal Content Container */
+.story-modal-box {
+  max-width: 920px;
+  max-height: 94vh;
+  width: 95vw;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  background: linear-gradient(145deg, rgba(24, 14, 26, 0.98) 0%, rgba(12, 6, 14, 0.99) 100%);
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(212, 175, 55, 0.15);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.story-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  margin-bottom: 16px;
+}
+
+.story-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.story-modal-badge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(212, 175, 55, 0.25) 100%);
+  border: 1px solid rgba(236, 72, 153, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  color: #f472b6;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.25);
+}
+
+.story-modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  color: var(--gold-300);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.story-modal-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+/* Modal Body Layout */
+.story-modal-body {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Coluna Esquerda: Mockup de Celular com o Card */
+.story-preview-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.story-phone-mockup {
+  width: 270px;
+  height: 480px;
+  aspect-ratio: 9 / 16;
+  border-radius: 28px;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  border: 4px solid #231826;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(212, 175, 55, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-phone-mockup::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  pointer-events: none;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+
+.story-phone-camera {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 14px;
+  background: #0e0712;
+  border-radius: 10px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#storyPreviewCanvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.story-preview-badge-live {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--gold-400);
+  background: rgba(212, 175, 55, 0.12);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Coluna Direita: Controles e Temas */
+.story-controls-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.story-control-section {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.story-control-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-300);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Grid de Temas */
+.story-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.story-theme-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.story-theme-chip:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.35);
+  transform: translateY(-1px);
+}
+
+.story-theme-chip.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.22) 0%, rgba(236, 72, 153, 0.18) 100%);
+  border-color: var(--gold-400);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+.story-theme-chip-icon {
+  font-size: 15px;
+  color: var(--gold-400);
+  width: 20px;
+  text-align: center;
+}
+
+.story-theme-chip-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.story-theme-chip-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-theme-chip-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-theme-chip-check {
+  font-size: 11px;
+  color: #22c55e;
+}
+
+/* Tamanho de Fonte */
+.story-size-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.story-size-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.story-size-btn:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--gold-200);
+}
+
+.story-size-btn.active {
+  background: rgba(212, 175, 55, 0.22);
+  border-color: var(--gold-400);
+  color: var(--gold-300);
+  font-weight: 700;
+}
+
+/* Opções de Toggle */
+.story-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.story-toggle-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #d4af37;
+  cursor: pointer;
+}
+
+/* Rodapé de Ações */
+.story-modal-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.story-btn-share-primary {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+  transition: all 0.2s ease;
+}
+
+.story-btn-share-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.55);
+}
+
+.story-btn-download {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(184, 134, 11, 0.3) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: var(--gold-300);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.story-btn-download:hover {
+  background: rgba(212, 175, 55, 0.35);
+  border-color: var(--gold-400);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.story-btn-copy {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s ease;
+}
+
+.story-btn-copy:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .story-modal-box {
+    padding: 16px;
+    max-height: 96vh;
+    width: 96vw;
+  }
+  
+  .story-modal-body {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .story-phone-mockup {
+    width: 220px;
+    height: 391px;
+  }
+
+  .story-themes-grid {
+    grid-template-columns: 1fr 1fr;
+    max-height: 160px;
+  }
+
+  .story-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .story-btn-share-primary,
+  .story-btn-download,
+  .story-btn-copy {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   TIMER DE SONO (SLEEP TIMER) PARA O ÁUDIO
+   ========================================================================== */
+
+/* Badge Flutuante de Timer Ativo */
+.sleep-timer-floating-badge {
+  position: fixed;
+  bottom: 84px;
+  right: 18px;
+  z-index: 9980;
+  background: linear-gradient(135deg, rgba(20, 10, 30, 0.94) 0%, rgba(10, 5, 20, 0.96) 100%);
+  border: 1.5px solid rgba(192, 132, 252, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(192, 132, 252, 0.35);
+  border-radius: 24px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f3e8ff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+  animation: sleepPulseGlow 3s infinite alternate;
+}
+
+@keyframes sleepPulseGlow {
+  0% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 10px rgba(192, 132, 252, 0.25); }
+  100% { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75), 0 0 20px rgba(192, 132, 252, 0.55); border-color: rgba(216, 180, 254, 0.8); }
+}
+
+.sleep-timer-floating-badge:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.sleep-timer-floating-badge i.fa-moon {
+  color: #c084fc;
+  font-size: 14px;
+}
+
+.sleep-timer-badge-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+}
+
+.sleep-timer-badge-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* Modal Box do Sleep Timer */
+.sleep-modal-box {
+  max-width: 520px;
+  width: 92vw;
+  background: linear-gradient(145deg, rgba(18, 10, 26, 0.98) 0%, rgba(10, 5, 16, 0.99) 100%);
+  border: 1.5px solid rgba(192, 132, 252, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(192, 132, 252, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  color: #fdfaf3;
+  position: relative;
+}
+
+.sleep-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(192, 132, 252, 0.18);
+}
+
+.sleep-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sleep-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.2) 0%, rgba(147, 51, 234, 0.25) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #c084fc;
+}
+
+.sleep-modal-title {
+  font-family: 'Cinzel', serif;
+  font-size: 19px;
+  color: #f5d0fe;
+  margin: 0;
+}
+
+.sleep-modal-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+/* Caixa de Timer Ativo no Modal */
+.sleep-timer-active-card {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.sleep-timer-countdown-display {
+  font-family: 'Cinzel', monospace;
+  font-size: 44px;
+  font-weight: 800;
+  color: #f5d0fe;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
+  margin: 6px 0;
+}
+
+.sleep-timer-mode-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.sleep-timer-active-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.sleep-btn-extend {
+  background: rgba(192, 132, 252, 0.18);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  color: #f5d0fe;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.sleep-btn-extend:hover {
+  background: rgba(192, 132, 252, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.sleep-btn-cancel {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.sleep-btn-cancel:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fff;
+}
+
+/* Grid de Presets */
+.sleep-presets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.sleep-timer-preset-btn {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.sleep-timer-preset-btn:hover {
+  background: rgba(192, 132, 252, 0.12);
+  border-color: rgba(192, 132, 252, 0.35);
+  transform: translateY(-2px);
+}
+
+.sleep-timer-preset-btn.active {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.22) 0%, rgba(147, 51, 234, 0.2) 100%);
+  border-color: #c084fc;
+  box-shadow: 0 0 14px rgba(192, 132, 252, 0.35);
+}
+
+.sleep-preset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sleep-preset-time {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5d0fe;
+}
+
+.sleep-preset-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sleep-preset-recommended {
+  grid-column: 1 / -1;
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+.sleep-preset-recommended.active {
+  border-color: var(--gold-400);
+}
+
+/* Custom Minutes Input */
+.sleep-custom-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sleep-custom-input {
+  width: 90px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+}
+
+.sleep-custom-input:focus {
+  border-color: #c084fc;
+}
+
+.sleep-custom-btn {
+  background: rgba(192, 132, 252, 0.2);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  color: #f5d0fe;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sleep-custom-btn:hover {
+  background: rgba(192, 132, 252, 0.35);
+  color: #fff;
+}
+
+.sleep-tip-box {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+/* Botões do Timer no Player e no Capítulo */
+.mini-btn-timer {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c084fc;
+  cursor: pointer;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.mini-btn-timer:hover {
+  background: rgba(192, 132, 252, 0.2);
+  border-color: rgba(192, 132, 252, 0.4);
+  color: #f5d0fe;
+  transform: scale(1.06);
+}
+
+.mini-btn-timer.active-timer {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.3) 0%, rgba(147, 51, 234, 0.3) 100%);
+  border-color: #c084fc;
+  color: #f5d0fe;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.4);
+}
+
+.btn-sleep-timer {
+  background: rgba(192, 132, 252, 0.12) !important;
+  border-color: rgba(192, 132, 252, 0.35) !important;
+  color: #c084fc !important;
+}
+
+.btn-sleep-timer:hover {
+  background: rgba(192, 132, 252, 0.25) !important;
+  border-color: rgba(192, 132, 252, 0.6) !important;
+  color: #f5d0fe !important;
+}
+
+.btn-sleep-timer.active-timer {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.3) 0%, rgba(147, 51, 234, 0.35) 100%) !important;
+  border-color: #c084fc !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.4);
+}
