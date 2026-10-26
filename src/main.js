@@ -115,6 +115,18 @@ function saveStoredHighlights() {
 
 loadStoredHighlights();
 
+function clearVerseSelection() {
+  if (selectedVerses) selectedVerses.clear();
+  document.querySelectorAll('.verse.selected').forEach(el => el.classList.remove('selected'));
+  if (typeof updateVerseSelectionBarUI === 'function') {
+    updateVerseSelectionBarUI();
+  }
+  if (typeof closeHighlightPalette === 'function') {
+    closeHighlightPalette();
+  }
+}
+window.clearVerseSelection = clearVerseSelection;
+
 const fonts = ['normal', 'large', 'xlarge', 'small'];
 let currentFontIdx = 0;
 let isSpeaking = false;
@@ -372,6 +384,7 @@ function bookCard(b) {
 document.addEventListener('click', e => {
   const card = e.target.closest('.book-card');
   if (card) {
+    e.preventDefault();
     openBook(
       parseInt(card.dataset.livro),
       card.dataset.nome,
@@ -480,20 +493,27 @@ async function openBook(id, nome, total, initialChapter = 1) {
     trackEvent('read_chapter', { livro_id: id, livro_nome: nome, capitulo: targetCap });
   } catch (e) {
     console.error("OpenBook error:", e);
-    goHome();
+    showToast("Erro ao abrir livro");
   }
 }
 
 function renderChapterSelector() {
   let h = '';
-  for (let i = 1; i <= totalChapters; i++) h += `<button class="chapter-btn ${i === currentChapter ? 'active' : ''}" data-cap="${i}">${i}</button>`;
-  document.getElementById('chaptersSelector').innerHTML = h;
+  for (let i = 1; i <= totalChapters; i++) {
+    h += `<button type="button" class="chapter-btn ${i === currentChapter ? 'active' : ''}" data-cap="${i}">${i}</button>`;
+  }
+  const selEl = document.getElementById('chaptersSelector');
+  if (selEl) selEl.innerHTML = h;
 }
 
 // Event delegation para capitulos
-document.getElementById('chaptersSelector').addEventListener('click', async e => {
+document.getElementById('chaptersSelector')?.addEventListener('click', async e => {
   const btn = e.target.closest('.chapter-btn');
-  if (btn) await selectChapter(parseInt(btn.dataset.cap));
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    await selectChapter(parseInt(btn.dataset.cap));
+  }
 });
 
 async function selectChapter(n) {
@@ -509,9 +529,13 @@ async function selectChapter(n) {
     trackEvent('read_chapter', { livro_id: currentBook.id, livro_nome: currentBook.nome, capitulo: n });
   }
 }
+window.openBook = openBook;
+window.selectChapter = selectChapter;
 
 async function loadVerses() {
-  clearVerseSelection();
+  if (typeof clearVerseSelection === 'function') {
+    clearVerseSelection();
+  }
   const c = document.getElementById('versesContainer');
   const verses = await db.getVersiculos(currentBook.id, currentChapter);
   if (verses.length) {
@@ -1121,10 +1145,10 @@ window.readFullChapter = async function () {
 // SELEÇÃO INTERATIVA DE VERSÍCULOS & MARCA-TEXTO LITÚRGICO
 // ==========================================================================
 
-window.handleVerseClick = function (verseDiv, event) {
+function handleVerseClick(verseDiv, event) {
   if (!verseDiv) return;
   // Se clicou em botão interno, deixa a ação do botão agir
-  if (event.target.closest('.verse-action-btn') || event.target.closest('.btn-read-all')) {
+  if (event && (event.target.closest('.verse-action-btn') || event.target.closest('.btn-read-all'))) {
     return;
   }
   // Se o usuário selecionou texto manualmente para cópia nativa, não interfere
@@ -1134,9 +1158,10 @@ window.handleVerseClick = function (verseDiv, event) {
   }
 
   toggleVerseSelection(verseDiv);
-};
+}
+window.handleVerseClick = handleVerseClick;
 
-window.toggleVerseSelection = function (verseDiv) {
+function toggleVerseSelection(verseDiv) {
   if (!verseDiv) return;
   const vNum = parseInt(verseDiv.dataset.v);
   if (isNaN(vNum)) return;
@@ -1150,20 +1175,14 @@ window.toggleVerseSelection = function (verseDiv) {
   }
 
   updateVerseSelectionBarUI();
-};
-
-window.clearVerseSelection = function () {
-  selectedVerses.clear();
-  document.querySelectorAll('.verse.selected').forEach(el => el.classList.remove('selected'));
-  updateVerseSelectionBarUI();
-  closeHighlightPalette();
-};
+}
+window.toggleVerseSelection = toggleVerseSelection;
 
 function updateVerseSelectionBarUI() {
   const bar = document.getElementById('verseSelectionBar');
   if (!bar) return;
 
-  const count = selectedVerses.size;
+  const count = selectedVerses ? selectedVerses.size : 0;
   if (count === 0) {
     bar.classList.add('hidden');
     closeHighlightPalette();
@@ -1186,8 +1205,9 @@ function updateVerseSelectionBarUI() {
     }
   }
 }
+window.updateVerseSelectionBarUI = updateVerseSelectionBarUI;
 
-window.playSelectedVersesAudio = async function () {
+async function playSelectedVersesAudio() {
   if (!selectedVerses || selectedVerses.size === 0) return;
 
   const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
@@ -1200,23 +1220,26 @@ window.playSelectedVersesAudio = async function () {
     showToast(`🔊 Ouvindo ${sorted.length} versículos selecionados...`);
     await readVersesRange(sorted);
   }
-};
+}
+window.playSelectedVersesAudio = playSelectedVersesAudio;
 
-window.toggleHighlightPalette = function (e) {
+function toggleHighlightPalette(e) {
   if (e) {
     e.preventDefault();
     e.stopPropagation();
   }
   const palette = document.getElementById('verseHighlightPalette');
   if (palette) palette.classList.toggle('hidden');
-};
+}
+window.toggleHighlightPalette = toggleHighlightPalette;
 
-window.closeHighlightPalette = function () {
+function closeHighlightPalette() {
   const palette = document.getElementById('verseHighlightPalette');
   if (palette) palette.classList.add('hidden');
-};
+}
+window.closeHighlightPalette = closeHighlightPalette;
 
-window.applyHighlightToSelected = function (color) {
+function applyHighlightToSelected(color) {
   if (!selectedVerses || selectedVerses.size === 0) return;
   if (!currentBook) return;
 
@@ -1240,9 +1263,10 @@ window.applyHighlightToSelected = function (color) {
   saveStoredHighlights();
   closeHighlightPalette();
   showToast(color ? '🖍️ Versículo(s) destacado(s) com sucesso!' : 'Marcação removida!');
-};
+}
+window.applyHighlightToSelected = applyHighlightToSelected;
 
-window.openStoryCardFromSelection = function () {
+function openStoryCardFromSelection() {
   if (!selectedVerses || selectedVerses.size === 0) return;
   if (!currentBook) return;
 
@@ -1260,9 +1284,10 @@ window.openStoryCardFromSelection = function () {
     verEnd: sorted.length > 1 ? sorted[sorted.length - 1] : null,
     texto: combinedText
   });
-};
+}
+window.openStoryCardFromSelection = openStoryCardFromSelection;
 
-window.copySelectedVerses = async function () {
+async function copySelectedVerses() {
   if (!selectedVerses || selectedVerses.size === 0) return;
   if (!currentBook) return;
 
@@ -1277,9 +1302,10 @@ window.copySelectedVerses = async function () {
 
   const ok = await copyToClipboard(fullText);
   showToast(ok ? `📋 ${sorted.length} versículo(s) copiado(s)!` : 'Erro ao copiar versículos');
-};
+}
+window.copySelectedVerses = copySelectedVerses;
 
-window.shareSelectedVersesWhatsApp = function () {
+function shareSelectedVersesWhatsApp() {
   if (!selectedVerses || selectedVerses.size === 0) return;
   if (!currentBook) return;
 
@@ -1292,7 +1318,8 @@ window.shareSelectedVersesWhatsApp = function () {
   const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
   const msg = `“${lines.join('\n')}”\n\n— *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_Bíblia Sagrada Edição Católica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-};
+}
+window.shareSelectedVersesWhatsApp = shareSelectedVersesWhatsApp;
 
 // ===== SEARCH HIGHLIGHTING HELPER =====
 export function highlightSearchTerms(text, query) {
