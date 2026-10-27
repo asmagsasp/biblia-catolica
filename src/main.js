@@ -7,7 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
-import { getLiturgiaDiaria, LITURGICAL_COLORS } from './liturgiaService.js';
+import { getLiturgiaDiaria, getCachedLiturgia, sanitizeLiturgiaDate, LITURGICAL_COLORS } from './liturgiaService.js';
 import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
 import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
@@ -245,6 +245,11 @@ async function init() {
     renderBooks(allBooks);
     await loadVersiculoDoDia().catch(() => {});
     await loadStats().catch(() => {});
+
+    // Pré-carrega a Liturgia Diária de hoje em background (0ms de espera ao clicar)
+    setTimeout(() => {
+      getLiturgiaDiaria().catch(() => {});
+    }, 150);
 
     // Carrega identificação de Paróquia (Apoio de 30% da monetização)
     try {
@@ -6189,18 +6194,26 @@ let isLiturgiaSpeaking = false;
 
 window.showLiturgia = function (date = null) {
   showView('liturgiaView');
-  currentLiturgiaDate = date ? new Date(date) : new Date();
+  currentLiturgiaDate = sanitizeLiturgiaDate(date);
   loadLiturgiaData();
 };
 
 window.loadLiturgiaHoje = function () {
   currentLiturgiaDate = new Date();
   const dateInput = document.getElementById('liturgiaDateInput');
-  if (dateInput) dateInput.value = '';
+  if (dateInput) {
+    const y = currentLiturgiaDate.getFullYear();
+    const m = String(currentLiturgiaDate.getMonth() + 1).padStart(2, '0');
+    const d = String(currentLiturgiaDate.getDate()).padStart(2, '0');
+    dateInput.value = `${y}-${m}-${d}`;
+  }
   loadLiturgiaData();
 };
 
 window.changeLiturgiaDay = function (offset) {
+  if (!(currentLiturgiaDate instanceof Date) || isNaN(currentLiturgiaDate.getTime())) {
+    currentLiturgiaDate = new Date();
+  }
   const newD = new Date(currentLiturgiaDate);
   newD.setDate(newD.getDate() + offset);
   currentLiturgiaDate = newD;
@@ -6211,8 +6224,14 @@ window.loadLiturgiaCustomDate = function (val) {
   if (!val) return;
   const parts = val.split('-');
   if (parts.length === 3) {
-    currentLiturgiaDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    loadLiturgiaData();
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const candidate = new Date(y, m, d);
+    if (!isNaN(candidate.getTime())) {
+      currentLiturgiaDate = candidate;
+      loadLiturgiaData();
+    }
   }
 };
 
@@ -6227,6 +6246,9 @@ async function loadLiturgiaData() {
   stopLiturgiaSpeech();
   stopHomiliaLiturgiaSpeech();
 
+  // Garante que a data seja 100% válida em qualquer situação
+  currentLiturgiaDate = sanitizeLiturgiaDate(currentLiturgiaDate);
+
   const now = new Date();
   const isToday = currentLiturgiaDate.toDateString() === now.toDateString();
   if (todayBtn) todayBtn.classList.toggle('active', isToday);
@@ -6237,6 +6259,18 @@ async function loadLiturgiaData() {
     dateInput.value = `${y}-${m}-${d}`;
   }
 
+  // 1. CARREGAMENTO INSTANTÂNEO DO CACHE (0ms de espera)
+  // Se a liturgia já está em memória ou salva localmente, exibe imediatamente sem spinner
+  const cached = getCachedLiturgia(currentLiturgiaDate);
+  if (cached) {
+    currentLiturgiaData = cached;
+    if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
+    renderLiturgiaView(currentLiturgiaData);
+    autoFetchAiHomilyForLiturgia(currentLiturgiaData);
+    return;
+  }
+
+  // 2. Se for uma data inédita ainda sem cache, exibe indicador de carregamento
   container.innerHTML = '<div class="loading" style="padding:80px"><div class="loading-spinner"></div></div>';
 
   try {

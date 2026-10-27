@@ -107,10 +107,66 @@ function extrairDadosLiturgia(json) {
 }
 
 /**
+ * Sanitiza e garante um objeto Date estritamente válido
+ */
+export function sanitizeLiturgiaDate(dateInput) {
+  if (dateInput instanceof Date && !isNaN(dateInput.getTime())) {
+    return dateInput;
+  }
+  if (typeof dateInput === 'string' && dateInput.trim()) {
+    const parts = dateInput.trim().split('-');
+    if (parts.length === 3) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const parsed = new Date(y, m, d);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+    const parsed = new Date(dateInput);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  if (typeof dateInput === 'number' && !isNaN(dateInput) && dateInput > 0) {
+    const parsed = new Date(dateInput);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+/**
+ * Retorna instantaneamente os dados de liturgia em cache (memória ou LocalStorage)
+ */
+export function getCachedLiturgia(dateInput = null) {
+  const targetDate = sanitizeLiturgiaDate(dateInput);
+  const year = targetDate.getFullYear();
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const day = String(targetDate.getDate()).padStart(2, '0');
+  const dateKey = `${year}-${month}-${day}`;
+
+  if (liturgiaCache.has(dateKey)) {
+    return liturgiaCache.get(dateKey);
+  }
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const cachedLocal = localStorage.getItem(`liturgia_v2_${dateKey}`);
+      if (cachedLocal) {
+        const parsed = JSON.parse(cachedLocal);
+        if (parsed && (parsed.evangelho?.texto || parsed.primeiraLeitura?.texto)) {
+          liturgiaCache.set(dateKey, parsed);
+          return parsed;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return null;
+}
+
+/**
  * Obtém a liturgia para a data especificada (ou hoje por padrão)
  */
 export async function getLiturgiaDiaria(dateInput = null) {
-  const targetDate = dateInput ? new Date(dateInput) : new Date();
+  const targetDate = sanitizeLiturgiaDate(dateInput);
   const year = targetDate.getFullYear();
   const month = String(targetDate.getMonth() + 1).padStart(2, '0');
   const day = String(targetDate.getDate()).padStart(2, '0');
@@ -123,39 +179,40 @@ export async function getLiturgiaDiaria(dateInput = null) {
   }
 
   // 2. Cache Persistente em LocalStorage (Garante funcionamento perfeito em iPhone e Android offline)
-  try {
-    const cachedLocal = localStorage.getItem(`liturgia_v2_${dateKey}`);
-    if (cachedLocal) {
-      const parsed = JSON.parse(cachedLocal);
-      if (parsed && (parsed.evangelho?.texto || parsed.primeiraLeitura?.texto)) {
-        liturgiaCache.set(dateKey, parsed);
-        return parsed;
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const cachedLocal = localStorage.getItem(`liturgia_v2_${dateKey}`);
+      if (cachedLocal) {
+        const parsed = JSON.parse(cachedLocal);
+        if (parsed && (parsed.evangelho?.texto || parsed.primeiraLeitura?.texto)) {
+          liturgiaCache.set(dateKey, parsed);
+          return parsed;
+        }
       }
+    } catch (e) {
+      console.warn('[LiturgiaService] Erro ao ler cache local:', e);
     }
-  } catch (e) {
-    console.warn('[LiturgiaService] Erro ao ler cache local:', e);
+  }
+
+  // Se o dispositivo estiver offline, não tenta fazer fetch e retorna canônico imediatamente
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const fallbackData = buildLiturgiaWithSanto(gerarLiturgiaCanonico(targetDate), targetDate, dayMonthKey);
+    liturgiaCache.set(dateKey, fallbackData);
+    return fallbackData;
   }
 
   let liturgiaData = null;
 
-  // 3. Endpoints públicos ordenados para máxima compatibilidade
+  // 3. Endpoints públicos ordenados para máxima compatibilidade e rapidez
   const endpoints = [
     `https://liturgia.up.railway.app/v2/?dia=${day}&mes=${month}&ano=${year}`,
-    `https://liturgia.up.railway.app/?dia=${day}&mes=${month}`,
-    `https://liturgia.up.railway.app/v2/`,
-    `https://liturgia.up.railway.app/`
+    `https://liturgia.up.railway.app/?dia=${day}&mes=${month}`
   ];
-
-  // Adiciona endpoint do backend local se estiver rodando
-  try {
-    const host = window.location.hostname || 'localhost';
-    endpoints.unshift(`http://${host}:3001/api/liturgia?dia=${day}&mes=${month}&ano=${year}`);
-  } catch (e) {}
 
   for (const url of endpoints) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
 
       const res = await fetch(url, {
         signal: controller.signal,
@@ -172,32 +229,36 @@ export async function getLiturgiaDiaria(dateInput = null) {
         }
       }
     } catch (inner) {
-      // Ignora e tenta o próximo endpoint
+      // Ignora e tenta o próximo endpoint rapidamente
     }
   }
 
-  // 4. Se todas as APIs falharem, usa gerador canônico de alta fidelidade
+  // 4. Se todas as APIs falharem ou demorarem, usa gerador canônico de segurança
   if (!liturgiaData) {
-    console.warn('[LiturgiaService] Todas as APIs falharam. Usando gerador canônico de segurança.');
+    console.warn('[LiturgiaService] APIs remotas indisponíveis ou demoradas. Usando gerador canônico de segurança.');
     liturgiaData = gerarLiturgiaCanonico(targetDate);
   }
 
-  // 5. Acrescenta dados do Santo do Dia
+  // 5. Acrescenta dados do Santo do Dia e Homilia
+  liturgiaData = buildLiturgiaWithSanto(liturgiaData, targetDate, dayMonthKey);
+
+  // 6. Salva em cache persistente
+  liturgiaCache.set(dateKey, liturgiaData);
+  try {
+    localStorage.setItem(`liturgia_v2_${dateKey}`, JSON.stringify(liturgiaData));
+  } catch (e) {}
+
+  return liturgiaData;
+}
+
+function buildLiturgiaWithSanto(liturgiaData, targetDate, dayMonthKey) {
   const santoInfo = SANTOS_DO_ANO[dayMonthKey] || gerarSantoGenerico(targetDate);
   liturgiaData.santo = {
     ...santoInfo,
     dataLegivel: targetDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
   };
 
-  // 6. Gera Homilia Teológica do Evangelho
   liturgiaData.homilia = gerarHomiliaDoEvangelho(liturgiaData.evangelho, liturgiaData.reflexao);
-
-  // 7. Salva em cache persistente
-  liturgiaCache.set(dateKey, liturgiaData);
-  try {
-    localStorage.setItem(`liturgia_v2_${dateKey}`, JSON.stringify(liturgiaData));
-  } catch (e) {}
-
   return liturgiaData;
 }
 
