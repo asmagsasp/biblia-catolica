@@ -7,7 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Clipboard } from '@capacitor/clipboard';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
-import { getLiturgiaDiaria, getCachedLiturgia, sanitizeLiturgiaDate, LITURGICAL_COLORS } from './liturgiaService.js';
+import { getLiturgiaDiaria, getCachedLiturgia, getImmediateLiturgia, sanitizeLiturgiaDate, LITURGICAL_COLORS } from './liturgiaService.js';
 import { buildRosarySteps, getMisterioDoDia, MISTERIOS_DATA, ORACOES_TEXTOS } from './rosarioService.js';
 import { getVelasOracao, acenderNovaVela, rezarPorVela, getVelasRezadasLocal, formatarStatusVela, VELAS_CATEGORIAS } from './velasService.js';
 import { DOUTORES_PERSONAS, TEOLOGIA_PROMPT_SUGESTOES, consultarIaTeologica } from './teologiaService.js';
@@ -202,6 +202,22 @@ async function init() {
       initDonateButtonShimmer();
       updateHomeFraternalCard();
       initAudioStreamingListener();
+
+      // Pré-renderiza imediatamente a Liturgia de Hoje no boot para abertura instantânea (0ms de espera)
+      try {
+        const initialLiturgia = getImmediateLiturgia();
+        currentLiturgiaData = initialLiturgia;
+        renderLiturgiaView(initialLiturgia);
+        const subtitleEl = document.getElementById('liturgiaSubtitle');
+        if (subtitleEl && initialLiturgia.dataExtenso) subtitleEl.textContent = initialLiturgia.dataExtenso;
+      } catch (e) {}
+
+      getLiturgiaDiaria().then(fresh => {
+        if (fresh) {
+          currentLiturgiaData = fresh;
+          renderLiturgiaView(fresh);
+        }
+      }).catch(() => {});
     } catch (e) {
       console.warn("Aviso em timers:", e);
     }
@@ -6194,8 +6210,14 @@ let isLiturgiaSpeaking = false;
 
 window.showLiturgia = function (date = null) {
   showView('liturgiaView');
-  currentLiturgiaDate = sanitizeLiturgiaDate(date);
-  loadLiturgiaData();
+
+  // Garante que o botão 'Hoje' seja ativado/clicado automaticamente
+  if (!date || date instanceof Event) {
+    loadLiturgiaHoje();
+  } else {
+    currentLiturgiaDate = sanitizeLiturgiaDate(date);
+    loadLiturgiaData();
+  }
 };
 
 window.loadLiturgiaHoje = function () {
@@ -6206,6 +6228,11 @@ window.loadLiturgiaHoje = function () {
     const m = String(currentLiturgiaDate.getMonth() + 1).padStart(2, '0');
     const d = String(currentLiturgiaDate.getDate()).padStart(2, '0');
     dateInput.value = `${y}-${m}-${d}`;
+  }
+  const todayBtn = document.getElementById('btnLiturgiaToday');
+  if (todayBtn) {
+    document.querySelectorAll('.liturgia-date-btn').forEach(b => b.classList.remove('active'));
+    todayBtn.classList.add('active');
   }
   loadLiturgiaData();
 };
@@ -6259,39 +6286,25 @@ async function loadLiturgiaData() {
     dateInput.value = `${y}-${m}-${d}`;
   }
 
-  // 1. CARREGAMENTO INSTANTÂNEO DO CACHE (0ms de espera)
-  // Se a liturgia já está em memória ou salva localmente, exibe imediatamente sem spinner
-  const cached = getCachedLiturgia(currentLiturgiaDate);
-  if (cached) {
-    currentLiturgiaData = cached;
-    if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
-    renderLiturgiaView(currentLiturgiaData);
-    autoFetchAiHomilyForLiturgia(currentLiturgiaData);
-    return;
-  }
+  // 1. CARREGAMENTO ULTRA INSTANTÂNEO (0ms de espera, SEM NENHUM SPINNER)
+  // Exibe na hora os dados completos (do cache ou do gerador canônico de alta fidelidade)
+  const initialData = getImmediateLiturgia(currentLiturgiaDate);
+  currentLiturgiaData = initialData;
+  if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
+  renderLiturgiaView(currentLiturgiaData);
+  autoFetchAiHomilyForLiturgia(currentLiturgiaData);
 
-  // 2. Se for uma data inédita ainda sem cache, exibe indicador de carregamento
-  container.innerHTML = '<div class="loading" style="padding:80px"><div class="loading-spinner"></div></div>';
-
-  try {
-    currentLiturgiaData = await getLiturgiaDiaria(currentLiturgiaDate);
-    if (!currentLiturgiaData) throw new Error('Não foi possível carregar a liturgia');
-
-    if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
-
-    renderLiturgiaView(currentLiturgiaData);
-    autoFetchAiHomilyForLiturgia(currentLiturgiaData);
-  } catch (err) {
-    console.error("Liturgia error:", err);
-    container.innerHTML = `
-      <div class="gallery-empty-state">
-        <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444;"></i>
-        <h3 class="gallery-empty-title">Falha ao carregar Liturgia</h3>
-        <p class="gallery-empty-desc">Verifique sua conexão e tente novamente.</p>
-        <button class="hero-donate-btn" onclick="loadLiturgiaData()"><i class="fas fa-redo"></i> Tentar Novamente</button>
-      </div>
-    `;
-  }
+  // 2. Busca atualização remota em segundo plano de forma silenciosa e transparente
+  getLiturgiaDiaria(currentLiturgiaDate).then(fresh => {
+    if (fresh) {
+      currentLiturgiaData = fresh;
+      if (subtitleEl) subtitleEl.textContent = `${fresh.dataExtenso}`;
+      renderLiturgiaView(fresh);
+      autoFetchAiHomilyForLiturgia(fresh);
+    }
+  }).catch(err => {
+    console.warn("[Liturgia] Mantendo dados imediatos canônicos:", err);
+  });
 }
 
 function renderLiturgiaView(data) {

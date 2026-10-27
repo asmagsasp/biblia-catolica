@@ -163,6 +163,22 @@ export function getCachedLiturgia(dateInput = null) {
 }
 
 /**
+ * Retorna imediatamente a liturgia (do cache ou gerador canônico de alta fidelidade).
+ * Garante 0ms de espera ao abrir a tela sem nenhum spinner.
+ */
+export function getImmediateLiturgia(dateInput = null) {
+  const targetDate = sanitizeLiturgiaDate(dateInput);
+  const cached = getCachedLiturgia(targetDate);
+  if (cached) return cached;
+
+  const day = String(targetDate.getDate()).padStart(2, '0');
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const dayMonthKey = `${month}-${day}`;
+  const canonico = buildLiturgiaWithSanto(gerarLiturgiaCanonico(targetDate), targetDate, dayMonthKey);
+  return canonico;
+}
+
+/**
  * Obtém a liturgia para a data especificada (ou hoje por padrão)
  */
 export async function getLiturgiaDiaria(dateInput = null) {
