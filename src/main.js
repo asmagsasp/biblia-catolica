@@ -150,69 +150,100 @@ function updateChapterReadBtnState(reading) {
   }
 }
 
+// Helper seguro para leitura de preferências nativas sem risco de travamento
+async function safePrefGet(key, defaultValue = null, timeoutMs = 800) {
+  try {
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ value: defaultValue }), timeoutMs));
+    const prefPromise = Preferences.get({ key });
+    const res = await Promise.race([prefPromise, timeoutPromise]);
+    return res && res.value !== undefined && res.value !== null ? res.value : defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+// ===== DISMISS SPLASH SCREEN (GARANTIDO) =====
+function dismissSplashScreen() {
+  const splash = document.getElementById('splash');
+  if (splash && !splash.classList.contains('fade-out')) {
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      if (splash && splash.parentElement) {
+        splash.remove();
+      }
+    }, 600);
+  }
+}
+window.dismissSplashScreen = dismissSplashScreen;
+
 // ===== INIT =====
+let isAppInitialized = false;
 async function init() {
+  if (isAppInitialized) return;
+  isAppInitialized = true;
   const splashStartTime = performance.now();
 
-  // Inicia timer de doação, compromissos de benfeitor e brilho periódico a cada 1 minuto
-  checkAndStartDonateTimer();
-  checkPledgeReminder();
-  initDonateButtonShimmer();
-  updateHomeFraternalCard();
-  initAudioStreamingListener();
+  // Trava de segurança máxima: desfaz a splash screen após 2.2s mesmo se houver erro
+  setTimeout(dismissSplashScreen, 2200);
 
-  // Restore theme & font
-  const { value: savedTheme } = await Preferences.get({ key: 'biblia_theme' }) || { value: 'dark' };
-  setTheme(savedTheme || 'dark');
-
-  const { value: savedFont } = await Preferences.get({ key: 'biblia_font' }) || { value: 'normal' };
-  currentFontIdx = fonts.indexOf(savedFont) !== -1 ? fonts.indexOf(savedFont) : 0;
-  document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
-
-  // Restore Plan
-  const { value: savedPlan } = await Preferences.get({ key: 'biblia_plan_days' });
-  readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
-  updatePlanProgress();
-
-  // Load data
   try {
-    await db.initDB();
-  } catch (e) {
-    console.error("Erro na inicialização do DB:", e);
-  }
-
-  // Subscribe to real-time Firebase gallery sync across all devices
-  try {
-    subscribeToFirebaseGallery(async () => {
-      const galleryView = document.getElementById('galleryView');
-      if (galleryView && !galleryView.classList.contains('hidden')) {
-        const fresh = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
-        allGalleryItems = fresh || [];
-        renderGalleryGrid();
-      }
-    });
-  } catch (e) {
-    console.warn('[RealtimeSync] Falha ao iniciar listener:', e);
-  }
-
-  // Load UI
-  allBooks = await db.getLivros() || [];
-  renderBooks(allBooks);
-  await loadVersiculoDoDia();
-  await loadStats();
-
-  // Remove splash com no mínimo 1.8 segundos de exibição suave para destacar o ícone
-  const MIN_SPLASH_TIME_MS = 1800;
-  const elapsed = performance.now() - splashStartTime;
-  const remainingTime = Math.max(0, MIN_SPLASH_TIME_MS - elapsed);
-
-  setTimeout(() => {
-    const splash = document.getElementById('splash');
-    if (splash) {
-      splash.classList.add('fade-out');
-      setTimeout(() => splash.remove(), 700);
+    // Inicia timers em background sem bloquear
+    try {
+      checkAndStartDonateTimer();
+      checkPledgeReminder();
+      initDonateButtonShimmer();
+      updateHomeFraternalCard();
+      initAudioStreamingListener();
+    } catch (e) {
+      console.warn("Aviso em timers:", e);
     }
-  }, remainingTime);
+
+    // Restore theme & font com timeout seguro
+    const savedTheme = await safePrefGet('biblia_theme', 'dark');
+    setTheme(savedTheme || 'dark');
+
+    const savedFont = await safePrefGet('biblia_font', 'normal');
+    currentFontIdx = fonts.indexOf(savedFont) !== -1 ? fonts.indexOf(savedFont) : 0;
+    document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
+
+    // Restore Plan com timeout seguro
+    const savedPlan = await safePrefGet('biblia_plan_days', null);
+    readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
+    try { updatePlanProgress(); } catch (e) {}
+
+    // Load data
+    try {
+      await db.initDB();
+    } catch (e) {
+      console.error("Erro na inicialização do DB:", e);
+    }
+
+    // Subscribe to real-time Firebase gallery sync across all devices
+    try {
+      subscribeToFirebaseGallery(async () => {
+        const galleryView = document.getElementById('galleryView');
+        if (galleryView && !galleryView.classList.contains('hidden')) {
+          const fresh = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
+          allGalleryItems = fresh || [];
+          renderGalleryGrid();
+        }
+      });
+    } catch (e) {
+      console.warn('[RealtimeSync] Falha ao iniciar listener:', e);
+    }
+
+    // Load UI
+    allBooks = (await db.getLivros()) || [];
+    renderBooks(allBooks);
+    await loadVersiculoDoDia().catch(() => {});
+    await loadStats().catch(() => {});
+  } catch (err) {
+    console.error("[AppInit] Erro geral na inicialização:", err);
+  } finally {
+    const elapsed = performance.now() - splashStartTime;
+    const remainingTime = Math.max(0, 1500 - elapsed);
+    setTimeout(dismissSplashScreen, remainingTime);
+  }
 
   // Events & Search Input Handling
   const mainSearchInput = document.getElementById('searchInput');
@@ -264,7 +295,11 @@ async function init() {
   };
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 // ===== THEME =====
 function setTheme(theme) {

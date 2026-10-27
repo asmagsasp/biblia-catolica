@@ -18,53 +18,80 @@
   <link rel="stylesheet" href="/vendor/fonts/fonts.css">
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
-  <!-- Service Worker & PWA Offline Setup -->
+  <!-- Service Worker & PWA Offline Setup + Failsafe Splash Screen -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          console.log('[PWA] Service Worker registrado com escopo:', reg.scope);
-        }).catch(err => {
-          console.warn('[PWA] Falha ao registrar Service Worker:', err);
+    // 1. Detecção precisa de Plataforma Nativa (Capacitor Android / iOS)
+    var isNativePlatform = (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) ||
+                           window.location.protocol === 'capacitor:' ||
+                           (window.location.hostname === 'localhost' && !window.location.port);
+
+    // 2. Failsafe Absoluto para a Splash Screen: NUNCA deixa a splash screen presa
+    function forceDismissSplash() {
+      var sp = document.getElementById('splash');
+      if (sp && !sp.classList.contains('fade-out')) {
+        sp.classList.add('fade-out');
+        setTimeout(function () {
+          if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
+        }, 600);
+      }
+    }
+    window.forceDismissSplash = forceDismissSplash;
+    // Dispara no máximo após 2.2 segundos para garantir que a tela inicial sempre abra
+    setTimeout(forceDismissSplash, 2200);
+
+    // 3. Service Worker: EXCLUSIVO para Web PWA (Desativado no APK nativo para evitar bloqueios de assets locais)
+    if (isNativePlatform) {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        }).catch(function () {});
+      }
+    } else if ('serviceWorker' in navigator && window.location.protocol.indexOf('http') === 0) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+        }).catch(function (err) {
+          console.warn('[PWA] Aviso ao registrar Service Worker:', err);
         });
       });
     }
 
-    // Monitoramento de Conexão Online/Offline
-    window.addEventListener('offline', () => {
-      console.log('[PWA] Modo Offline ativado');
-      setTimeout(() => {
+    // 4. Monitoramento de Conexão Online/Offline
+    window.addEventListener('offline', function () {
+      setTimeout(function () {
         if (typeof window.showToast === 'function') {
           window.showToast('📡 Modo Offline: Bíblia, Orações e Santo Terço disponíveis 100% sem internet!');
         }
       }, 500);
     });
 
-    window.addEventListener('online', () => {
-      console.log('[PWA] Conexão restabelecida');
-      setTimeout(() => {
+    window.addEventListener('online', function () {
+      setTimeout(function () {
         if (typeof window.showToast === 'function') {
-          window.showToast('🟢 Conexão restabelecida com sucesso!');
+          window.showToast('🟢 Conexão restabelecida!');
         }
       }, 500);
     });
 
-    // PWA Install Prompt Capture
+    // 5. PWA Install Prompt Capture (Apenas Web)
     window.deferredPWAInstallPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      window.deferredPWAInstallPrompt = e;
-      const btn = document.getElementById('pwaInstallBtn');
-      if (btn) btn.classList.remove('hidden');
-    });
+    if (!isNativePlatform) {
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.deferredPWAInstallPrompt = e;
+        var btn = document.getElementById('pwaInstallBtn');
+        if (btn) btn.classList.remove('hidden');
+      });
+    }
 
     window.installPWAApp = async function () {
       if (window.deferredPWAInstallPrompt) {
         window.deferredPWAInstallPrompt.prompt();
-        const { outcome } = await window.deferredPWAInstallPrompt.userChoice;
-        console.log('[PWA] Resposta de instalação:', outcome);
+        var choice = await window.deferredPWAInstallPrompt.userChoice;
         window.deferredPWAInstallPrompt = null;
-        const btn = document.getElementById('pwaInstallBtn');
+        var btn = document.getElementById('pwaInstallBtn');
         if (btn) btn.classList.add('hidden');
       } else {
         if (typeof window.showToast === 'function') {

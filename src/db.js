@@ -39,21 +39,39 @@ async function loadFavoritosLocal() {
 }
 
 async function loadUserImagesLocal() {
-    try {
-        const { value } = await Preferences.get({ key: 'biblia_user_images' });
-        userImages = value ? JSON.parse(value) : [];
-    } catch (e) {
-        userImages = [];
-    }
+    return new Promise(async (resolve) => {
+        const timeout = setTimeout(() => {
+            userImages = [];
+            resolve();
+        }, 1000);
+        try {
+            const { value } = await Preferences.get({ key: 'biblia_user_images' });
+            userImages = value ? JSON.parse(value) : [];
+        } catch (e) {
+            userImages = [];
+        } finally {
+            clearTimeout(timeout);
+            resolve();
+        }
+    });
 }
 
 async function loadFavoriteImagesLocal() {
-    try {
-        const { value } = await Preferences.get({ key: 'biblia_favorite_images' });
-        favoriteImages = value ? JSON.parse(value) : {};
-    } catch (e) {
-        favoriteImages = {};
-    }
+    return new Promise(async (resolve) => {
+        const timeout = setTimeout(() => {
+            favoriteImages = {};
+            resolve();
+        }, 1000);
+        try {
+            const { value } = await Preferences.get({ key: 'biblia_favorite_images' });
+            favoriteImages = value ? JSON.parse(value) : {};
+        } catch (e) {
+            favoriteImages = {};
+        } finally {
+            clearTimeout(timeout);
+            resolve();
+        }
+    });
 }
 
 function saveUserImagesLocal() {
@@ -185,27 +203,40 @@ export async function syncPendingUserImagesToBackend() {
 }
 
 export async function initDB() {
-    try {
-        // Tentar conectar ao backend em /api/stats com timeout de 3s
-        const checkRes = await fetchWithTimeout(getApiUrl('/api/stats'), { cache: 'no-cache' }, 3000);
-        if (checkRes.ok) {
-            useBackend = true;
-            isDBReady = true;
-            console.log('[BibliaDB] Conectado ao servidor Backend SQLite (/api)!');
-            await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);
-            // Sincronizar em segundo plano quaisquer imagens que o usuário criou localmente
-            syncPendingUserImagesToBackend().catch(e => console.warn('[BibliaDB] Erro no sync em segundo plano:', e));
-            return;
+    const isNative = typeof window !== 'undefined' && ((window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && !window.location.port));
+    const hasCustomBackend = typeof window !== 'undefined' && (localStorage.getItem('biblia_custom_api_url') || localStorage.getItem('biblia_dev_host_ip'));
+
+    // No App Nativo Android sem backend customizado, pula verificação de rede e carrega o JSON local instantaneamente
+    if (!isNative || hasCustomBackend) {
+        try {
+            const checkRes = await fetchWithTimeout(getApiUrl('/api/stats'), { cache: 'no-cache' }, isNative ? 1200 : 2500);
+            if (checkRes.ok) {
+                useBackend = true;
+                isDBReady = true;
+                console.log('[BibliaDB] Conectado ao servidor Backend SQLite (/api)!');
+                await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);
+                syncPendingUserImagesToBackend().catch(e => console.warn('[BibliaDB] Erro no sync em segundo plano:', e));
+                return;
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Backend não acessível, usando banco local JSON (Fallback):', err);
         }
-    } catch (err) {
-        console.warn('[BibliaDB] Backend não acessível, usando banco local JSON (Fallback):', err);
     }
 
-    // Fallback local se o backend não estiver disponível (ex: app offline)
+    // Fallback local se o backend não estiver disponível (ex: app offline / app nativo)
     useBackend = false;
     try {
-        const res = await fetch('data/biblia.json');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        let res = null;
+        const candidates = ['data/biblia.json', '/data/biblia.json', './data/biblia.json'];
+        for (const candidate of candidates) {
+            try {
+                res = await fetch(candidate);
+                if (res && res.ok) break;
+            } catch (e) {
+                // tenta próximo candidato
+            }
+        }
+        if (!res || !res.ok) throw new Error(`HTTP error ao carregar biblia.json: ${res ? res.status : 'desconhecido'}`);
         bibliaData = await res.json();
         
         await Promise.all([loadFavoritosLocal(), loadUserImagesLocal(), loadFavoriteImagesLocal()]);

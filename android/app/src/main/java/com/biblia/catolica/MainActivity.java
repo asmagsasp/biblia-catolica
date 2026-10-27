@@ -19,7 +19,7 @@ public class MainActivity extends BridgeActivity {
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             keepSplashScreen = false;
-        }, 2000);
+        }, 800);
 
         super.onCreate(savedInstanceState);
     }
