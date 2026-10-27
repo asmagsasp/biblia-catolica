@@ -14,12 +14,67 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-512.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Fontes e Ícones Locais 100% Offline (Zero Dependência de Internet para UI) -->
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
-  <!-- Google tag (gtag.js) -->
+  <!-- Service Worker & PWA Offline Setup -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          console.log('[PWA] Service Worker registrado com escopo:', reg.scope);
+        }).catch(err => {
+          console.warn('[PWA] Falha ao registrar Service Worker:', err);
+        });
+      });
+    }
+
+    // Monitoramento de Conexão Online/Offline
+    window.addEventListener('offline', () => {
+      console.log('[PWA] Modo Offline ativado');
+      setTimeout(() => {
+        if (typeof window.showToast === 'function') {
+          window.showToast('📡 Modo Offline: Bíblia, Orações e Santo Terço disponíveis 100% sem internet!');
+        }
+      }, 500);
+    });
+
+    window.addEventListener('online', () => {
+      console.log('[PWA] Conexão restabelecida');
+      setTimeout(() => {
+        if (typeof window.showToast === 'function') {
+          window.showToast('🟢 Conexão restabelecida com sucesso!');
+        }
+      }, 500);
+    });
+
+    // PWA Install Prompt Capture
+    window.deferredPWAInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPWAInstallPrompt = e;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.classList.remove('hidden');
+    });
+
+    window.installPWAApp = async function () {
+      if (window.deferredPWAInstallPrompt) {
+        window.deferredPWAInstallPrompt.prompt();
+        const { outcome } = await window.deferredPWAInstallPrompt.userChoice;
+        console.log('[PWA] Resposta de instalação:', outcome);
+        window.deferredPWAInstallPrompt = null;
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) btn.classList.add('hidden');
+      } else {
+        if (typeof window.showToast === 'function') {
+          window.showToast('📱 Para instalar: no menu do navegador toque em "Instalar aplicativo" ou "Adicionar à tela inicial"');
+        }
+      }
+    };
+  </script>
+
+  <!-- Google tag (gtag.js) com suporte a falha offline graciosa -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGSPQKGTQD"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -89,6 +144,7 @@
       <button class="header-btn" onclick="toggleFontSize()" title="Tamanho do Texto"><i
           class="fas fa-font"></i></button>
       <button class="header-btn" onclick="toggleTheme()" title="Tema" id="themeBtn"><i class="fas fa-moon"></i></button>
+      <button class="header-btn hidden" onclick="installPWAApp()" title="Instalar Aplicativo (Funciona Offline)" id="pwaInstallBtn" style="color: var(--gold-400); border: 1px solid rgba(212, 175, 55, 0.4);"><i class="fas fa-download"></i></button>
       <button class="header-btn" onclick="openAdminModal()" title="Painel do Administrador" id="adminBtn" style="color: var(--gold-400);"><i class="fas fa-shield-halved"></i></button>
     </div>
   </header>

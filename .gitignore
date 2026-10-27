@@ -22,6 +22,7 @@ server/data/*.db
 *.apk
 *.old
 scratch/
+android/local.properties
 
 # Editor directories and files
 .vscode/*
