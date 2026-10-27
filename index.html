@@ -171,6 +171,7 @@
       <button class="header-btn" onclick="toggleFontSize()" title="Tamanho do Texto"><i
           class="fas fa-font"></i></button>
       <button class="header-btn" onclick="toggleTheme()" title="Tema" id="themeBtn"><i class="fas fa-moon"></i></button>
+      <button class="header-btn" onclick="openParoquiaModal()" title="Minha Paróquia & Apoio de 30%" id="paroquiaHeaderBtn" style="color: #60a5fa;"><i class="fas fa-church"></i></button>
       <button class="header-btn hidden" onclick="installPWAApp()" title="Instalar Aplicativo (Funciona Offline)" id="pwaInstallBtn" style="color: var(--gold-400); border: 1px solid rgba(212, 175, 55, 0.4);"><i class="fas fa-download"></i></button>
       <button class="header-btn" onclick="openAdminModal()" title="Painel do Administrador" id="adminBtn" style="color: var(--gold-400);"><i class="fas fa-shield-halved"></i></button>
     </div>
@@ -221,6 +222,23 @@
           </div>
           <p class="fraternal-card-text">
             Este aplicativo é mantido sem propagandas para a sua oração. Apoie com um café fraterno (R$ 2,00) ou o que o coração desejar!
+          </p>
+        </div>
+      </div>
+
+      <!-- CARD DE MINHA PARÓQUIA (VÍNCULO DE FÉ & 30% DE MONETIZAÇÃO) -->
+      <div id="homeParoquiaCard" class="home-donate-fraternal-card paroquia-mode" onclick="openParoquiaModal()" style="margin-top: 0; margin-bottom: 16px;">
+        <div class="fraternal-card-glow" style="background: radial-gradient(circle, rgba(96, 165, 250, 0.22) 0%, transparent 70%);"></div>
+        <div class="fraternal-card-icon">
+          <i class="fas fa-church"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" id="homeParoquiaTag"><i class="fas fa-cross"></i> Minha Paróquia & Comunidade</span>
+            <span class="fraternal-card-cta" id="homeParoquiaCta">Vincular Paróquia <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <p class="fraternal-card-text" id="homeParoquiaText">
+            Toque aqui para vincular sua paróquia. <strong>30% da monetização e doações</strong> deste aplicativo são repassadas à sua comunidade no fechamento de cada mês!
           </p>
         </div>
       </div>
@@ -1741,6 +1759,14 @@
         </p>
       </div>
 
+      <!-- BANNER DE DESTINAÇÃO DE 30% À PARÓQUIA -->
+      <div id="donateParoquiaBanner" class="donate-paroquia-banner" onclick="openParoquiaModal()" style="background: rgba(96, 165, 250, 0.12); border: 1px solid rgba(96, 165, 250, 0.35); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer;">
+        <i class="fas fa-church" style="color: #60a5fa; font-size: 20px;"></i>
+        <div style="flex: 1; font-size: 12px; line-height: 1.4; color: var(--text-primary);" id="donateParoquiaBannerText">
+          <strong style="color: #93c5fd;">Partilha Fraterna de 30%:</strong> Toda contribuição realizada aqui tem 30% repassado à sua Paróquia no final do mês. <span style="text-decoration: underline; color: #60a5fa;">Toque para verificar/vincular sua paróquia.</span>
+        </div>
+      </div>
+
       <!-- SELETOR DE VALORES SUGERIDOS -->
       <div class="donate-values-container">
         <div class="donate-values-label">
@@ -2355,6 +2381,30 @@
           </div>
         </div>
 
+        <!-- GESTÃO DE PARÓQUIAS E FECHAMENTO MENSAL (30% PIX) -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-primary);">
+              <i class="fas fa-church" style="color: #60a5fa;"></i>
+              <span>Paróquias Cadastradas (Rateio 30% PIX)</span>
+            </div>
+            <button type="button" onclick="carregarParoquiasAdmin()" style="background: rgba(96,165,250,0.15); border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+              <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+          </div>
+          <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">
+            Lista de paróquias vinculadas pelos fiéis no app para o fechamento mensal e cálculo de repasse de 30% do Padre.
+          </p>
+          <div id="adminParoquiasContainer" style="max-height: 220px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px;">
+            <p style="color: var(--text-muted); text-align: center; margin: 10px 0;">Toque em <strong>Atualizar</strong> para consultar as paróquias sincronizadas na nuvem.</p>
+          </div>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button type="button" class="hero-donate-btn" onclick="copiarRelatorioParoquiasAdmin()" style="flex: 1; padding: 8px; font-size: 12px; border-radius: 8px;">
+              <i class="fas fa-copy"></i> Copiar Relatório para o Padre
+            </button>
+          </div>
+        </div>
+
         <!-- 3. SYSTEM DIAGNOSTICS -->
         <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; flex-wrap: wrap; gap: 8px;">
           <span>Bíblia Católica • Modo Seguro</span>
@@ -2368,6 +2418,88 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE IDENTIFICAÇÃO PAROQUIAL (30% DE MONETIZAÇÃO PARA A PARÓQUIA) -->
+  <div id="paroquiaModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="paroquiaModalTitle" onclick="if(event.target===this) closeParoquiaModal()">
+    <div class="donate-modal-content" style="max-width: 500px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeParoquiaModal()" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: #60a5fa; background: rgba(59, 130, 246, 0.15); margin-bottom: 12px;">
+          <i class="fas fa-church donate-icon" style="color: #60a5fa;"></i>
+        </div>
+        <h2 id="paroquiaModalTitle" style="font-family: var(--font-display); font-size: 21px; margin-bottom: 6px;">Minha Paróquia</h2>
+        <p style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px;">
+          Conecte sua fé à sua comunidade: <strong style="color: var(--gold-300);">30% de toda a monetização e doações</strong> deste aplicativo são repassadas mensalmente para a sua paróquia via PIX!
+        </p>
+      </div>
+
+      <!-- BANNER DE TRANSPARÊNCIA FRATERNA -->
+      <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.28); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: var(--text-primary); display: flex; gap: 10px; align-items: flex-start;">
+        <i class="fas fa-hand-holding-heart" style="color: var(--gold-400); font-size: 18px; margin-top: 2px;"></i>
+        <div>
+          <strong style="color: var(--gold-300);">Apoio à Igreja Viva:</strong>
+          <span style="color: var(--text-muted); display: block; margin-top: 2px;">No fechamento do último dia de cada mês, calculamos o saldo e realizamos a partilha fraterna de 30% diretamente para a sua paróquia.</span>
+        </div>
+      </div>
+
+      <!-- FORMULÁRIO -->
+      <form id="paroquiaForm" onsubmit="event.preventDefault(); submitParoquiaForm();" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- ESTADO -->
+        <div>
+          <label for="paroquiaEstado" style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">
+            <i class="fas fa-map-marker-alt" style="color: #60a5fa; margin-right: 4px;"></i> Estado (UF) *
+          </label>
+          <select id="paroquiaEstado" required class="upload-input" style="width: 100%; padding: 10px 12px; font-size: 14px; background: var(--bg-card); color: var(--text-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+            <option value="">Selecione o seu Estado...</option>
+          </select>
+        </div>
+
+        <!-- CIDADE -->
+        <div>
+          <label for="paroquiaCidade" style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">
+            <i class="fas fa-city" style="color: #60a5fa; margin-right: 4px;"></i> Cidade que frequenta *
+          </label>
+          <input type="text" id="paroquiaCidade" required class="upload-input" placeholder="Ex: Campinas, São Paulo, Curitiba..." style="width: 100%; padding: 10px 12px; font-size: 14px; background: var(--bg-card); color: var(--text-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+        </div>
+
+        <!-- NOME DA PARÓQUIA -->
+        <div>
+          <label for="paroquiaNome" style="display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px;">
+            <i class="fas fa-cross" style="color: var(--gold-400); margin-right: 4px;"></i> Nome da Paróquia ou Comunidade *
+          </label>
+          <input type="text" id="paroquiaNome" required class="upload-input" placeholder="Ex: Paróquia São José, Catedral Santo Antônio..." style="width: 100%; padding: 10px 12px; font-size: 14px; background: var(--bg-card); color: var(--text-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+        </div>
+
+        <!-- CHAVE PIX OU CNPJ (OPCIONAL) -->
+        <div>
+          <label for="paroquiaPix" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px;">
+            <i class="fas fa-qrcode" style="color: #10b981; margin-right: 4px;"></i> Chave PIX ou CNPJ da Paróquia (Opcional)
+          </label>
+          <input type="text" id="paroquiaPix" class="upload-input" placeholder="CNPJ, E-mail, Celular ou Chave Aleatória (se souber)" style="width: 100%; padding: 10px 12px; font-size: 13.5px; background: var(--bg-card); color: var(--text-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+          <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 3px;">Se não souber, pode deixar em branco que contataremos a secretaria da paróquia.</span>
+        </div>
+
+        <!-- NOME DO FIEL / DEVOTO (OPCIONAL) -->
+        <div>
+          <label for="paroquiaDevoto" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px;">
+            <i class="fas fa-user" style="color: var(--text-muted); margin-right: 4px;"></i> Seu Nome / Como prefere ser chamado (Opcional)
+          </label>
+          <input type="text" id="paroquiaDevoto" class="upload-input" placeholder="Ex: Maria, José, Família Silva..." style="width: 100%; padding: 10px 12px; font-size: 13.5px; background: var(--bg-card); color: var(--text-primary); border-radius: 10px; border: 1px solid var(--border-color);">
+        </div>
+
+        <!-- BOTÕES -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+          <button type="submit" class="hero-donate-btn" id="btnSalvarParoquia" style="width: 100%; padding: 12px; font-size: 14.5px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px;">
+            <i class="fas fa-check"></i> Salvar Minha Paróquia
+          </button>
+          <button type="button" onclick="pularParoquiaModal()" style="background: transparent; border: none; color: var(--text-muted); padding: 8px; font-size: 12.5px; cursor: pointer; text-decoration: underline;">
+            Pular por enquanto / Lembrar mais tarde
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

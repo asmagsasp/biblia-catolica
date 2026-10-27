@@ -16,6 +16,11 @@
     "velas_oracao": {
       ".read": true,
       ".write": true
+    },
+    "paroquias_cadastradas": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["estado", "cidade"]
     }
   }
 }

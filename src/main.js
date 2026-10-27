@@ -31,6 +31,14 @@ import {
   handleCustomSleepTimerSubmit, 
   notifyReadingFinished 
 } from './sleepTimerService.js';
+import { 
+  ESTADOS_BRASIL, 
+  getLocalParoquia, 
+  isParoquiaDismissed, 
+  dismissParoquiaOnboarding, 
+  saveParoquia, 
+  fetchAllParoquiasFromFirebase 
+} from './paroquiasService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -237,6 +245,22 @@ async function init() {
     renderBooks(allBooks);
     await loadVersiculoDoDia().catch(() => {});
     await loadStats().catch(() => {});
+
+    // Carrega identificação de Paróquia (Apoio de 30% da monetização)
+    try {
+      const savedParoquia = await getLocalParoquia();
+      const isDismissed = await isParoquiaDismissed();
+      updateHomeParoquiaCard(savedParoquia);
+
+      // Onboarding na primeira vez que abre o app (se ainda não cadastrou e não ignorou)
+      if (!savedParoquia && !isDismissed) {
+        setTimeout(() => {
+          openParoquiaModal(true);
+        }, 1400);
+      }
+    } catch (e) {
+      console.warn('[ParoquiaInit] Erro ao carregar paróquia:', e);
+    }
   } catch (err) {
     console.error("[AppInit] Erro geral na inicialização:", err);
   } finally {
@@ -5085,6 +5109,7 @@ window.unlockAdminPanel = function () {
     if (keyInput) keyInput.value = currentKey || '';
     updateAdminKeyBadge(currentKey);
     updateAdminDonateBadge();
+    carregarParoquiasAdmin();
     showToast('🔓 Painel do Administrador desbloqueado com sucesso!');
   } else {
     showToast('PIN de Administrador incorreto. Tente novamente.');
@@ -5099,6 +5124,261 @@ window.lockAdminPanel = function () {
   if (pinSec) pinSec.classList.remove('hidden');
   if (dashSec) dashSec.classList.add('hidden');
   if (pinInput) pinInput.value = '';
+};
+
+// ===== PARÓQUIA & RATEIO 30% DE MONETIZAÇÃO =====
+let isParoquiaOnboarding = false;
+
+window.openParoquiaModal = async function (isOnboarding = false) {
+  isParoquiaOnboarding = isOnboarding;
+  const modal = document.getElementById('paroquiaModal');
+  if (!modal) return;
+
+  // 1. Popula os Estados do Brasil no select se ainda não estiver populado
+  const selectEstado = document.getElementById('paroquiaEstado');
+  if (selectEstado && selectEstado.options.length <= 1) {
+    ESTADOS_BRASIL.forEach(est => {
+      const opt = document.createElement('option');
+      opt.value = est.uf;
+      opt.textContent = `${est.uf} - ${est.nome}`;
+      selectEstado.appendChild(opt);
+    });
+  }
+
+  // 2. Preenche os campos se já houver paróquia cadastrada localmente
+  const current = await getLocalParoquia();
+  if (current) {
+    if (selectEstado) selectEstado.value = current.estado || '';
+    const inputCidade = document.getElementById('paroquiaCidade');
+    if (inputCidade) inputCidade.value = current.cidade || '';
+    const inputNome = document.getElementById('paroquiaNome');
+    if (inputNome) inputNome.value = current.paroquia || '';
+    const inputPix = document.getElementById('paroquiaPix');
+    if (inputPix) inputPix.value = current.pix_chave || '';
+    const inputDevoto = document.getElementById('paroquiaDevoto');
+    if (inputDevoto) inputDevoto.value = current.nome_devoto || '';
+  }
+
+  modal.classList.remove('hidden');
+};
+
+window.closeParoquiaModal = function () {
+  const modal = document.getElementById('paroquiaModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.pularParoquiaModal = async function () {
+  await dismissParoquiaOnboarding();
+  closeParoquiaModal();
+  showToast('Lembrete: você pode vincular sua Paróquia a qualquer momento tocando em ⛪ no topo do app! 🙏');
+};
+
+window.submitParoquiaForm = async function () {
+  const estado = document.getElementById('paroquiaEstado')?.value?.trim();
+  const cidade = document.getElementById('paroquiaCidade')?.value?.trim();
+  const paroquia = document.getElementById('paroquiaNome')?.value?.trim();
+  const pix_chave = document.getElementById('paroquiaPix')?.value?.trim() || '';
+  const nome_devoto = document.getElementById('paroquiaDevoto')?.value?.trim() || '';
+
+  if (!estado || !cidade || !paroquia) {
+    showToast('Por favor, preencha o Estado, Cidade e o Nome da sua Paróquia.');
+    return;
+  }
+
+  const btn = document.getElementById('btnSalvarParoquia');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando Paróquia...';
+  }
+
+  try {
+    const saved = await saveParoquia({ estado, cidade, paroquia, pix_chave, nome_devoto });
+    await updateHomeParoquiaCard(saved);
+    closeParoquiaModal();
+    showToast(`⛪ ${paroquia} vinculada com sucesso! 30% das arrecadações do app apoiarão a sua comunidade.`);
+  } catch (err) {
+    console.error('[ParoquiaForm] Erro ao salvar:', err);
+    showToast('Erro ao salvar informações da paróquia. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+};
+
+export async function updateHomeParoquiaCard(cachedParoquia = null) {
+  try {
+    const p = cachedParoquia !== null ? cachedParoquia : await getLocalParoquia();
+    const card = document.getElementById('homeParoquiaCard');
+    const headerBtn = document.getElementById('paroquiaHeaderBtn');
+    const tag = document.getElementById('homeParoquiaTag');
+    const cta = document.getElementById('homeParoquiaCta');
+    const text = document.getElementById('homeParoquiaText');
+    const donateBannerText = document.getElementById('donateParoquiaBannerText');
+
+    if (p && p.paroquia) {
+      if (card) {
+        card.classList.add('paroquia-mode');
+        if (tag) tag.innerHTML = '<i class="fas fa-church"></i> Minha Paróquia Vinculada (Apoio de 30%)';
+        if (cta) cta.innerHTML = 'Alterar <i class="fas fa-edit"></i>';
+        if (text) {
+          text.innerHTML = `<strong>${p.paroquia}</strong> — ${p.cidade}/${p.estado}<br><span style="font-size: 11.5px; opacity: 0.85;">30% de toda a monetização e doações deste app são destinadas à sua comunidade no fechamento mensal.</span>`;
+        }
+      }
+      if (headerBtn) {
+        headerBtn.title = `Minha Paróquia: ${p.paroquia} (${p.cidade}/${p.estado})`;
+        headerBtn.style.color = '#38bdf8';
+      }
+      if (donateBannerText) {
+        donateBannerText.innerHTML = `<strong>⛪ Partilha de 30% Garantida:</strong> 30% desta sua contribuição será transferida via PIX para apoiar a <strong>${p.paroquia}</strong> (${p.cidade} - ${p.estado}) no fechamento mensal.`;
+      }
+    } else {
+      if (card) {
+        card.classList.remove('paroquia-mode');
+        if (tag) tag.innerHTML = '<i class="fas fa-cross"></i> Minha Paróquia & Comunidade';
+        if (cta) cta.innerHTML = 'Vincular Paróquia <i class="fas fa-chevron-right"></i>';
+        if (text) {
+          text.innerHTML = `Toque aqui para vincular sua paróquia. <strong>30% da monetização e doações</strong> deste aplicativo são repassadas à sua comunidade no fechamento de cada mês!`;
+        }
+      }
+      if (headerBtn) {
+        headerBtn.title = 'Vincular Minha Paróquia (Apoio de 30%)';
+        headerBtn.style.color = '#60a5fa';
+      }
+      if (donateBannerText) {
+        donateBannerText.innerHTML = `<strong style="color: #93c5fd;">Partilha Fraterna de 30%:</strong> Toda contribuição tem 30% repassado à sua Paróquia no final do mês. <span style="text-decoration: underline; color: #60a5fa;">Toque para vincular sua paróquia agora.</span>`;
+      }
+    }
+  } catch (err) {
+    console.error('[UpdateHomeParoquiaCard] Erro:', err);
+  }
+}
+window.updateHomeParoquiaCard = updateHomeParoquiaCard;
+
+// ===== ADMIN: GESTÃO E FECHAMENTO DE PARÓQUIAS (30% PIX) =====
+let cachedAdminParoquiasList = [];
+
+window.carregarParoquiasAdmin = async function () {
+  const container = document.getElementById('adminParoquiasContainer');
+  if (!container) return;
+  container.innerHTML = '<p style="text-align: center; color: var(--gold-400); margin: 12px 0;"><i class="fas fa-spinner fa-spin"></i> Consultando paróquias cadastradas na nuvem...</p>';
+
+  try {
+    const list = await fetchAllParoquiasFromFirebase();
+    cachedAdminParoquiasList = list;
+
+    if (!list || list.length === 0) {
+      container.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin: 12px 0;">Nenhuma paróquia cadastrada na nuvem até o momento.</p>';
+      return;
+    }
+
+    // Agrupa por Paróquia + Cidade + Estado
+    const agrupado = {};
+    list.forEach(item => {
+      const chave = `${(item.paroquia || '').toLowerCase()}|${(item.cidade || '').toLowerCase()}|${(item.estado || '').toLowerCase()}`;
+      if (!agrupado[chave]) {
+        agrupado[chave] = {
+          paroquia: item.paroquia,
+          cidade: item.cidade,
+          estado: item.estado,
+          pix: item.pix_chave || '',
+          contagem: 0,
+          devotos: []
+        };
+      }
+      agrupado[chave].contagem++;
+      if (item.pix_chave && !agrupado[chave].pix) agrupado[chave].pix = item.pix_chave;
+      if (item.nome_devoto) agrupado[chave].devotos.push(item.nome_devoto);
+    });
+
+    const entries = Object.values(agrupado).sort((a, b) => b.contagem - a.contagem);
+
+    let html = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 600; color: #10b981; font-size: 11.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+        <span>Total de Fiéis: <strong>${list.length}</strong></span>
+        <span>Paróquias Distintas: <strong>${entries.length}</strong></span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+    `;
+
+    entries.forEach(e => {
+      const pixBadge = e.pix 
+        ? `<span style="color: #10b981; background: rgba(16,185,129,0.15); padding: 1px 6px; border-radius: 4px; font-size: 10px;">PIX: ${e.pix}</span>`
+        : `<span style="color: #f59e0b; background: rgba(245,158,11,0.15); padding: 1px 6px; border-radius: 4px; font-size: 10px;">PIX Pendente</span>`;
+
+      html += `
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 9px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;">
+            <strong style="color: var(--text-primary); font-size: 12px;">${e.paroquia}</strong>
+            <span style="font-weight: 700; color: var(--gold-400); font-size: 11px; white-space: nowrap;">${e.contagem} fiel(is)</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+            <i class="fas fa-map-marker-alt" style="font-size: 10px;"></i> ${e.cidade} - ${e.estado}
+          </div>
+          <div style="margin-top: 4px;">${pixBadge}</div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('[AdminParoquias] Erro:', err);
+    container.innerHTML = '<p style="text-align: center; color: #ef4444; margin: 12px 0;">Erro ao consultar nuvem. Verifique a conexão de internet.</p>';
+  }
+};
+
+window.copiarRelatorioParoquiasAdmin = async function () {
+  if (!cachedAdminParoquiasList || cachedAdminParoquiasList.length === 0) {
+    try {
+      cachedAdminParoquiasList = await fetchAllParoquiasFromFirebase();
+    } catch (e) {}
+  }
+
+  if (!cachedAdminParoquiasList || cachedAdminParoquiasList.length === 0) {
+    showToast('Carregue as paróquias primeiro tocando em Atualizar.');
+    return;
+  }
+
+  const agrupado = {};
+  cachedAdminParoquiasList.forEach(item => {
+    const chave = `${(item.paroquia || '').toLowerCase()}|${(item.cidade || '').toLowerCase()}|${(item.estado || '').toLowerCase()}`;
+    if (!agrupado[chave]) {
+      agrupado[chave] = {
+        paroquia: item.paroquia,
+        cidade: item.cidade,
+        estado: item.estado,
+        pix: item.pix_chave || '',
+        contagem: 0
+      };
+    }
+    agrupado[chave].contagem++;
+    if (item.pix_chave && !agrupado[chave].pix) agrupado[chave].pix = item.pix_chave;
+  });
+
+  const entries = Object.values(agrupado).sort((a, b) => b.contagem - a.contagem);
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+  let relatorio = `⛪ RELATÓRIO DE PARÓQUIAS E RATEIO DE 30% (BÍBLIA SAGRADA CATÓLICA)\n`;
+  relatorio += `Data do Fechamento: ${dataHoje}\n`;
+  relatorio += `Total de Fiéis Cadastrados: ${cachedAdminParoquiasList.length}\n`;
+  relatorio += `Total de Paróquias Vinculadas: ${entries.length}\n`;
+  relatorio += `--------------------------------------------------------\n\n`;
+
+  entries.forEach((e, idx) => {
+    relatorio += `${idx + 1}. ${e.paroquia}\n`;
+    relatorio += `   Localidade: ${e.cidade} - ${e.estado}\n`;
+    relatorio += `   Fiéis Vinculados: ${e.contagem}\n`;
+    relatorio += `   Chave PIX: ${e.pix || 'Solicitar à secretaria paroquial'}\n\n`;
+  });
+
+  relatorio += `--------------------------------------------------------\n`;
+  relatorio += `Observação: 30% do saldo mensal de monetização e doações arrecadadas no app devem ser repassados para as paróquias acima conforme o número de fiéis.\n`;
+
+  await copyToClipboard(relatorio);
+  showToast('📋 Relatório de fechamento copiado para a área de transferência!');
 };
 
 function updateAdminKeyBadge(key) {
