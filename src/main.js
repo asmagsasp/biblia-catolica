@@ -6208,19 +6208,20 @@ let currentLiturgiaDate = new Date();
 let currentLiturgiaData = null;
 let isLiturgiaSpeaking = false;
 
-window.showLiturgia = function (date = null) {
+function showLiturgia(date = null) {
   showView('liturgiaView');
 
-  // Garante que o botão 'Hoje' seja ativado/clicado automaticamente
+  // Garante que a data e o botão 'Hoje' sejam carregados e ativados automaticamente
   if (!date || date instanceof Event) {
     loadLiturgiaHoje();
   } else {
     currentLiturgiaDate = sanitizeLiturgiaDate(date);
     loadLiturgiaData();
   }
-};
+}
+window.showLiturgia = showLiturgia;
 
-window.loadLiturgiaHoje = function () {
+function loadLiturgiaHoje() {
   currentLiturgiaDate = new Date();
   const dateInput = document.getElementById('liturgiaDateInput');
   if (dateInput) {
@@ -6235,9 +6236,10 @@ window.loadLiturgiaHoje = function () {
     todayBtn.classList.add('active');
   }
   loadLiturgiaData();
-};
+}
+window.loadLiturgiaHoje = loadLiturgiaHoje;
 
-window.changeLiturgiaDay = function (offset) {
+function changeLiturgiaDay(offset) {
   if (!(currentLiturgiaDate instanceof Date) || isNaN(currentLiturgiaDate.getTime())) {
     currentLiturgiaDate = new Date();
   }
@@ -6245,9 +6247,10 @@ window.changeLiturgiaDay = function (offset) {
   newD.setDate(newD.getDate() + offset);
   currentLiturgiaDate = newD;
   loadLiturgiaData();
-};
+}
+window.changeLiturgiaDay = changeLiturgiaDay;
 
-window.loadLiturgiaCustomDate = function (val) {
+function loadLiturgiaCustomDate(val) {
   if (!val) return;
   const parts = val.split('-');
   if (parts.length === 3) {
@@ -6260,7 +6263,8 @@ window.loadLiturgiaCustomDate = function (val) {
       loadLiturgiaData();
     }
   }
-};
+}
+window.loadLiturgiaCustomDate = loadLiturgiaCustomDate;
 
 async function loadLiturgiaData() {
   const container = document.getElementById('liturgiaContentContainer');
