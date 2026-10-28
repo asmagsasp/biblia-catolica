@@ -3185,6 +3185,18 @@ window.showPlan = function () {
   requestAnimationFrame(async () => {
     try {
       const plan = await db.getPlanoLeitura();
+      if (!plan || !Array.isArray(plan) || !plan.length) {
+        c.innerHTML = `
+          <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
+            <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
+            <h3 class="gallery-empty-title">Plano de Leitura Temporariamente Indisponível</h3>
+            <p class="gallery-empty-desc">Toque no botão abaixo para recarregar o plano de leitura de 365 dias.</p>
+            <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Recarregar Plano</button>
+          </div>
+        `;
+        return;
+      }
+
       const now = new Date();
       const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
       const nextDia = getNextPlanDayNumber();
@@ -3195,7 +3207,7 @@ window.showPlan = function () {
         const done = !!readingPlanDays[d.dia];
         const isNext = (d.dia === nextDia && !done);
         
-        const leiturasHtml = d.leituras.map((l, idx) => 
+        const leiturasHtml = (d.leituras || []).map((l, idx) => 
           `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
         ).join('');
 
@@ -3226,6 +3238,14 @@ window.showPlan = function () {
       scrollToNextPlanDay(false);
     } catch (e) {
       console.error("Plan Error:", e);
+      c.innerHTML = `
+        <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
+          <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
+          <h3 class="gallery-empty-title">Erro ao carregar o Plano</h3>
+          <p class="gallery-empty-desc">${e.message || 'Erro inesperado'}</p>
+          <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Tentar Novamente</button>
+        </div>
+      `;
     }
   });
 };
@@ -3460,8 +3480,20 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
 
   try {
     const plan = await db.getPlanoLeitura();
-    const dayData = plan.find(d => d.dia === dia) || { dia, leituras: [] };
+    const dayData = (Array.isArray(plan) ? plan.find(d => d.dia === dia) : null) || { dia, leituras: [] };
     currentPlanDayData = dayData;
+
+    if (!dayData.leituras || !dayData.leituras.length) {
+      container.innerHTML = `
+        <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
+          <i class="fas fa-bible gallery-empty-icon" style="font-size: 2.2rem; margin-bottom: 14px;"></i>
+          <h3 class="gallery-empty-title">Nenhuma leitura encontrada para o Dia ${dia}</h3>
+          <p class="gallery-empty-desc">Toque abaixo para recarregar as leituras deste dia.</p>
+          <button class="hero-donate-btn" style="margin-top: 15px;" onclick="openPlanDay(${dia})"><i class="fas fa-redo"></i> Recarregar Dia</button>
+        </div>
+      `;
+      return;
+    }
 
     const leiturasStr = dayData.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
     document.getElementById('planDayTitle').textContent = `Plano de Leitura • Dia ${dia}`;
@@ -3562,6 +3594,14 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
   } catch (err) {
     console.error("OpenPlanDay error:", err);
     showToast("Erro ao abrir leitura do dia");
+    container.innerHTML = `
+      <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
+        <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
+        <h3 class="gallery-empty-title">Falha ao abrir leitura do Dia ${dia}</h3>
+        <p class="gallery-empty-desc">${err.message || 'Erro inesperado'}</p>
+        <button class="hero-donate-btn" style="margin-top: 15px;" onclick="openPlanDay(${dia})"><i class="fas fa-redo"></i> Tentar Novamente</button>
+      </div>
+    `;
   }
 };
 

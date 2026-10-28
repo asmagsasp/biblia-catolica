@@ -268,7 +268,7 @@ export async function getLivros() {
             console.warn('[BibliaDB] Falha no backend getLivros, usando local:', err);
         }
     }
-    return bibliaData ? bibliaData.livros : [];
+    return (bibliaData && bibliaData.livros && bibliaData.livros.length) ? bibliaData.livros : CANONICAL_BOOKS;
 }
 
 export async function getVersiculos(idLivro, idCapitulo) {
@@ -856,28 +856,89 @@ export function isFavoriteImage(imgId, refKey = '') {
     return !!favoriteImages[key] || (refKey ? !!favoriteImages[refKey] : false);
 }
 
-export async function getPlanoLeitura() {
-    if (planCache) return planCache;
+export const CANONICAL_BOOKS = [
+    { id_livro: 1, nome_livro: 'Gênesis', total_capitulos: 50 },
+    { id_livro: 2, nome_livro: 'Êxodo', total_capitulos: 40 },
+    { id_livro: 3, nome_livro: 'Levítico', total_capitulos: 27 },
+    { id_livro: 4, nome_livro: 'Números', total_capitulos: 36 },
+    { id_livro: 5, nome_livro: 'Deuteronômio', total_capitulos: 34 },
+    { id_livro: 6, nome_livro: 'Josué', total_capitulos: 24 },
+    { id_livro: 7, nome_livro: 'Juízes', total_capitulos: 21 },
+    { id_livro: 8, nome_livro: 'Rute', total_capitulos: 4 },
+    { id_livro: 9, nome_livro: 'I Samuel', total_capitulos: 31 },
+    { id_livro: 10, nome_livro: 'II Samuel', total_capitulos: 24 },
+    { id_livro: 11, nome_livro: 'I Reis', total_capitulos: 22 },
+    { id_livro: 12, nome_livro: 'II Reis', total_capitulos: 25 },
+    { id_livro: 13, nome_livro: 'I Crônicas', total_capitulos: 29 },
+    { id_livro: 14, nome_livro: 'II Crônicas', total_capitulos: 36 },
+    { id_livro: 15, nome_livro: 'Esdras', total_capitulos: 10 },
+    { id_livro: 16, nome_livro: 'Neemias', total_capitulos: 13 },
+    { id_livro: 17, nome_livro: 'Tobias', total_capitulos: 14 },
+    { id_livro: 18, nome_livro: 'Judite', total_capitulos: 16 },
+    { id_livro: 19, nome_livro: 'Ester', total_capitulos: 10 },
+    { id_livro: 20, nome_livro: 'Jó', total_capitulos: 42 },
+    { id_livro: 21, nome_livro: 'Salmos', total_capitulos: 150 },
+    { id_livro: 22, nome_livro: 'I Macabeus', total_capitulos: 16 },
+    { id_livro: 23, nome_livro: 'II Macabeus', total_capitulos: 15 },
+    { id_livro: 24, nome_livro: 'Provérbios', total_capitulos: 31 },
+    { id_livro: 25, nome_livro: 'Eclesiastes', total_capitulos: 12 },
+    { id_livro: 26, nome_livro: 'Cântico dos Cânticos', total_capitulos: 8 },
+    { id_livro: 27, nome_livro: 'Sabedoria', total_capitulos: 19 },
+    { id_livro: 28, nome_livro: 'Eclesiástico', total_capitulos: 29 },
+    { id_livro: 29, nome_livro: 'Isaías', total_capitulos: 66 },
+    { id_livro: 30, nome_livro: 'Jeremias', total_capitulos: 52 },
+    { id_livro: 31, nome_livro: 'Lamentações', total_capitulos: 5 },
+    { id_livro: 32, nome_livro: 'Baruc', total_capitulos: 6 },
+    { id_livro: 33, nome_livro: 'Ezequiel', total_capitulos: 48 },
+    { id_livro: 34, nome_livro: 'Daniel', total_capitulos: 12 },
+    { id_livro: 35, nome_livro: 'Oséias', total_capitulos: 14 },
+    { id_livro: 36, nome_livro: 'Joel', total_capitulos: 3 },
+    { id_livro: 37, nome_livro: 'Amós', total_capitulos: 9 },
+    { id_livro: 38, nome_livro: 'Abdias', total_capitulos: 1 },
+    { id_livro: 39, nome_livro: 'Jonas', total_capitulos: 4 },
+    { id_livro: 40, nome_livro: 'Miquéias', total_capitulos: 7 },
+    { id_livro: 41, nome_livro: 'Naum', total_capitulos: 3 },
+    { id_livro: 42, nome_livro: 'Habacuc', total_capitulos: 3 },
+    { id_livro: 43, nome_livro: 'Sofonias', total_capitulos: 3 },
+    { id_livro: 44, nome_livro: 'Ageu', total_capitulos: 2 },
+    { id_livro: 45, nome_livro: 'Zacarias', total_capitulos: 14 },
+    { id_livro: 46, nome_livro: 'Malaquias', total_capitulos: 3 },
+    { id_livro: 47, nome_livro: 'São Mateus', total_capitulos: 28 },
+    { id_livro: 48, nome_livro: 'São Marcos', total_capitulos: 16 },
+    { id_livro: 49, nome_livro: 'São Lucas', total_capitulos: 24 },
+    { id_livro: 50, nome_livro: 'São João', total_capitulos: 21 },
+    { id_livro: 51, nome_livro: 'Atos dos Apóstolos', total_capitulos: 28 },
+    { id_livro: 52, nome_livro: 'Romanos', total_capitulos: 16 },
+    { id_livro: 53, nome_livro: 'I Coríntios', total_capitulos: 16 },
+    { id_livro: 54, nome_livro: 'II Coríntios', total_capitulos: 13 },
+    { id_livro: 55, nome_livro: 'Gálatas', total_capitulos: 6 },
+    { id_livro: 56, nome_livro: 'Efésios', total_capitulos: 6 },
+    { id_livro: 57, nome_livro: 'Filipenses', total_capitulos: 4 },
+    { id_livro: 58, nome_livro: 'Colossenses', total_capitulos: 4 },
+    { id_livro: 59, nome_livro: 'I Tessalonicenses', total_capitulos: 5 },
+    { id_livro: 60, nome_livro: 'II Tessalonicenses', total_capitulos: 3 },
+    { id_livro: 61, nome_livro: 'I Timóteo', total_capitulos: 6 },
+    { id_livro: 62, nome_livro: 'II Timóteo', total_capitulos: 4 },
+    { id_livro: 63, nome_livro: 'Tito', total_capitulos: 3 },
+    { id_livro: 64, nome_livro: 'Filêmon', total_capitulos: 1 },
+    { id_livro: 65, nome_livro: 'Hebreus', total_capitulos: 13 },
+    { id_livro: 66, nome_livro: 'São Tiago', total_capitulos: 5 },
+    { id_livro: 67, nome_livro: 'I São Pedro', total_capitulos: 5 },
+    { id_livro: 68, nome_livro: 'II São Pedro', total_capitulos: 3 },
+    { id_livro: 69, nome_livro: 'I São João', total_capitulos: 5 },
+    { id_livro: 70, nome_livro: 'II São João', total_capitulos: 1 },
+    { id_livro: 71, nome_livro: 'III São João', total_capitulos: 1 },
+    { id_livro: 72, nome_livro: 'São Judas', total_capitulos: 1 },
+    { id_livro: 73, nome_livro: 'Apocalipse', total_capitulos: 22 }
+];
 
-    if (useBackend) {
-        try {
-            const res = await fetchWithTimeout(getApiUrl('/api/plano-leitura'), {}, 1500);
-            if (res.ok) {
-                planCache = await res.json();
-                return planCache;
-            }
-        } catch (err) {
-            console.warn('[BibliaDB] Falha getPlanoLeitura backend, usando local:', err);
-        }
-    }
-
-    const livros = await getLivros();
-    if (!livros || !livros.length) return [];
-    
+export function buildPlanoLeituraArray(booksList) {
+    const list = (booksList && booksList.length) ? booksList : CANONICAL_BOOKS;
     const allChapters = [];
-    for (let i = 0; i < livros.length; i++) {
-        const livro = livros[i];
-        for (let cap = 1; cap <= livro.total_capitulos; cap++) {
+    for (let i = 0; i < list.length; i++) {
+        const livro = list[i];
+        const totalCaps = livro.total_capitulos || livro.totalCapitulos || 1;
+        for (let cap = 1; cap <= totalCaps; cap++) {
             allChapters.push({
                 id_livro: livro.id_livro,
                 nome_livro: livro.nome_livro,
@@ -885,20 +946,65 @@ export async function getPlanoLeitura() {
             });
         }
     }
-    
     const total = allChapters.length;
-    const perDay = Math.floor(total / 365);
+    const remainder = total % 365;
+    const basePerDay = Math.floor(total / 365);
     const plano = new Array(365);
-    
+    let cursor = 0;
     for (let dia = 0; dia < 365; dia++) {
-        const start = dia * perDay;
-        const end = (dia === 364) ? total : (start + perDay);
+        const count = dia < remainder ? basePerDay + 1 : basePerDay;
         plano[dia] = {
             dia: dia + 1,
-            leituras: allChapters.slice(start, end)
+            leituras: allChapters.slice(cursor, cursor + count)
         };
+        cursor += count;
     }
+    return plano;
+}
+
+export async function getPlanoLeitura() {
+    if (planCache && Array.isArray(planCache) && planCache.length === 365) {
+        return planCache;
+    }
+
+    // 1. Tenta recuperar do cache local do navegador/dispositivo (0ms instantâneo)
+    try {
+        const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('biblia_plano_365_v2') : null;
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length === 365) {
+                planCache = parsed;
+                return planCache;
+            }
+        }
+    } catch (e) {}
+
+    // 2. Se temos backend ativo, tenta buscar do backend
+    if (useBackend) {
+        try {
+            const res = await fetchWithTimeout(getApiUrl('/api/plano-leitura'), {}, 1200);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data) && data.length === 365) {
+                    planCache = data;
+                    try { localStorage.setItem('biblia_plano_365_v2', JSON.stringify(planCache)); } catch (e) {}
+                    return planCache;
+                }
+            }
+        } catch (err) {
+            console.warn('[BibliaDB] Falha getPlanoLeitura backend, usando cálculo local:', err);
+        }
+    }
+
+    // 3. Garante cálculo imediato offline ultra-resiliente
+    const livros = (bibliaData && bibliaData.livros && bibliaData.livros.length) ? bibliaData.livros : CANONICAL_BOOKS;
+    const plano = buildPlanoLeituraArray(livros);
     planCache = plano;
+    try {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('biblia_plano_365_v2', JSON.stringify(planCache));
+        }
+    } catch (e) {}
     return plano;
 }
 

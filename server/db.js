@@ -560,7 +560,7 @@ export async function getFavoritos() {
 }
 
 export async function getPlanoLeitura() {
-    if (planCache) return planCache;
+    if (planCache && Array.isArray(planCache) && planCache.length === 365) return planCache;
     await ensureDB();
 
     const livros = await getLivros();
@@ -576,16 +576,18 @@ export async function getPlanoLeitura() {
     }
 
     const total = allChapters.length;
-    const perDay = Math.floor(total / 365);
+    const remainder = total % 365;
+    const basePerDay = Math.floor(total / 365);
     const plano = new Array(365);
+    let cursor = 0;
 
     for (let dia = 0; dia < 365; dia++) {
-        const start = dia * perDay;
-        const end = (dia === 364) ? total : (start + perDay);
+        const count = dia < remainder ? basePerDay + 1 : basePerDay;
         plano[dia] = {
             dia: dia + 1,
-            leituras: allChapters.slice(start, end)
+            leituras: allChapters.slice(cursor, cursor + count)
         };
+        cursor += count;
     }
     planCache = plano;
     return plano;
