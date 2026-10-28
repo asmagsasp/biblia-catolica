@@ -11383,14 +11383,15 @@ window.renderMuralFeed = function (messages, channel) {
 };
 
 window.renderOnlineFieisList = function (fieis) {
+  window.currentFieisList = fieis || [];
   const container = document.getElementById('comunidadeFeedContainer');
   if (!container) return;
 
   const tabBadge = document.getElementById('tabFieisCountBadge');
-  if (tabBadge) tabBadge.textContent = String(fieis.length);
+  if (tabBadge) tabBadge.textContent = String((fieis || []).length);
 
   const bannerEl = document.getElementById('comunidadeOnlineTotal');
-  if (bannerEl) bannerEl.textContent = `${fieis.length} Fiéis em Comunhão e Oração`;
+  if (bannerEl) bannerEl.textContent = `${(fieis || []).length} Fiéis em Comunhão e Oração`;
 
   if (!fieis || !fieis.length) {
     container.innerHTML = `
@@ -11445,7 +11446,7 @@ window.renderOnlineFieisList = function (fieis) {
                 <i class="fas fa-user-pen"></i> Editar
               </button>
             ` : `
-              <button type="button" class="comunidade-saudar-btn" onclick="openChatDiretoModal('${f.id}', '${(f.nome || 'Irmão').replace(/'/g, "\\'")}', '${(f.paroquia || '').replace(/'/g, "\\'")}', '${(f.cidade || '').replace(/'/g, "\\'")}', '${(f.estado || '').replace(/'/g, "\\'")}')" title="Conversar em particular com ${f.nome}">
+              <button type="button" class="comunidade-saudar-btn" onclick="openChatDiretoModal('${f.id}')" title="Conversar em particular">
                 <i class="fas fa-comments"></i> Conversar
               </button>
             `}
@@ -11580,59 +11581,12 @@ window.salvarPerfilModalComunidade = async function (e) {
 let currentChatFiel = null;
 let currentChatId = null;
 
-window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade, estado) {
-  try {
-    currentChatFiel = { id: destId, nome: destNome, paroquia, cidade, estado };
-    const perfil = await getPerfilFiel();
-    currentChatId = getChatId(perfil.id, destId);
-
-    const avatarEl = document.getElementById('chatDiretoAvatar');
-    const nomeEl = document.getElementById('chatDiretoNome');
-    const subEl = document.getElementById('chatDiretoSub');
-    const inputEl = document.getElementById('chatDiretoInput');
-    const streamEl = document.getElementById('chatDiretoStream');
-
-    if (avatarEl) avatarEl.textContent = (destNome || 'Fiel').slice(0, 2).toUpperCase();
-    if (nomeEl) nomeEl.textContent = destNome || 'Irmão em Cristo';
-    if (subEl) {
-      const loc = (cidade && estado) ? `${cidade}/${estado}` : (cidade || 'Brasil');
-      subEl.textContent = `${paroquia || 'Paróquia Católica'} • ${loc}`;
-    }
-    if (inputEl) inputEl.value = '';
-    if (streamEl) {
-      streamEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
-    }
-
-    const modal = document.getElementById('comunidadeChatDiretoModal');
-    if (modal) modal.classList.remove('hidden');
-
-    startChatDiretoPolling(currentChatId, renderChatDiretoMessages);
-  } catch (e) {
-    console.error('Erro ao abrir chat direto:', e);
-  }
-};
-
-window.closeChatDiretoModal = function () {
-  stopChatDiretoPolling();
-  currentChatFiel = null;
-  currentChatId = null;
-  const modal = document.getElementById('comunidadeChatDiretoModal');
-  if (modal) modal.classList.add('hidden');
-};
-
-window.insertChatDiretoText = function (text) {
-  const input = document.getElementById('chatDiretoInput');
-  if (!input) return;
-  input.value = (input.value ? input.value + ' ' : '') + text + ' ';
-  input.focus();
-};
-
-window.renderChatDiretoMessages = function (mensagens) {
+function renderChatDiretoMessages(mensagens) {
   const stream = document.getElementById('chatDiretoStream');
   if (!stream) return;
 
   if (!mensagens || !mensagens.length) {
-    const nome = currentChatFiel ? currentChatFiel.nome : 'o fiel';
+    const nome = currentChatFiel ? currentChatFiel.nome : 'o irmão(ã)';
     stream.innerHTML = `
       <div style="text-align: center; padding: 40px 15px; color: var(--text-secondary); margin: auto;">
         <i class="fas fa-dove" style="font-size: 2.2rem; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
@@ -11645,23 +11599,100 @@ window.renderChatDiretoMessages = function (mensagens) {
     return;
   }
 
-  getPerfilFiel().then(perfil => {
-    const html = mensagens.map(m => {
-      const isMe = m.de_id === perfil.id;
-      const hora = m.timestamp 
-        ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : '';
-      return `
-        <div class="chat-bubble ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'}">
-          <div>${String(m.texto || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-          <span class="chat-bubble-time">${hora}</span>
-        </div>
-      `;
-    }).join('');
+  const myId = localStorage.getItem('biblia_device_id') || '';
+  const html = mensagens.map(m => {
+    const isMe = m.de_id === myId || (currentChatFiel && m.para_id === currentChatFiel.id && m.de_id !== currentChatFiel.id);
+    const hora = m.timestamp 
+      ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '';
+    return `
+      <div class="chat-bubble ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'}">
+        <div>${String(m.texto || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        <span class="chat-bubble-time">${hora}</span>
+      </div>
+    `;
+  }).join('');
 
-    stream.innerHTML = html;
-    stream.scrollTop = stream.scrollHeight;
-  });
+  stream.innerHTML = html;
+  stream.scrollTop = stream.scrollHeight;
+}
+window.renderChatDiretoMessages = renderChatDiretoMessages;
+
+window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade, estado) {
+  try {
+    // 1. Abre o modal INSTANTANEAMENTE (0ms) para resposta tátil imediata ao usuário
+    const modal = document.getElementById('comunidadeChatDiretoModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
+
+    // 2. Resolve informações do fiel (a partir da lista já carregada em memória se vier apenas destId)
+    const target = (window.currentFieisList || []).find(x => x.id === destId);
+    const finalNome = destNome || (target && target.nome) || 'Irmão em Cristo';
+    const finalParoquia = paroquia || (target && target.paroquia) || 'Paróquia Católica';
+    const finalCidade = cidade || (target && target.cidade) || 'Brasil';
+    const finalEstado = estado || (target && target.estado) || 'BR';
+
+    currentChatFiel = {
+      id: destId,
+      nome: finalNome,
+      paroquia: finalParoquia,
+      cidade: finalCidade,
+      estado: finalEstado
+    };
+
+    // 3. Atualiza avatar e informações no topo do modal
+    const avatarEl = document.getElementById('chatDiretoAvatar');
+    const nomeEl = document.getElementById('chatDiretoNome');
+    const subEl = document.getElementById('chatDiretoSub');
+    const inputEl = document.getElementById('chatDiretoInput');
+    const streamEl = document.getElementById('chatDiretoStream');
+
+    if (avatarEl) avatarEl.textContent = finalNome.slice(0, 2).toUpperCase();
+    if (nomeEl) nomeEl.textContent = finalNome;
+    if (subEl) {
+      const loc = (finalCidade && finalEstado) ? `${finalCidade}/${finalEstado}` : finalCidade;
+      subEl.textContent = `${finalParoquia} • ${loc}`;
+    }
+    if (inputEl) {
+      inputEl.value = '';
+      setTimeout(() => inputEl.focus(), 100);
+    }
+    if (streamEl) {
+      streamEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+    }
+
+    // 4. Obtém o ID do usuário local e inicia a sincronização da conversa
+    let myId = localStorage.getItem('biblia_device_id');
+    if (!myId) {
+      const perfil = await getPerfilFiel();
+      myId = perfil.id;
+    }
+    currentChatId = getChatId(myId, destId);
+
+    startChatDiretoPolling(currentChatId, renderChatDiretoMessages);
+  } catch (e) {
+    console.error('Erro ao abrir chat direto:', e);
+  }
+};
+
+window.closeChatDiretoModal = function () {
+  stopChatDiretoPolling();
+  currentChatFiel = null;
+  currentChatId = null;
+  const modal = document.getElementById('comunidadeChatDiretoModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+
+window.insertChatDiretoText = function (text) {
+  const input = document.getElementById('chatDiretoInput');
+  if (!input) return;
+  input.value = (input.value ? input.value + ' ' : '') + text + ' ';
+  input.focus();
 };
 
 window.handleSendChatDiretoMessage = async function (e) {
@@ -11681,8 +11712,9 @@ window.handleSendChatDiretoMessage = async function (e) {
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     }
 
-    await enviarMensagemDireta(currentChatFiel.id, currentChatFiel.nome, texto);
     input.value = '';
+
+    await enviarMensagemDireta(currentChatFiel.id, currentChatFiel.nome, texto);
 
     // Atualiza imediatamente a conversa
     const msgs = await getConversaDireta(currentChatId);
@@ -11697,6 +11729,8 @@ window.handleSendChatDiretoMessage = async function (e) {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
     }
+    input.focus();
   }
 };
+
 

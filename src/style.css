@@ -10361,8 +10361,8 @@ mark,
 
 /* Modal de Bate-Papo Fraterno Direto (1 a 1) */
 .comunidade-chat-modal-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: #18101e;
+  border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 20px;
   width: 100%;
   max-width: 520px;
@@ -10370,9 +10370,17 @@ mark,
   max-height: 640px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.85), 0 0 24px rgba(212, 175, 55, 0.2);
   overflow: hidden;
   position: relative;
+  z-index: 100000;
+  margin: auto;
+}
+
+[data-theme="light"] .comunidade-chat-modal-box {
+  background: #ffffff;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
 .comunidade-chat-header {
