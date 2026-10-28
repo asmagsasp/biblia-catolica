@@ -57,7 +57,10 @@ import {
   getConversaDireta,
   enviarMensagemDireta,
   startChatDiretoPolling,
-  stopChatDiretoPolling
+  stopChatDiretoPolling,
+  startCaixaEntradaListener,
+  stopCaixaEntradaListener,
+  marcarMensagemLida
 } from './comunidadeService.js';
 
 // ===== CLIPBOARD UTILITY =====
@@ -11413,9 +11416,14 @@ window.renderOnlineFieisList = function (fieis) {
         const isMe = !!f.is_me;
         const isReal = !f.is_seed;
         const hasRecado = !!(f.ultimo_recado && f.ultimo_recado.texto);
+        const safeId = String(f.id || '').replace(/'/g, "\\'");
+        const safeNome = String(f.nome || '').replace(/'/g, "\\'");
+        const safeParoquia = String(f.paroquia || '').replace(/'/g, "\\'");
+        const safeCidade = String(f.cidade || '').replace(/'/g, "\\'");
+        const safeEstado = String(f.estado || '').replace(/'/g, "\\'");
 
         return `
-          <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : 'cursor: pointer;'}" ${!isMe ? `onclick="openChatDiretoModal('${f.id}')"` : ''}>
+          <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : 'cursor: pointer;'}" ${!isMe ? `onclick="openChatDiretoModal('${safeId}', '${safeNome}', '${safeParoquia}', '${safeCidade}', '${safeEstado}')"` : ''}>
             <div style="position: relative;">
               <div class="comunidade-avatar" style="width: 44px; height: 44px; font-size: 14px; ${isMe ? 'background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #111; font-weight: 800;' : ''}">
                 ${initials}
@@ -11446,7 +11454,7 @@ window.renderOnlineFieisList = function (fieis) {
                 <i class="fas fa-user-pen"></i> Editar
               </button>
             ` : `
-              <button type="button" class="comunidade-saudar-btn" onclick="event.stopPropagation(); openChatDiretoModal('${f.id}')" title="Conversar em particular">
+              <button type="button" class="comunidade-saudar-btn" onclick="event.stopPropagation(); openChatDiretoModal('${safeId}', '${safeNome}', '${safeParoquia}', '${safeCidade}', '${safeEstado}')" title="Conversar em particular">
                 <i class="fas fa-comments"></i> Conversar
               </button>
             `}
@@ -11632,6 +11640,9 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
       modal.style.setProperty('pointer-events', 'auto', 'important');
     }
 
+    // Fecha banner in-app caso esteja aberto
+    fecharInAppNotif();
+
     // 2. Resolve informações do fiel (a partir da lista já carregada em memória se vier apenas destId)
     const target = (window.currentFieisList || []).find(x => x.id === destId);
     const finalNome = destNome || (target && target.nome) || 'Irmão em Cristo';
@@ -11676,7 +11687,11 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
     }
     currentChatId = getChatId(myId, destId);
 
-    startChatDiretoPolling(currentChatId, renderChatDiretoMessages);
+    // Marca mensagens recebidas como lidas
+    marcarMensagemLida(destId, finalNome).catch(() => {});
+
+    // Inicia polling com suporte a histórico unificado
+    startChatDiretoPolling(currentChatId, destId, finalNome, renderChatDiretoMessages);
   } catch (e) {
     console.error('Erro ao abrir chat direto:', e);
   }
@@ -11724,8 +11739,8 @@ window.handleSendChatDiretoMessage = async function (e) {
 
     await enviarMensagemDireta(currentChatFiel.id, currentChatFiel.nome, texto);
 
-    // Atualiza imediatamente a conversa
-    const msgs = await getConversaDireta(currentChatId);
+    // Atualiza imediatamente a conversa unificada
+    const msgs = await getConversaDireta(currentChatId, currentChatFiel.id, currentChatFiel.nome);
     renderChatDiretoMessages(msgs);
 
     // Atualiza silenciosamente os cards da lista online para refletir o novo recado
@@ -11740,5 +11755,110 @@ window.handleSendChatDiretoMessage = async function (e) {
     input.focus();
   }
 };
+
+// ==========================================================================
+// NOTIFICAÇÕES IN-APP E ALERTA SONORO/VIBRAÇÃO EM TEMPO REAL
+// ==========================================================================
+let notifTimeout = null;
+
+function playCatholicNotificationChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    
+    // Suave acorde de sinos celestiais (E5, G#5, B5)
+    [659.25, 830.61, 987.77].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+      gain.gain.setValueAtTime(0.18, now + idx * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.85);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.12);
+      osc.stop(now + idx * 0.12 + 0.85);
+    });
+  } catch (e) {}
+}
+
+window.fecharInAppNotif = function () {
+  if (notifTimeout) {
+    clearTimeout(notifTimeout);
+    notifTimeout = null;
+  }
+  const el = document.getElementById('comunidadeInAppNotif');
+  if (el) el.classList.remove('show');
+};
+
+window.showInAppChatNotification = function (item) {
+  if (!item) return;
+
+  const el = document.getElementById('comunidadeInAppNotif');
+  if (!el) return;
+
+  const avatar = document.getElementById('comunidadeNotifAvatar');
+  const title = document.getElementById('comunidadeNotifTitle');
+  const text = document.getElementById('comunidadeNotifText');
+  const btnReply = document.getElementById('comunidadeNotifBtnReply');
+  const clickArea = document.getElementById('comunidadeNotifClickArea');
+
+  const senderNome = item.de_nome || 'Irmão em Cristo';
+  if (avatar) avatar.textContent = senderNome.slice(0, 2).toUpperCase();
+  if (title) title.innerHTML = `Mensagem de <strong>${senderNome}</strong>`;
+  if (text) text.textContent = `"${item.texto || ''}"`;
+
+  const onOpen = () => {
+    fecharInAppNotif();
+    openChatDiretoModal(item.de_id, item.de_nome, item.de_paroquia, item.de_cidade, item.de_estado);
+  };
+
+  if (btnReply) btnReply.onclick = onOpen;
+  if (clickArea) clickArea.onclick = onOpen;
+
+  el.classList.add('show');
+  playCatholicNotificationChime();
+
+  if (navigator.vibrate) {
+    try { navigator.vibrate([150, 80, 150]); } catch (e) {}
+  }
+
+  if (notifTimeout) clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => {
+    fecharInAppNotif();
+  }, 9000);
+};
+
+// Manipulador central de novas mensagens recebidas pela caixa de entrada
+function handleIncomingChatMessage(item) {
+  if (!item) return;
+
+  // Se o modal de conversa direta já estiver aberto com essa pessoa:
+  if (currentChatFiel && (
+    currentChatFiel.id === item.de_id || 
+    (item.de_nome && currentChatFiel.nome && item.de_nome.trim().toLowerCase() === currentChatFiel.nome.trim().toLowerCase())
+  )) {
+    getConversaDireta(currentChatId, currentChatFiel.id, currentChatFiel.nome).then(renderChatDiretoMessages);
+    marcarMensagemLida(item.de_id, item.de_nome);
+    return;
+  }
+
+  // Se o modal não estiver aberto, exibe banner flutuante
+  showInAppChatNotification(item);
+
+  // Atualiza badge se estiver visível
+  updateHomeComunidadeCard();
+}
+
+// Inicializa a escuta contínua de presença e caixa de entrada comunitária
+try {
+  startPresenceHeartbeat();
+  startCaixaEntradaListener(handleIncomingChatMessage);
+  setTimeout(updateHomeComunidadeCard, 2000);
+} catch (e) {
+  console.warn('[Comunidade] Erro ao inicializar escutas:', e);
+}
 
 

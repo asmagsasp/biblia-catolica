@@ -2936,6 +2936,23 @@
     </div>
   </div>
 
+  <!-- BANNER FLUTUANTE DE NOTIFICAÇÃO IN-APP EM TEMPO REAL -->
+  <div id="comunidadeInAppNotif" class="comunidade-inapp-banner" role="alert" aria-live="assertive">
+    <div class="comunidade-notif-left" id="comunidadeNotifClickArea" style="cursor: pointer;">
+      <div class="comunidade-notif-avatar" id="comunidadeNotifAvatar">🕊️</div>
+      <div class="comunidade-notif-body">
+        <div class="comunidade-notif-title" id="comunidadeNotifTitle">Nova Mensagem Fraterna</div>
+        <div class="comunidade-notif-text" id="comunidadeNotifText">...</div>
+      </div>
+    </div>
+    <div class="comunidade-notif-actions">
+      <button type="button" class="comunidade-notif-btn-reply" id="comunidadeNotifBtnReply">
+        <i class="fas fa-comments"></i> Conversar
+      </button>
+      <button type="button" class="comunidade-notif-btn-close" onclick="fecharInAppNotif()" title="Fechar"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
   <!-- MODAL: BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FIÉIS) -->
   <div id="comunidadeChatDiretoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeChatDiretoModal()">
     <div class="comunidade-chat-modal-box">

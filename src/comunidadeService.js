@@ -234,15 +234,20 @@ export function stopPresenceHeartbeat() {
 }
 
 /**
- * Busca os fiéis online no Firebase (ativos nos últimos 20 minutos)
+ * Busca os fiéis online no Firebase (ativos nos últimos 20 minutos) com deduplicação inteligente por nome
  */
 export async function getFieisOnline() {
   const agora = Date.now();
   const limiteOnline = agora - 20 * 60 * 1000; // 20 minutos de tolerância ativa
-  const fieisMap = new Map();
   const myDeviceId = await getDeviceId();
+  const perfilLocal = await getPerfilFiel();
+  const myNomeClean = (perfilLocal && perfilLocal.nome && perfilLocal.nome !== 'Irmão em Cristo') 
+    ? perfilLocal.nome.trim().toLowerCase() 
+    : '';
 
-  // 1. Sempre inclui o usuário atual se tiver perfil configurado
+  const rawList = [];
+
+  // 1. Sempre inclui o usuário atual local se tiver nome configurado
   try {
     let recadoLocal = null;
     const recadoLocalStr = localStorage.getItem('biblia_fiel_ultimo_recado');
@@ -250,9 +255,8 @@ export async function getFieisOnline() {
       try { recadoLocal = JSON.parse(recadoLocalStr); } catch (e) {}
     }
 
-    const perfilLocal = await getPerfilFiel();
     if (perfilLocal && perfilLocal.nome && perfilLocal.nome !== 'Irmão em Cristo') {
-      fieisMap.set(perfilLocal.id, {
+      rawList.push({
         ...perfilLocal,
         ultimo_recado: recadoLocal,
         last_seen: agora,
@@ -275,14 +279,13 @@ export async function getFieisOnline() {
         Object.keys(data).forEach(key => {
           const item = data[key];
           if (item && item.last_seen && item.last_seen >= limiteOnline) {
-            const isMe = key === myDeviceId;
-            const existing = fieisMap.get(key) || {};
-            fieisMap.set(key, { 
-              ...existing,
-              ...item, 
+            const itemNomeClean = (item.nome || '').trim().toLowerCase();
+            const isMe = key === myDeviceId || (myNomeClean && itemNomeClean === myNomeClean);
+            rawList.push({
+              ...item,
+              id: key,
               online: true,
-              is_me: isMe,
-              ultimo_recado: item.ultimo_recado || existing.ultimo_recado || null
+              is_me: isMe
             });
           }
         });
@@ -294,17 +297,43 @@ export async function getFieisOnline() {
 
   // 3. Adiciona fiéis sementes para complementar a experiência fraterna
   SEED_FIEIS.forEach(f => {
-    if (!fieisMap.has(f.id)) {
-      fieisMap.set(f.id, { ...f, online: true, is_seed: true });
-    }
+    rawList.push({ ...f, online: true, is_seed: true });
   });
 
-  // Ordenação:
-  // 1. O próprio usuário logado (is_me)
-  // 2. Fiéis reais cadastrados
-  // 3. Fiéis sementes
-  // E por último visto mais recente
-  return Array.from(fieisMap.values()).sort((a, b) => {
+  // 4. DEDUPLICAÇÃO INTELIGENTE POR NOME:
+  // - O usuário atual (is_me) só aparece UMA vez (a versão com maior last_seen / local)
+  // - Outros fiéis são agrupados por nome (case-insensitive). Se um fiel tiver mais de um device ID, mantém o mais recente!
+  const fieisDeduplicados = new Map();
+
+  // Primeiro processa os registros do usuário atual (is_me)
+  const myEntries = rawList.filter(x => x.is_me);
+  if (myEntries.length > 0) {
+    myEntries.sort((a, b) => (b.last_seen || 0) - (a.last_seen || 0));
+    const bestMe = myEntries[0];
+    fieisDeduplicados.set('__me__', { ...bestMe, is_me: true });
+  }
+
+  // Depois processa os outros fiéis
+  const others = rawList.filter(x => !x.is_me);
+  others.sort((a, b) => (b.last_seen || 0) - (a.last_seen || 0));
+
+  for (const item of others) {
+    const nomeKey = (item.nome || '').trim().toLowerCase();
+    if (!nomeKey) continue;
+
+    // Se tiver o mesmo nome do usuário atual, nunca exibe como outra pessoa
+    if (myNomeClean && nomeKey === myNomeClean) continue;
+
+    // Se for 'Irmão em Cristo' sem recado e não for semente, ignora se já tiver pessoas
+    if (nomeKey === 'irmão em cristo' && !item.ultimo_recado && !item.is_seed) continue;
+
+    if (!fieisDeduplicados.has(nomeKey)) {
+      fieisDeduplicados.set(nomeKey, item);
+    }
+  }
+
+  const result = Array.from(fieisDeduplicados.values());
+  return result.sort((a, b) => {
     if (a.is_me && !b.is_me) return -1;
     if (!a.is_me && b.is_me) return 1;
     if (!a.is_seed && b.is_seed) return -1;
@@ -493,10 +522,18 @@ export function getChatId(idA, idB) {
 }
 
 /**
- * Busca histórico de mensagens diretas entre dois fiéis
+ * Busca histórico de mensagens diretas entre dois fiéis com recuperação resiliente por nome e ID
  */
-export async function getConversaDireta(chatId) {
+export async function getConversaDireta(chatId, destId = null, destNome = null) {
   if (!chatId) return [];
+  const perfil = await getPerfilFiel();
+  const myId = perfil.id;
+  const myNome = (perfil.nome || '').trim().toLowerCase();
+  const targetNome = (destNome || '').trim().toLowerCase();
+
+  const msgsMap = new Map();
+
+  // 1. Busca mensagens no chatId direto
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
@@ -506,20 +543,74 @@ export async function getConversaDireta(chatId) {
     });
     clearTimeout(timeout);
 
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data || typeof data !== 'object') return [];
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(k => {
+          msgsMap.set(k, { ...data[k], id: k });
+        });
+      }
+    }
+  } catch (e) {}
 
-    const msgs = Object.keys(data).map(k => ({ ...data[k], id: k }));
-    msgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    return msgs;
-  } catch (e) {
-    return [];
+  // 2. Busca e unifica conversas cruzadas entre os dois fiéis por nome ou ID
+  // Isso garante que mesmo se o usuário ou destinatário trocou de aba, limpou cache ou alterou ID, NENHUMA mensagem é perdida!
+  try {
+    const controllerAll = new AbortController();
+    const timeoutAll = setTimeout(() => controllerAll.abort(), 6000);
+    const resAll = await fetch(`${COMUNIDADE_BASE_URL}/conversas_diretas.json`, {
+      signal: controllerAll.signal,
+      cache: 'no-cache'
+    });
+    clearTimeout(timeoutAll);
+
+    if (resAll.ok) {
+      const allChats = await resAll.json();
+      if (allChats && typeof allChats === 'object') {
+        Object.keys(allChats).forEach(cKey => {
+          const cData = allChats[cKey];
+          if (cData && cData.mensagens && typeof cData.mensagens === 'object') {
+            Object.keys(cData.mensagens).forEach(mId => {
+              const m = cData.mensagens[mId];
+              if (!m) return;
+              const deNome = (m.de_nome || '').trim().toLowerCase();
+              const paraNome = (m.para_nome || '').trim().toLowerCase();
+
+              const matchParticipants = 
+                (m.de_id === myId && m.para_id === destId) ||
+                (m.de_id === destId && m.para_id === myId) ||
+                (targetNome && myNome && (
+                  (deNome === myNome && paraNome === targetNome) ||
+                  (deNome === targetNome && paraNome === myNome) ||
+                  (deNome.includes(targetNome) && paraNome.includes(myNome)) ||
+                  (deNome.includes(myNome) && paraNome.includes(targetNome))
+                ));
+
+              if (matchParticipants) {
+                const uniqueKey = m.id || `${m.timestamp}_${m.texto}`;
+                if (!msgsMap.has(uniqueKey)) {
+                  msgsMap.set(uniqueKey, { ...m, id: mId });
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  // 3. Marca mensagens da caixa de entrada como lidas automaticamente
+  if (destId) {
+    marcarMensagemLida(destId, destNome).catch(() => {});
   }
+
+  const msgs = Array.from(msgsMap.values());
+  msgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  return msgs;
 }
 
 /**
- * Envia mensagem direta entre dois fiéis e atualiza o recado do autor no card de presença
+ * Envia mensagem direta entre dois fiéis com entrega garantida na caixa de entrada e espelhamento
  */
 export async function enviarMensagemDireta(destId, destNome, texto) {
   const cleanTexto = String(texto || '').trim();
@@ -537,7 +628,7 @@ export async function enviarMensagemDireta(destId, destNome, texto) {
     timestamp: Date.now()
   };
 
-  // 1. Grava na conversa direta
+  // 1. Grava na conversa direta primária
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   const res = await fetch(`${COMUNIDADE_BASE_URL}/conversas_diretas/${chatId}/mensagens.json`, {
@@ -550,8 +641,71 @@ export async function enviarMensagemDireta(destId, destNome, texto) {
 
   if (!res.ok) throw new Error('Erro ao transmitir mensagem');
   const result = await res.json();
+  const savedMsg = { ...payload, id: result.name };
 
-  // 2. Atualiza o ultimo_recado do autor para exibir no card em Fiéis Online
+  // 2. Busca todos os device IDs ativos pertencentes ao destinatário (pelo nome)
+  // Para espelhar a mensagem e alertar o aparelho correto onde o fiel estiver com o app aberto!
+  const targetIds = new Set([destId]);
+  try {
+    const presRes = await fetch(`${COMUNIDADE_BASE_URL}/presenca.json`, { cache: 'no-cache' });
+    if (presRes.ok) {
+      const presData = await presRes.json();
+      if (presData && typeof presData === 'object') {
+        const destNomeLower = destNome.trim().toLowerCase();
+        Object.keys(presData).forEach(k => {
+          const item = presData[k];
+          if (item && item.nome && item.nome.trim().toLowerCase() === destNomeLower) {
+            targetIds.add(k);
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  // 3. Grava notificação de Caixa de Entrada para todos os IDs do destinatário
+  const notifPayload = {
+    de_id: perfil.id,
+    de_nome: perfil.nome,
+    de_paroquia: perfil.paroquia,
+    de_cidade: perfil.cidade,
+    de_estado: perfil.estado,
+    para_id: destId,
+    para_nome: destNome,
+    texto: cleanTexto,
+    timestamp: Date.now(),
+    lido: false
+  };
+
+  for (const tid of targetIds) {
+    // Escreve na caixa_entrada/{tid}/{perfil.id}.json
+    fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada/${tid}/${perfil.id}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notifPayload)
+    }).catch(() => {});
+
+    // Se houver outro ID ativo, espelha a mensagem também na conversa daquele ID
+    if (tid !== destId) {
+      const altChatId = getChatId(perfil.id, tid);
+      fetch(`${COMUNIDADE_BASE_URL}/conversas_diretas/${altChatId}/mensagens.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, para_id: tid })
+      }).catch(() => {});
+    }
+  }
+
+  // 4. Também grava na caixa de entrada indexada pelo nome limpo do destinatário
+  const destNomeSlug = destNome.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+  if (destNomeSlug) {
+    fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada_nome/${destNomeSlug}/${perfil.id}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notifPayload)
+    }).catch(() => {});
+  }
+
+  // 5. Atualiza o ultimo_recado do autor para exibir no card em Fiéis Online
   const recadoPayload = {
     texto: cleanTexto,
     timestamp: Date.now(),
@@ -568,21 +722,131 @@ export async function enviarMensagemDireta(destId, destNome, texto) {
     body: JSON.stringify(recadoPayload)
   }).catch(() => {});
 
-  // 3. Atualiza batimento de presença
+  // 6. Atualiza batimento de presença
   pingPresencaOnline().catch(() => {});
 
-  return { ...payload, id: result.name };
+  return savedMsg;
 }
 
-export function startChatDiretoPolling(chatId, onUpdate) {
+// ==========================================================================
+// CAIXA DE ENTRADA & NOTIFICAÇÕES EM TEMPO REAL
+// ==========================================================================
+let caixaEntradaPollTimer = null;
+const notifiedMessageKeys = new Set();
+
+/**
+ * Escuta continuamente a caixa de entrada para notificar o fiel instantaneamente
+ */
+export async function checkCaixaEntrada(onNewMessage) {
+  try {
+    const perfil = await getPerfilFiel();
+    const myId = perfil.id;
+    const myNomeSlug = (perfil.nome || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    const unreadItems = [];
+
+    // 1. Verifica caixa do deviceId
+    try {
+      const resId = await fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada/${myId}.json`, { cache: 'no-cache' });
+      if (resId.ok) {
+        const data = await resId.json();
+        if (data && typeof data === 'object') {
+          Object.keys(data).forEach(k => {
+            const item = data[k];
+            if (item && item.lido === false && item.de_id !== myId) {
+              unreadItems.push({ ...item, key: k, type: 'device' });
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    // 2. Verifica caixa pelo nome do usuário (caso o device ID tenha mudado)
+    if (myNomeSlug && myNomeSlug !== 'irmao_em_cristo') {
+      try {
+        const resNome = await fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada_nome/${myNomeSlug}.json`, { cache: 'no-cache' });
+        if (resNome.ok) {
+          const dataNome = await resNome.json();
+          if (dataNome && typeof dataNome === 'object') {
+            Object.keys(dataNome).forEach(k => {
+              const item = dataNome[k];
+              if (item && item.lido === false && item.de_id !== myId) {
+                const already = unreadItems.find(x => x.de_id === item.de_id && x.timestamp === item.timestamp);
+                if (!already) {
+                  unreadItems.push({ ...item, key: k, type: 'name' });
+                }
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (unreadItems.length > 0 && typeof onNewMessage === 'function') {
+      for (const item of unreadItems) {
+        const itemKey = `${item.de_id}_${item.timestamp}`;
+        if (!notifiedMessageKeys.has(itemKey)) {
+          notifiedMessageKeys.add(itemKey);
+          onNewMessage(item);
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+export function startCaixaEntradaListener(onNewMessage) {
+  if (caixaEntradaPollTimer) clearInterval(caixaEntradaPollTimer);
+  checkCaixaEntrada(onNewMessage);
+  caixaEntradaPollTimer = setInterval(() => {
+    checkCaixaEntrada(onNewMessage);
+  }, 3000);
+}
+
+export function stopCaixaEntradaListener() {
+  if (caixaEntradaPollTimer) {
+    clearInterval(caixaEntradaPollTimer);
+    caixaEntradaPollTimer = null;
+  }
+}
+
+export async function marcarMensagemLida(senderId, senderNome = '') {
+  try {
+    const perfil = await getPerfilFiel();
+    const myId = perfil.id;
+    const myNomeSlug = (perfil.nome || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // Remove ou marca como lido no nó do device
+    fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada/${myId}/${senderId}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lido: true })
+    }).catch(() => {});
+
+    // Remove ou marca como lido no nó do nome
+    if (myNomeSlug) {
+      fetch(`${COMUNIDADE_BASE_URL}/caixa_entrada_nome/${myNomeSlug}/${senderId}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lido: true })
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
+export function startChatDiretoPolling(chatId, destId = null, destNome = null, onUpdate = null) {
   stopChatDiretoPolling();
-  getConversaDireta(chatId).then(onUpdate).catch(() => {});
+  // Trata caso a chamada use apenas 2 argumentos (chatId, onUpdate)
+  const callback = typeof destId === 'function' ? destId : (typeof onUpdate === 'function' ? onUpdate : () => {});
+  const actualDestId = typeof destId === 'function' ? null : destId;
+  const actualDestNome = typeof destNome === 'function' ? null : destNome;
+
+  getConversaDireta(chatId, actualDestId, actualDestNome).then(callback).catch(() => {});
   chatDiretoPollTimer = setInterval(async () => {
     try {
-      const msgs = await getConversaDireta(chatId);
-      onUpdate(msgs);
+      const msgs = await getConversaDireta(chatId, actualDestId, actualDestNome);
+      callback(msgs);
     } catch (e) {}
-  }, 3500);
+  }, 3000);
 }
 
 export function stopChatDiretoPolling() {
@@ -591,4 +855,5 @@ export function stopChatDiretoPolling() {
     chatDiretoPollTimer = null;
   }
 }
+
 
