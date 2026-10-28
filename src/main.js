@@ -11415,7 +11415,7 @@ window.renderOnlineFieisList = function (fieis) {
         const hasRecado = !!(f.ultimo_recado && f.ultimo_recado.texto);
 
         return `
-          <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : ''}">
+          <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : 'cursor: pointer;'}" ${!isMe ? `onclick="openChatDiretoModal('${f.id}')"` : ''}>
             <div style="position: relative;">
               <div class="comunidade-avatar" style="width: 44px; height: 44px; font-size: 14px; ${isMe ? 'background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #111; font-weight: 800;' : ''}">
                 ${initials}
@@ -11446,7 +11446,7 @@ window.renderOnlineFieisList = function (fieis) {
                 <i class="fas fa-user-pen"></i> Editar
               </button>
             ` : `
-              <button type="button" class="comunidade-saudar-btn" onclick="openChatDiretoModal('${f.id}')" title="Conversar em particular">
+              <button type="button" class="comunidade-saudar-btn" onclick="event.stopPropagation(); openChatDiretoModal('${f.id}')" title="Conversar em particular">
                 <i class="fas fa-comments"></i> Conversar
               </button>
             `}
@@ -11620,11 +11620,16 @@ window.renderChatDiretoMessages = renderChatDiretoMessages;
 
 window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade, estado) {
   try {
-    // 1. Abre o modal INSTANTANEAMENTE (0ms) para resposta tátil imediata ao usuário
+    console.log('[ChatDireto] Abrindo conversa com fiel:', destId);
+
+    // 1. Abre o modal INSTANTANEAMENTE com garantia absoluta de visibilidade
     const modal = document.getElementById('comunidadeChatDiretoModal');
     if (modal) {
       modal.classList.remove('hidden');
-      modal.style.display = 'flex';
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.style.setProperty('opacity', '1', 'important');
+      modal.style.setProperty('visibility', 'visible', 'important');
+      modal.style.setProperty('pointer-events', 'auto', 'important');
     }
 
     // 2. Resolve informações do fiel (a partir da lista já carregada em memória se vier apenas destId)
@@ -11684,7 +11689,10 @@ window.closeChatDiretoModal = function () {
   const modal = document.getElementById('comunidadeChatDiretoModal');
   if (modal) {
     modal.classList.add('hidden');
-    modal.style.display = 'none';
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('opacity', '0', 'important');
+    modal.style.setProperty('visibility', 'hidden', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
   }
 };
 
