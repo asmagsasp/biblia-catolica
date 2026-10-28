@@ -3661,6 +3661,8 @@ window.handleChapterBack = function () {
     showView('planDayView');
   } else if (lastViewBeforeChapter === 'planView') {
     showPlan();
+  } else if (lastViewBeforeChapter === 'liturgiaView') {
+    showLiturgia();
   } else {
     goHome();
   }
