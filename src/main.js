@@ -52,7 +52,12 @@ import {
   startPresenceHeartbeat, 
   formatarTempoDecorrido,
   INAUGURAL_MESSAGES,
-  SEED_FIEIS
+  SEED_FIEIS,
+  getChatId,
+  getConversaDireta,
+  enviarMensagemDireta,
+  startChatDiretoPolling,
+  stopChatDiretoPolling
 } from './comunidadeService.js';
 
 // ===== CLIPBOARD UTILITY =====
@@ -11406,6 +11411,7 @@ window.renderOnlineFieisList = function (fieis) {
         const santo = f.santo || 'Nossa Senhora Aparecida';
         const isMe = !!f.is_me;
         const isReal = !f.is_seed;
+        const hasRecado = !!(f.ultimo_recado && f.ultimo_recado.texto);
 
         return `
           <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : ''}">
@@ -11423,14 +11429,24 @@ window.renderOnlineFieisList = function (fieis) {
               </div>
               <div class="comunidade-fiel-cidade"><i class="fas fa-location-dot" style="color: #60a5fa; font-size: 10.5px; margin-right: 3px;"></i> ${local} • ${paroquia}</div>
               <span class="comunidade-fiel-santo"><i class="fas fa-cross" style="margin-right: 3px;"></i> Devoção: ${santo}</span>
+
+              ${hasRecado ? `
+                <div class="comunidade-card-recado">
+                  <div class="comunidade-card-recado-header">
+                    <span><i class="fas fa-comment-dots" style="color: var(--gold-400); margin-right: 4px;"></i> ${isMe ? 'Meu Último Recado' : 'Mensagem do Fiel'}</span>
+                    <span class="comunidade-card-recado-time">${f.ultimo_recado.timestamp ? formatarTempoDecorrido(f.ultimo_recado.timestamp) : 'recente'}</span>
+                  </div>
+                  <div class="comunidade-card-recado-text">"${String(f.ultimo_recado.texto).replace(/"/g, '&quot;')}"</div>
+                </div>
+              ` : ''}
             </div>
             ${isMe ? `
               <button type="button" class="comunidade-saudar-btn" onclick="openComunidadePerfilModal()" style="border-color: rgba(234, 179, 8, 0.4); color: var(--gold-300);" title="Editar meu perfil">
                 <i class="fas fa-user-pen"></i> Editar
               </button>
             ` : `
-              <button type="button" class="comunidade-saudar-btn" onclick="saudarFielOnline('${(f.nome || 'Irmão').replace(/'/g, "\\'")}')" title="Enviar saudação no mural">
-                <i class="fas fa-dove"></i> Saudar
+              <button type="button" class="comunidade-saudar-btn" onclick="openChatDiretoModal('${f.id}', '${(f.nome || 'Irmão').replace(/'/g, "\\'")}', '${(f.paroquia || '').replace(/'/g, "\\'")}', '${(f.cidade || '').replace(/'/g, "\\'")}', '${(f.estado || '').replace(/'/g, "\\'")}')" title="Conversar em particular com ${f.nome}">
+                <i class="fas fa-comments"></i> Conversar
               </button>
             `}
           </div>
@@ -11557,3 +11573,130 @@ window.salvarPerfilModalComunidade = async function (e) {
   const fieis = await getFieisOnline();
   renderOnlineFieisList(fieis);
 };
+
+// ==========================================================================
+// BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FIÉIS)
+// ==========================================================================
+let currentChatFiel = null;
+let currentChatId = null;
+
+window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade, estado) {
+  try {
+    currentChatFiel = { id: destId, nome: destNome, paroquia, cidade, estado };
+    const perfil = await getPerfilFiel();
+    currentChatId = getChatId(perfil.id, destId);
+
+    const avatarEl = document.getElementById('chatDiretoAvatar');
+    const nomeEl = document.getElementById('chatDiretoNome');
+    const subEl = document.getElementById('chatDiretoSub');
+    const inputEl = document.getElementById('chatDiretoInput');
+    const streamEl = document.getElementById('chatDiretoStream');
+
+    if (avatarEl) avatarEl.textContent = (destNome || 'Fiel').slice(0, 2).toUpperCase();
+    if (nomeEl) nomeEl.textContent = destNome || 'Irmão em Cristo';
+    if (subEl) {
+      const loc = (cidade && estado) ? `${cidade}/${estado}` : (cidade || 'Brasil');
+      subEl.textContent = `${paroquia || 'Paróquia Católica'} • ${loc}`;
+    }
+    if (inputEl) inputEl.value = '';
+    if (streamEl) {
+      streamEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+    }
+
+    const modal = document.getElementById('comunidadeChatDiretoModal');
+    if (modal) modal.classList.remove('hidden');
+
+    startChatDiretoPolling(currentChatId, renderChatDiretoMessages);
+  } catch (e) {
+    console.error('Erro ao abrir chat direto:', e);
+  }
+};
+
+window.closeChatDiretoModal = function () {
+  stopChatDiretoPolling();
+  currentChatFiel = null;
+  currentChatId = null;
+  const modal = document.getElementById('comunidadeChatDiretoModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.insertChatDiretoText = function (text) {
+  const input = document.getElementById('chatDiretoInput');
+  if (!input) return;
+  input.value = (input.value ? input.value + ' ' : '') + text + ' ';
+  input.focus();
+};
+
+window.renderChatDiretoMessages = function (mensagens) {
+  const stream = document.getElementById('chatDiretoStream');
+  if (!stream) return;
+
+  if (!mensagens || !mensagens.length) {
+    const nome = currentChatFiel ? currentChatFiel.nome : 'o fiel';
+    stream.innerHTML = `
+      <div style="text-align: center; padding: 40px 15px; color: var(--text-secondary); margin: auto;">
+        <i class="fas fa-dove" style="font-size: 2.2rem; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
+        <h4 style="color: var(--text-primary); margin: 0 0 6px; font-size: 15px;">Conversa Fraterna e Direta</h4>
+        <p style="font-size: 13px; line-height: 1.5; margin: 0 0 16px;">
+          Inicie agora uma conversa com <strong>${nome}</strong>.<br>Troque saudações de paz, partilhas e orações!
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  getPerfilFiel().then(perfil => {
+    const html = mensagens.map(m => {
+      const isMe = m.de_id === perfil.id;
+      const hora = m.timestamp 
+        ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '';
+      return `
+        <div class="chat-bubble ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'}">
+          <div>${String(m.texto || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <span class="chat-bubble-time">${hora}</span>
+        </div>
+      `;
+    }).join('');
+
+    stream.innerHTML = html;
+    stream.scrollTop = stream.scrollHeight;
+  });
+};
+
+window.handleSendChatDiretoMessage = async function (e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  if (!currentChatFiel || !currentChatId) return;
+
+  const input = document.getElementById('chatDiretoInput');
+  const btn = document.getElementById('btnSendChatDireto');
+  if (!input) return;
+
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    await enviarMensagemDireta(currentChatFiel.id, currentChatFiel.nome, texto);
+    input.value = '';
+
+    // Atualiza imediatamente a conversa
+    const msgs = await getConversaDireta(currentChatId);
+    renderChatDiretoMessages(msgs);
+
+    // Atualiza silenciosamente os cards da lista online para refletir o novo recado
+    getFieisOnline().then(renderOnlineFieisList).catch(() => {});
+  } catch (err) {
+    showToast('❌ ' + (err.message || 'Erro ao enviar mensagem'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    }
+  }
+};
+

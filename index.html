@@ -2971,6 +2971,50 @@
     </div>
   </div>
 
+  <!-- MODAL: BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FIÉIS) -->
+  <div id="comunidadeChatDiretoModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" onclick="if(event.target===this) closeChatDiretoModal()">
+    <div class="comunidade-chat-modal-box">
+      <!-- Header do Bate-Papo -->
+      <div class="comunidade-chat-header">
+        <div class="comunidade-chat-user-info">
+          <div style="position: relative;">
+            <div class="comunidade-avatar" id="chatDiretoAvatar" style="width: 44px; height: 44px; font-size: 14px;">G</div>
+            <span class="online-pulse-dot" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid var(--bg-card); box-shadow: 0 0 6px #22c55e;"></span>
+          </div>
+          <div style="min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <h3 class="comunidade-chat-nome" id="chatDiretoNome">Irmão em Cristo</h3>
+              <span style="font-size: 10px; background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 1px 6px; border-radius: 8px; font-weight: 700;">Online</span>
+            </div>
+            <p class="comunidade-chat-sub" id="chatDiretoSub">Paróquia Católica</p>
+          </div>
+        </div>
+        <button class="donate-close-btn" onclick="closeChatDiretoModal()" title="Fechar conversa"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Fluxo de Mensagens em Tempo Real -->
+      <div class="comunidade-chat-stream" id="chatDiretoStream">
+        <div class="loading"><div class="loading-spinner"></div></div>
+      </div>
+
+      <!-- Chips de Saudações Fraternas Rápidas -->
+      <div class="comunidade-chat-chips">
+        <button type="button" class="comunidade-chip" onclick="insertChatDiretoText('🕊️ A Paz de Jesus e o amor de Maria!')">🕊️ Paz e Bem</button>
+        <button type="button" class="comunidade-chip" onclick="insertChatDiretoText('🙏 Deus abençoe sua vida e família!')">🙏 Deus te abençoe</button>
+        <button type="button" class="comunidade-chip" onclick="insertChatDiretoText('✝️ Em oração por você!')">✝️ Em Oração</button>
+        <button type="button" class="comunidade-chip" onclick="insertChatDiretoText('📿 Salve Maria Imaculada!')">📿 Salve Maria</button>
+      </div>
+
+      <!-- Barra de Envio de Mensagem Direta -->
+      <form class="comunidade-chat-composer" onsubmit="handleSendChatDiretoMessage(event)">
+        <input type="text" id="chatDiretoInput" class="comunidade-msg-input" placeholder="Escreva uma mensagem fraterna..." maxlength="500" autocomplete="off" required>
+        <button type="submit" class="comunidade-send-btn" id="btnSendChatDireto" title="Enviar Mensagem">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: GERADOR DE CARDS SACROS PARA REDES SOCIAIS (1080x1920) -->
   <div id="storyCardModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle" onclick="if(event.target===this) closeStoryCardModal()">
     <div class="story-modal-box">

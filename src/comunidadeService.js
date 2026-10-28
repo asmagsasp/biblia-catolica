@@ -78,7 +78,11 @@ export const SEED_FIEIS = [
     estado: 'SP',
     santo: 'Santa Teresinha do Menino Jesus',
     last_seen: Date.now() - 1000 * 60 * 2,
-    online: true
+    online: true,
+    ultimo_recado: {
+      texto: 'Rezar o Santo Terço hoje pelas famílias católicas! 🌹',
+      timestamp: Date.now() - 1000 * 60 * 12
+    }
   },
   {
     id: 'fiel_demo_2',
@@ -88,7 +92,11 @@ export const SEED_FIEIS = [
     estado: 'RJ',
     santo: 'São Bento',
     last_seen: Date.now() - 1000 * 60 * 4,
-    online: true
+    online: true,
+    ultimo_recado: {
+      texto: 'A Cruz Sagrada seja a minha luz! Paz e bem a todos os irmãos. 🛡️',
+      timestamp: Date.now() - 1000 * 60 * 25
+    }
   },
   {
     id: 'fiel_demo_3',
@@ -98,7 +106,11 @@ export const SEED_FIEIS = [
     estado: 'PR',
     santo: 'Nossa Senhora do Perpétuo Socorro',
     last_seen: Date.now() - 1000 * 60 * 6,
-    online: true
+    online: true,
+    ultimo_recado: {
+      texto: 'Pedindo a intercessão de Nossa Senhora pelos enfermos nesta semana. 🕊️',
+      timestamp: Date.now() - 1000 * 60 * 40
+    }
   },
   {
     id: 'fiel_demo_4',
@@ -108,7 +120,11 @@ export const SEED_FIEIS = [
     estado: 'GO',
     santo: 'São José',
     last_seen: Date.now() - 1000 * 60 * 8,
-    online: true
+    online: true,
+    ultimo_recado: {
+      texto: 'São José, pai adotivo de Jesus, rogai por nossas vocações! ✝️',
+      timestamp: Date.now() - 1000 * 60 * 55
+    }
   }
 ];
 
@@ -188,7 +204,7 @@ export async function pingPresencaOnline() {
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     const res = await fetch(url, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       signal: controller.signal
@@ -228,10 +244,17 @@ export async function getFieisOnline() {
 
   // 1. Sempre inclui o usuário atual se tiver perfil configurado
   try {
+    let recadoLocal = null;
+    const recadoLocalStr = localStorage.getItem('biblia_fiel_ultimo_recado');
+    if (recadoLocalStr) {
+      try { recadoLocal = JSON.parse(recadoLocalStr); } catch (e) {}
+    }
+
     const perfilLocal = await getPerfilFiel();
     if (perfilLocal && perfilLocal.nome && perfilLocal.nome !== 'Irmão em Cristo') {
       fieisMap.set(perfilLocal.id, {
         ...perfilLocal,
+        ultimo_recado: recadoLocal,
         last_seen: agora,
         online: true,
         is_me: true
@@ -252,10 +275,14 @@ export async function getFieisOnline() {
         Object.keys(data).forEach(key => {
           const item = data[key];
           if (item && item.last_seen && item.last_seen >= limiteOnline) {
+            const isMe = key === myDeviceId;
+            const existing = fieisMap.get(key) || {};
             fieisMap.set(key, { 
+              ...existing,
               ...item, 
               online: true,
-              is_me: key === myDeviceId
+              is_me: isMe,
+              ultimo_recado: item.ultimo_recado || existing.ultimo_recado || null
             });
           }
         });
@@ -374,7 +401,20 @@ export async function enviarMensagemMural(channel = 'geral', texto = '') {
 
   const result = await res.json();
 
-  // Ao enviar mensagem, renova imediatamente a presenca online do fiel
+  // Ao enviar mensagem, grava também como último recado no card do fiel e renova presença
+  const recadoPayload = {
+    texto: cleanTexto,
+    timestamp: Date.now()
+  };
+  try {
+    localStorage.setItem('biblia_fiel_ultimo_recado', JSON.stringify(recadoPayload));
+  } catch (e) {}
+
+  fetch(`${COMUNIDADE_BASE_URL}/presenca/${perfil.id}/ultimo_recado.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(recadoPayload)
+  }).catch(() => {});
   pingPresencaOnline().catch(() => {});
 
   return { ...payload, id: result.name };
@@ -442,3 +482,113 @@ export function formatarTempoDecorrido(timestamp) {
   const d = new Date(timestamp);
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} às ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
+
+// ==========================================================================
+// BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FIÉIS)
+// ==========================================================================
+let chatDiretoPollTimer = null;
+
+export function getChatId(idA, idB) {
+  return [String(idA || ''), String(idB || '')].sort().join('_');
+}
+
+/**
+ * Busca histórico de mensagens diretas entre dois fiéis
+ */
+export async function getConversaDireta(chatId) {
+  if (!chatId) return [];
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${COMUNIDADE_BASE_URL}/conversas_diretas/${chatId}/mensagens.json`, {
+      signal: controller.signal,
+      cache: 'no-cache'
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return [];
+
+    const msgs = Object.keys(data).map(k => ({ ...data[k], id: k }));
+    msgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    return msgs;
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Envia mensagem direta entre dois fiéis e atualiza o recado do autor no card de presença
+ */
+export async function enviarMensagemDireta(destId, destNome, texto) {
+  const cleanTexto = String(texto || '').trim();
+  if (!cleanTexto) throw new Error('A mensagem não pode estar vazia');
+
+  const perfil = await getPerfilFiel();
+  const chatId = getChatId(perfil.id, destId);
+
+  const payload = {
+    de_id: perfil.id,
+    de_nome: perfil.nome,
+    para_id: destId,
+    para_nome: destNome,
+    texto: cleanTexto,
+    timestamp: Date.now()
+  };
+
+  // 1. Grava na conversa direta
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  const res = await fetch(`${COMUNIDADE_BASE_URL}/conversas_diretas/${chatId}/mensagens.json`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: controller.signal
+  });
+  clearTimeout(timeout);
+
+  if (!res.ok) throw new Error('Erro ao transmitir mensagem');
+  const result = await res.json();
+
+  // 2. Atualiza o ultimo_recado do autor para exibir no card em Fiéis Online
+  const recadoPayload = {
+    texto: cleanTexto,
+    timestamp: Date.now(),
+    para_nome: destNome,
+    para_id: destId
+  };
+  try {
+    localStorage.setItem('biblia_fiel_ultimo_recado', JSON.stringify(recadoPayload));
+  } catch (e) {}
+
+  fetch(`${COMUNIDADE_BASE_URL}/presenca/${perfil.id}/ultimo_recado.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(recadoPayload)
+  }).catch(() => {});
+
+  // 3. Atualiza batimento de presença
+  pingPresencaOnline().catch(() => {});
+
+  return { ...payload, id: result.name };
+}
+
+export function startChatDiretoPolling(chatId, onUpdate) {
+  stopChatDiretoPolling();
+  getConversaDireta(chatId).then(onUpdate).catch(() => {});
+  chatDiretoPollTimer = setInterval(async () => {
+    try {
+      const msgs = await getConversaDireta(chatId);
+      onUpdate(msgs);
+    } catch (e) {}
+  }, 3500);
+}
+
+export function stopChatDiretoPolling() {
+  if (chatDiretoPollTimer) {
+    clearInterval(chatDiretoPollTimer);
+    chatDiretoPollTimer = null;
+  }
+}
+
