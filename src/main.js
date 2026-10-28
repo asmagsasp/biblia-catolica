@@ -39,6 +39,21 @@ import {
   saveParoquia, 
   fetchAllParoquiasFromFirebase 
 } from './paroquiasService.js';
+import { 
+  getPerfilFiel, 
+  salvarPerfilFiel, 
+  pingPresencaOnline,
+  getFieisOnline, 
+  getMuralMensagens, 
+  enviarMensagemMural, 
+  reagirMensagemMural, 
+  startMuralPolling, 
+  stopMuralPolling, 
+  startPresenceHeartbeat, 
+  formatarTempoDecorrido,
+  INAUGURAL_MESSAGES,
+  SEED_FIEIS
+} from './comunidadeService.js';
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -202,6 +217,10 @@ async function init() {
       initDonateButtonShimmer();
       updateHomeFraternalCard();
       initAudioStreamingListener();
+      try {
+        startPresenceHeartbeat();
+        updateHomeComunidadeCard();
+      } catch (e) {}
 
       // Pré-renderiza imediatamente a Liturgia de Hoje no boot para abertura instantânea (0ms de espera)
       try {
@@ -3709,7 +3728,8 @@ const VIEW_TRACKING_META = {
   mariaView: { title: 'Devoção a Maria', path: '/maria' },
   radiosPodcastsView: { title: 'Rádios & Podcasts Católicos', path: '/radios-podcasts' },
   oracoesLivroView: { title: 'Livro de Orações Católicas', path: '/livro-oracoes' },
-  diretorEspiritualView: { title: 'Diretor Espiritual & Palavra Amiga', path: '/diretor-espiritual' }
+  diretorEspiritualView: { title: 'Diretor Espiritual & Palavra Amiga', path: '/diretor-espiritual' },
+  comunidadeView: { title: 'Mural da Comunidade & Bate-Papo', path: '/comunidade' }
 };
 
 let lastViewBeforeChapter = 'homeView';
@@ -3724,7 +3744,10 @@ function showView(id) {
   stopMariaSpeech();
   stopOracaoAudio();
   stopDiretorAudio();
-  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'planDayView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView', 'diretorEspiritualView'].forEach(v => {
+  if (id !== 'comunidadeView') {
+    try { stopMuralPolling(); } catch (e) {}
+  }
+  ['homeView', 'chapterView', 'searchView', 'favoritesView', 'galleryView', 'planView', 'planDayView', 'liturgiaView', 'rosarioView', 'velasView', 'teologiaView', 'lectioView', 'confissaoView', 'diarioView', 'novenasView', 'cartasView', 'mariaView', 'radiosPodcastsView', 'oracoesLivroView', 'diretorEspiritualView', 'comunidadeView'].forEach(v => {
     const el = document.getElementById(v);
     if (el) el.classList.toggle('hidden', v !== id);
   });
@@ -11202,12 +11225,321 @@ window.deletarItemHistoricoDiretor = function (id, event) {
   showToast('Registro excluído do histórico.');
 };
 
+// ==========================================================================
+// COMUNIDADE CATÓLICA, MURAL FRATERNO & BATE-PAPO — CONTROLLER
+// ==========================================================================
+let currentComunidadeChannel = 'geral';
+let currentMuralMessages = [];
 
+window.updateHomeComunidadeCard = async function () {
+  try {
+    const fieis = await getFieisOnline();
+    const count = fieis.length;
+    const countEl = document.getElementById('homeComunidadeOnlineCount');
+    if (countEl) countEl.textContent = `${count} Fiéis Online`;
+    const bannerEl = document.getElementById('comunidadeOnlineTotal');
+    if (bannerEl) bannerEl.textContent = `${count} Fiéis em Comunhão e Oração`;
+    const tabBadge = document.getElementById('tabFieisCountBadge');
+    if (tabBadge) tabBadge.textContent = String(count);
+  } catch (e) {
+    console.warn('[Comunidade] Erro ao atualizar contadores:', e);
+  }
+};
 
+window.showComunidade = async function (channel = 'geral') {
+  showView('comunidadeView');
 
+  // Atualiza informações do perfil e paróquia no cabeçalho
+  try {
+    const perfil = await getPerfilFiel();
+    const headerNome = document.getElementById('comunidadeHeaderNome');
+    if (headerNome) headerNome.textContent = perfil.nome || 'Meu Perfil';
 
+    const paroquiaTag = document.getElementById('comunidadeUserParoquiaName');
+    if (paroquiaTag) {
+      paroquiaTag.textContent = perfil.paroquia !== 'Paróquia Católica' ? `${perfil.paroquia} (${perfil.cidade}/${perfil.estado})` : 'Vincular Minha Paróquia';
+    }
+  } catch (e) {}
 
+  await switchComunidadeTab(channel);
+  updateHomeComunidadeCard();
+};
 
+window.switchComunidadeTab = async function (tab) {
+  currentComunidadeChannel = tab;
 
+  // Atualiza classes ativas nos botões das abas
+  const tabGeral = document.getElementById('tabComunidadeGeral');
+  const tabAmizades = document.getElementById('tabComunidadeAmizades');
+  const tabFieis = document.getElementById('tabComunidadeFieis');
+  const composer = document.getElementById('comunidadeComposerWrapper');
+  const input = document.getElementById('comunidadeMsgInput');
+  const container = document.getElementById('comunidadeFeedContainer');
 
+  if (tabGeral) tabGeral.classList.toggle('active', tab === 'geral');
+  if (tabAmizades) tabAmizades.classList.toggle('active', tab === 'amizades');
+  if (tabFieis) tabFieis.classList.toggle('active', tab === 'fieis');
 
+  if (!container) return;
+
+  if (tab === 'fieis') {
+    // Aba de Fiéis Online (Diretório)
+    if (composer) composer.style.display = 'none';
+    stopMuralPolling();
+    container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+
+    try {
+      const fieis = await getFieisOnline();
+      renderOnlineFieisList(fieis);
+    } catch (e) {
+      container.innerHTML = `
+        <div class="gallery-empty-state" style="padding: 40px 20px; text-align: center;">
+          <i class="fas fa-exclamation-circle" style="color: #ef4444; font-size: 2rem; margin-bottom: 10px;"></i>
+          <p style="color: var(--text-secondary);">Não foi possível carregar os fiéis online no momento.</p>
+          <button class="upload-btn-secondary" onclick="switchComunidadeTab('fieis')"><i class="fas fa-redo"></i> Tentar Novamente</button>
+        </div>
+      `;
+    }
+  } else {
+    // Abas de Mensagens (Mural Geral ou Amizades & Namoro Santo)
+    if (composer) composer.style.display = '';
+    if (input) {
+      input.placeholder = tab === 'amizades'
+        ? 'Apresente-se, conte sobre sua fé, paróquia ou amizades santas...'
+        : 'Escreva sua mensagem, partilha ou pedido de oração...';
+    }
+
+    container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+
+    startMuralPolling(tab, (msgs) => {
+      renderMuralFeed(msgs, tab);
+    });
+  }
+};
+
+window.renderMuralFeed = function (messages, channel) {
+  const container = document.getElementById('comunidadeFeedContainer');
+  if (!container) return;
+
+  currentMuralMessages = messages || [];
+
+  if (!messages || !messages.length) {
+    container.innerHTML = `
+      <div class="gallery-empty-state" style="padding: 50px 20px; text-align: center;">
+        <i class="fas fa-dove" style="color: var(--gold-400); font-size: 2.2rem; margin-bottom: 12px;"></i>
+        <h3 style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 6px;">Seja o primeiro a partilhar!</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 16px;">Deixe uma oração ou saudação fraterna para todos os irmãos do aplicativo.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const html = messages.map(m => {
+    const isPastoral = !!m.is_pastoral;
+    const authorInitials = (m.nome || 'Fiel').slice(0, 2).toUpperCase();
+    const paroquiaStr = m.paroquia ? `${m.paroquia}` : 'Paróquia Católica';
+    const localStr = (m.cidade && m.estado) ? ` • ${m.cidade}/${m.estado}` : '';
+    const tempoStr = formatarTempoDecorrido(m.timestamp);
+    const amemCount = (m.reacoes && m.reacoes.amem) || 0;
+
+    return `
+      <div class="comunidade-msg-card ${isPastoral ? 'pastoral-featured' : ''}" id="msg-${m.id}">
+        <div class="comunidade-msg-header">
+          <div class="comunidade-msg-author-row">
+            <div class="comunidade-avatar ${isPastoral ? 'pastoral-avatar' : ''}">
+              ${isPastoral ? '<i class="fas fa-church"></i>' : authorInitials}
+            </div>
+            <div class="comunidade-author-info">
+              <span class="comunidade-author-name">
+                ${m.nome || 'Irmão em Cristo'}
+                ${isPastoral ? '<span style="font-size: 10px; background: rgba(212, 175, 55, 0.2); color: var(--gold-300); padding: 1px 6px; border-radius: 8px; margin-left: 4px;">Pastoral</span>' : ''}
+              </span>
+              <span class="comunidade-paroquia-sub">${paroquiaStr}${localStr}</span>
+            </div>
+          </div>
+          <span class="comunidade-msg-time">${tempoStr}</span>
+        </div>
+        <div class="comunidade-msg-body">
+          ${(m.texto || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+        </div>
+        <div class="comunidade-msg-actions">
+          <button type="button" class="comunidade-react-btn" onclick="reactMural('${m.id}')" title="Dizer Amém">
+            <span>🙏 Amém</span>
+            <span class="react-count" id="react-count-${m.id}">${amemCount > 0 ? amemCount : ''}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+};
+
+window.renderOnlineFieisList = function (fieis) {
+  const container = document.getElementById('comunidadeFeedContainer');
+  if (!container) return;
+
+  const tabBadge = document.getElementById('tabFieisCountBadge');
+  if (tabBadge) tabBadge.textContent = String(fieis.length);
+
+  const bannerEl = document.getElementById('comunidadeOnlineTotal');
+  if (bannerEl) bannerEl.textContent = `${fieis.length} Fiéis em Comunhão e Oração`;
+
+  if (!fieis || !fieis.length) {
+    container.innerHTML = `
+      <div class="gallery-empty-state" style="padding: 50px 20px; text-align: center;">
+        <i class="fas fa-users" style="color: var(--gold-400); font-size: 2.2rem; margin-bottom: 12px;"></i>
+        <p style="color: var(--text-secondary);">Nenhum fiel online no momento. O seu batimento de presença acabou de ser registrado!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const html = `
+    <div class="comunidade-fieis-grid">
+      ${fieis.map(f => {
+        const initials = (f.nome || 'Fiel').slice(0, 2).toUpperCase();
+        const paroquia = f.paroquia || 'Paróquia Católica';
+        const local = (f.cidade && f.estado) ? `${f.cidade}/${f.estado}` : (f.cidade || 'Brasil');
+        const santo = f.santo || 'Nossa Senhora Aparecida';
+
+        return `
+          <div class="comunidade-fiel-card">
+            <div style="position: relative;">
+              <div class="comunidade-avatar" style="width: 44px; height: 44px; font-size: 14px;">
+                ${initials}
+              </div>
+              <span class="online-pulse-dot" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid var(--bg-card); box-shadow: 0 0 6px #22c55e;"></span>
+            </div>
+            <div class="comunidade-fiel-body">
+              <div class="comunidade-fiel-nome">${f.nome || 'Irmão em Cristo'}</div>
+              <div class="comunidade-fiel-cidade"><i class="fas fa-location-dot" style="color: #60a5fa; font-size: 10.5px; margin-right: 3px;"></i> ${local} • ${paroquia}</div>
+              <span class="comunidade-fiel-santo"><i class="fas fa-cross" style="margin-right: 3px;"></i> Devoção: ${santo}</span>
+            </div>
+            <button type="button" class="comunidade-saudar-btn" onclick="saudarFielOnline('${(f.nome || 'Irmão').replace(/'/g, "\\'")}')" title="Enviar saudação no mural">
+              <i class="fas fa-dove"></i> Saudar
+            </button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  container.innerHTML = html;
+};
+
+window.saudarFielOnline = function (nome) {
+  switchComunidadeTab('amizades');
+  const input = document.getElementById('comunidadeMsgInput');
+  if (input) {
+    input.value = `A Paz de Jesus e o amor de Maria, ${nome}! 🕊️ `;
+    input.focus();
+  }
+};
+
+window.insertQuickMuralText = function (text) {
+  const input = document.getElementById('comunidadeMsgInput');
+  if (!input) return;
+  input.value = (input.value ? input.value + ' ' : '') + text + ' ';
+  input.focus();
+};
+
+window.handleSendMuralMessage = async function (e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('comunidadeMsgInput');
+  const btn = document.getElementById('btnSendMural');
+  if (!input) return;
+
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    await enviarMensagemMural(currentComunidadeChannel, texto);
+    input.value = '';
+    showToast('✨ Mensagem enviada para o mural!');
+
+    // Atualiza imediatamente na tela
+    const msgs = await getMuralMensagens(currentComunidadeChannel);
+    renderMuralFeed(msgs, currentComunidadeChannel);
+
+    // Faz rolagem suave para o final do feed
+    const container = document.getElementById('comunidadeFeedContainer');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  } catch (err) {
+    showToast('❌ ' + (err.message || 'Erro ao enviar mensagem'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+    }
+  }
+};
+
+window.reactMural = async function (msgId) {
+  const countEl = document.getElementById(`react-count-${msgId}`);
+  if (countEl) {
+    const current = parseInt(countEl.textContent || '0', 10);
+    countEl.textContent = String(current + 1);
+  }
+  showToast('🙏 Amém! Oração confirmada.');
+  reagirMensagemMural(currentComunidadeChannel, msgId, 'amem');
+};
+
+window.openComunidadePerfilModal = async function () {
+  try {
+    const perfil = await getPerfilFiel();
+    const nomeInput = document.getElementById('comunidadePerfilNomeInput');
+    const santoSelect = document.getElementById('comunidadePerfilSantoSelect');
+    const paroquiaInfo = document.getElementById('comunidadePerfilParoquiaInfo');
+
+    if (nomeInput) nomeInput.value = perfil.has_custom_nome ? perfil.nome : '';
+    if (santoSelect && perfil.santo) santoSelect.value = perfil.santo;
+    if (paroquiaInfo) paroquiaInfo.textContent = `${perfil.paroquia} • ${perfil.cidade}/${perfil.estado}`;
+
+    const modal = document.getElementById('comunidadePerfilModal');
+    if (modal) modal.classList.remove('hidden');
+  } catch (e) {
+    console.error('Erro ao abrir perfil:', e);
+  }
+};
+
+window.closeComunidadePerfilModal = function () {
+  const modal = document.getElementById('comunidadePerfilModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.salvarPerfilModalComunidade = async function (e) {
+  if (e) e.preventDefault();
+  const nomeInput = document.getElementById('comunidadePerfilNomeInput');
+  const santoSelect = document.getElementById('comunidadePerfilSantoSelect');
+
+  const nome = nomeInput ? nomeInput.value.trim() : '';
+  const santo = santoSelect ? santoSelect.value : '';
+
+  if (!nome) {
+    showToast('Por favor, informe seu nome.');
+    return;
+  }
+
+  salvarPerfilFiel(nome, santo);
+  await pingPresencaOnline();
+
+  const headerNome = document.getElementById('comunidadeHeaderNome');
+  if (headerNome) headerNome.textContent = nome;
+
+  closeComunidadePerfilModal();
+  showToast('✨ Perfil salvo com sucesso!');
+
+  // Atualiza a visualização atual
+  if (currentComunidadeChannel === 'fieis') {
+    const fieis = await getFieisOnline();
+    renderOnlineFieisList(fieis);
+  }
+};

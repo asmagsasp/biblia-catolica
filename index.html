@@ -237,7 +237,7 @@
       </div>
 
       <!-- CARD DE MINHA PARÓQUIA (VÍNCULO DE FÉ & 30% DE MONETIZAÇÃO) -->
-      <div id="homeParoquiaCard" class="home-donate-fraternal-card paroquia-mode" onclick="openParoquiaModal()" style="margin-top: 0; margin-bottom: 16px;">
+      <div id="homeParoquiaCard" class="home-donate-fraternal-card paroquia-mode" onclick="openParoquiaModal()" style="margin-top: 0; margin-bottom: 12px;">
         <div class="fraternal-card-glow" style="background: radial-gradient(circle, rgba(96, 165, 250, 0.22) 0%, transparent 70%);"></div>
         <div class="fraternal-card-icon">
           <i class="fas fa-church"></i>
@@ -249,6 +249,28 @@
           </div>
           <p class="fraternal-card-text" id="homeParoquiaText">
             Toque aqui para vincular sua paróquia. <strong>30% da monetização e doações</strong> deste aplicativo são repassadas à sua comunidade no fechamento de cada mês!
+          </p>
+        </div>
+      </div>
+
+      <!-- CARD DE DESTAQUE: MURAL DA COMUNIDADE & BATE-PAPO FRATERNO -->
+      <div id="homeComunidadeCard" class="home-donate-fraternal-card comunidade-mode" onclick="showComunidade()" style="margin-top: 0; margin-bottom: 16px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%); border-color: rgba(212, 175, 55, 0.45); cursor: pointer;">
+        <div class="fraternal-card-glow" style="background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);"></div>
+        <div class="fraternal-card-icon" style="background: rgba(212, 175, 55, 0.18); color: var(--gold-300);">
+          <i class="fas fa-comments"></i>
+        </div>
+        <div class="fraternal-card-body">
+          <div class="fraternal-card-header">
+            <span class="fraternal-card-tag" style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border-color: rgba(34, 197, 94, 0.35);">
+              <span class="online-pulse-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e; display: inline-block; box-shadow: 0 0 6px #22c55e; margin-right: 4px;"></span> <span id="homeComunidadeOnlineCount">Fiéis Conectados</span>
+            </span>
+            <span class="fraternal-card-cta" style="color: var(--gold-300); font-weight: 700;">Entrar no Mural <i class="fas fa-chevron-right"></i></span>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 3px 0 4px;">
+            Mural da Comunidade & Bate-Papo Fraterno
+          </h3>
+          <p class="fraternal-card-text" style="font-size: 12px; margin: 0; line-height: 1.45;">
+            Conheça fiéis da sua região e paróquia, partilhe orações e cultive amizades santas em comunhão de fé.
           </p>
         </div>
       </div>
@@ -1598,6 +1620,84 @@
       </div>
     </div>
 
+    <!-- COMUNIDADE CATÓLICA & MURAL FRATERNO -->
+    <div id="comunidadeView" class="hidden">
+      <div class="comunidade-view">
+        <!-- Header -->
+        <div class="chapter-header">
+          <div class="chapter-header-left">
+            <button class="btn-back" onclick="goHome()" title="Voltar ao Início"><i class="fas fa-arrow-left"></i></button>
+            <div>
+              <h2 class="chapter-title"><i class="fas fa-comments" style="color: var(--gold-400); margin-right: 6px;"></i> Mural da Comunidade</h2>
+              <p class="chapter-subtitle">Partilha fraterna, amizades e oração em comunhão</p>
+            </div>
+          </div>
+          <div class="chapter-header-actions">
+            <button class="comunidade-perfil-btn" onclick="openComunidadePerfilModal()" title="Editar meu perfil na comunidade">
+              <i class="fas fa-user-edit"></i> <span id="comunidadeHeaderNome">Meu Perfil</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Presença Online -->
+        <div class="comunidade-presence-bar">
+          <div class="comunidade-presence-info">
+            <span class="online-pulse-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; box-shadow: 0 0 8px #22c55e; margin-right: 6px;"></span>
+            <span id="comunidadeOnlineTotal">Conectando aos fiéis...</span>
+          </div>
+          <div class="comunidade-paroquia-badge" id="comunidadeUserParoquiaTag" onclick="openParoquiaModal()" title="Minha Paróquia vinculada">
+            <i class="fas fa-church"></i> <span id="comunidadeUserParoquiaName">Minha Paróquia</span>
+          </div>
+        </div>
+
+        <!-- Abas do Mural -->
+        <div class="comunidade-tabs">
+          <button class="comunidade-tab-btn active" id="tabComunidadeGeral" onclick="switchComunidadeTab('geral')">
+            <i class="fas fa-dove"></i> <span>Mural & Oração</span>
+          </button>
+          <button class="comunidade-tab-btn" id="tabComunidadeAmizades" onclick="switchComunidadeTab('amizades')">
+            <i class="fas fa-heart"></i> <span>Amizades & Namoro Santo</span>
+          </button>
+          <button class="comunidade-tab-btn" id="tabComunidadeFieis" onclick="switchComunidadeTab('fieis')">
+            <i class="fas fa-users"></i> <span>Fiéis Online</span> <span class="tab-badge-count" id="tabFieisCountBadge">4</span>
+          </button>
+        </div>
+
+        <!-- Card de Boas-Vindas & Regras de Ouro -->
+        <div class="comunidade-welcome-banner" id="comunidadeWelcomeBanner">
+          <div class="comunidade-welcome-icon"><i class="fas fa-cross"></i></div>
+          <div class="comunidade-welcome-text">
+            <h4>Bênção da Comunidade Fraterna</h4>
+            <p>“Onde dois ou três estiverem reunidos em meu nome, ali estou Eu no meio deles” (Mt 18, 20). Este é um ambiente sagrado para partilhar intenções, cultivar amizades santas e testemunhar o amor de Cristo com respeito e caridade mútua.</p>
+          </div>
+        </div>
+
+        <!-- Lista de Mensagens / Fiéis Container -->
+        <div class="comunidade-feed-container" id="comunidadeFeedContainer">
+          <div class="loading"><div class="loading-spinner"></div></div>
+        </div>
+
+        <!-- Compositor de Mensagens (Fixo na parte inferior nas abas de bate-papo) -->
+        <div class="comunidade-composer-wrapper" id="comunidadeComposerWrapper">
+          <!-- Chips de Respostas Rápidas / Emojis Devocionais -->
+          <div class="comunidade-quick-chips">
+            <button type="button" class="comunidade-chip" onclick="insertQuickMuralText('🙏 Amém!')">🙏 Amém!</button>
+            <button type="button" class="comunidade-chip" onclick="insertQuickMuralText('🕊️ Paz e Bem!')">🕊️ Paz e Bem!</button>
+            <button type="button" class="comunidade-chip" onclick="insertQuickMuralText('✝️ Em Oração por você!')">✝️ Em Oração</button>
+            <button type="button" class="comunidade-chip" onclick="insertQuickMuralText('📿 Salve Maria Imaculada!')">📿 Salve Maria</button>
+            <button type="button" class="comunidade-chip" onclick="insertQuickMuralText('❤️ Deus abençoe sua caminhada!')">❤️ Deus te abençoe</button>
+          </div>
+
+          <form class="comunidade-composer-form" id="comunidadeComposerForm" onsubmit="handleSendMuralMessage(event)">
+            <input type="text" id="comunidadeMsgInput" class="comunidade-msg-input" placeholder="Escreva sua mensagem ou pedido de oração..." maxlength="500" autocomplete="off" required>
+            <button type="submit" class="comunidade-send-btn" id="btnSendMural" title="Enviar Mensagem">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- BARRA FLUTUANTE DE AÇÕES DE VERSÍCULOS SELECIONADOS -->
@@ -2513,6 +2613,48 @@
     </div>
   </div>
 
+  <!-- MODAL DE IDENTIFICAÇÃO DO FIEL NA COMUNIDADE -->
+  <div id="comunidadePerfilModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="comunidadePerfilTitle" onclick="if(event.target===this) closeComunidadePerfilModal()">
+    <div class="donate-modal-content" style="max-width: 480px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeComunidadePerfilModal()" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212, 175, 55, 0.15); margin-bottom: 12px;">
+          <i class="fas fa-user-circle donate-icon" style="color: var(--gold-400);"></i>
+        </div>
+        <h2 id="comunidadePerfilTitle" style="font-family: var(--font-display); font-size: 20px; margin-bottom: 6px;">Meu Perfil Fraterno</h2>
+        <p style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+          Como os irmãos e irmãs na fé verão suas mensagens no mural comunitário.
+        </p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label for="inputComunidadeNome" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Seu Nome ou Apelido:</label>
+          <input type="text" id="inputComunidadeNome" class="paroquia-form-input" placeholder="Ex: Gabriel Santos ou Irmã Teresa" maxlength="40" style="width: 100%;">
+        </div>
+
+        <div>
+          <label for="inputComunidadeSanto" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Santo(a) de Devoção Especial:</label>
+          <input type="text" id="inputComunidadeSanto" class="paroquia-form-input" placeholder="Ex: São José, São Bento, Santa Teresinha..." maxlength="50" style="width: 100%;">
+        </div>
+
+        <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 10px; padding: 12px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <strong style="color: var(--gold-300);"><i class="fas fa-church"></i> Paróquia Vinculada</strong>
+            <button type="button" onclick="closeComunidadePerfilModal(); openParoquiaModal();" style="background: none; border: none; color: #60a5fa; font-size: 11.5px; cursor: pointer; text-decoration: underline;">Alterar Paróquia</button>
+          </div>
+          <span id="txtComunidadeModalParoquia" style="display: block; color: var(--text-primary);">Carregando sua paróquia...</span>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeComunidadePerfilModal()">Fechar</button>
+          <button type="button" class="hero-donate-btn" onclick="salvarPerfilModalComunidade()"><i class="fas fa-check"></i> Salvar Perfil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL ACENDER VELA VIRTUAL -->
   <div id="acenderVelaModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="acenderVelaTitle" onclick="if(event.target===this) closeAcenderVelaModal()">
     <div class="donate-modal-content" style="max-width: 520px; text-align: left;">
@@ -2808,6 +2950,66 @@
       <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
         <button type="button" class="upload-btn-secondary" onclick="closeDiretorHistoricoModal()">Fechar</button>
       </div>
+    </div>
+  <!-- MODAL: MEU PERFIL NA COMUNIDADE & SANTO DE DEVOÇÃO -->
+  <div id="comunidadePerfilModal" class="donate-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="comunidadePerfilTitle" onclick="if(event.target===this) closeComunidadePerfilModal()">
+    <div class="donate-modal-content" style="max-width: 500px; text-align: left;">
+      <button class="donate-close-btn" onclick="closeComunidadePerfilModal()" aria-label="Fechar"><i class="fas fa-times"></i></button>
+
+      <div class="donate-header" style="text-align: center;">
+        <div class="donate-icon-container pulse-animation" style="border-color: var(--gold-400); background: rgba(212, 175, 55, 0.15); margin-bottom: 12px;">
+          <i class="fas fa-user-check donate-icon" style="color: var(--gold-300);"></i>
+        </div>
+        <h2 id="comunidadePerfilTitle" style="font-family: var(--font-display); font-size: 21px; margin-bottom: 6px;">Meu Perfil na Comunidade</h2>
+        <p style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 10px;">
+          Personalize como os outros irmãos e irmãs verão você no Mural e na lista de Fiéis Online.
+        </p>
+      </div>
+
+      <form id="comunidadePerfilForm" onsubmit="salvarPerfilModalComunidade(event)" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+        <div>
+          <label for="comunidadePerfilNomeInput" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">
+            <i class="fas fa-user"></i> Seu Nome ou Como prefere ser chamado: *
+          </label>
+          <input type="text" id="comunidadePerfilNomeInput" class="upload-input" placeholder="Ex: Gabriel Silva, Irmã Maria..." required maxlength="40">
+        </div>
+
+        <div>
+          <label for="comunidadePerfilSantoSelect" style="display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">
+            <i class="fas fa-cross"></i> Santo(a) de Devoção Principal:
+          </label>
+          <select id="comunidadePerfilSantoSelect" class="upload-select">
+            <option value="Nossa Senhora Aparecida">Nossa Senhora Aparecida</option>
+            <option value="São Bento">São Bento</option>
+            <option value="São José">São José</option>
+            <option value="Santa Teresinha do Menino Jesus">Santa Teresinha do Menino Jesus</option>
+            <option value="São Francisco de Assis">São Francisco de Assis</option>
+            <option value="São Miguel Arcanjo">São Miguel Arcanjo</option>
+            <option value="Santa Rita de Cássia">Santa Rita de Cássia</option>
+            <option value="Santo Antônio">Santo Antônio</option>
+            <option value="Padre Pio de Pietrelcina">São Padre Pio de Pietrelcina</option>
+            <option value="São Judas Tadeu">São Judas Tadeu</option>
+            <option value="Nossa Senhora de Fátima">Nossa Senhora de Fátima</option>
+            <option value="Sagrado Coração de Jesus">Sagrado Coração de Jesus</option>
+          </select>
+        </div>
+
+        <div style="background: rgba(96, 165, 250, 0.08); border: 1px solid rgba(96, 165, 250, 0.25); border-radius: 10px; padding: 12px; font-size: 12px; color: var(--text-secondary); display: flex; gap: 10px; align-items: center;">
+          <i class="fas fa-church" style="color: #60a5fa; font-size: 18px;"></i>
+          <div style="flex: 1;">
+            <strong style="color: var(--text-primary);">Sua Paróquia & Cidade:</strong>
+            <p id="comunidadePerfilParoquiaInfo" style="margin: 2px 0 0; font-size: 11.5px;">Carregando...</p>
+          </div>
+          <button type="button" class="upload-btn-secondary" onclick="closeComunidadePerfilModal(); openParoquiaModal()" style="padding: 5px 10px; font-size: 11px; white-space: nowrap;">Alterar</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+          <button type="button" class="upload-btn-secondary" onclick="closeComunidadePerfilModal()">Cancelar</button>
+          <button type="submit" class="hero-donate-btn pulse-animation" style="padding: 10px 22px;">
+            <i class="fas fa-check"></i> Salvar Perfil
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
