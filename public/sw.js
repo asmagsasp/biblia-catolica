@@ -2,7 +2,7 @@
 // SERVICE WORKER - BÍBLIA SAGRADA CATÓLICA (OFFLINE FIRST PWA)
 // ==========================================================================
 
-const CACHE_NAME = 'biblia-catolica-v5';
+const CACHE_NAME = 'biblia-catolica-v6';
 
 // Recursos vitais para o funcionamento offline imediato
 const PRECACHE_ASSETS = [

@@ -11510,9 +11510,9 @@ window.reactMural = async function (msgId) {
 window.openComunidadePerfilModal = async function () {
   try {
     const perfil = await getPerfilFiel();
-    const nomeInput = document.getElementById('comunidadePerfilNomeInput');
-    const santoSelect = document.getElementById('comunidadePerfilSantoSelect');
-    const paroquiaInfo = document.getElementById('comunidadePerfilParoquiaInfo');
+    const nomeInput = document.getElementById('comunidadePerfilNomeInput') || document.getElementById('inputComunidadeNome');
+    const santoSelect = document.getElementById('comunidadePerfilSantoSelect') || document.getElementById('inputComunidadeSanto');
+    const paroquiaInfo = document.getElementById('comunidadePerfilParoquiaInfo') || document.getElementById('txtComunidadeModalParoquia');
 
     if (nomeInput) nomeInput.value = perfil.has_custom_nome ? perfil.nome : '';
     if (santoSelect && perfil.santo) santoSelect.value = perfil.santo;
@@ -11531,19 +11531,19 @@ window.closeComunidadePerfilModal = function () {
 };
 
 window.salvarPerfilModalComunidade = async function (e) {
-  if (e) e.preventDefault();
-  const nomeInput = document.getElementById('comunidadePerfilNomeInput');
-  const santoSelect = document.getElementById('comunidadePerfilSantoSelect');
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  const nomeInput = document.getElementById('comunidadePerfilNomeInput') || document.getElementById('inputComunidadeNome');
+  const santoSelect = document.getElementById('comunidadePerfilSantoSelect') || document.getElementById('inputComunidadeSanto');
 
   const nome = nomeInput ? nomeInput.value.trim() : '';
-  const santo = santoSelect ? santoSelect.value : '';
+  const santo = santoSelect ? (santoSelect.value || '').trim() : '';
 
   if (!nome) {
     showToast('Por favor, informe seu nome.');
     return;
   }
 
-  salvarPerfilFiel(nome, santo);
+  salvarPerfilFiel(nome, santo || 'Nossa Senhora Aparecida');
   await pingPresencaOnline();
 
   const headerNome = document.getElementById('comunidadeHeaderNome');
@@ -11552,9 +11552,8 @@ window.salvarPerfilModalComunidade = async function (e) {
   closeComunidadePerfilModal();
   showToast('✨ Perfil salvo com sucesso!');
 
-  // Atualiza a visualização atual
-  if (currentComunidadeChannel === 'fieis') {
-    const fieis = await getFieisOnline();
-    renderOnlineFieisList(fieis);
-  }
+  // Atualiza imediatamente a visualização atual e contadores
+  await updateHomeComunidadeCard();
+  const fieis = await getFieisOnline();
+  renderOnlineFieisList(fieis);
 };
