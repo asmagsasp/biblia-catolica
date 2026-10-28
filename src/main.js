@@ -11289,6 +11289,8 @@ window.switchComunidadeTab = async function (tab) {
     container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
 
     try {
+      // Garante batimento de presença atualizado antes de carregar a lista
+      await pingPresencaOnline();
       const fieis = await getFieisOnline();
       renderOnlineFieisList(fieis);
     } catch (e) {
@@ -11402,23 +11404,35 @@ window.renderOnlineFieisList = function (fieis) {
         const paroquia = f.paroquia || 'Paróquia Católica';
         const local = (f.cidade && f.estado) ? `${f.cidade}/${f.estado}` : (f.cidade || 'Brasil');
         const santo = f.santo || 'Nossa Senhora Aparecida';
+        const isMe = !!f.is_me;
+        const isReal = !f.is_seed;
 
         return `
-          <div class="comunidade-fiel-card">
+          <div class="comunidade-fiel-card ${isMe ? 'fiel-card-me' : ''}" style="${isMe ? 'border-color: rgba(234, 179, 8, 0.45); background: rgba(234, 179, 8, 0.05);' : ''}">
             <div style="position: relative;">
-              <div class="comunidade-avatar" style="width: 44px; height: 44px; font-size: 14px;">
+              <div class="comunidade-avatar" style="width: 44px; height: 44px; font-size: 14px; ${isMe ? 'background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #111; font-weight: 800;' : ''}">
                 ${initials}
               </div>
               <span class="online-pulse-dot" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid var(--bg-card); box-shadow: 0 0 6px #22c55e;"></span>
             </div>
             <div class="comunidade-fiel-body">
-              <div class="comunidade-fiel-nome">${f.nome || 'Irmão em Cristo'}</div>
+              <div class="comunidade-fiel-nome">
+                ${f.nome || 'Irmão em Cristo'}
+                ${isMe ? '<span style="font-size: 10px; background: rgba(234, 179, 8, 0.25); color: var(--gold-300); padding: 1px 7px; border-radius: 8px; margin-left: 4px; font-weight: 800; border: 1px solid rgba(234,179,8,0.4);"><i class="fas fa-user-check"></i> Você</span>' : ''}
+                ${(!isMe && isReal) ? '<span style="font-size: 9.5px; background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 1px 5px; border-radius: 8px; margin-left: 4px; font-weight: 700;">🟢 Online Agora</span>' : ''}
+              </div>
               <div class="comunidade-fiel-cidade"><i class="fas fa-location-dot" style="color: #60a5fa; font-size: 10.5px; margin-right: 3px;"></i> ${local} • ${paroquia}</div>
               <span class="comunidade-fiel-santo"><i class="fas fa-cross" style="margin-right: 3px;"></i> Devoção: ${santo}</span>
             </div>
-            <button type="button" class="comunidade-saudar-btn" onclick="saudarFielOnline('${(f.nome || 'Irmão').replace(/'/g, "\\'")}')" title="Enviar saudação no mural">
-              <i class="fas fa-dove"></i> Saudar
-            </button>
+            ${isMe ? `
+              <button type="button" class="comunidade-saudar-btn" onclick="openComunidadePerfilModal()" style="border-color: rgba(234, 179, 8, 0.4); color: var(--gold-300);" title="Editar meu perfil">
+                <i class="fas fa-user-pen"></i> Editar
+              </button>
+            ` : `
+              <button type="button" class="comunidade-saudar-btn" onclick="saudarFielOnline('${(f.nome || 'Irmão').replace(/'/g, "\\'")}')" title="Enviar saudação no mural">
+                <i class="fas fa-dove"></i> Saudar
+              </button>
+            `}
           </div>
         `;
       }).join('')}
@@ -11427,6 +11441,7 @@ window.renderOnlineFieisList = function (fieis) {
 
   container.innerHTML = html;
 };
+
 
 window.saudarFielOnline = function (nome) {
   switchComunidadeTab('amizades');

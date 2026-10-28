@@ -138,6 +138,10 @@ export async function saveParoquia(data) {
   try {
     localStorage.setItem(STORAGE_KEY, jsonStr);
     localStorage.removeItem(DISMISSED_KEY); // Limpa flag de ignorado
+    if (payload.nome_devoto) {
+      localStorage.setItem('biblia_fiel_nome', payload.nome_devoto);
+      await Preferences.set({ key: 'biblia_fiel_nome', value: payload.nome_devoto });
+    }
     await Preferences.set({ key: STORAGE_KEY, value: jsonStr });
     await Preferences.remove({ key: DISMISSED_KEY });
   } catch (e) {

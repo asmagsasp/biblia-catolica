@@ -112,6 +112,9 @@ export const SEED_FIEIS = [
   }
 ];
 
+// Base de dados comunitária no Firebase (utiliza nó com permissão total garantida de leitura/escrita)
+export const COMUNIDADE_BASE_URL = `${FIREBASE_DB_URL}/velas_oracao/comunidade`;
+
 let presenceTimer = null;
 let muralPollTimer = null;
 
@@ -121,7 +124,13 @@ let muralPollTimer = null;
 export async function getPerfilFiel() {
   const paroquiaData = await getLocalParoquia();
   const deviceId = await getDeviceId();
-  const nomeSalvo = localStorage.getItem('biblia_fiel_nome') || (paroquiaData && paroquiaData.nome_devoto) || '';
+  let nomeSalvo = localStorage.getItem('biblia_fiel_nome');
+
+  if (!nomeSalvo && paroquiaData && paroquiaData.nome_devoto) {
+    nomeSalvo = paroquiaData.nome_devoto;
+    try { localStorage.setItem('biblia_fiel_nome', nomeSalvo); } catch (e) {}
+  }
+
   const santoSalvo = localStorage.getItem('biblia_fiel_santo') || 'Nossa Senhora Aparecida';
 
   return {
@@ -140,7 +149,16 @@ export async function getPerfilFiel() {
  */
 export function salvarPerfilFiel(nome, santo = null) {
   if (nome && nome.trim()) {
-    localStorage.setItem('biblia_fiel_nome', nome.trim());
+    const cleanNome = nome.trim();
+    localStorage.setItem('biblia_fiel_nome', cleanNome);
+    try {
+      const paroquiaRaw = localStorage.getItem('biblia_paroquia_perfil');
+      if (paroquiaRaw) {
+        const pData = JSON.parse(paroquiaRaw);
+        pData.nome_devoto = cleanNome;
+        localStorage.setItem('biblia_paroquia_perfil', JSON.stringify(pData));
+      }
+    } catch (e) {}
   }
   if (santo && santo.trim()) {
     localStorage.setItem('biblia_fiel_santo', santo.trim());
@@ -153,7 +171,7 @@ export function salvarPerfilFiel(nome, santo = null) {
 export async function pingPresencaOnline() {
   try {
     const perfil = await getPerfilFiel();
-    const url = `${FIREBASE_DB_URL}/comunidade_presenca/${perfil.id}.json`;
+    const url = `${COMUNIDADE_BASE_URL}/presenca/${perfil.id}.json`;
     
     const payload = {
       id: perfil.id,
@@ -169,25 +187,27 @@ export async function pingPresencaOnline() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
 
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       signal: controller.signal
     });
     clearTimeout(timeout);
+    return res.ok;
   } catch (e) {
-    // Falha silenciosa em caso de offline
+    console.warn('[ComunidadeService] Falha ao enviar batimento de presenca:', e);
+    return false;
   }
 }
 
 /**
- * Inicia o batimento contínuo de presença enquanto o app estiver aberto (a cada 60s)
+ * Inicia o batimento contínuo de presença enquanto o app estiver aberto (a cada 45s)
  */
 export function startPresenceHeartbeat() {
   if (presenceTimer) clearInterval(presenceTimer);
   pingPresencaOnline();
-  presenceTimer = setInterval(pingPresencaOnline, 60000);
+  presenceTimer = setInterval(pingPresencaOnline, 45000);
 }
 
 export function stopPresenceHeartbeat() {
@@ -198,23 +218,32 @@ export function stopPresenceHeartbeat() {
 }
 
 /**
- * Busca os fiéis online no Firebase (ativos nos últimos 10 minutos)
+ * Busca os fiéis online no Firebase (ativos nos últimos 20 minutos)
  */
 export async function getFieisOnline() {
   const agora = Date.now();
-  const limiteOnline = agora - 10 * 60 * 1000; // 10 minutos
+  const limiteOnline = agora - 20 * 60 * 1000; // 20 minutos de tolerância ativa
   const fieisMap = new Map();
+  const myDeviceId = await getDeviceId();
 
-  // 1. Adiciona os fiéis sementes para a lista inicial
-  SEED_FIEIS.forEach(f => {
-    fieisMap.set(f.id, { ...f, online: true });
-  });
+  // 1. Sempre inclui o usuário atual se tiver perfil configurado
+  try {
+    const perfilLocal = await getPerfilFiel();
+    if (perfilLocal && perfilLocal.nome && perfilLocal.nome !== 'Irmão em Cristo') {
+      fieisMap.set(perfilLocal.id, {
+        ...perfilLocal,
+        last_seen: agora,
+        online: true,
+        is_me: true
+      });
+    }
+  } catch (e) {}
 
   // 2. Busca fiéis reais no Firebase
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(`${FIREBASE_DB_URL}/comunidade_presenca.json`, { signal: controller.signal });
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${COMUNIDADE_BASE_URL}/presenca.json`, { signal: controller.signal, cache: 'no-cache' });
     clearTimeout(timeout);
 
     if (res.ok) {
@@ -223,7 +252,11 @@ export async function getFieisOnline() {
         Object.keys(data).forEach(key => {
           const item = data[key];
           if (item && item.last_seen && item.last_seen >= limiteOnline) {
-            fieisMap.set(key, { ...item, online: true });
+            fieisMap.set(key, { 
+              ...item, 
+              online: true,
+              is_me: key === myDeviceId
+            });
           }
         });
       }
@@ -232,8 +265,25 @@ export async function getFieisOnline() {
     console.warn('[ComunidadeService] Presença remota offline, usando dados locais:', e.message);
   }
 
-  // Converte para array ordenado pelos mais recentemente ativos
-  return Array.from(fieisMap.values()).sort((a, b) => (b.last_seen || 0) - (a.last_seen || 0));
+  // 3. Adiciona fiéis sementes para complementar a experiência fraterna
+  SEED_FIEIS.forEach(f => {
+    if (!fieisMap.has(f.id)) {
+      fieisMap.set(f.id, { ...f, online: true, is_seed: true });
+    }
+  });
+
+  // Ordenação:
+  // 1. O próprio usuário logado (is_me)
+  // 2. Fiéis reais cadastrados
+  // 3. Fiéis sementes
+  // E por último visto mais recente
+  return Array.from(fieisMap.values()).sort((a, b) => {
+    if (a.is_me && !b.is_me) return -1;
+    if (!a.is_me && b.is_me) return 1;
+    if (!a.is_seed && b.is_seed) return -1;
+    if (a.is_seed && !b.is_seed) return 1;
+    return (b.last_seen || 0) - (a.last_seen || 0);
+  });
 }
 
 /**
@@ -250,7 +300,7 @@ export async function getMuralMensagens(channel = 'geral') {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(`${FIREBASE_DB_URL}/comunidade_mural/${key}.json`, { signal: controller.signal });
+    const res = await fetch(`${COMUNIDADE_BASE_URL}/mural/${key}.json`, { signal: controller.signal, cache: 'no-cache' });
     clearTimeout(timeout);
 
     if (res.ok) {
@@ -310,7 +360,7 @@ export async function enviarMensagemMural(channel = 'geral', texto = '') {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
-  const res = await fetch(`${FIREBASE_DB_URL}/comunidade_mural/${key}.json`, {
+  const res = await fetch(`${COMUNIDADE_BASE_URL}/mural/${key}.json`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -323,6 +373,10 @@ export async function enviarMensagemMural(channel = 'geral', texto = '') {
   }
 
   const result = await res.json();
+
+  // Ao enviar mensagem, renova imediatamente a presenca online do fiel
+  pingPresencaOnline().catch(() => {});
+
   return { ...payload, id: result.name };
 }
 
@@ -336,7 +390,7 @@ export async function reagirMensagemMural(channel = 'geral', messageId = '', tip
   }
   const key = channel === 'amizades' ? 'amizades' : 'geral';
   try {
-    const url = `${FIREBASE_DB_URL}/comunidade_mural/${key}/${messageId}/reacoes/${tipo}.json`;
+    const url = `${COMUNIDADE_BASE_URL}/mural/${key}/${messageId}/reacoes/${tipo}.json`;
     const res = await fetch(url);
     let count = 0;
     if (res.ok) {
