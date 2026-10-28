@@ -230,10 +230,60 @@ async function init() {
     currentFontIdx = fonts.indexOf(savedFont) !== -1 ? fonts.indexOf(savedFont) : 0;
     document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
 
-    // Restore Plan com timeout seguro
+    // Restore Plan com timeout seguro e validação rígida
     const savedPlan = await safePrefGet('biblia_plan_days', null);
-    readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
+    try {
+      readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
+    } catch (e) {
+      readingPlanDays = {};
+    }
+    if (!readingPlanDays || typeof readingPlanDays !== 'object') {
+      readingPlanDays = {};
+    }
     try { updatePlanProgress(); } catch (e) {}
+
+    // Pré-renderiza imediatamente os 365 dias do Plano de Leitura no boot (0ms de espera ao clicar)
+    try {
+      const pc = document.getElementById('planContainer');
+      if (pc && pc.dataset.loaded !== '1') {
+        const plan = db.getPlanoLeituraSync();
+        if (plan && plan.length === 365) {
+          const now = new Date();
+          const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+          const nextDia = getNextPlanDayNumber();
+          let h = '';
+          plan.forEach(d => {
+            const isToday = d.dia === dayOfYear;
+            const done = !!readingPlanDays[d.dia];
+            const isNext = (d.dia === nextDia && !done);
+            const leiturasHtml = (d.leituras || []).map((l, idx) => 
+              `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+            ).join('');
+            h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
+                    <div class="plan-day-num">${d.dia}</div>
+                    <div class="plan-day-content">
+                        <div class="plan-day-title">
+                          Dia ${d.dia}
+                          ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
+                          ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
+                        </div>
+                        <div class="plan-day-desc">${leiturasHtml}</div>
+                        <div class="plan-day-card-actions">
+                          <button class="plan-day-open-btn" onclick="event.stopPropagation(); openPlanDay(${d.dia}, 0)" title="Ler e ouvir todas as leituras do Dia ${d.dia}">
+                            <i class="fas fa-play-circle"></i> Ler e Ouvir Dia Completo
+                          </button>
+                        </div>
+                    </div>
+                    <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
+                </div>`;
+          });
+          pc.innerHTML = h;
+          pc.dataset.loaded = '1';
+          updatePlanProgress();
+          updateNextPlanDayMarker();
+        }
+      }
+    } catch (e) {}
 
     // Load data
     try {
@@ -3173,6 +3223,8 @@ function updateNextPlanDayMarker() {
 window.showPlan = function () {
   showView('planView');
   const c = document.getElementById('planContainer');
+  if (!c) return;
+
   if (c.dataset.loaded === '1') {
     updatePlanProgress();
     updateNextPlanDayMarker();
@@ -3180,74 +3232,77 @@ window.showPlan = function () {
     return;
   }
 
-  c.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
+  // 1. Obtém imediatamente o plano canônico pré-carregado em 0ms
+  const plan = (typeof db.getPlanoLeituraSync === 'function') 
+    ? db.getPlanoLeituraSync() 
+    : (db.buildPlanoLeituraArray ? db.buildPlanoLeituraArray(db.CANONICAL_BOOKS) : []);
 
-  requestAnimationFrame(async () => {
-    try {
-      const plan = await db.getPlanoLeitura();
-      if (!plan || !Array.isArray(plan) || !plan.length) {
-        c.innerHTML = `
-          <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
-            <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
-            <h3 class="gallery-empty-title">Plano de Leitura Temporariamente Indisponível</h3>
-            <p class="gallery-empty-desc">Toque no botão abaixo para recarregar o plano de leitura de 365 dias.</p>
-            <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Recarregar Plano</button>
-          </div>
-        `;
-        return;
-      }
-
-      const now = new Date();
-      const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-      const nextDia = getNextPlanDayNumber();
-
-      let h = '';
-      plan.forEach(d => {
-        const isToday = d.dia === dayOfYear;
-        const done = !!readingPlanDays[d.dia];
-        const isNext = (d.dia === nextDia && !done);
-        
-        const leiturasHtml = (d.leituras || []).map((l, idx) => 
-          `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
-        ).join('');
-
-        h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
-                <div class="plan-day-num">${d.dia}</div>
-                <div class="plan-day-content">
-                    <div class="plan-day-title">
-                      Dia ${d.dia}
-                      ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
-                      ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
-                    </div>
-                    <div class="plan-day-desc">${leiturasHtml}</div>
-                    <div class="plan-day-card-actions">
-                      <button class="plan-day-open-btn" onclick="event.stopPropagation(); openPlanDay(${d.dia}, 0)" title="Ler e ouvir todas as leituras do Dia ${d.dia}">
-                        <i class="fas fa-play-circle"></i> Ler e Ouvir Dia Completo
-                      </button>
-                    </div>
-                </div>
-                <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
-            </div>`;
-      });
-      c.innerHTML = h;
-      c.dataset.loaded = '1';
-      updatePlanProgress();
-      updateNextPlanDayMarker();
-
-      // Rola automaticamente para o próximo dia a ser executado
-      scrollToNextPlanDay(false);
-    } catch (e) {
-      console.error("Plan Error:", e);
+  const renderDaysList = (planList) => {
+    if (!planList || !planList.length) {
       c.innerHTML = `
         <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
           <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
-          <h3 class="gallery-empty-title">Erro ao carregar o Plano</h3>
-          <p class="gallery-empty-desc">${e.message || 'Erro inesperado'}</p>
-          <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Tentar Novamente</button>
+          <h3 class="gallery-empty-title">Plano de Leitura Temporariamente Indisponível</h3>
+          <p class="gallery-empty-desc">Toque no botão abaixo para recarregar o plano de leitura de 365 dias.</p>
+          <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Recarregar Plano</button>
         </div>
       `;
+      return;
     }
-  });
+
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    const nextDia = getNextPlanDayNumber();
+
+    let h = '';
+    planList.forEach(d => {
+      const isToday = d.dia === dayOfYear;
+      const done = !!readingPlanDays[d.dia];
+      const isNext = (d.dia === nextDia && !done);
+      
+      const leiturasHtml = (d.leituras || []).map((l, idx) => 
+        `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+      ).join('');
+
+      h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
+              <div class="plan-day-num">${d.dia}</div>
+              <div class="plan-day-content">
+                  <div class="plan-day-title">
+                    Dia ${d.dia}
+                    ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
+                    ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
+                  </div>
+                  <div class="plan-day-desc">${leiturasHtml}</div>
+                  <div class="plan-day-card-actions">
+                    <button class="plan-day-open-btn" onclick="event.stopPropagation(); openPlanDay(${d.dia}, 0)" title="Ler e ouvir todas as leituras do Dia ${d.dia}">
+                      <i class="fas fa-play-circle"></i> Ler e Ouvir Dia Completo
+                    </button>
+                  </div>
+              </div>
+              <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
+          </div>`;
+    });
+
+    c.innerHTML = h;
+    c.dataset.loaded = '1';
+    updatePlanProgress();
+    updateNextPlanDayMarker();
+
+    // Rola para o próximo dia a ser executado
+    scrollToNextPlanDay(false);
+  };
+
+  if (plan && plan.length === 365) {
+    // Renderização imediata (0ms de espera, SEM TELA BRANCA, SEM SPINNER)
+    renderDaysList(plan);
+  } else {
+    c.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+    db.getPlanoLeitura().then(renderDaysList).catch(err => {
+      console.error("Erro ao carregar plano:", err);
+      const fallback = (typeof db.getPlanoLeituraSync === 'function') ? db.getPlanoLeituraSync() : null;
+      if (fallback) renderDaysList(fallback);
+    });
+  }
 };
 
 document.getElementById('planContainer').addEventListener('click', async e => {
@@ -3479,7 +3534,7 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
   container.innerHTML = '<div class="loading" style="padding:100px"><div class="loading-spinner"></div></div>';
 
   try {
-    const plan = await db.getPlanoLeitura();
+    const plan = (typeof db.getPlanoLeituraSync === 'function') ? db.getPlanoLeituraSync() : await db.getPlanoLeitura();
     const dayData = (Array.isArray(plan) ? plan.find(d => d.dia === dia) : null) || { dia, leituras: [] };
     currentPlanDayData = dayData;
 

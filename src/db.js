@@ -962,6 +962,17 @@ export function buildPlanoLeituraArray(booksList) {
     return plano;
 }
 
+// Pré-popula imediatamente o cache em memória com os 365 dias canônicos (0ms de espera)
+planCache = buildPlanoLeituraArray(CANONICAL_BOOKS);
+
+export function getPlanoLeituraSync() {
+    if (planCache && Array.isArray(planCache) && planCache.length === 365) {
+        return planCache;
+    }
+    planCache = buildPlanoLeituraArray(CANONICAL_BOOKS);
+    return planCache;
+}
+
 export async function getPlanoLeitura() {
     if (planCache && Array.isArray(planCache) && planCache.length === 365) {
         return planCache;

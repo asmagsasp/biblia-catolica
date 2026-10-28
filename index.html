@@ -52,9 +52,19 @@
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('/sw.js').then(function (reg) {
           console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+          // Força verificação imediata de nova versão no servidor
+          reg.update().catch(function () {});
         }).catch(function (err) {
           console.warn('[PWA] Aviso ao registrar Service Worker:', err);
         });
+      });
+      var swRefreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!swRefreshing) {
+          swRefreshing = true;
+          console.log('[PWA] Nova versão instalada, atualizando...');
+          window.location.reload();
+        }
       });
     }
 

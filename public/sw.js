@@ -2,7 +2,7 @@
 // SERVICE WORKER - BÍBLIA SAGRADA CATÓLICA (OFFLINE FIRST PWA)
 // ==========================================================================
 
-const CACHE_NAME = 'biblia-catolica-v2';
+const CACHE_NAME = 'biblia-catolica-v3';
 
 // Recursos vitais para o funcionamento offline imediato
 const PRECACHE_ASSETS = [
@@ -118,7 +118,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 5. Demais recursos estáticos (JS, CSS gerados pelo Vite, imagens): STALE-WHILE-REVALIDATE
+  // 5. Recursos gerados pelo Vite (assets/*.js, assets/*.css): NETWORK-FIRST com cache fallback
+  if (url.pathname.includes('/assets/index-') || url.pathname.includes('/assets/web-')) {
+    event.respondWith(
+      fetch(req).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, clone));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // 6. Demais recursos estáticos: STALE-WHILE-REVALIDATE
   event.respondWith(
     caches.match(req).then(cached => {
       const fetchPromise = fetch(req).then(networkResponse => {
