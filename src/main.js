@@ -129,7 +129,7 @@ let heroData = null;
 let planData = null;
 let readingPlanDays = {};
 
-// ===== ESTADO DE SELEÇÃO DE VERSÍCULOS E MARCA-TEXTO LITÚRGICO =====
+// ===== ESTADO DE SELE��O DE VERS�CULOS E MARCA-TEXTO LIT�RGICO =====
 let selectedVerses = new Set();
 let savedHighlights = {};
 
@@ -178,14 +178,14 @@ function updateChapterReadBtnState(reading) {
     btn.style.color = '#ffffff';
     btn.style.borderColor = 'transparent';
   } else {
-    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Capítulo';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Cap�tulo';
     btn.style.background = '';
     btn.style.color = '';
     btn.style.borderColor = '';
   }
 }
 
-// Helper seguro para leitura de preferências nativas sem risco de travamento
+// Helper seguro para leitura de prefer�ncias nativas sem risco de travamento
 async function safePrefGet(key, defaultValue = null, timeoutMs = 800) {
   try {
     const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ value: defaultValue }), timeoutMs));
@@ -218,7 +218,7 @@ async function init() {
   isAppInitialized = true;
   const splashStartTime = performance.now();
 
-  // Trava de segurança máxima: desfaz a splash screen após 2.2s mesmo se houver erro
+  // Trava de seguran�a m�xima: desfaz a splash screen ap�s 2.2s mesmo se houver erro
   setTimeout(dismissSplashScreen, 2200);
 
   try {
@@ -234,7 +234,7 @@ async function init() {
         updateHomeComunidadeCard();
       } catch (e) {}
 
-      // Pré-renderiza imediatamente a Liturgia de Hoje no boot para abertura instantânea (0ms de espera)
+      // Pr�-renderiza imediatamente a Liturgia de Hoje no boot para abertura instant�nea (0ms de espera)
       try {
         const initialLiturgia = getImmediateLiturgia();
         currentLiturgiaData = initialLiturgia;
@@ -261,7 +261,7 @@ async function init() {
     currentFontIdx = fonts.indexOf(savedFont) !== -1 ? fonts.indexOf(savedFont) : 0;
     document.documentElement.setAttribute('data-font', fonts[currentFontIdx]);
 
-    // Restore Plan com timeout seguro e validação rígida
+    // Restore Plan com timeout seguro e valida��o r�gida
     const savedPlan = await safePrefGet('biblia_plan_days', null);
     try {
       readingPlanDays = savedPlan ? JSON.parse(savedPlan) : {};
@@ -273,7 +273,7 @@ async function init() {
     }
     try { updatePlanProgress(); } catch (e) {}
 
-    // Pré-renderiza imediatamente os 365 dias do Plano de Leitura no boot (0ms de espera ao clicar)
+    // Pr�-renderiza imediatamente os 365 dias do Plano de Leitura no boot (0ms de espera ao clicar)
     try {
       const pc = document.getElementById('planContainer');
       if (pc && pc.dataset.loaded !== '1') {
@@ -288,14 +288,14 @@ async function init() {
             const done = !!readingPlanDays[d.dia];
             const isNext = (d.dia === nextDia && !done);
             const leiturasHtml = (d.leituras || []).map((l, idx) => 
-              `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+              `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} cap�tulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
             ).join('');
             h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
                     <div class="plan-day-num">${d.dia}</div>
                     <div class="plan-day-content">
                         <div class="plan-day-title">
                           Dia ${d.dia}
-                          ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
+                          ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Pr�xima Leitura</span>' : ''}
                           ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
                         </div>
                         <div class="plan-day-desc">${leiturasHtml}</div>
@@ -305,7 +305,7 @@ async function init() {
                           </button>
                         </div>
                     </div>
-                    <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
+                    <div class="plan-day-check" title="${done ? 'Marcar como n�o lido' : 'Marcar como conclu�do'}"><i class="fas fa-check"></i></div>
                 </div>`;
           });
           pc.innerHTML = h;
@@ -320,7 +320,7 @@ async function init() {
     try {
       await db.initDB();
     } catch (e) {
-      console.error("Erro na inicialização do DB:", e);
+      console.error("Erro na inicializa��o do DB:", e);
     }
 
     // Subscribe to real-time Firebase gallery sync across all devices
@@ -343,28 +343,28 @@ async function init() {
     await loadVersiculoDoDia().catch(() => {});
     await loadStats().catch(() => {});
 
-    // Pré-carrega a Liturgia Diária de hoje em background (0ms de espera ao clicar)
+    // Pr�-carrega a Liturgia Di�ria de hoje em background (0ms de espera ao clicar)
     setTimeout(() => {
       getLiturgiaDiaria().catch(() => {});
     }, 150);
 
-    // Carrega identificação de Paróquia (Apoio de 30% da monetização)
+    // Carrega identifica��o de Par�quia (Apoio de 30% da monetiza��o)
     try {
       const savedParoquia = await getLocalParoquia();
       const isDismissed = await isParoquiaDismissed();
       updateHomeParoquiaCard(savedParoquia);
 
-      // Onboarding na primeira vez que abre o app (se ainda não cadastrou e não ignorou)
+      // Onboarding na primeira vez que abre o app (se ainda n�o cadastrou e n�o ignorou)
       if (!savedParoquia && !isDismissed) {
         setTimeout(() => {
           openParoquiaModal(true);
         }, 1400);
       }
     } catch (e) {
-      console.warn('[ParoquiaInit] Erro ao carregar paróquia:', e);
+      console.warn('[ParoquiaInit] Erro ao carregar par�quia:', e);
     }
   } catch (err) {
-    console.error("[AppInit] Erro geral na inicialização:", err);
+    console.error("[AppInit] Erro geral na inicializa��o:", err);
   } finally {
     const elapsed = performance.now() - splashStartTime;
     const remainingTime = Math.max(0, 1500 - elapsed);
@@ -512,10 +512,10 @@ async function loadStats() {
   const container = document.getElementById('statsBar');
   if (!container) return;
 
-  // Atualização atômica para não travar a UI
+  // Atualiza��o at�mica para n�o travar a UI
   container.innerHTML = `
         <div class="stat-item"><span class="stat-number">${s.total_livros}</span><span class="stat-label">Livros</span></div>
-        <div class="stat-item"><span class="stat-number">${(s.total_versiculos / 1000).toFixed(1)}k</span><span class="stat-label">Versículos</span></div>
+        <div class="stat-item"><span class="stat-number">${(s.total_versiculos / 1000).toFixed(1)}k</span><span class="stat-label">Vers�culos</span></div>
         <div class="stat-item"><span class="stat-number">${s.total_imagens}</span><span class="stat-label">Imagens</span></div>
         <div class="stat-item"><span class="stat-number" id="statsFavCount">${s.total_favoritos}</span><span class="stat-label">Favoritos</span></div>
     `;
@@ -582,12 +582,12 @@ async function loadVersiculoDoDia() {
     const ver = heroData.id_versiculo || 1;
     const ref = heroData.referencia || `${nomeLivro} ${cap},${ver}`;
 
-    document.getElementById('heroText').textContent = `“${heroData.texto.trim()}”`;
+    document.getElementById('heroText').textContent = `�${heroData.texto.trim()}�`;
     document.getElementById('heroRef').textContent = ref;
     const oracaoEl = document.getElementById('heroOracao');
     if (oracaoEl) {
       if (heroData.oracao) {
-        oracaoEl.textContent = `— ${heroData.oracao}`;
+        oracaoEl.textContent = `� ${heroData.oracao}`;
         oracaoEl.style.display = 'block';
       } else {
         oracaoEl.textContent = '';
@@ -595,10 +595,10 @@ async function loadVersiculoDoDia() {
       }
     }
   } else {
-    document.getElementById('heroText').textContent = '“O Senhor é o meu pastor; nada me faltará.”';
+    document.getElementById('heroText').textContent = '�O Senhor � o meu pastor; nada me faltar�.�';
     document.getElementById('heroRef').textContent = 'Salmos 23,1';
     const oracaoEl = document.getElementById('heroOracao');
-    if (oracaoEl) oracaoEl.textContent = '— Senhor, conduzi os meus passos e dai-me a paz de descansar em Teus braços.';
+    if (oracaoEl) oracaoEl.textContent = '� Senhor, conduzi os meus passos e dai-me a paz de descansar em Teus bra�os.';
   }
 }
 
@@ -609,11 +609,11 @@ window.shareHeroWhatsApp = function () {
   const ver = heroData.id_versiculo || 1;
   const ref = heroData.referencia || `${nomeLivro} ${cap},${ver}`;
 
-  let txt = `“${heroData.texto.trim()}”\n\n— ${ref}`;
+  let txt = `�${heroData.texto.trim()}�\n\n� ${ref}`;
   if (heroData.oracao) {
     txt += `\n\n_${heroData.oracao}_`;
   }
-  txt += `\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  txt += `\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 };
 
@@ -654,7 +654,7 @@ async function openBook(id, nome, total, initialChapter = 1) {
     currentChapter = targetCap;
     showView('chapterView');
     document.getElementById('chapterTitle').textContent = nome;
-    document.getElementById('chapterSubtitle').textContent = `${total} capítulos`;
+    document.getElementById('chapterSubtitle').textContent = `${total} cap�tulos`;
     renderChapterSelector();
     await loadVerses();
     window.scrollTo(0, 0);
@@ -714,19 +714,19 @@ async function loadVerses() {
     c.innerHTML = `
       <div class="chapter-actions-top" style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button type="button" class="btn-read-all" id="btnReadChapter" onclick="readFullChapter()">
-          <i class="fas fa-volume-up"></i> Ouvir Capítulo
+          <i class="fas fa-volume-up"></i> Ouvir Cap�tulo
         </button>
-        <button type="button" class="btn-read-all btn-sleep-timer" id="btnChapterSleepTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Automático)">
+        <button type="button" class="btn-read-all btn-sleep-timer" id="btnChapterSleepTimer" onclick="openSleepTimerModal()" title="Timer de Sono (Desligamento Autom�tico)">
           <i class="fas fa-moon"></i> <span id="chapterTimerLabel">Timer</span>
         </button>
-        <button type="button" class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradição Católica">
-          <i class="fas fa-feather-pointed"></i> Explicar pela Tradição
+        <button type="button" class="btn-read-all" onclick="explicarCapituloTeologia()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="Explicar segundo a Tradi��o Cat�lica">
+          <i class="fas fa-feather-pointed"></i> Explicar pela Tradi��o
         </button>
-        <button type="button" class="btn-read-all" onclick="startLectioDivinaCurrentChapter()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Rezar este Capítulo com Lectio Divina">
+        <button type="button" class="btn-read-all" onclick="startLectioDivinaCurrentChapter()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="Rezar este Cap�tulo com Lectio Divina">
           <i class="fas fa-dove"></i> Lectio Divina
         </button>
         <button type="button" class="btn-read-all pulse-animation" onclick="generateHomilyForChapter()" style="background: linear-gradient(135deg, var(--gold-500, #d4af37) 0%, #b8860b 100%); color: #111827; font-weight: 600; border-color: transparent;">
-          <i class="fas fa-church"></i> Homilia do Capítulo
+          <i class="fas fa-church"></i> Homilia do Cap�tulo
         </button>
       </div>
     ` + verses.map(v => {
@@ -739,19 +739,19 @@ async function loadVerses() {
                     <span class="verse-text">${v.texto}</span>
                 </div>
                 <div class="verse-actions">
-                    <button type="button" class="verse-action-btn speak-btn" data-v="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this, event)" title="Ouvir este versículo"><i class="fas fa-volume-up"></i></button>
+                    <button type="button" class="verse-action-btn speak-btn" data-v="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this, event)" title="Ouvir este vers�culo"><i class="fas fa-volume-up"></i></button>
                     <button type="button" class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${currentBook.id}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
-                    <button type="button" class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
+                    <button type="button" class="verse-action-btn teologia-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradi��o Cat�lica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
                     <button type="button" class="verse-action-btn whatsapp wa-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                     <button type="button" class="verse-action-btn story-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
                     <button type="button" class="verse-action-btn copy-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Copiar"><i class="fas fa-copy"></i></button>
-                    <button type="button" class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Meditação" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
+                    <button type="button" class="verse-action-btn ai-btn" data-livro="${currentBook.nome}" data-cap="${currentChapter}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Homilia & Medita��o" style="color: var(--gold-400);"><i class="fas fa-church"></i></button>
                 </div>
             </div>
       `;
     }).join('');
   } else {
-    c.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">Nenhum versículo encontrado.</p>';
+    c.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px;">Nenhum vers�culo encontrado.</p>';
   }
   document.getElementById('prevChapter').disabled = currentChapter <= 1;
   document.getElementById('nextChapter').disabled = currentChapter >= totalChapters;
@@ -762,7 +762,7 @@ window.navigateChapter = function (d) {
   if (n >= 1 && n <= totalChapters) selectChapter(n);
 };
 
-// Event delegation para ações de versículos
+// Event delegation para a��es de vers�culos
 document.getElementById('versesContainer').addEventListener('click', async e => {
   const favBtn = e.target.closest('.fav-btn');
   if (favBtn) {
@@ -777,7 +777,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
       favBtn.classList.toggle('favorited', result === 1);
 
       requestAnimationFrame(async () => {
-        showToast(result ? '❤ Favoritado' : 'Removido');
+        showToast(result ? '? Favoritado' : 'Removido');
         const favContainer = document.getElementById('favoritesContainer');
         if (favContainer) delete favContainer.dataset.loaded;
         await updateFavCountOnly();
@@ -798,7 +798,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   if (waBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     return;
   }
@@ -818,12 +818,12 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   if (copyBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const verseText = `"${copyBtn.dataset.txt}" — ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
+    const verseText = `"${copyBtn.dataset.txt}" � ${copyBtn.dataset.livro} ${copyBtn.dataset.cap},${copyBtn.dataset.ver}`;
     copyToClipboard(verseText).then(ok => {
       if (ok) {
-        showToast('📋 Versículo copiado!');
+        showToast('?? Vers�culo copiado!');
       } else {
-        showToast('Erro ao copiar versículo');
+        showToast('Erro ao copiar vers�culo');
       }
     });
     return;
@@ -851,7 +851,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   }
 });
 
-// Event delegation para versículos do Modo Leitura do Dia do Plano
+// Event delegation para vers�culos do Modo Leitura do Dia do Plano
 const planDayContentEl = document.getElementById('planDayContent');
 if (planDayContentEl) {
   planDayContentEl.addEventListener('click', async e => {
@@ -866,7 +866,7 @@ if (planDayContentEl) {
           parseInt(favBtn.dataset.ver)
         );
         favBtn.classList.toggle('favorited', result === 1);
-        showToast(result ? '❤ Favoritado' : 'Removido');
+        showToast(result ? '? Favoritado' : 'Removido');
         const favContainer = document.getElementById('favoritesContainer');
         if (favContainer) delete favContainer.dataset.loaded;
         await updateFavCountOnly();
@@ -884,7 +884,7 @@ if (planDayContentEl) {
     const waBtn = e.target.closest('.wa-btn');
     if (waBtn) {
       e.stopPropagation();
-      const msg = `“${waBtn.dataset.txt}”\n\n— ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+      const msg = `�${waBtn.dataset.txt}�\n\n� ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
       return;
     }
@@ -930,7 +930,7 @@ function cleanupVerseSpeech() {
 function speakSingleVerseText(text) {
   if (!text || stopRequested) return Promise.resolve();
 
-  // Limpa tags HTML (mark, etc.), asteriscos de notas bíblicas e pontuações especiais para leitura natural
+  // Limpa tags HTML (mark, etc.), asteriscos de notas b�blicas e pontua��es especiais para leitura natural
   const cleanText = (text || '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&quot;/g, '"')
@@ -938,7 +938,7 @@ function speakSingleVerseText(text) {
     .replace(/&amp;/g, ' e ')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/[*_#`~«»]/g, ' ')
+    .replace(/[*_#`~��]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -965,7 +965,7 @@ function speakSingleVerseText(text) {
 
 function speakWebSpeechDirect(cleanText) {
   if (!('speechSynthesis' in window)) {
-    showToast('Seu navegador não suporta leitura por voz.');
+    showToast('Seu navegador n�o suporta leitura por voz.');
     return Promise.resolve();
   }
 
@@ -1022,7 +1022,7 @@ function speakWebSpeechDirect(cleanText) {
       utterance.onerror = (e) => {
         const errType = e?.error;
         console.warn('[WebSpeech Utterance Error/Status]:', errType, e);
-        // Se foi cancelado antes mesmo de iniciar (colisão de cancel do SO) e o usuário não pediu para parar
+        // Se foi cancelado antes mesmo de iniciar (colis�o de cancel do SO) e o usu�rio n�o pediu para parar
         if (!started && !stopRequested && retryCount === 0 && (errType === 'canceled' || errType === 'interrupted' || !errType)) {
           retryCount++;
           setTimeout(() => {
@@ -1044,13 +1044,13 @@ function speakWebSpeechDirect(cleanText) {
         finish();
       };
 
-      // Dispara diretamente no mesmo frame do clique do usuário
+      // Dispara diretamente no mesmo frame do clique do usu�rio
       window.speechSynthesis.speak(utterance);
       if (window.speechSynthesis.paused) {
         try { window.speechSynthesis.resume(); } catch (e) {}
       }
     } catch (err) {
-      console.error('[WebSpeech Exceção]:', err);
+      console.error('[WebSpeech Exce��o]:', err);
       cleanupVerseSpeech();
       resolve();
     }
@@ -1060,7 +1060,7 @@ function speakWebSpeechDirect(cleanText) {
 window.speakText = async function (text, vNum = null, customEl = null) {
   if (!text) return;
 
-  // Se já estiver tocando este elemento exato, para imediatamente
+  // Se j� estiver tocando este elemento exato, para imediatamente
   if (customEl && (customEl.classList.contains('reading') || customEl.querySelector?.('.speaking') || (customEl.classList.contains('speaking')))) {
     stopSpeech();
     return;
@@ -1073,7 +1073,7 @@ window.speakText = async function (text, vNum = null, customEl = null) {
     }
   }
 
-  // Interrompe qualquer áudio anterior sincronamente
+  // Interrompe qualquer �udio anterior sincronamente
   stopSpeech();
 
   isSpeaking = true;
@@ -1161,7 +1161,7 @@ window.toggleSearchResultSpeech = function (buttonEl) {
   const text = btn.dataset.txt || item?.querySelector('.search-result-text')?.innerText || item?.querySelector('.search-result-text')?.textContent || '';
 
   if (!text) {
-    showToast('Texto do versículo não encontrado.');
+    showToast('Texto do vers�culo n�o encontrado.');
     return;
   }
 
@@ -1190,7 +1190,7 @@ window.toggleSearchResultFavorite = async function (btn) {
       item.style.opacity = '1';
     }
 
-    showToast(result === 1 ? '❤ Adicionado aos Favoritos' : 'Removido dos Favoritos');
+    showToast(result === 1 ? '? Adicionado aos Favoritos' : 'Removido dos Favoritos');
     const favContainer = document.getElementById('favoritesContainer');
     if (favContainer) delete favContainer.dataset.loaded;
     await updateFavCountOnly();
@@ -1205,10 +1205,10 @@ window.copySearchResultVerse = function (btn) {
   const livro = btn.dataset.livro || '';
   const cap = btn.dataset.cap || '';
   const ver = btn.dataset.ver || '';
-  const verseText = `"${text}" — ${livro} ${cap},${ver}`;
+  const verseText = `"${text}" � ${livro} ${cap},${ver}`;
   copyToClipboard(verseText).then(ok => {
-    if (ok) showToast('📋 Versículo copiado!');
-    else showToast('Erro ao copiar versículo');
+    if (ok) showToast('?? Vers�culo copiado!');
+    else showToast('Erro ao copiar vers�culo');
   });
 };
 
@@ -1218,7 +1218,7 @@ window.shareSearchResultWhatsApp = function (btn) {
   const livro = btn.dataset.livro || '';
   const cap = btn.dataset.cap || '';
   const ver = btn.dataset.ver || '';
-  const msg = `“${text}”\n\n— ${livro} ${cap},${ver}\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `�${text}�\n\n� ${livro} ${cap},${ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
@@ -1255,7 +1255,7 @@ window.readVersesRange = async function (verseNumbers = null, startFromVerseNum 
 
   try {
     if (Array.isArray(verseNumbers) && verseNumbers.length > 0) {
-      // Lê sequencialmente a lista exata de versículos (ex: [1, 2, 3, 4, 5])
+      // L� sequencialmente a lista exata de vers�culos (ex: [1, 2, 3, 4, 5])
       for (const vNum of verseNumbers) {
         if (stopRequested) break;
 
@@ -1276,7 +1276,7 @@ window.readVersesRange = async function (verseNumbers = null, startFromVerseNum 
         }
       }
     } else {
-      // Lê versículos do capítulo a partir de startFromVerseNum (ou 1 se não informado)
+      // L� vers�culos do cap�tulo a partir de startFromVerseNum (ou 1 se n�o informado)
       const verses = Array.from(document.querySelectorAll('#versesContainer .verse'));
       let startIdx = 0;
       if (startFromVerseNum) {
@@ -1317,7 +1317,7 @@ window.readFullChapter = async function () {
     await stopSpeech();
     return;
   }
-  // Se houver versículos selecionados pelo usuário, começa do primeiro versículo selecionado
+  // Se houver vers�culos selecionados pelo usu�rio, come�a do primeiro vers�culo selecionado
   if (selectedVerses && selectedVerses.size > 0) {
     const sorted = Array.from(selectedVerses).sort((a, b) => a - b);
     await readVersesRange(null, sorted[0]);
@@ -1327,16 +1327,16 @@ window.readFullChapter = async function () {
 };
 
 // ==========================================================================
-// SELEÇÃO INTERATIVA DE VERSÍCULOS & MARCA-TEXTO LITÚRGICO
+// SELE��O INTERATIVA DE VERS�CULOS & MARCA-TEXTO LIT�RGICO
 // ==========================================================================
 
 function handleVerseClick(verseDiv, event) {
   if (!verseDiv) return;
-  // Se clicou em botão interno, deixa a ação do botão agir
+  // Se clicou em bot�o interno, deixa a a��o do bot�o agir
   if (event && (event.target.closest('.verse-action-btn') || event.target.closest('.btn-read-all'))) {
     return;
   }
-  // Se o usuário selecionou texto manualmente para cópia nativa, não interfere
+  // Se o usu�rio selecionou texto manualmente para c�pia nativa, n�o interfere
   const sel = window.getSelection();
   if (sel && sel.toString().trim().length > 0) {
     return;
@@ -1377,7 +1377,7 @@ function updateVerseSelectionBarUI() {
   bar.classList.remove('hidden');
   const badgeEl = document.getElementById('verseSelectionBadge');
   if (badgeEl) {
-    badgeEl.innerHTML = `<i class="fas fa-check-circle"></i> <span>${count} ${count === 1 ? 'versículo selecionado' : 'versículos selecionados'}</span>`;
+    badgeEl.innerHTML = `<i class="fas fa-check-circle"></i> <span>${count} ${count === 1 ? 'vers�culo selecionado' : 'vers�culos selecionados'}</span>`;
   }
 
   const listenTextEl = document.getElementById('btnListenSelectedText');
@@ -1386,7 +1386,7 @@ function updateVerseSelectionBarUI() {
       const vNum = Array.from(selectedVerses)[0];
       listenTextEl.textContent = `Ouvir do vers. ${vNum}`;
     } else {
-      listenTextEl.textContent = `Ouvir ${count} versículos`;
+      listenTextEl.textContent = `Ouvir ${count} vers�culos`;
     }
   }
 }
@@ -1399,10 +1399,10 @@ async function playSelectedVersesAudio() {
 
   if (sorted.length === 1) {
     const startV = sorted[0];
-    showToast(`🔊 Ouvindo a partir do versículo ${startV}...`);
+    showToast(`?? Ouvindo a partir do vers�culo ${startV}...`);
     await readVersesRange(null, startV);
   } else {
-    showToast(`🔊 Ouvindo ${sorted.length} versículos selecionados...`);
+    showToast(`?? Ouvindo ${sorted.length} vers�culos selecionados...`);
     await readVersesRange(sorted);
   }
 }
@@ -1447,7 +1447,7 @@ function applyHighlightToSelected(color) {
 
   saveStoredHighlights();
   closeHighlightPalette();
-  showToast(color ? '🖍️ Versículo(s) destacado(s) com sucesso!' : 'Marcação removida!');
+  showToast(color ? '??? Vers�culo(s) destacado(s) com sucesso!' : 'Marca��o removida!');
 }
 window.applyHighlightToSelected = applyHighlightToSelected;
 
@@ -1483,10 +1483,10 @@ async function copySelectedVerses() {
     return `${vNum}. ${txt}`;
   });
   const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
-  const fullText = `"${lines.join('\n')}"\n\n— ${currentBook.nome} ${currentChapter},${rangeStr}\nBíblia Sagrada Edição Católica\nhttps://bibliasagradaavemaria.com.br`;
+  const fullText = `"${lines.join('\n')}"\n\n� ${currentBook.nome} ${currentChapter},${rangeStr}\nB�blia Sagrada Edi��o Cat�lica\nhttps://bibliasagradaavemaria.com.br`;
 
   const ok = await copyToClipboard(fullText);
-  showToast(ok ? `📋 ${sorted.length} versículo(s) copiado(s)!` : 'Erro ao copiar versículos');
+  showToast(ok ? `?? ${sorted.length} vers�culo(s) copiado(s)!` : 'Erro ao copiar vers�culos');
 }
 window.copySelectedVerses = copySelectedVerses;
 
@@ -1501,7 +1501,7 @@ function shareSelectedVersesWhatsApp() {
     return `*${vNum}* ${txt}`;
   });
   const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
-  const msg = `“${lines.join('\n')}”\n\n— *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_Bíblia Sagrada Edição Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `�${lines.join('\n')}�\n\n� *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_B�blia Sagrada Edi��o Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 window.shareSelectedVersesWhatsApp = shareSelectedVersesWhatsApp;
@@ -1512,35 +1512,35 @@ export function highlightSearchTerms(text, query) {
 
   try {
     const accentMap = {
-      'a': '[aáàâãäAÁÀÂÃÄ]',
-      'e': '[eéèêëEÉÈÊË]',
-      'i': '[iíìîïIÍÌÎÏ]',
-      'o': '[oóòôõöOÓÒÔÕÖ]',
-      'u': '[uúùûüUÚÙÛÜ]',
-      'c': '[cçCÇ]',
-      'n': '[nñNÑ]'
+      'a': '[a�����A�����]',
+      'e': '[e����E����]',
+      'i': '[i����I����]',
+      'o': '[o�����O�����]',
+      'u': '[u����U����]',
+      'c': '[c�C�]',
+      'n': '[n�N�]'
     };
 
     const escapeRegex = (s) => (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const makeFlexPattern = (phrase) => {
-      const cleaned = phrase.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+      const cleaned = phrase.trim().replace(/^["'��\s]+|["'��:,.;!?\s]+$/g, '');
       return cleaned
         .split('')
         .map(ch => {
-          if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”\\-–—]+';
+          if (/\s+/.test(ch)) return '[\\s,.:;!?"\'����\\-��]+';
           const lower = ch.toLowerCase();
           return accentMap[lower] || escapeRegex(ch);
         })
         .join('');
     };
 
-    const cleanQuery = query.trim().replace(/^["'«“\s]+|["'»”:,.;!?\s]+$/g, '');
+    const cleanQuery = query.trim().replace(/^["'��\s]+|["'��:,.;!?\s]+$/g, '');
     if (cleanQuery.length === 0) return text;
 
-    // Limites exatos de palavra respeitando letras acentuadas e pontuação
-    const leftBound = '(?:^|(?<=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]))';
-    const rightBound = '(?=[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]|$)';
+    // Limites exatos de palavra respeitando letras acentuadas e pontua��o
+    const leftBound = '(?:^|(?<=[^a-zA-Z0-9��������������������������]))';
+    const rightBound = '(?=[^a-zA-Z0-9��������������������������]|$)';
 
     // 1. Tentar casar a frase inteira com limite de palavra exata
     const phrasePattern = makeFlexPattern(cleanQuery);
@@ -1550,10 +1550,10 @@ export function highlightSearchTerms(text, query) {
       return text.replace(phraseRegex, '<mark class="search-highlight">$1</mark>');
     }
 
-    // 2. Se a frase completa contínua não casar, casar palavras individuais com limites exatos
+    // 2. Se a frase completa cont�nua n�o casar, casar palavras individuais com limites exatos
     const words = cleanQuery
       .split(/\s+/)
-      .map(w => w.replace(/^[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+|[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/g, ''))
+      .map(w => w.replace(/^[^a-zA-Z0-9��������������������������]+|[^a-zA-Z0-9��������������������������]+$/g, ''))
       .filter(w => w.length >= 2);
 
     if (words.length === 0) return text;
@@ -1589,10 +1589,10 @@ function doSearch() {
     try {
       const resultados = await db.buscar(t);
       const count = resultados.length;
-      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${count} versículo${count === 1 ? '' : 's'} encontrado${count === 1 ? '' : 's'} para "${t}"</p></div></div></div>`;
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Resultados da Busca</h2><p class="chapter-subtitle">${count} vers�culo${count === 1 ? '' : 's'} encontrado${count === 1 ? '' : 's'} para "${t}"</p></div></div></div>`;
 
       if (!resultados.length) {
-        h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum versículo encontrado para este termo.</p>';
+        h += '<p style="color:var(--text-muted);text-align:center;padding:40px;">Nenhum vers�culo encontrado para este termo.</p>';
       } else {
         resultados.forEach(r => {
           const hl = highlightSearchTerms(r.texto, t);
@@ -1606,12 +1606,12 @@ function doSearch() {
                   <div class="search-result-header">
                     <div class="search-result-ref">
                       <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
-                      <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+                      <span class="search-result-tag">Cap�tulo ${r.id_capitulo}</span>
                     </div>
                     <div class="search-result-actions" onclick="event.stopPropagation()">
-                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir vers�culo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
                       <button type="button" class="search-action-btn search-fav-btn ${isFav ? 'favorited' : ''}" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="${isFav ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
-                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar vers�culo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
                       <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                       <button type="button" class="search-action-btn search-story-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); openStoryCardFromSearchResult(this)" title="Criar Card para Story / Status" aria-label="Criar Card para Story"><i class="fas fa-camera"></i></button>
                     </div>
@@ -1638,10 +1638,10 @@ window.showFavorites = function () {
   requestAnimationFrame(async () => {
     try {
       const d = await db.getFavoritos();
-      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} versículos</p></div></div></div>`;
+      let h = `<div class="chapter-header"><div class="chapter-header-left"><button class="btn-back" onclick="goHome()"><i class="fas fa-arrow-left"></i></button><div><h2 class="chapter-title">Meus Favoritos</h2><p class="chapter-subtitle">${d.length} vers�culos</p></div></div></div>`;
 
       if (!d.length) {
-        h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum versículo favoritado.</p></div>`;
+        h += `<div class="favorites-empty"><i class="far fa-heart"></i><p>Nenhum vers�culo favoritado.</p></div>`;
       } else {
         d.forEach(r => {
           const rawTextEscaped = (r.texto || '')
@@ -1652,12 +1652,12 @@ window.showFavorites = function () {
                   <div class="search-result-header">
                     <div class="search-result-ref">
                       <span class="search-result-ref-title"><i class="fas fa-book-bible"></i> ${r.nome_livro} ${r.id_capitulo}, ${r.id_versiculo}</span>
-                      <span class="search-result-tag">Capítulo ${r.id_capitulo}</span>
+                      <span class="search-result-tag">Cap�tulo ${r.id_capitulo}</span>
                     </div>
                     <div class="search-result-actions" onclick="event.stopPropagation()">
-                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir versículo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
+                      <button type="button" class="search-action-btn search-speak-btn" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); toggleSearchResultSpeech(this)" title="Ouvir vers�culo" aria-label="Ouvir"><i class="fas fa-volume-up"></i> <span>Ouvir</span></button>
                       <button type="button" class="search-action-btn search-fav-btn favorited" data-livro="${r.id_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" onclick="event.stopPropagation(); toggleSearchResultFavorite(this)" title="Remover dos Favoritos" aria-label="Favoritar"><i class="fas fa-heart"></i></button>
-                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar versículo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
+                      <button type="button" class="search-action-btn search-copy-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); copySearchResultVerse(this)" title="Copiar vers�culo" aria-label="Copiar"><i class="fas fa-copy"></i></button>
                       <button type="button" class="search-action-btn search-wa-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); shareSearchResultWhatsApp(this)" title="Compartilhar no WhatsApp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                       <button type="button" class="search-action-btn search-story-btn" data-livro="${r.nome_livro}" data-cap="${r.id_capitulo}" data-ver="${r.id_versiculo}" data-txt="${rawTextEscaped}" onclick="event.stopPropagation(); openStoryCardFromSearchResult(this)" title="Criar Card para Story / Status" aria-label="Criar Card para Story"><i class="fas fa-camera"></i></button>
                     </div>
@@ -1704,7 +1704,7 @@ async function loadGalleryData(forceRefresh = false) {
   }
 
   g.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:80px"><div class="loading-spinner"></div></div>';
-  if (statusEl) statusEl.textContent = 'Carregando versículos com imagem...';
+  if (statusEl) statusEl.textContent = 'Carregando vers�culos com imagem...';
 
   try {
     const rawImgs = await db.getImgVersiculos(currentGallerySearch, currentGalleryCategory);
@@ -1721,7 +1721,7 @@ async function loadGalleryData(forceRefresh = false) {
     g.innerHTML = `<div class="gallery-empty-state">
       <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444;"></i>
       <h3 class="gallery-empty-title">Erro ao carregar imagens</h3>
-      <p class="gallery-empty-desc">${e.message || 'Verifique sua conexão ou tente novamente.'}</p>
+      <p class="gallery-empty-desc">${e.message || 'Verifique sua conex�o ou tente novamente.'}</p>
       <button class="hero-donate-btn" onclick="loadGalleryData(true)"><i class="fas fa-redo"></i> Tentar Novamente</button>
     </div>`;
   }
@@ -1769,10 +1769,10 @@ function renderGalleryGrid() {
     let emptyCta = `<button class="hero-donate-btn" onclick="clearGallerySearch()"><i class="fas fa-undo"></i> Limpar Filtros</button>`;
     
     if (currentGalleryCategory === 'uploads') {
-      emptyMsg = 'Você ainda não fez upload de imagens nem criou cards bíblicos.';
+      emptyMsg = 'Voc� ainda n�o fez upload de imagens nem criou cards b�blicos.';
       emptyCta = `<button class="hero-donate-btn" onclick="openGalleryUploadModal()"><i class="fas fa-plus-circle"></i> Fazer Upload / Criar Card</button>`;
     } else if (currentGalleryCategory === 'favorites') {
-      emptyMsg = 'Você ainda não favoritou nenhuma imagem. Clique no coração das fotos que mais gostar!';
+      emptyMsg = 'Voc� ainda n�o favoritou nenhuma imagem. Clique no cora��o das fotos que mais gostar!';
       emptyCta = `<button class="hero-donate-btn" onclick="filterGalleryCategory('all', document.querySelector('.gallery-chip[data-category=\\'all\\']'))"><i class="fas fa-images"></i> Ver Todas as Imagens</button>`;
     }
 
@@ -1791,10 +1791,10 @@ function renderGalleryGrid() {
     const isFav = img.is_favorite;
     const isUpload = img.is_user_upload;
     const hasYt = img.youtube_url && img.youtube_url.trim().length > 0;
-    const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+    const hasBook = img.nome_livro && img.nome_livro !== 'B�blia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
     const ref = hasBook 
       ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
-      : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
+      : (img.id_capitulo ? `B�blia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
     const txt = (img.texto || '').trim();
     const oracao = (img.oracao || '').trim();
     const ytUrl = (img.youtube_url || '').trim();
@@ -1807,11 +1807,11 @@ function renderGalleryGrid() {
                onerror="this.parentElement.style.background='linear-gradient(135deg, #2D1018 0%, #1A0A0E 100%)';this.style.opacity='0.2'">
           
           <div class="gallery-card-badge">${ref}</div>
-          ${hasYt ? `<div class="gallery-card-yt-badge"><i class="fab fa-youtube"></i> Vídeo</div>` : ''}
+          ${hasYt ? `<div class="gallery-card-yt-badge"><i class="fab fa-youtube"></i> V�deo</div>` : ''}
           
           <div class="gallery-card-actions" onclick="event.stopPropagation()">
               ${hasYt ? `
-              <button class="gallery-action-btn btn-youtube" title="Assistir Vídeo no App"
+              <button class="gallery-action-btn btn-youtube" title="Assistir V�deo no App"
                       onclick="openYouTubePlayer(event, '${escapeHtml(ytUrl)}', '${escapeHtml(ref)}', '${escapeHtml(txt)}', '${escapeHtml(oracao)}')">
                   <i class="fab fa-youtube" style="color:#ff0000;"></i>
               </button>` : ''}
@@ -1832,7 +1832,7 @@ function renderGalleryGrid() {
           </div>
 
           <div class="gallery-card-overlay">
-              ${txt ? `<div class="gallery-card-text">“${txt}”</div>` : ''}
+              ${txt ? `<div class="gallery-card-text">�${txt}�</div>` : ''}
               ${oracao ? `<div class="gallery-card-oracao-tag"><i class="fas fa-praying-hands"></i> ${oracao}</div>` : ''}
           </div>
       </div>`;
@@ -1889,7 +1889,7 @@ window.changeGallerySort = function (sortVal) {
 window.toggleCardFavorite = function (e, id, refKey) {
   e.stopPropagation();
   const isNowFav = db.toggleFavoriteImage(id, refKey);
-  showToast(isNowFav ? '❤️ Imagem favoritada!' : 'Imagem removida dos favoritos');
+  showToast(isNowFav ? '?? Imagem favoritada!' : 'Imagem removida dos favoritos');
   
   // Update local memory flag
   const target = allGalleryItems.find(img => String(img.id) === String(id));
@@ -1905,12 +1905,12 @@ window.toggleCardFavorite = function (e, id, refKey) {
 window.shareCardWhatsApp = function (e, ref, txt, youtubeUrl = '') {
   if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
   let msg = '';
-  if (txt) msg += `“${txt}”\n\n`;
-  if (ref) msg += `— ${ref}\n\n`;
+  if (txt) msg += `�${txt}�\n\n`;
+  if (ref) msg += `� ${ref}\n\n`;
   if (youtubeUrl && youtubeUrl.trim()) {
-    msg += `▶ Assista ao vídeo de reflexão: ${youtubeUrl.trim()}\n\n`;
+    msg += `? Assista ao v�deo de reflex�o: ${youtubeUrl.trim()}\n\n`;
   }
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -1928,7 +1928,7 @@ window.deleteCardImage = async function (e, id) {
     return true;
   });
   renderGalleryGrid();
-  showToast('Imagem excluída com sucesso');
+  showToast('Imagem exclu�da com sucesso');
 
   // 2. Persist deletion in Firebase Cloud & Local Storage
   try {
@@ -1937,7 +1937,7 @@ window.deleteCardImage = async function (e, id) {
     allGalleryItems = refreshedImgs || [];
     renderGalleryGrid();
   } catch (err) {
-    console.warn('Erro ao persistir exclusão:', err);
+    console.warn('Erro ao persistir exclus�o:', err);
   }
 };
 
@@ -1971,10 +1971,10 @@ function updateLightboxContent() {
   const copyBtn = document.getElementById('lightboxBtnCopy');
   const readBtn = document.getElementById('lightboxBtnReadChapter');
 
-  const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+  const hasBook = img.nome_livro && img.nome_livro !== 'B�blia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
   const ref = hasBook 
     ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
-    : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
+    : (img.id_capitulo ? `B�blia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
   const txt = (img.texto || '').trim();
   const oracaoTxt = (img.oracao || '').trim();
   const imgSrc = img.address || img.url || '';
@@ -1986,7 +1986,7 @@ function updateLightboxContent() {
   if (refBadge) refBadge.textContent = ref;
   if (title) title.textContent = ref;
   if (oracao) {
-    oracao.textContent = oracaoTxt ? `Oração: “${oracaoTxt}”` : '';
+    oracao.textContent = oracaoTxt ? `Ora��o: �${oracaoTxt}�` : '';
     oracao.style.display = oracaoTxt ? 'block' : 'none';
   }
   if (verseText) verseText.textContent = txt;
@@ -2028,19 +2028,19 @@ window.navigateLightbox = function (direction) {
 window.shareLightboxWhatsApp = function () {
   const img = currentLightboxList[activeLightboxIndex];
   if (!img) return;
-  const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+  const hasBook = img.nome_livro && img.nome_livro !== 'B�blia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
   const ref = hasBook 
     ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
-    : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
+    : (img.id_capitulo ? `B�blia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
   const txt = (img.texto || '').trim();
   let msg = '';
-  if (txt) msg += `“${txt}”\n\n`;
-  if (ref) msg += `— ${ref}\n\n`;
+  if (txt) msg += `�${txt}�\n\n`;
+  if (ref) msg += `� ${ref}\n\n`;
   if (img.oracao && img.oracao.trim()) msg += `_${img.oracao.trim()}_\n\n`;
   if (img.youtube_url && img.youtube_url.trim()) {
-    msg += `▶ Assista ao vídeo de reflexão: ${img.youtube_url.trim()}\n\n`;
+    msg += `? Assista ao v�deo de reflex�o: ${img.youtube_url.trim()}\n\n`;
   }
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -2049,7 +2049,7 @@ window.downloadLightboxImage = async function () {
   if (!img) return;
   const imgSrc = img.address || img.url;
   if (!imgSrc) {
-    showToast('Imagem não disponível para download');
+    showToast('Imagem n�o dispon�vel para download');
     return;
   }
 
@@ -2063,7 +2063,7 @@ window.downloadLightboxImage = async function () {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast('Imagem salva com sucesso! 📥');
+      showToast('Imagem salva com sucesso! ??');
       return;
     }
 
@@ -2079,27 +2079,27 @@ window.downloadLightboxImage = async function () {
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-      showToast('Imagem salva com sucesso! 📥');
+      showToast('Imagem salva com sucesso! ??');
     } else {
       // Fallback open in new tab
       window.open(imgSrc, '_blank');
-      showToast('Toque e segure na imagem para salvar 📥');
+      showToast('Toque e segure na imagem para salvar ??');
     }
   } catch (e) {
     window.open(imgSrc, '_blank');
-    showToast('Toque e segure na imagem para salvar 📥');
+    showToast('Toque e segure na imagem para salvar ??');
   }
 };
 
 window.copyLightboxVerse = async function () {
   const img = currentLightboxList[activeLightboxIndex];
   if (!img) return;
-  const ref = `${img.nome_livro || 'Bíblia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
+  const ref = `${img.nome_livro || 'B�blia'} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim();
   const txt = (img.texto || '').trim();
-  const textToCopy = `“${txt}” (${ref})`;
+  const textToCopy = `�${txt}� (${ref})`;
   const ok = await copyToClipboard(textToCopy);
-  if (ok) showToast('📋 Versículo copiado para a área de transferência!');
-  else showToast('Erro ao copiar versículo');
+  if (ok) showToast('?? Vers�culo copiado para a �rea de transfer�ncia!');
+  else showToast('Erro ao copiar vers�culo');
 };
 
 window.toggleLightboxFavorite = function () {
@@ -2108,7 +2108,7 @@ window.toggleLightboxFavorite = function () {
   const isNowFav = db.toggleFavoriteImage(img.id, `${img.nome_livro}_${img.id_capitulo}_${img.id_versiculo}`);
   img.is_favorite = isNowFav;
   updateLightboxContent();
-  showToast(isNowFav ? '❤️ Imagem favoritada!' : 'Imagem removida dos favoritos');
+  showToast(isNowFav ? '?? Imagem favoritada!' : 'Imagem removida dos favoritos');
   renderGalleryGrid();
 };
 
@@ -2137,7 +2137,7 @@ window.deleteCurrentLightboxImage = async function () {
     return true;
   });
   renderGalleryGrid();
-  showToast('Imagem excluída com sucesso');
+  showToast('Imagem exclu�da com sucesso');
 
   // 2. Persist deletion in Firebase Cloud & Local Storage
   try {
@@ -2146,7 +2146,7 @@ window.deleteCurrentLightboxImage = async function () {
     allGalleryItems = refreshedImgs || [];
     renderGalleryGrid();
   } catch (err) {
-    console.warn('Erro ao persistir exclusão no lightbox:', err);
+    console.warn('Erro ao persistir exclus�o no lightbox:', err);
   }
 };
 
@@ -2201,13 +2201,13 @@ window.testStudioYtVideo = function (url) {
   }
   const videoId = getYouTubeVideoId(url);
   if (!videoId) {
-    showToast('Link do YouTube inválido ou não reconhecido');
+    showToast('Link do YouTube inv�lido ou n�o reconhecido');
     return;
   }
   if (previewBox) {
-    previewBox.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0" title="Prévia YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    previewBox.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0" title="Pr�via YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     previewBox.classList.remove('hidden');
-    showToast('▶ Vídeo do YouTube carregado com sucesso!');
+    showToast('? V�deo do YouTube carregado com sucesso!');
   }
 };
 
@@ -2219,7 +2219,7 @@ window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao =
 
   const videoId = getYouTubeVideoId(youtubeUrl);
   if (!videoId) {
-    showToast('Link do YouTube inválido');
+    showToast('Link do YouTube inv�lido');
     return;
   }
 
@@ -2233,10 +2233,10 @@ window.openYouTubePlayer = function (e, youtubeUrl, ref = '', txt = '', oracao =
   const verseTextEl = document.getElementById('ytPlayerVerseText');
   const oracaoEl = document.getElementById('ytPlayerOracao');
 
-  if (titleEl) titleEl.textContent = ref || 'Vídeo Sagrado';
-  if (refEl) refEl.textContent = ref ? `Passagem: ${ref}` : 'Louvor & Meditação Católica';
-  if (verseTextEl) verseTextEl.textContent = txt ? `“${txt}”` : '';
-  if (oracaoEl) oracaoEl.textContent = oracao ? `Oração: ${oracao}` : '';
+  if (titleEl) titleEl.textContent = ref || 'V�deo Sagrado';
+  if (refEl) refEl.textContent = ref ? `Passagem: ${ref}` : 'Louvor & Medita��o Cat�lica';
+  if (verseTextEl) verseTextEl.textContent = txt ? `�${txt}�` : '';
+  if (oracaoEl) oracaoEl.textContent = oracao ? `Ora��o: ${oracao}` : '';
   if (verseBox) verseBox.classList.toggle('hidden', !txt && !oracao);
 
   if (iframe) {
@@ -2262,98 +2262,98 @@ window.shareCurrentYouTubeVideo = function () {
   if (!currentPlayingVideoData) return;
   const { youtubeUrl, ref, txt, oracao } = currentPlayingVideoData;
   let msg = '';
-  if (txt) msg += `“${txt}”\n\n`;
-  if (ref) msg += `— ${ref}\n\n`;
+  if (txt) msg += `�${txt}�\n\n`;
+  if (ref) msg += `� ${ref}\n\n`;
   if (oracao) msg += `_${oracao}_\n\n`;
-  if (youtubeUrl) msg += `▶ Assista ao vídeo de reflexão: ${youtubeUrl}\n\n`;
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  if (youtubeUrl) msg += `? Assista ao v�deo de reflex�o: ${youtubeUrl}\n\n`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.openLightboxYouTube = function () {
   const img = currentLightboxList[activeLightboxIndex];
   if (!img || !img.youtube_url) return;
-  const hasBook = img.nome_livro && img.nome_livro !== 'Bíblia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
+  const hasBook = img.nome_livro && img.nome_livro !== 'B�blia' && img.nome_livro !== 'Imagem Devocional' && img.nome_livro !== 'Card Sagrado';
   const ref = hasBook 
     ? `${img.nome_livro} ${img.id_capitulo || ''}${img.id_versiculo ? ',' + img.id_versiculo : ''}`.trim()
-    : (img.id_capitulo ? `Bíblia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
+    : (img.id_capitulo ? `B�blia ${img.id_capitulo},${img.id_versiculo || 1}` : (img.nome_livro || 'Imagem Devocional'));
   openYouTubePlayer(null, img.youtube_url, ref, img.texto, img.oracao);
 };
 
 // Canonical list of all 73 Catholic Books for instant synchronous dropdowns
 const CATHOLIC_BOOKS = [
-  { id_livro: 1, nome_livro: "Gênesis", total_capitulos: 50 },
-  { id_livro: 2, nome_livro: "Êxodo", total_capitulos: 40 },
-  { id_livro: 3, nome_livro: "Levítico", total_capitulos: 27 },
-  { id_livro: 4, nome_livro: "Números", total_capitulos: 36 },
-  { id_livro: 5, nome_livro: "Deuteronômio", total_capitulos: 34 },
-  { id_livro: 6, nome_livro: "Josué", total_capitulos: 24 },
-  { id_livro: 7, nome_livro: "Juízes", total_capitulos: 21 },
+  { id_livro: 1, nome_livro: "G�nesis", total_capitulos: 50 },
+  { id_livro: 2, nome_livro: "�xodo", total_capitulos: 40 },
+  { id_livro: 3, nome_livro: "Lev�tico", total_capitulos: 27 },
+  { id_livro: 4, nome_livro: "N�meros", total_capitulos: 36 },
+  { id_livro: 5, nome_livro: "Deuteron�mio", total_capitulos: 34 },
+  { id_livro: 6, nome_livro: "Josu�", total_capitulos: 24 },
+  { id_livro: 7, nome_livro: "Ju�zes", total_capitulos: 21 },
   { id_livro: 8, nome_livro: "Rute", total_capitulos: 4 },
   { id_livro: 9, nome_livro: "I Samuel", total_capitulos: 31 },
   { id_livro: 10, nome_livro: "II Samuel", total_capitulos: 24 },
   { id_livro: 11, nome_livro: "I Reis", total_capitulos: 22 },
   { id_livro: 12, nome_livro: "II Reis", total_capitulos: 25 },
-  { id_livro: 13, nome_livro: "I Crônicas", total_capitulos: 29 },
-  { id_livro: 14, nome_livro: "II Crônicas", total_capitulos: 36 },
+  { id_livro: 13, nome_livro: "I Cr�nicas", total_capitulos: 29 },
+  { id_livro: 14, nome_livro: "II Cr�nicas", total_capitulos: 36 },
   { id_livro: 15, nome_livro: "Esdras", total_capitulos: 10 },
   { id_livro: 16, nome_livro: "Neemias", total_capitulos: 13 },
   { id_livro: 17, nome_livro: "Tobias", total_capitulos: 14 },
   { id_livro: 18, nome_livro: "Judite", total_capitulos: 16 },
   { id_livro: 19, nome_livro: "Ester", total_capitulos: 16 },
-  { id_livro: 20, nome_livro: "Jó", total_capitulos: 42 },
+  { id_livro: 20, nome_livro: "J�", total_capitulos: 42 },
   { id_livro: 21, nome_livro: "Salmos", total_capitulos: 150 },
   { id_livro: 22, nome_livro: "I Macabeus", total_capitulos: 16 },
   { id_livro: 23, nome_livro: "II Macabeus", total_capitulos: 15 },
-  { id_livro: 24, nome_livro: "Provérbios", total_capitulos: 31 },
+  { id_livro: 24, nome_livro: "Prov�rbios", total_capitulos: 31 },
   { id_livro: 25, nome_livro: "Eclesiastes", total_capitulos: 12 },
-  { id_livro: 26, nome_livro: "Cântico dos Cânticos", total_capitulos: 8 },
+  { id_livro: 26, nome_livro: "C�ntico dos C�nticos", total_capitulos: 8 },
   { id_livro: 27, nome_livro: "Sabedoria", total_capitulos: 19 },
-  { id_livro: 28, nome_livro: "Eclesiástico", total_capitulos: 29 },
-  { id_livro: 29, nome_livro: "Isaías", total_capitulos: 66 },
+  { id_livro: 28, nome_livro: "Eclesi�stico", total_capitulos: 29 },
+  { id_livro: 29, nome_livro: "Isa�as", total_capitulos: 66 },
   { id_livro: 30, nome_livro: "Jeremias", total_capitulos: 52 },
-  { id_livro: 31, nome_livro: "Lamentações", total_capitulos: 5 },
+  { id_livro: 31, nome_livro: "Lamenta��es", total_capitulos: 5 },
   { id_livro: 32, nome_livro: "Baruc", total_capitulos: 6 },
   { id_livro: 33, nome_livro: "Ezequiel", total_capitulos: 48 },
   { id_livro: 34, nome_livro: "Daniel", total_capitulos: 14 },
-  { id_livro: 35, nome_livro: "Oséias", total_capitulos: 14 },
+  { id_livro: 35, nome_livro: "Os�ias", total_capitulos: 14 },
   { id_livro: 36, nome_livro: "Joel", total_capitulos: 4 },
-  { id_livro: 37, nome_livro: "Amós", total_capitulos: 9 },
+  { id_livro: 37, nome_livro: "Am�s", total_capitulos: 9 },
   { id_livro: 38, nome_livro: "Abdias", total_capitulos: 1 },
   { id_livro: 39, nome_livro: "Jonas", total_capitulos: 4 },
-  { id_livro: 40, nome_livro: "Miquéias", total_capitulos: 7 },
+  { id_livro: 40, nome_livro: "Miqu�ias", total_capitulos: 7 },
   { id_livro: 41, nome_livro: "Naum", total_capitulos: 3 },
   { id_livro: 42, nome_livro: "Habacuc", total_capitulos: 3 },
   { id_livro: 43, nome_livro: "Sofonias", total_capitulos: 3 },
   { id_livro: 44, nome_livro: "Ageu", total_capitulos: 2 },
   { id_livro: 45, nome_livro: "Zacarias", total_capitulos: 14 },
   { id_livro: 46, nome_livro: "Malaquias", total_capitulos: 3 },
-  { id_livro: 47, nome_livro: "São Mateus", total_capitulos: 28 },
-  { id_livro: 48, nome_livro: "São Marcos", total_capitulos: 16 },
-  { id_livro: 49, nome_livro: "São Lucas", total_capitulos: 24 },
-  { id_livro: 50, nome_livro: "São João", total_capitulos: 21 },
-  { id_livro: 51, nome_livro: "Atos dos Apóstolos", total_capitulos: 28 },
+  { id_livro: 47, nome_livro: "S�o Mateus", total_capitulos: 28 },
+  { id_livro: 48, nome_livro: "S�o Marcos", total_capitulos: 16 },
+  { id_livro: 49, nome_livro: "S�o Lucas", total_capitulos: 24 },
+  { id_livro: 50, nome_livro: "S�o Jo�o", total_capitulos: 21 },
+  { id_livro: 51, nome_livro: "Atos dos Ap�stolos", total_capitulos: 28 },
   { id_livro: 52, nome_livro: "Romanos", total_capitulos: 16 },
-  { id_livro: 53, nome_livro: "I Coríntios", total_capitulos: 16 },
-  { id_livro: 54, nome_livro: "II Coríntios", total_capitulos: 13 },
-  { id_livro: 55, nome_livro: "Gálatas", total_capitulos: 6 },
-  { id_livro: 56, nome_livro: "Efésios", total_capitulos: 6 },
+  { id_livro: 53, nome_livro: "I Cor�ntios", total_capitulos: 16 },
+  { id_livro: 54, nome_livro: "II Cor�ntios", total_capitulos: 13 },
+  { id_livro: 55, nome_livro: "G�latas", total_capitulos: 6 },
+  { id_livro: 56, nome_livro: "Ef�sios", total_capitulos: 6 },
   { id_livro: 57, nome_livro: "Filipenses", total_capitulos: 4 },
   { id_livro: 58, nome_livro: "Colossenses", total_capitulos: 4 },
   { id_livro: 59, nome_livro: "I Tessalonicenses", total_capitulos: 5 },
   { id_livro: 60, nome_livro: "II Tessalonicenses", total_capitulos: 16 },
-  { id_livro: 61, nome_livro: "I Timóteo", total_capitulos: 6 },
-  { id_livro: 62, nome_livro: "II Timóteo", total_capitulos: 4 },
+  { id_livro: 61, nome_livro: "I Tim�teo", total_capitulos: 6 },
+  { id_livro: 62, nome_livro: "II Tim�teo", total_capitulos: 4 },
   { id_livro: 63, nome_livro: "Tito", total_capitulos: 3 },
-  { id_livro: 64, nome_livro: "Filêmon", total_capitulos: 1 },
+  { id_livro: 64, nome_livro: "Fil�mon", total_capitulos: 1 },
   { id_livro: 65, nome_livro: "Hebreus", total_capitulos: 13 },
-  { id_livro: 66, nome_livro: "São Tiago", total_capitulos: 5 },
-  { id_livro: 67, nome_livro: "I São Pedro", total_capitulos: 5 },
-  { id_livro: 68, nome_livro: "II São Pedro", total_capitulos: 16 },
-  { id_livro: 69, nome_livro: "I São João", total_capitulos: 5 },
-  { id_livro: 70, nome_livro: "II São João", total_capitulos: 1 },
-  { id_livro: 71, nome_livro: "III São João", total_capitulos: 1 },
-  { id_livro: 72, nome_livro: "São Judas", total_capitulos: 1 },
+  { id_livro: 66, nome_livro: "S�o Tiago", total_capitulos: 5 },
+  { id_livro: 67, nome_livro: "I S�o Pedro", total_capitulos: 5 },
+  { id_livro: 68, nome_livro: "II S�o Pedro", total_capitulos: 16 },
+  { id_livro: 69, nome_livro: "I S�o Jo�o", total_capitulos: 5 },
+  { id_livro: 70, nome_livro: "II S�o Jo�o", total_capitulos: 1 },
+  { id_livro: 71, nome_livro: "III S�o Jo�o", total_capitulos: 1 },
+  { id_livro: 72, nome_livro: "S�o Judas", total_capitulos: 1 },
   { id_livro: 73, nome_livro: "Apocalipse", total_capitulos: 22 }
 ];
 
@@ -2412,7 +2412,7 @@ function populateUploadBooksDropdown() {
 
   if (select.children.length === 0) {
     const list = (allBooks && allBooks.length > 0) ? allBooks : CATHOLIC_BOOKS;
-    let h = '<option value="">-- Sem livro específico / Imagem Devocional --</option>';
+    let h = '<option value="">-- Sem livro espec�fico / Imagem Devocional --</option>';
     list.forEach(b => {
       h += `<option value="${b.id_livro}" data-total="${b.total_capitulos}">${b.nome_livro}</option>`;
     });
@@ -2450,7 +2450,7 @@ window.handleImageFileSelected = async function (input) {
   const file = input.files[0];
 
   if (file.size > 25 * 1024 * 1024) {
-    showToast('A imagem deve ter no máximo 25MB');
+    showToast('A imagem deve ter no m�ximo 25MB');
     return;
   }
 
@@ -2510,7 +2510,7 @@ window.handleImageUrlInput = function (url, isManualClick = false) {
   }
   const cleanUrl = url.trim();
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://') && !cleanUrl.startsWith('data:image/')) {
-    if (isManualClick) showToast('O link precisa começar com http:// ou https://');
+    if (isManualClick) showToast('O link precisa come�ar com http:// ou https://');
     return;
   }
 
@@ -2519,11 +2519,11 @@ window.handleImageUrlInput = function (url, isManualClick = false) {
   testImg.onload = function () {
     uploadedImageData = cleanUrl;
     showImagePreview(cleanUrl);
-    if (isManualClick) showToast('Imagem da web carregada com sucesso! 🖼️');
+    if (isManualClick) showToast('Imagem da web carregada com sucesso! ???');
   };
   testImg.onerror = function () {
     if (isManualClick) {
-      showToast('Não foi possível carregar a imagem. Verifique se o link direto é público.');
+      showToast('N�o foi poss�vel carregar a imagem. Verifique se o link direto � p�blico.');
     } else {
       // Direct assignment fallback
       uploadedImageData = cleanUrl;
@@ -2597,7 +2597,7 @@ window.fetchVerseTextForUpload = async function () {
   if (!bookSelect || !capInput || !verInput) return;
 
   if (!bookSelect.value) {
-    showToast('Selecione primeiro um Livro da Bíblia acima para puxar o versículo.');
+    showToast('Selecione primeiro um Livro da B�blia acima para puxar o vers�culo.');
     return;
   }
 
@@ -2606,18 +2606,18 @@ window.fetchVerseTextForUpload = async function () {
   const ver = parseInt(verInput.value) || 1;
 
   try {
-    showToast('Buscando versículo na Bíblia Sagrada...');
+    showToast('Buscando vers�culo na B�blia Sagrada...');
     const verses = await db.getVersiculos(bookId, cap);
     const match = verses.find(v => v.id_versiculo === ver);
     if (match && match.texto) {
       if (verseTextArea) verseTextArea.value = match.texto.trim();
-      showToast(`Versículo carregado: ${match.texto.substring(0, 30)}... ✨`);
+      showToast(`Vers�culo carregado: ${match.texto.substring(0, 30)}... ?`);
       updateStudioCard();
     } else {
-      showToast('Versículo não encontrado para este capítulo.');
+      showToast('Vers�culo n�o encontrado para este cap�tulo.');
     }
   } catch (err) {
-    showToast('Erro ao consultar a Bíblia.');
+    showToast('Erro ao consultar a B�blia.');
   }
 };
 
@@ -2641,7 +2641,7 @@ window.saveUploadedImage = async function () {
   const ytId = getYouTubeVideoId(ytUrl);
 
   if (!uploadedImageData && !txt && !ytId) {
-    showToast('Por favor, adicione uma foto, versículo ou link do YouTube para salvar.');
+    showToast('Por favor, adicione uma foto, vers�culo ou link do YouTube para salvar.');
     return;
   }
 
@@ -2669,9 +2669,9 @@ window.saveUploadedImage = async function () {
     });
 
     closeGalleryUploadModal();
-    showToast('✨ Imagem adicionada com sucesso à Galeria!');
+    showToast('? Imagem adicionada com sucesso � Galeria!');
     
-    // Switch to "Meus Uploads" or "Com Vídeo" to immediately show what was added
+    // Switch to "Meus Uploads" or "Com V�deo" to immediately show what was added
     const targetCategory = ytUrl ? 'videos' : 'uploads';
     const chipSelector = `.gallery-chip[data-category="${targetCategory}"]`;
     filterGalleryCategory(targetCategory, document.querySelector(chipSelector));
@@ -2722,11 +2722,11 @@ window.useVerseAsAiPrompt = function () {
   if (!promptInput) return;
 
   if (txt) {
-    promptInput.value = `Cena sagrada bíblica de ${bookName ? bookName + ' ' + cap + ': ' : ''}“${txt}”`;
-    showToast('Versículo inserido no prompt da IA! ✨');
+    promptInput.value = `Cena sagrada b�blica de ${bookName ? bookName + ' ' + cap + ': ' : ''}�${txt}�`;
+    showToast('Vers�culo inserido no prompt da IA! ?');
   } else if (bookName) {
-    promptInput.value = `Cena bíblica inspirada no livro de ${bookName} ${cap}`;
-    showToast('Referência bíblica inserida no prompt da IA! ✨');
+    promptInput.value = `Cena b�blica inspirada no livro de ${bookName} ${cap}`;
+    showToast('Refer�ncia b�blica inserida no prompt da IA! ?');
   } else {
     promptInput.value = 'Luz divina celestial iluminando a Sagrada Escritura e a Cruz de Cristo';
   }
@@ -2738,7 +2738,7 @@ window.toggleAiVerseOverlay = function () {
 
 window.generateAiArt = async function (isRegen = false) {
   if (isGeneratingAiArt) {
-    showToast('Aguarde a IA concluir a pintura atual... 🎨');
+    showToast('Aguarde a IA concluir a pintura atual... ??');
     return;
   }
 
@@ -2778,7 +2778,7 @@ window.generateAiArt = async function (isRegen = false) {
   }
 
   try {
-    showToast(isRegen ? 'Criando nova variação sacra... ✨' : 'Pintando cena bíblica com Inteligência Artificial... ✨');
+    showToast(isRegen ? 'Criando nova varia��o sacra... ?' : 'Pintando cena b�blica com Intelig�ncia Artificial... ?');
     
     const dataUrl = await generateSacredAIImage(prompt, styleId, {
       verseText: verseText,
@@ -2807,10 +2807,10 @@ window.generateAiArt = async function (isRegen = false) {
       img.src = dataUrl;
     });
 
-    showToast('✨ Obra de Arte Sacra criada com sucesso pela IA!');
+    showToast('? Obra de Arte Sacra criada com sucesso pela IA!');
   } catch (err) {
     console.error("AI Generation error:", err);
-    showToast('Falha temporária ao gerar com IA. Tente novamente em alguns instantes.');
+    showToast('Falha tempor�ria ao gerar com IA. Tente novamente em alguns instantes.');
   } finally {
     isGeneratingAiArt = false;
     if (loadingContainer) loadingContainer.classList.add('hidden');
@@ -2840,13 +2840,13 @@ window.copyVerseToNarrative = function () {
 
   if (txt) {
     narrativeInput.value = txt;
-    showToast('✨ Versículo copiado para a narrativa central!');
+    showToast('? Vers�culo copiado para a narrativa central!');
   } else if (bookName) {
-    narrativeInput.value = `“Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.”`;
-    showToast('✨ Citação bíblica inserida na narrativa!');
+    narrativeInput.value = `�Porque Deus amou o mundo de tal maneira que deu o seu Filho unig�nito, para que todo aquele que nele cr� n�o pere�a, mas tenha a vida eterna.�`;
+    showToast('? Cita��o b�blica inserida na narrativa!');
   } else {
-    narrativeInput.value = 'O Senhor é o meu pastor, nada me faltará. Em verdes prados Ele me faz repousar.';
-    showToast('✨ Narrativa devocional inserida!');
+    narrativeInput.value = 'O Senhor � o meu pastor, nada me faltar�. Em verdes prados Ele me faz repousar.';
+    showToast('? Narrativa devocional inserida!');
   }
   renderStudioAiCanvas();
 };
@@ -2939,7 +2939,7 @@ function drawGeneratingStudioCanvas(canvas, prompt) {
   ctx.font = '84px "Cinzel", serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#E8C98A';
-  ctx.fillText('✝', w / 2, h / 2 - 15);
+  ctx.fillText('?', w / 2, h / 2 - 15);
 
   // Mensagem
   ctx.font = 'bold 30px "Cinzel", serif';
@@ -2950,12 +2950,12 @@ function drawGeneratingStudioCanvas(canvas, prompt) {
     ctx.font = 'italic 22px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = '#D4A853';
     const displayP = prompt.length > 55 ? prompt.slice(0, 52) + '...' : prompt;
-    ctx.fillText(`“${displayP}”`, w / 2, h / 2 + 120);
+    ctx.fillText(`�${displayP}�`, w / 2, h / 2 + 120);
   }
 
   ctx.font = '16px sans-serif';
   ctx.fillStyle = 'rgba(232, 201, 138, 0.7)';
-  ctx.fillText('✨ A Inteligência Artificial está pintando sua cena bíblica...', w / 2, h / 2 + 170);
+  ctx.fillText('? A Intelig�ncia Artificial est� pintando sua cena b�blica...', w / 2, h / 2 + 170);
 }
 
 function drawDefaultSacredPlaceholder(canvas, options = {}) {
@@ -3008,10 +3008,10 @@ function drawDefaultSacredPlaceholder(canvas, options = {}) {
   ctx.font = '72px "Cinzel", serif, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#E8C98A';
-  ctx.fillText('✝', w / 2, 160);
+  ctx.fillText('?', w / 2, 160);
 
   // Title
-  const refTitle = bookRef ? bookRef.toUpperCase() : 'BÍBLIA SAGRADA';
+  const refTitle = bookRef ? bookRef.toUpperCase() : 'B�BLIA SAGRADA';
   ctx.font = 'bold 34px "Cinzel", serif';
   ctx.fillStyle = '#F5E6C8';
   ctx.fillText(refTitle, w / 2, 235);
@@ -3028,13 +3028,13 @@ function drawDefaultSacredPlaceholder(canvas, options = {}) {
 
   ctx.font = '18px sans-serif';
   ctx.fillStyle = '#D4A853';
-  ctx.fillText('✦', w / 2, 276);
+  ctx.fillText('?', w / 2, 276);
 
   // Text / Narrativa
   const mainHighlight = (narrativa || verseText).trim();
   const isCustom = !!mainHighlight;
   const rawText = mainHighlight || 'Digite um tema sagrado e uma narrativa acima e clique em "Gerar Obra Sacra com IA" para criar arte personalizada!';
-  const displayTxt = (useQuotes && isCustom && !rawText.startsWith('“')) ? `“${rawText}”` : rawText;
+  const displayTxt = (useQuotes && isCustom && !rawText.startsWith('�')) ? `�${rawText}�` : rawText;
 
   if (centerHighlight && isCustom) {
     const boxMaxWidth = w - 160;
@@ -3100,13 +3100,13 @@ function drawDefaultSacredPlaceholder(canvas, options = {}) {
   if (oracao) {
     ctx.font = 'italic 24px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = '#E8C98A';
-    ctx.fillText(`“${oracao}”`, w / 2, h - 160);
+    ctx.fillText(`�${oracao}�`, w / 2, h - 160);
   }
 
   // Footer
   ctx.font = '600 20px "Cinzel", serif';
   ctx.fillStyle = 'rgba(212, 168, 83, 0.7)';
-  ctx.fillText('✝  ESTÚDIO DE ARTE SACRA COM IA  ✝', w / 2, h - 85);
+  ctx.fillText('?  EST�DIO DE ARTE SACRA COM IA  ?', w / 2, h - 85);
 }
 
 function drawCornerAccents(ctx, x, y) {
@@ -3150,7 +3150,7 @@ window.downloadStudioCard = function () {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  showToast('✨ Arte Sacra baixada com sucesso em alta resolução!');
+  showToast('? Arte Sacra baixada com sucesso em alta resolu��o!');
 };
 
 window.saveStudioCardToGallery = async function () {
@@ -3195,7 +3195,7 @@ window.saveStudioCardToGallery = async function () {
     });
 
     closeGalleryUploadModal();
-    showToast('✨ Arte Sacra salva com sucesso na sua Galeria!');
+    showToast('? Arte Sacra salva com sucesso na sua Galeria!');
     const targetCategory = aiYtUrl ? 'videos' : 'uploads';
     filterGalleryCategory(targetCategory, document.querySelector(`.gallery-chip[data-category="${targetCategory}"]`));
   } catch (err) {
@@ -3254,14 +3254,14 @@ function updateNextPlanDayMarker() {
 
     const checkEl = el.querySelector('.plan-day-check');
     if (checkEl) {
-      checkEl.title = isDone ? 'Marcar como não lido' : 'Marcar como concluído';
+      checkEl.title = isDone ? 'Marcar como n�o lido' : 'Marcar como conclu�do';
     }
 
     const titleEl = el.querySelector('.plan-day-title');
     if (titleEl) {
       const badge = titleEl.querySelector('.plan-badge-next');
       if (isNext && !badge) {
-        titleEl.insertAdjacentHTML('beforeend', '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>');
+        titleEl.insertAdjacentHTML('beforeend', '<span class="plan-badge-next"><i class="fas fa-play"></i> Pr�xima Leitura</span>');
       } else if (!isNext && badge) {
         badge.remove();
       }
@@ -3270,7 +3270,7 @@ function updateNextPlanDayMarker() {
 
   const nextBtn = document.getElementById('btnPlanGoNext');
   if (nextBtn) {
-    nextBtn.innerHTML = `<i class="fas fa-play"></i> Próxima Leitura (Dia ${nextDia})`;
+    nextBtn.innerHTML = `<i class="fas fa-play"></i> Pr�xima Leitura (Dia ${nextDia})`;
   }
 
   return nextDia;
@@ -3288,7 +3288,7 @@ window.showPlan = function () {
     return;
   }
 
-  // 1. Obtém imediatamente o plano canônico pré-carregado em 0ms
+  // 1. Obt�m imediatamente o plano can�nico pr�-carregado em 0ms
   const plan = (typeof db.getPlanoLeituraSync === 'function') 
     ? db.getPlanoLeituraSync() 
     : (db.buildPlanoLeituraArray ? db.buildPlanoLeituraArray(db.CANONICAL_BOOKS) : []);
@@ -3298,8 +3298,8 @@ window.showPlan = function () {
       c.innerHTML = `
         <div class="gallery-empty-state" style="padding: 60px 20px; text-align: center;">
           <i class="fas fa-exclamation-triangle gallery-empty-icon" style="color:#ef4444; font-size: 2.2rem; margin-bottom: 14px;"></i>
-          <h3 class="gallery-empty-title">Plano de Leitura Temporariamente Indisponível</h3>
-          <p class="gallery-empty-desc">Toque no botão abaixo para recarregar o plano de leitura de 365 dias.</p>
+          <h3 class="gallery-empty-title">Plano de Leitura Temporariamente Indispon�vel</h3>
+          <p class="gallery-empty-desc">Toque no bot�o abaixo para recarregar o plano de leitura de 365 dias.</p>
           <button class="hero-donate-btn" style="margin-top: 15px;" onclick="delete document.getElementById('planContainer').dataset.loaded; showPlan()"><i class="fas fa-redo"></i> Recarregar Plano</button>
         </div>
       `;
@@ -3317,7 +3317,7 @@ window.showPlan = function () {
       const isNext = (d.dia === nextDia && !done);
       
       const leiturasHtml = (d.leituras || []).map((l, idx) => 
-        `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} capítulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
+        `<span class="plan-leitura-tag" data-dia="${d.dia}" data-idx="${idx}" data-livro="${l.id_livro}" data-nome="${l.nome_livro}" data-cap="${l.capitulo}" title="Abrir ${l.nome_livro} cap�tulo ${l.capitulo}"><i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}</span>`
       ).join('');
 
       h += `<div class="plan-day ${done ? 'completed' : ''} ${isToday ? 'today' : ''} ${isNext ? 'next-day' : ''}" data-dia="${d.dia}">
@@ -3325,7 +3325,7 @@ window.showPlan = function () {
               <div class="plan-day-content">
                   <div class="plan-day-title">
                     Dia ${d.dia}
-                    ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Próxima Leitura</span>' : ''}
+                    ${isNext ? '<span class="plan-badge-next"><i class="fas fa-play"></i> Pr�xima Leitura</span>' : ''}
                     ${isToday ? '<span class="plan-badge-today"><i class="fas fa-calendar-day"></i> Hoje</span>' : ''}
                   </div>
                   <div class="plan-day-desc">${leiturasHtml}</div>
@@ -3335,7 +3335,7 @@ window.showPlan = function () {
                     </button>
                   </div>
               </div>
-              <div class="plan-day-check" title="${done ? 'Marcar como não lido' : 'Marcar como concluído'}"><i class="fas fa-check"></i></div>
+              <div class="plan-day-check" title="${done ? 'Marcar como n�o lido' : 'Marcar como conclu�do'}"><i class="fas fa-check"></i></div>
           </div>`;
     });
 
@@ -3344,12 +3344,12 @@ window.showPlan = function () {
     updatePlanProgress();
     updateNextPlanDayMarker();
 
-    // Rola para o próximo dia a ser executado
+    // Rola para o pr�ximo dia a ser executado
     scrollToNextPlanDay(false);
   };
 
   if (plan && plan.length === 365) {
-    // Renderização imediata (0ms de espera, SEM TELA BRANCA, SEM SPINNER)
+    // Renderiza��o imediata (0ms de espera, SEM TELA BRANCA, SEM SPINNER)
     renderDaysList(plan);
   } else {
     c.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
@@ -3377,7 +3377,7 @@ document.getElementById('planContainer').addEventListener('click', async e => {
       day.classList.toggle('completed', readingPlanDays[dia]);
       updatePlanProgress();
       updateNextPlanDayMarker();
-      if (readingPlanDays[dia]) showToast('Leitura concluída! Deus te abençoe! 🙏');
+      if (readingPlanDays[dia]) showToast('Leitura conclu�da! Deus te aben�oe! ??');
     }
     return;
   }
@@ -3402,7 +3402,7 @@ document.getElementById('planContainer').addEventListener('click', async e => {
   }
 });
 
-// ===== MODO LEITURA E ÁUDIO SEQUENCIAL DO DIA =====
+// ===== MODO LEITURA E �UDIO SEQUENCIAL DO DIA =====
 let currentPlanDayData = null;
 let isPlanDaySpeaking = false;
 
@@ -3417,7 +3417,7 @@ function updatePlanDaySpeechBtnState(speaking) {
   if (btn) {
     if (speaking) {
       btn.classList.add('reading');
-      btn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar Áudio</span>';
+      btn.innerHTML = '<i class="fas fa-stop"></i> <span>Parar �udio</span>';
     } else {
       btn.classList.remove('reading');
       btn.innerHTML = '<i class="fas fa-volume-up"></i> <span>Ouvir Dia Completo</span>';
@@ -3448,7 +3448,7 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
 
   try {
     if (startIndex === 0) {
-      const allTitles = dayData.leituras.map(l => `${l.nome_livro} capítulo ${l.capitulo}`).join(', ');
+      const allTitles = dayData.leituras.map(l => `${l.nome_livro} cap�tulo ${l.capitulo}`).join(', ');
       await speakSingleVerseText(`Plano de Leitura. Dia ${dayData.dia}. ${allTitles}.`);
       if (stopRequested) return;
     }
@@ -3457,22 +3457,22 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
       if (stopRequested) break;
       const leitura = dayData.leituras[rIdx];
 
-      // Atualiza botões ativos na barra superior
+      // Atualiza bot�es ativos na barra superior
       document.querySelectorAll('.plan-chapter-jump-btn').forEach((btn, i) => {
         btn.classList.toggle('active', i === rIdx);
       });
 
-      // Rola a tela até o início desta seção
+      // Rola a tela at� o in�cio desta se��o
       const sectionEl = document.getElementById(`plan-chapter-section-${rIdx}`);
       if (sectionEl) {
         sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      // Anuncia o capítulo corrente
-      await speakSingleVerseText(`${leitura.nome_livro}, capítulo ${leitura.capitulo}.`);
+      // Anuncia o cap�tulo corrente
+      await speakSingleVerseText(`${leitura.nome_livro}, cap�tulo ${leitura.capitulo}.`);
       if (stopRequested) break;
 
-      // Percorre todos os versículos deste capítulo
+      // Percorre todos os vers�culos deste cap�tulo
       const verseEls = document.querySelectorAll(`.plan-day-verse[data-idx="${rIdx}"]`);
       for (let vIdx = 0; vIdx < verseEls.length; vIdx++) {
         if (stopRequested) break;
@@ -3494,7 +3494,7 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
 
     // Se concluiu todas as leituras sem ser interrompido
     if (!stopRequested && startIndex <= dayData.leituras.length - 1) {
-      await speakSingleVerseText(`Parabéns! Você concluiu todas as leituras do Dia ${dayData.dia}. Deus te abençoe!`);
+      await speakSingleVerseText(`Parab�ns! Voc� concluiu todas as leituras do Dia ${dayData.dia}. Deus te aben�oe!`);
 
       if (!readingPlanDays[dayData.dia]) {
         readingPlanDays[dayData.dia] = true;
@@ -3504,18 +3504,18 @@ window.speakPlanDayFromIndex = async function (startIndex = 0) {
         });
         updatePlanProgress();
         updateNextPlanDayMarker();
-        showToast(`🎉 Leituras do Dia ${dayData.dia} concluídas com sucesso!`);
+        showToast(`?? Leituras do Dia ${dayData.dia} conclu�das com sucesso!`);
 
         const topBtn = document.getElementById('btnPlanDayCompleteTop');
         if (topBtn) {
           topBtn.classList.add('completed');
-          topBtn.innerHTML = '<i class="fas fa-check"></i> <span>Concluído</span>';
+          topBtn.innerHTML = '<i class="fas fa-check"></i> <span>Conclu�do</span>';
         }
         const finishCard = document.getElementById('planDayFinishCard');
         if (finishCard) finishCard.classList.add('completed');
         const finishBtn = document.getElementById('btnFinishMarkDay');
         if (finishBtn) {
-          finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>Dia Concluído (Clique para desmarcar)</span>`;
+          finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>Dia Conclu�do (Clique para desmarcar)</span>`;
         }
       }
     }
@@ -3557,17 +3557,17 @@ window.togglePlanDayFromView = async function (dia) {
   const topBtn = document.getElementById('btnPlanDayCompleteTop');
   if (topBtn) {
     topBtn.classList.toggle('completed', isDone);
-    topBtn.innerHTML = `<i class="fas fa-check"></i> <span>${isDone ? 'Concluído' : 'Marcar Concluído'}</span>`;
+    topBtn.innerHTML = `<i class="fas fa-check"></i> <span>${isDone ? 'Conclu�do' : 'Marcar Conclu�do'}</span>`;
   }
 
   const finishCard = document.getElementById('planDayFinishCard');
   if (finishCard) finishCard.classList.toggle('completed', isDone);
   const finishBtn = document.getElementById('btnFinishMarkDay');
   if (finishBtn) {
-    finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Concluído (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Concluído'}</span>`;
+    finishBtn.innerHTML = `<i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Conclu�do (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Conclu�do'}</span>`;
   }
 
-  showToast(isDone ? `Leituras do Dia ${dia} concluídas! Deus te abençoe! 🙏` : `Dia ${dia} marcado como pendente.`);
+  showToast(isDone ? `Leituras do Dia ${dia} conclu�das! Deus te aben�oe! ??` : `Dia ${dia} marcado como pendente.`);
 };
 
 window.markAndGoNextPlanDay = async function (dia) {
@@ -3607,12 +3607,12 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
     }
 
     const leiturasStr = dayData.leituras.map(l => `${l.nome_livro} ${l.capitulo}`).join(', ');
-    document.getElementById('planDayTitle').textContent = `Plano de Leitura • Dia ${dia}`;
+    document.getElementById('planDayTitle').textContent = `Plano de Leitura � Dia ${dia}`;
     document.getElementById('planDaySubtitle').textContent = leiturasStr || 'Leituras do dia';
 
     const isDone = !!readingPlanDays[dia];
 
-    // Barra de navegação rápida entre os capítulos do dia
+    // Barra de navega��o r�pida entre os cap�tulos do dia
     let barHtml = dayData.leituras.map((l, idx) => `
       <button class="plan-chapter-jump-btn ${idx === initialReadingIndex ? 'active' : ''}" onclick="scrollToPlanChapter(${idx})">
         <i class="fas fa-book-open"></i> ${l.nome_livro} ${l.capitulo}
@@ -3620,12 +3620,12 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
     `).join('');
     barHtml += `
       <button class="plan-chapter-check-btn ${isDone ? 'completed' : ''}" id="btnPlanDayCompleteTop" onclick="togglePlanDayFromView(${dia})">
-        <i class="fas fa-check"></i> <span>${isDone ? 'Concluído' : 'Marcar Concluído'}</span>
+        <i class="fas fa-check"></i> <span>${isDone ? 'Conclu�do' : 'Marcar Conclu�do'}</span>
       </button>
     `;
     document.getElementById('planDayChapterBar').innerHTML = barHtml;
 
-    // Carrega todos os capítulos em paralelo para visualização contínua imediata
+    // Carrega todos os cap�tulos em paralelo para visualiza��o cont�nua imediata
     const chaptersData = await Promise.all(
       dayData.leituras.map(async (l, idx) => {
         const verses = await db.getVersiculos(l.id_livro, l.capitulo);
@@ -3638,11 +3638,11 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
       contentHtml += `
         <div class="plan-day-section" id="plan-chapter-section-${index}" data-idx="${index}">
           <div class="plan-day-section-header">
-            <div class="plan-day-section-badge">Leitura ${index + 1} de ${dayData.leituras.length} • Dia ${dia}</div>
+            <div class="plan-day-section-badge">Leitura ${index + 1} de ${dayData.leituras.length} � Dia ${dia}</div>
             <div class="plan-day-section-title-row">
               <h3 class="plan-day-section-title">${leitura.nome_livro} ${leitura.capitulo}</h3>
               <button class="plan-day-listen-section-btn" onclick="speakPlanDayFromIndex(${index})" title="Ouvir a partir de ${leitura.nome_livro} ${leitura.capitulo}">
-                <i class="fas fa-volume-up"></i> Ouvir este capítulo em diante
+                <i class="fas fa-volume-up"></i> Ouvir este cap�tulo em diante
               </button>
             </div>
           </div>
@@ -3659,7 +3659,7 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
             <div class="verse-actions">
               <button type="button" class="verse-action-btn speak-btn" data-v="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); toggleVerseSpeech(this, event)" title="Ouvir"><i class="fas fa-volume-up"></i></button>
               <button type="button" class="verse-action-btn fav-btn ${v.favorito ? 'favorited' : ''}" data-livro="${leitura.id_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" title="Favoritar"><i class="fas fa-heart"></i></button>
-              <button type="button" class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradição Católica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
+              <button type="button" class="verse-action-btn teologia-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Explicar pela Tradi��o Cat�lica" style="color: #c084fc;"><i class="fas fa-feather-pointed"></i></button>
               <button type="button" class="verse-action-btn whatsapp wa-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
               <button type="button" class="verse-action-btn story-btn" data-livro="${leitura.nome_livro}" data-cap="${leitura.capitulo}" data-ver="${v.id_versiculo}" data-txt="${v.texto.replace(/"/g, '&quot;')}" title="Criar Card para Story / Status"><i class="fas fa-camera"></i></button>
             </div>
@@ -3677,15 +3677,15 @@ window.openPlanDay = async function (dia, initialReadingIndex = 0) {
     contentHtml += `
       <div class="plan-day-finish-card ${isDone ? 'completed' : ''}" id="planDayFinishCard">
         <div class="plan-day-finish-icon"><i class="fas fa-bible"></i></div>
-        <h3 class="plan-day-finish-title">Conclusão do Dia ${dia}</h3>
+        <h3 class="plan-day-finish-title">Conclus�o do Dia ${dia}</h3>
         <p class="plan-day-finish-desc">${leiturasStr}</p>
         <div class="plan-day-finish-actions">
           <button class="plan-day-finish-btn btn-finish-mark" id="btnFinishMarkDay" onclick="togglePlanDayFromView(${dia})">
-            <i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Concluído (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Concluído'}</span>
+            <i class="fas fa-check-circle"></i> <span>${isDone ? 'Dia Conclu�do (Clique para desmarcar)' : 'Marcar Dia ' + dia + ' como Conclu�do'}</span>
           </button>
           ${dia < 365 ? `
             <button class="plan-day-finish-btn btn-finish-next" onclick="markAndGoNextPlanDay(${dia})">
-              <span>Avançar para o Dia ${nextDayNum}</span> <i class="fas fa-arrow-right"></i>
+              <span>Avan�ar para o Dia ${nextDayNum}</span> <i class="fas fa-arrow-right"></i>
             </button>
           ` : ''}
         </div>
@@ -3727,44 +3727,44 @@ function updatePlanProgress() {
   const textEl = document.getElementById('planProgressText');
   if (textEl) {
     if (done >= 365) {
-      textEl.innerHTML = `<strong>365 de 365 dias concluídos (100%)</strong> • Parabéns! Você concluiu a Bíblia inteira! 🎉`;
+      textEl.innerHTML = `<strong>365 de 365 dias conclu�dos (100%)</strong> � Parab�ns! Voc� concluiu a B�blia inteira! ??`;
     } else {
-      textEl.innerHTML = `<strong>${done} de 365</strong> dias concluídos (${pct}%) • Próxima leitura: <strong>Dia ${nextDia}</strong>`;
+      textEl.innerHTML = `<strong>${done} de 365</strong> dias conclu�dos (${pct}%) � Pr�xima leitura: <strong>Dia ${nextDia}</strong>`;
     }
   }
 
   const homeBadge = document.getElementById('homePlanBadge');
   if (homeBadge) {
-    homeBadge.textContent = done >= 365 ? '100% Concluído 🎉' : `Próximo: Dia ${nextDia}`;
+    homeBadge.textContent = done >= 365 ? '100% Conclu�do ??' : `Pr�ximo: Dia ${nextDia}`;
   }
 
   const nextBtn = document.getElementById('btnPlanGoNext');
   if (nextBtn) {
-    nextBtn.innerHTML = `<i class="fas fa-play"></i> Próxima Leitura (Dia ${nextDia})`;
+    nextBtn.innerHTML = `<i class="fas fa-play"></i> Pr�xima Leitura (Dia ${nextDia})`;
   }
 }
 
 // ===== VIEW MANAGEMENT & ANALYTICS TRACKING =====
 const VIEW_TRACKING_META = {
-  homeView: { title: 'Início', path: '/' },
-  chapterView: { title: 'Leitura Bíblica', path: '/leitura' },
-  searchView: { title: 'Busca Bíblica', path: '/busca' },
+  homeView: { title: 'In�cio', path: '/' },
+  chapterView: { title: 'Leitura B�blica', path: '/leitura' },
+  searchView: { title: 'Busca B�blica', path: '/busca' },
   favoritesView: { title: 'Meus Favoritos', path: '/favoritos' },
   galleryView: { title: 'Galeria de Imagens Sacras', path: '/galeria' },
   planView: { title: 'Plano de Leitura 365 Dias', path: '/plano-leitura' },
   planDayView: { title: 'Leitura do Dia - Plano 365', path: '/plano-leitura/dia' },
-  liturgiaView: { title: 'Liturgia Diária & Santo do Dia', path: '/liturgia' },
-  rosarioView: { title: 'Santo Rosário & Terço', path: '/santo-terco' },
-  velasView: { title: 'Mural de Velas & Intenções', path: '/velas' },
-  teologiaView: { title: 'IA Teológica Católica', path: '/teologia' },
+  liturgiaView: { title: 'Liturgia Di�ria & Santo do Dia', path: '/liturgia' },
+  rosarioView: { title: 'Santo Ros�rio & Ter�o', path: '/santo-terco' },
+  velasView: { title: 'Mural de Velas & Inten��es', path: '/velas' },
+  teologiaView: { title: 'IA Teol�gica Cat�lica', path: '/teologia' },
   lectioView: { title: 'Lectio Divina Guiada', path: '/lectio-divina' },
-  confissaoView: { title: 'Exame de Consciência', path: '/confissao' },
-  diarioView: { title: 'Diário Espiritual', path: '/diario' },
+  confissaoView: { title: 'Exame de Consci�ncia', path: '/confissao' },
+  diarioView: { title: 'Di�rio Espiritual', path: '/diario' },
   novenasView: { title: 'Novenas Tradicionais', path: '/novenas' },
-  cartasView: { title: 'Cartas Apostólicas', path: '/cartas' },
-  mariaView: { title: 'Devoção a Maria', path: '/maria' },
-  radiosPodcastsView: { title: 'Rádios & Podcasts Católicos', path: '/radios-podcasts' },
-  oracoesLivroView: { title: 'Livro de Orações Católicas', path: '/livro-oracoes' },
+  cartasView: { title: 'Cartas Apost�licas', path: '/cartas' },
+  mariaView: { title: 'Devo��o a Maria', path: '/maria' },
+  radiosPodcastsView: { title: 'R�dios & Podcasts Cat�licos', path: '/radios-podcasts' },
+  oracoesLivroView: { title: 'Livro de Ora��es Cat�licas', path: '/livro-oracoes' },
   diretorEspiritualView: { title: 'Diretor Espiritual & Palavra Amiga', path: '/diretor-espiritual' },
   comunidadeView: { title: 'Mural da Comunidade & Bate-Papo', path: '/comunidade' }
 };
@@ -3797,7 +3797,7 @@ function showView(id) {
     lastViewBeforeChapter = id;
   }
 
-  // Registro dinâmico de PageView e Navegação no Google Analytics 4
+  // Registro din�mico de PageView e Navega��o no Google Analytics 4
   const meta = VIEW_TRACKING_META[id];
   if (meta && id !== 'chapterView') {
     trackPageView(meta.title, meta.path);
@@ -3862,7 +3862,7 @@ function getBestPortugueseVoice() {
 
 
 // ===== DONATE MODAL & RECURRING REMINDER =====
-const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria estejam com você! Este aplicativo é mantido sem propagandas para preservar a santidade da sua oração. Ajude este projeto de evangelização a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu coração desejar. Deus abençoe imensamente a sua generosidade!";
+const DONATE_AUDIO_TEXT = "A Paz de Jesus e o amor de Maria estejam com voc�! Este aplicativo � mantido sem propagandas para preservar a santidade da sua ora��o. Ajude este projeto de evangeliza��o a continuar no ar com qualquer valor: 2 reais, 5 reais, 10 reais ou o que o seu cora��o desejar. Deus aben�oe imensamente a sua generosidade!";
 let isDonateAudioSpeaking = false;
 let activeDonateUtterance = null;
 let donateHeartbeatResumeTimer = null;
@@ -3876,11 +3876,11 @@ const PIX_MERCHANT_CITY = 'SAO PAULO';
 // Valor selecionado atualmente (2, 5, 10 ou 0 para Livre)
 let selectedDonateAmount = 2;
 
-// Frequência do compromisso (1 = Única, 2 = 2 Meses, 3 = 3 Meses Trimestral)
+// Frequ�ncia do compromisso (1 = �nica, 2 = 2 Meses, 3 = 3 Meses Trimestral)
 let selectedDonateFrequency = 1;
 
 /**
- * Formata um campo no padrão EMV / Pix do Banco Central (ID + Tamanho 2 dígitos + Conteúdo)
+ * Formata um campo no padr�o EMV / Pix do Banco Central (ID + Tamanho 2 d�gitos + Conte�do)
  */
 function formatPixField(id, val) {
   const len = String(val.length).padStart(2, '0');
@@ -3888,7 +3888,7 @@ function formatPixField(id, val) {
 }
 
 /**
- * Calcula o checksum CRC16-CCITT (Polinômio 0x1021, valor inicial 0xFFFF)
+ * Calcula o checksum CRC16-CCITT (Polin�mio 0x1021, valor inicial 0xFFFF)
  */
 function crc16Pix(str) {
   let crc = 0xFFFF;
@@ -3940,7 +3940,7 @@ window.selectDonateValue = function (amount, btnEl) {
 };
 
 /**
- * Seleciona a frequência do compromisso fraterno (1, 2 ou 3 meses)
+ * Seleciona a frequ�ncia do compromisso fraterno (1, 2 ou 3 meses)
  */
 window.selectDonateFrequency = function (months, btnEl) {
   selectedDonateFrequency = Number(months);
@@ -3952,7 +3952,7 @@ window.selectDonateFrequency = function (months, btnEl) {
 };
 
 /**
- * Atualiza o texto informativo da frequência selecionada
+ * Atualiza o texto informativo da frequ�ncia selecionada
  */
 async function updateDonateFrequencyInfo() {
   const infoEl = document.getElementById('donateFrequencyInfo');
@@ -3965,7 +3965,7 @@ async function updateDonateFrequencyInfo() {
   if (pledge && pledge.active && !pledge.completed) {
     infoEl.classList.remove('hidden');
     const nextCycle = (pledge.currentCycle || 1) + 1;
-    textEl.innerHTML = `🕊️ <strong>Compromisso de Benfeitor Ativo:</strong> Valor de <strong>${valStr}</strong> fixado conforme sua 1ª contribuição (${nextCycle}ª de ${pledge.totalMonths} meses). Que Deus abençoe sua fidelidade!`;
+    textEl.innerHTML = `??? <strong>Compromisso de Benfeitor Ativo:</strong> Valor de <strong>${valStr}</strong> fixado conforme sua 1� contribui��o (${nextCycle}� de ${pledge.totalMonths} meses). Que Deus aben�oe sua fidelidade!`;
     return;
   }
 
@@ -3973,15 +3973,15 @@ async function updateDonateFrequencyInfo() {
     infoEl.classList.add('hidden');
   } else if (selectedDonateFrequency === 2) {
     infoEl.classList.remove('hidden');
-    textEl.innerHTML = `🕊️ <strong>Guardião (2 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e um lembrete fraterno no app daqui a 30 dias para a 2ª com este mesmo valor. Sem cobrança automática!`;
+    textEl.innerHTML = `??? <strong>Guardi�o (2 Meses):</strong> 1� contribui��o hoje de <strong>${valStr}</strong> e um lembrete fraterno no app daqui a 30 dias para a 2� com este mesmo valor. Sem cobran�a autom�tica!`;
   } else if (selectedDonateFrequency === 3) {
     infoEl.classList.remove('hidden');
-    textEl.innerHTML = `👑 <strong>Benfeitor Trimestral (3 Meses):</strong> 1ª contribuição hoje de <strong>${valStr}</strong> e lembretes fraternos aos 30 e 60 dias no app com este mesmo valor. Você no controle total!`;
+    textEl.innerHTML = `?? <strong>Benfeitor Trimestral (3 Meses):</strong> 1� contribui��o hoje de <strong>${valStr}</strong> e lembretes fraternos aos 30 e 60 dias no app com este mesmo valor. Voc� no controle total!`;
   }
 }
 
 /**
- * Salva o compromisso de doação (2x ou 3x)
+ * Salva o compromisso de doa��o (2x ou 3x)
  */
 export async function saveDonatePledge(amount, months) {
   try {
@@ -4005,7 +4005,7 @@ export async function saveDonatePledge(amount, months) {
 }
 
 /**
- * Recupera o compromisso de doação salvo
+ * Recupera o compromisso de doa��o salvo
  */
 export async function getPledgeData() {
   try {
@@ -4023,17 +4023,17 @@ export async function getPledgeData() {
 window.updatePixDisplay = function () {
   const brCode = generatePixBrCode(selectedDonateAmount);
 
-  // Texto da instrução
+  // Texto da instru��o
   const instructionEl = document.getElementById('pixInstructionText');
   if (instructionEl) {
     if (selectedDonateAmount > 0) {
-      instructionEl.innerHTML = `Código Pix Copia e Cola de <strong>R$ ${selectedDonateAmount},00</strong>:`;
+      instructionEl.innerHTML = `C�digo Pix Copia e Cola de <strong>R$ ${selectedDonateAmount},00</strong>:`;
     } else {
-      instructionEl.innerHTML = `Código Pix Copia e Cola com <strong>Valor Livre</strong>:`;
+      instructionEl.innerHTML = `C�digo Pix Copia e Cola com <strong>Valor Livre</strong>:`;
     }
   }
 
-  // QR Code Dinâmico
+  // QR Code Din�mico
   const qrImg = document.getElementById('pixQrImg');
   if (qrImg) {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(brCode)}&margin=4`;
@@ -4046,7 +4046,7 @@ window.updatePixDisplay = function () {
     keyDisplay.innerText = brCode;
   }
 
-  // Botão principal de copiar
+  // Bot�o principal de copiar
   const copyBtn = document.getElementById('pixCopyBtn');
   if (copyBtn) {
     if (selectedDonateAmount > 0) {
@@ -4058,7 +4058,7 @@ window.updatePixDisplay = function () {
 };
 
 /**
- * Copia o código Pix Copia e Cola atualmente selecionado
+ * Copia o c�digo Pix Copia e Cola atualmente selecionado
  */
 window.copyCurrentPixSelection = async function () {
   const brCode = generatePixBrCode(selectedDonateAmount);
@@ -4080,16 +4080,16 @@ window.copyCurrentPixSelection = async function () {
     
     if (selectedDonateFrequency > 1) {
       await saveDonatePledge(selectedDonateAmount, selectedDonateFrequency);
-      const freqName = selectedDonateFrequency === 2 ? 'Guardião (2 meses)' : 'Benfeitor (3 meses)';
-      showToast(`🕊️ Pix Copiado! Seu compromisso como ${freqName} foi registrado no coração. Muito obrigado!`);
+      const freqName = selectedDonateFrequency === 2 ? 'Guardi�o (2 meses)' : 'Benfeitor (3 meses)';
+      showToast(`??? Pix Copiado! Seu compromisso como ${freqName} foi registrado no cora��o. Muito obrigado!`);
     } else {
-      showToast(`📋 Pix Copia e Cola (${valStr}) copiado com sucesso! Abra o app do seu banco.`);
+      showToast(`?? Pix Copia e Cola (${valStr}) copiado com sucesso! Abra o app do seu banco.`);
     }
 
     const copyBtn = document.getElementById('pixCopyBtn');
     if (copyBtn) {
       const origHtml = copyBtn.innerHTML;
-      copyBtn.innerHTML = '<i class="fas fa-check"></i> <span>Código Copiado!</span>';
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> <span>C�digo Copiado!</span>';
       copyBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
       setTimeout(() => {
         copyBtn.innerHTML = origHtml;
@@ -4097,8 +4097,8 @@ window.copyCurrentPixSelection = async function () {
       }, 2500);
     }
   } catch (err) {
-    console.error('[Donate] Erro ao copiar código Pix:', err);
-    showToast('Falha ao copiar automaticamente. Selecione e copie o código acima.');
+    console.error('[Donate] Erro ao copiar c�digo Pix:', err);
+    showToast('Falha ao copiar automaticamente. Selecione e copie o c�digo acima.');
   }
 };
 
@@ -4119,7 +4119,7 @@ window.copyDirectEmailKey = async function () {
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    showToast(`✉️ Chave e-mail (${PIX_KEY}) copiada com sucesso!`);
+    showToast(`?? Chave e-mail (${PIX_KEY}) copiada com sucesso!`);
   } catch (err) {
     showToast(`Chave Pix: ${PIX_KEY}`);
   }
@@ -4158,7 +4158,7 @@ function handleDonateAudioFinished() {
   activeDonateUtterance = null;
   updateDonateAudioBtnState(false);
   clearDonateAutoCloseTimer();
-  console.log('[Donate] Leitura do texto concluída. Modal permanece aberto para interação do usuário.');
+  console.log('[Donate] Leitura do texto conclu�da. Modal permanece aberto para intera��o do usu�rio.');
 }
 
 window.stopDonateAudio = function () {
@@ -4301,8 +4301,8 @@ window.toggleDonateAudio = function () {
 };
 
 let donateHeartbeatInterval = null;
-// Intervalo de 20 minutos de uso contínuo (respeitoso e equilibrado para oração)
-const DONATE_INTERVAL_MS = 20 * 60 * 1000;
+// Intervalo de 20 minutos de uso cont�nuo (respeitoso e equilibrado para ora��o)
+const DONATE_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 horas = 4x por dia
 let lastDonateTime = Date.now();
 
 export async function isDonatePopupDisabledByAdmin() {
@@ -4315,7 +4315,7 @@ export async function isDonatePopupDisabledByAdmin() {
 }
 
 /**
- * Verifica se o usuário pediu para ser lembrado em outro dia (snooze até amanhã)
+ * Verifica se o usu�rio pediu para ser lembrado em outro dia (snooze at� amanh�)
  */
 export async function isDonateSnoozedToday() {
   try {
@@ -4328,10 +4328,10 @@ export async function isDonateSnoozedToday() {
 }
 
 /**
- * Salvaguarda da oração: verifica se o usuário está em momento profundo de oração ou ouvindo áudio
+ * Salvaguarda da ora��o: verifica se o usu�rio est� em momento profundo de ora��o ou ouvindo �udio
  */
 export function isUserInDeepPrayer() {
-  // Áudios devocionais ativos controlados pela aplicação
+  // �udios devocionais ativos controlados pela aplica��o
   if (isSpeaking || isChapterReading || isRosarioSpeaking || isDonateAudioSpeaking || isDiretorSpeaking) return true;
   if (typeof isLiturgiaSpeaking !== 'undefined' && isLiturgiaSpeaking) return true;
   if (typeof isHomilySpeaking !== 'undefined' && isHomilySpeaking) return true;
@@ -4340,7 +4340,7 @@ export function isUserInDeepPrayer() {
   if (typeof isMariaAudioSpeaking !== 'undefined' && isMariaAudioSpeaking) return true;
   if (typeof isTeologiaSpeaking !== 'undefined' && isTeologiaSpeaking) return true;
 
-  // Telas devocionais que não devem ser interrompidas
+  // Telas devocionais que n�o devem ser interrompidas
   const prayerViews = ['rosarioView', 'novenasView', 'lectioView', 'confissaoView', 'diretorEspiritualView'];
   for (const vId of prayerViews) {
     const el = document.getElementById(vId);
@@ -4382,22 +4382,22 @@ export async function updateHomeFraternalCard() {
         </div>
         <div class="fraternal-card-body">
           <div class="fraternal-card-header">
-            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-heart"></i> Lembrete Fraterno (${nextCycle}ª de ${pledge.totalMonths})</span>
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-heart"></i> Lembrete Fraterno (${nextCycle}� de ${pledge.totalMonths})</span>
             <span class="fraternal-card-cta" style="color: var(--gold-400); font-weight: 800;">Contribuir (${amountStr}) <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Completam-se 30 dias do seu abençoado compromisso. Toque aqui para realizar a sua contribuição e manter esta obra viva!
+            Completam-se 30 dias do seu aben�oado compromisso. Toque aqui para realizar a sua contribui��o e manter esta obra viva!
           </p>
         </div>
       `;
       return;
     }
 
-    // 2. Caso tenha compromisso de benfeitor em andamento (aguardando próximo mês)
+    // 2. Caso tenha compromisso de benfeitor em andamento (aguardando pr�ximo m�s)
     if (pledge && pledge.active && !pledge.completed) {
       const cycle = pledge.currentCycle || 1;
       const total = pledge.totalMonths || 3;
-      const tagTitle = total === 2 ? `Guardião da Palavra (Mês ${cycle} de 2)` : `Benfeitor Trimestral (Mês ${cycle} de 3)`;
+      const tagTitle = total === 2 ? `Guardi�o da Palavra (M�s ${cycle} de 2)` : `Benfeitor Trimestral (M�s ${cycle} de 3)`;
 
       card.classList.add('donated-mode');
       card.onclick = () => showDonateModal();
@@ -4412,16 +4412,16 @@ export async function updateHomeFraternalCard() {
             <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Seu compromisso de evangelização está ativo. Que Deus derrame bênçãos abundantes sobre a sua casa e sua família!
+            Seu compromisso de evangeliza��o est� ativo. Que Deus derrame b�n��os abundantes sobre a sua casa e sua fam�lia!
           </p>
         </div>
       `;
       return;
     }
 
-    // 3. Caso tenha completado o ciclo e esteja no 4º mês (hora da renovação fraterna)
+    // 3. Caso tenha completado o ciclo e esteja no 4� m�s (hora da renova��o fraterna)
     if (pledge && pledge.completed && !pledge.renewalDeclined && Date.now() >= (pledge.nextRenewalDate || 0)) {
-      const amountStr = pledge.amount > 0 ? `R$ ${pledge.amount},00/mês` : 'valor livre';
+      const amountStr = pledge.amount > 0 ? `R$ ${pledge.amount},00/m�s` : 'valor livre';
       card.classList.add('donated-mode');
       card.onclick = () => showPledgeRenewalModal(pledge);
       card.innerHTML = `
@@ -4431,18 +4431,18 @@ export async function updateHomeFraternalCard() {
         </div>
         <div class="fraternal-card-body">
           <div class="fraternal-card-header">
-            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-star"></i> Renovação Fraterna (Novo Ciclo)</span>
+            <span class="fraternal-card-tag" style="color: var(--gold-300);"><i class="fas fa-star"></i> Renova��o Fraterna (Novo Ciclo)</span>
             <span class="fraternal-card-cta" style="color: var(--gold-400); font-weight: 800;">Renovar (${amountStr}) <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Você concluiu seu ciclo de apoio com louvor! Toque aqui para renovar seu compromisso ou concluir sua missão com honra.
+            Voc� concluiu seu ciclo de apoio com louvor! Toque aqui para renovar seu compromisso ou concluir sua miss�o com honra.
           </p>
         </div>
       `;
       return;
     }
 
-    // 4. Caso tenha concluído o compromisso trimestral e optado por concluir / não renovar
+    // 4. Caso tenha conclu�do o compromisso trimestral e optado por concluir / n�o renovar
     if (pledge && pledge.completed && pledge.renewalDeclined) {
       card.classList.add('donated-mode');
       card.onclick = () => showDonateModal();
@@ -4457,14 +4457,14 @@ export async function updateHomeFraternalCard() {
             <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Gratidão perpétua pela sua contribuição à Palavra de Deus. Nossas orações e bênçãos estão com você e sua família!
+            Gratid�o perp�tua pela sua contribui��o � Palavra de Deus. Nossas ora��es e b�n��os est�o com voc� e sua fam�lia!
           </p>
         </div>
       `;
       return;
     }
 
-    // 5. Caso tenha concluído o ciclo recentemente (aguardando o 4º mês)
+    // 5. Caso tenha conclu�do o ciclo recentemente (aguardando o 4� m�s)
     if (pledge && pledge.completed) {
       card.classList.add('donated-mode');
       card.onclick = () => showDonateModal();
@@ -4479,7 +4479,7 @@ export async function updateHomeFraternalCard() {
             <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Você concluiu seu compromisso de sustentação desta obra de evangelização! Muito obrigado por caminhar conosco.
+            Voc� concluiu seu compromisso de sustenta��o desta obra de evangeliza��o! Muito obrigado por caminhar conosco.
           </p>
         </div>
       `;
@@ -4501,7 +4501,7 @@ export async function updateHomeFraternalCard() {
             <span class="fraternal-card-cta" style="color: var(--text-muted); font-size: 11px;">Ver Detalhes <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Você é um sustentador deste projeto sagrado. Deus abençoe imensamente a sua generosidade e oração!
+            Voc� � um sustentador deste projeto sagrado. Deus aben�oe imensamente a sua generosidade e ora��o!
           </p>
         </div>
       `;
@@ -4515,11 +4515,11 @@ export async function updateHomeFraternalCard() {
         </div>
         <div class="fraternal-card-body">
           <div class="fraternal-card-header">
-            <span class="fraternal-card-tag"><i class="fas fa-heart"></i> Evangelização Sem Anúncios</span>
+            <span class="fraternal-card-tag"><i class="fas fa-heart"></i> Evangeliza��o Sem An�ncios</span>
             <span class="fraternal-card-cta">Apoiar <i class="fas fa-chevron-right"></i></span>
           </div>
           <p class="fraternal-card-text">
-            Este aplicativo é mantido sem propagandas para a sua oração. Apoie com um café fraterno (R$ 2,00) ou o que o coração desejar!
+            Este aplicativo � mantido sem propagandas para a sua ora��o. Apoie com um caf� fraterno (R$ 2,00) ou o que o cora��o desejar!
           </p>
         </div>
       `;
@@ -4531,12 +4531,12 @@ export async function updateHomeFraternalCard() {
 
 async function checkAndStartDonateTimer() {
   try {
-    // Remove chave antiga de bloqueio diário total para não travar após testes
+    // Remove chave antiga de bloqueio di�rio total para n�o travar ap�s testes
     try { await Preferences.remove({ key: 'biblia_last_donate_popup_date' }); } catch (e) {}
 
     const disabledByAdmin = await isDonatePopupDisabledByAdmin();
     if (disabledByAdmin) {
-      console.log('[Donate] Popup de apoio desativado pelo Administrador (Modo Apresentação). Timer inativo.');
+      console.log('[Donate] Popup de apoio desativado pelo Administrador (Modo Apresenta��o). Timer inativo.');
       if (donateHeartbeatInterval) {
         clearInterval(donateHeartbeatInterval);
         donateHeartbeatInterval = null;
@@ -4548,7 +4548,7 @@ async function checkAndStartDonateTimer() {
     const res = await Preferences.get({ key: 'biblia_already_donated' });
     const alreadyDonated = res && (res.value === 'true' || res.value === true);
     if (alreadyDonated) {
-      console.log('[Donate] Usuário já marcou como doado anteriormente. Timer inativo.');
+      console.log('[Donate] Usu�rio j� marcou como doado anteriormente. Timer inativo.');
       if (donateHeartbeatInterval) {
         clearInterval(donateHeartbeatInterval);
         donateHeartbeatInterval = null;
@@ -4559,17 +4559,17 @@ async function checkAndStartDonateTimer() {
 
     const snoozedToday = await isDonateSnoozedToday();
     if (snoozedToday) {
-      console.log('[Donate] Usuário pediu para lembrar outro dia. Pausado hoje.');
+      console.log('[Donate] Usu�rio pediu para lembrar outro dia. Pausado hoje.');
       updateAdminDonateBadge();
       return;
     }
 
     if (donateHeartbeatInterval) clearInterval(donateHeartbeatInterval);
     lastDonateTime = Date.now();
-    console.log('[Donate] Timer de apoio ativado: monitorando periodicidade a cada 20 minutos.');
+    console.log('[Donate] Timer de apoio ativado: monitorando periodicidade a cada 6 horas.');
     updateAdminDonateBadge();
 
-    // Verificação contínua e imune a throttling a cada 5 segundos
+    // Verifica��o cont�nua e imune a throttling a cada 5 segundos
     donateHeartbeatInterval = setInterval(async () => {
       try {
         const adminOff = await isDonatePopupDisabledByAdmin();
@@ -4598,15 +4598,15 @@ async function checkAndStartDonateTimer() {
 
         const elapsed = Date.now() - lastDonateTime;
         if (elapsed >= DONATE_INTERVAL_MS) {
-          // Salvaguarda da oração: se estiver rezando, aguarda terminar
+          // Salvaguarda da ora��o: se estiver rezando, aguarda terminar
           if (isUserInDeepPrayer()) {
-            console.log('[Donate] 20 minutos decorridos, mas usuário está rezando ou ouvindo áudio. Aguardando...');
+            console.log('[Donate] 6 horas decorridas, mas usu�rio est� rezando ou ouvindo �udio. Aguardando...');
             return;
           }
 
           const modal = document.getElementById('donateModal');
           if (modal && modal.classList.contains('hidden')) {
-            console.log('[Donate] 20 minutos decorridos. Exibindo banner de apoio fraterno.');
+            console.log('[Donate] 6 horas decorridas. Exibindo banner de apoio fraterno.');
             lastDonateTime = Date.now();
             showDonateModal();
             updateAdminDonateBadge();
@@ -4617,18 +4617,18 @@ async function checkAndStartDonateTimer() {
       }
     }, 5000); // Heartbeat a cada 5 segundos
   } catch (err) {
-    console.error("[Donate] Erro ao verificar timer de doação:", err);
+    console.error("[Donate] Erro ao verificar timer de doa��o:", err);
   }
 }
 
 /**
- * Verifica se há um lembrete de compromisso fraterno (30 ou 60 dias) pendente
+ * Verifica se h� um lembrete de compromisso fraterno (30 ou 60 dias) pendente
  */
 export async function checkPledgeReminder() {
   try {
     const pledge = await getPledgeData();
 
-    // 1. Verifica lembrete fraterno durante o ciclo ativo (2º ou 3º mês)
+    // 1. Verifica lembrete fraterno durante o ciclo ativo (2� ou 3� m�s)
     if (pledge && pledge.active && !pledge.completed) {
       if (Date.now() >= pledge.nextReminderDate) {
         console.log('[Pledge] Lembrete fraterno de 30 dias atingido. Exibindo modal.');
@@ -4639,16 +4639,16 @@ export async function checkPledgeReminder() {
       }
     }
 
-    // 2. Verifica renovação fraterna no 4º mês (após concluir o ciclo de 3 meses)
+    // 2. Verifica renova��o fraterna no 4� m�s (ap�s concluir o ciclo de 3 meses)
     if (pledge && pledge.completed && !pledge.renewalDeclined && Date.now() >= (pledge.nextRenewalDate || 0)) {
-      console.log('[Pledge] Momento de renovação fraterna (4º mês) atingido. Exibindo modal de renovação.');
+      console.log('[Pledge] Momento de renova��o fraterna (4� m�s) atingido. Exibindo modal de renova��o.');
       setTimeout(() => {
         showPledgeRenewalModal(pledge);
       }, 1500);
       return true;
     }
   } catch (err) {
-    console.error('[Pledge] Erro ao verificar lembretes e renovação:', err);
+    console.error('[Pledge] Erro ao verificar lembretes e renova��o:', err);
   }
   return false;
 }
@@ -4668,17 +4668,17 @@ window.showPledgeReminderModal = async function (pledgeData = null) {
 
   const badge = document.getElementById('pledgeCycleText');
   if (badge) {
-    badge.innerText = `${nextCycle}ª Contribuição Fraterna (Mês ${nextCycle} de ${total})`;
+    badge.innerText = `${nextCycle}� Contribui��o Fraterna (M�s ${nextCycle} de ${total})`;
   }
 
   const msg = document.getElementById('pledgeReminderMessage');
   if (msg) {
-    msg.innerHTML = `Sua fidelidade mantém o Santo Terço, a Liturgia e a Bíblia Sagrada acessíveis e 100% gratuitos para milhares de lares. Toque abaixo para gerar o Pix no valor do seu compromisso (<strong>${amountStr}</strong>):`;
+    msg.innerHTML = `Sua fidelidade mant�m o Santo Ter�o, a Liturgia e a B�blia Sagrada acess�veis e 100% gratuitos para milhares de lares. Toque abaixo para gerar o Pix no valor do seu compromisso (<strong>${amountStr}</strong>):`;
   }
 
   const btnText = document.getElementById('btnFulfillPledgeText');
   if (btnText) {
-    btnText.innerText = `Realizar ${nextCycle}ª Contribuição (${amountStr})`;
+    btnText.innerText = `Realizar ${nextCycle}� Contribui��o (${amountStr})`;
   }
 
   modal.classList.remove('hidden');
@@ -4695,7 +4695,7 @@ window.closePledgeReminderModal = function () {
 };
 
 /**
- * Exibe o modal de renovação fraterna (4º Mês / Pós-Ciclo)
+ * Exibe o modal de renova��o fraterna (4� M�s / P�s-Ciclo)
  */
 window.showPledgeRenewalModal = async function (pledgeData = null) {
   const modal = document.getElementById('pledgeRenewalModal');
@@ -4703,7 +4703,7 @@ window.showPledgeRenewalModal = async function (pledgeData = null) {
 
   const pledge = pledgeData || (await getPledgeData()) || { totalMonths: 3, amount: selectedDonateAmount || 5 };
   const amount = pledge.amount !== undefined ? Number(pledge.amount) : (selectedDonateAmount || 5);
-  const amountStr = amount > 0 ? `R$ ${amount},00/mês` : 'valor livre';
+  const amountStr = amount > 0 ? `R$ ${amount},00/m�s` : 'valor livre';
   const totalMonths = pledge.totalMonths || 3;
 
   const amtSpan = document.getElementById('pledgeRenewalAmountText');
@@ -4713,7 +4713,7 @@ window.showPledgeRenewalModal = async function (pledgeData = null) {
 
   const btnSpan = document.getElementById('btnRenewPledgeText');
   if (btnSpan) {
-    btnSpan.innerText = `🔄 Renovar Compromisso Fraterno (+${totalMonths} Meses)`;
+    btnSpan.innerText = `?? Renovar Compromisso Fraterno (+${totalMonths} Meses)`;
   }
 
   modal.classList.remove('hidden');
@@ -4721,7 +4721,7 @@ window.showPledgeRenewalModal = async function (pledgeData = null) {
 };
 
 /**
- * Fecha o modal de renovação fraterna
+ * Fecha o modal de renova��o fraterna
  */
 window.closePledgeRenewalModal = function () {
   const modal = document.getElementById('pledgeRenewalModal');
@@ -4756,14 +4756,14 @@ window.renewPledgeCycle = async function () {
     await showDonateModal();
 
     updateHomeFraternalCard();
-    showToast('🕊️ Que bênção! Seu compromisso de benfeitor foi renovado. Deus abençoe sua generosidade!');
+    showToast('??? Que b�n��o! Seu compromisso de benfeitor foi renovado. Deus aben�oe sua generosidade!');
   } catch (err) {
     console.error('[PledgeRenewal] Erro ao renovar ciclo:', err);
   }
 };
 
 /**
- * Declina a renovação (Concluir Missão / Não contribuir mais)
+ * Declina a renova��o (Concluir Miss�o / N�o contribuir mais)
  */
 window.declinePledgeRenewal = async function () {
   try {
@@ -4776,14 +4776,14 @@ window.declinePledgeRenewal = async function () {
 
     closePledgeRenewalModal();
     updateHomeFraternalCard();
-    showToast('🙏 Deus abençoe imensamente tudo o que você fez por esta missão! Nossas orações estão com você.');
+    showToast('?? Deus aben�oe imensamente tudo o que voc� fez por esta miss�o! Nossas ora��es est�o com voc�.');
   } catch (err) {
-    console.error('[PledgeRenewal] Erro ao declinar renovação:', err);
+    console.error('[PledgeRenewal] Erro ao declinar renova��o:', err);
   }
 };
 
 /**
- * Adia a decisão de renovação por alguns dias (ex: 7 dias)
+ * Adia a decis�o de renova��o por alguns dias (ex: 7 dias)
  */
 window.snoozePledgeRenewal = async function (days = 7) {
   try {
@@ -4792,11 +4792,11 @@ window.snoozePledgeRenewal = async function (days = 7) {
     await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
   } catch (e) {}
   closePledgeRenewalModal();
-  showToast('🕊️ Combinado! Te lembraremos em alguns dias com muito carinho.');
+  showToast('??? Combinado! Te lembraremos em alguns dias com muito carinho.');
 };
 
 /**
- * Avança para a realização da 2ª ou 3ª contribuição mantendo exatamente o valor da 1ª
+ * Avan�a para a realiza��o da 2� ou 3� contribui��o mantendo exatamente o valor da 1�
  */
 window.fulfillPledgeNow = async function () {
   closePledgeReminderModal();
@@ -4812,7 +4812,7 @@ window.fulfillPledgeNow = async function () {
 };
 
 /**
- * Avança o ciclo do compromisso fraterno no armazenamento
+ * Avan�a o ciclo do compromisso fraterno no armazenamento
  */
 export async function advancePledgeCycle() {
   try {
@@ -4828,18 +4828,18 @@ export async function advancePledgeCycle() {
       pledge.active = false;
       pledge.completed = true;
       pledge.renewalDeclined = false;
-      pledge.nextRenewalDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // 4º Mês (30 dias após a 3ª)
-      showToast('👑 Parabéns! Você concluiu seu compromisso fraterno de evangelização! Que Deus te cubra de bênçãos.');
+      pledge.nextRenewalDate = Date.now() + 30 * 24 * 60 * 60 * 1000; // 4� M�s (30 dias ap�s a 3�)
+      showToast('?? Parab�ns! Voc� concluiu seu compromisso fraterno de evangeliza��o! Que Deus te cubra de b�n��os.');
     } else {
       pledge.nextReminderDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
-      showToast(`🕊️ ${pledge.currentCycle}ª Contribuição iniciada! Próximo lembrete em 30 dias. Obrigado por perseverar conosco!`);
+      showToast(`??? ${pledge.currentCycle}� Contribui��o iniciada! Pr�ximo lembrete em 30 dias. Obrigado por perseverar conosco!`);
     }
 
     await Preferences.set({ key: 'biblia_donate_pledge', value: JSON.stringify(pledge) });
     await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
     updateHomeFraternalCard();
   } catch (e) {
-    console.error('[Pledge] Erro ao avançar ciclo:', e);
+    console.error('[Pledge] Erro ao avan�ar ciclo:', e);
   }
 }
 
@@ -4855,7 +4855,7 @@ window.snoozePledgeReminder = async function (days = 1) {
     }
   } catch (e) {}
   closePledgeReminderModal();
-  showToast('🕊️ Combinado! Te lembraremos amanhã com muito carinho.');
+  showToast('??? Combinado! Te lembraremos amanh� com muito carinho.');
 };
 
 /**
@@ -4873,11 +4873,11 @@ window.completeOrCancelPledge = async function () {
   } catch (e) {}
   closePledgeReminderModal();
   updateHomeFraternalCard();
-  showToast('🙏 Agradecemos de coração por todo o seu apoio. Que a Paz de Jesus e o amor de Maria estejam sempre com você e sua família!');
+  showToast('?? Agradecemos de cora��o por todo o seu apoio. Que a Paz de Jesus e o amor de Maria estejam sempre com voc� e sua fam�lia!');
 };
 
 /**
- * Função de teste para pré-visualizar o modal de lembrete de 30 dias a qualquer momento
+ * Fun��o de teste para pr�-visualizar o modal de lembrete de 30 dias a qualquer momento
  */
 window.testPledgeReminderModalNow = async function () {
   if (typeof window.closeAdminModal === 'function') {
@@ -4895,7 +4895,7 @@ window.testPledgeReminderModalNow = async function () {
 };
 
 /**
- * Função de teste para pré-visualizar o modal de renovação do 4º mês a qualquer momento
+ * Fun��o de teste para pr�-visualizar o modal de renova��o do 4� m�s a qualquer momento
  */
 window.testPledgeRenewalModalNow = async function () {
   if (typeof window.closeAdminModal === 'function') {
@@ -4958,7 +4958,7 @@ window.toggleAdminDonatePopupState = async function () {
       const modal = document.getElementById('donateModal');
       if (modal) modal.classList.add('hidden');
       document.body.style.overflow = '';
-      showToast('🔕 Banner de apoio DESATIVADO (Modo Apresentação)!');
+      showToast('?? Banner de apoio DESATIVADO (Modo Apresenta��o)!');
     } else {
       await Preferences.remove({ key: 'biblia_already_donated' });
       await Preferences.remove({ key: 'biblia_donate_snooze_date' });
@@ -4966,7 +4966,7 @@ window.toggleAdminDonatePopupState = async function () {
       await Preferences.remove({ key: 'biblia_donate_pledge' });
       lastDonateTime = Date.now();
       await checkAndStartDonateTimer();
-      showToast('🔔 Banner de apoio ATIVADO (a cada 20 min de uso)!');
+      showToast('?? Banner de apoio ATIVADO (a cada 20 min de uso)!');
     }
     await updateAdminDonateBadge();
   } catch (err) {
@@ -4977,7 +4977,7 @@ window.toggleAdminDonatePopupState = async function () {
 window.showDonateModal = async function () {
   const modal = document.getElementById('donateModal');
   if (modal) {
-    // Recupera valor e frequência fixados pelo compromisso de benfeitor se houver
+    // Recupera valor e frequ�ncia fixados pelo compromisso de benfeitor se houver
     const pledge = await getPledgeData();
     if (pledge && pledge.active && !pledge.completed) {
       if (pledge.amount !== undefined) {
@@ -4997,7 +4997,7 @@ window.showDonateModal = async function () {
       }
     });
 
-    // Atualiza chips visuais de frequência
+    // Atualiza chips visuais de frequ�ncia
     document.querySelectorAll('.donate-freq-chip').forEach(chip => {
       if (Number(chip.dataset.months) === selectedDonateFrequency) {
         chip.classList.add('active');
@@ -5055,11 +5055,11 @@ window.markAsDonated = async function () {
     stopDonateAudio();
     if (selectedDonateFrequency > 1) {
       await saveDonatePledge(selectedDonateAmount, selectedDonateFrequency);
-      const freqName = selectedDonateFrequency === 2 ? 'Guardião (2 meses)' : 'Benfeitor Trimestral (3 meses)';
-      showToast(`🕊️ Deus abençoe imensamente! Seu compromisso como ${freqName} foi registrado no coração.`);
+      const freqName = selectedDonateFrequency === 2 ? 'Guardi�o (2 meses)' : 'Benfeitor Trimestral (3 meses)';
+      showToast(`??? Deus aben�oe imensamente! Seu compromisso como ${freqName} foi registrado no cora��o.`);
     } else {
       await Preferences.set({ key: 'biblia_already_donated', value: 'true' });
-      showToast('🙏 Deus abençoe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
+      showToast('?? Deus aben�oe imensamente sua generosidade! Muito obrigado por apoiar este projeto sagrado.');
     }
     
     if (donateHeartbeatInterval) {
@@ -5070,7 +5070,7 @@ window.markAsDonated = async function () {
     updateAdminDonateBadge();
     updateHomeFraternalCard();
   } catch (err) {
-    console.error("[Donate] Erro ao salvar status de doação:", err);
+    console.error("[Donate] Erro ao salvar status de doa��o:", err);
     closeDonateModal();
   }
 };
@@ -5086,7 +5086,7 @@ window.remindDonateLater = async function () {
   }
   closeDonateModal();
   updateAdminDonateBadge();
-  showToast('🕊️ Que a Paz de Jesus e o amor de Maria estejam com você! Lembraremos em outro dia.');
+  showToast('??? Que a Paz de Jesus e o amor de Maria estejam com voc�! Lembraremos em outro dia.');
 };
 
 window.resetDonateStatusAndTimer = async function () {
@@ -5099,7 +5099,7 @@ window.resetDonateStatusAndTimer = async function () {
     lastDonateTime = Date.now();
     await checkAndStartDonateTimer();
     updateHomeFraternalCard();
-    showToast('✨ Status e compromissos reiniciados com sucesso.');
+    showToast('? Status e compromissos reiniciados com sucesso.');
     updateAdminDonateBadge();
   } catch (e) {
     console.error(e);
@@ -5137,7 +5137,7 @@ function initDonateButtonShimmer() {
     window.triggerDonateBtnShimmer();
   }, 60000);
 
-  // Primeiro brilho suave 3.5 segundos após iniciar o app
+  // Primeiro brilho suave 3.5 segundos ap�s iniciar o app
   setTimeout(() => {
     window.triggerDonateBtnShimmer();
   }, 3500);
@@ -5158,22 +5158,22 @@ async function updateAdminDonateBadge() {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-off" style="color: #ef4444; font-size: 16px;"></i> <span>Desativado</span>';
         toggleBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
         toggleBtn.style.background = 'rgba(239, 68, 68, 0.12)';
-        toggleBtn.title = 'Clique para ativar o popup periódico a cada 20 minutos';
+        toggleBtn.title = 'Clique para ativar o popup peri�dico a cada 20 minutos';
       } else {
         toggleBtn.innerHTML = '<i class="fas fa-toggle-on" style="color: #10b981; font-size: 16px;"></i> <span>Ativo</span>';
         toggleBtn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
         toggleBtn.style.background = 'rgba(16, 185, 129, 0.12)';
-        toggleBtn.title = 'Clique para desativar (Modo Apresentação para Padres)';
+        toggleBtn.title = 'Clique para desativar (Modo Apresenta��o para Padres)';
       }
     }
 
     if (badge) {
       if (disabledByAdmin) {
-        badge.textContent = 'Desativado (Modo Apresentação)';
+        badge.textContent = 'Desativado (Modo Apresenta��o)';
         badge.style.background = 'rgba(239, 68, 68, 0.15)';
         badge.style.color = '#ef4444';
       } else if (already) {
-        badge.textContent = 'Já Apoiado (Pausado)';
+        badge.textContent = 'J� Apoiado (Pausado)';
         badge.style.background = 'rgba(16, 185, 129, 0.15)';
         badge.style.color = '#10b981';
       } else {
@@ -5287,7 +5287,7 @@ window.unlockAdminPanel = function () {
     updateAdminKeyBadge(currentKey);
     updateAdminDonateBadge();
     carregarParoquiasAdmin();
-    showToast('🔓 Painel do Administrador desbloqueado com sucesso!');
+    showToast('?? Painel do Administrador desbloqueado com sucesso!');
   } else {
     showToast('PIN de Administrador incorreto. Tente novamente.');
     if (pinInput) pinInput.select();
@@ -5303,7 +5303,7 @@ window.lockAdminPanel = function () {
   if (pinInput) pinInput.value = '';
 };
 
-// ===== PARÓQUIA & RATEIO 30% DE MONETIZAÇÃO =====
+// ===== PAR�QUIA & RATEIO 30% DE MONETIZA��O =====
 let isParoquiaOnboarding = false;
 
 window.openParoquiaModal = async function (isOnboarding = false) {
@@ -5311,7 +5311,7 @@ window.openParoquiaModal = async function (isOnboarding = false) {
   const modal = document.getElementById('paroquiaModal');
   if (!modal) return;
 
-  // 1. Popula os Estados do Brasil no select se ainda não estiver populado
+  // 1. Popula os Estados do Brasil no select se ainda n�o estiver populado
   const selectEstado = document.getElementById('paroquiaEstado');
   if (selectEstado && selectEstado.options.length <= 1) {
     ESTADOS_BRASIL.forEach(est => {
@@ -5322,7 +5322,7 @@ window.openParoquiaModal = async function (isOnboarding = false) {
     });
   }
 
-  // 2. Preenche os campos se já houver paróquia cadastrada localmente
+  // 2. Preenche os campos se j� houver par�quia cadastrada localmente
   const current = await getLocalParoquia();
   if (current) {
     if (selectEstado) selectEstado.value = current.estado || '';
@@ -5347,7 +5347,7 @@ window.closeParoquiaModal = function () {
 window.pularParoquiaModal = async function () {
   await dismissParoquiaOnboarding();
   closeParoquiaModal();
-  showToast('Lembrete: você pode vincular sua Paróquia a qualquer momento tocando em ⛪ no topo do app! 🙏');
+  showToast('Lembrete: voc� pode vincular sua Par�quia a qualquer momento tocando em ? no topo do app! ??');
 };
 
 window.submitParoquiaForm = async function () {
@@ -5358,7 +5358,7 @@ window.submitParoquiaForm = async function () {
   const nome_devoto = document.getElementById('paroquiaDevoto')?.value?.trim() || '';
 
   if (!estado || !cidade || !paroquia) {
-    showToast('Por favor, preencha o Estado, Cidade e o Nome da sua Paróquia.');
+    showToast('Por favor, preencha o Estado, Cidade e o Nome da sua Par�quia.');
     return;
   }
 
@@ -5366,17 +5366,17 @@ window.submitParoquiaForm = async function () {
   const originalHtml = btn ? btn.innerHTML : '';
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando Paróquia...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando Par�quia...';
   }
 
   try {
     const saved = await saveParoquia({ estado, cidade, paroquia, pix_chave, nome_devoto });
     await updateHomeParoquiaCard(saved);
     closeParoquiaModal();
-    showToast(`⛪ ${paroquia} vinculada com sucesso! 30% das arrecadações do app apoiarão a sua comunidade.`);
+    showToast(`? ${paroquia} vinculada com sucesso! 30% das arrecada��es do app apoiar�o a sua comunidade.`);
   } catch (err) {
     console.error('[ParoquiaForm] Erro ao salvar:', err);
-    showToast('Erro ao salvar informações da paróquia. Tente novamente.');
+    showToast('Erro ao salvar informa��es da par�quia. Tente novamente.');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -5398,34 +5398,34 @@ export async function updateHomeParoquiaCard(cachedParoquia = null) {
     if (p && p.paroquia) {
       if (card) {
         card.classList.add('paroquia-mode');
-        if (tag) tag.innerHTML = '<i class="fas fa-church"></i> Minha Paróquia Vinculada (Apoio de 30%)';
+        if (tag) tag.innerHTML = '<i class="fas fa-church"></i> Minha Par�quia Vinculada (Apoio de 30%)';
         if (cta) cta.innerHTML = 'Alterar <i class="fas fa-edit"></i>';
         if (text) {
-          text.innerHTML = `<strong>${p.paroquia}</strong> — ${p.cidade}/${p.estado}<br><span style="font-size: 11.5px; opacity: 0.85;">30% de toda a monetização e doações deste app são destinadas à sua comunidade no fechamento mensal.</span>`;
+          text.innerHTML = `<strong>${p.paroquia}</strong> � ${p.cidade}/${p.estado}<br><span style="font-size: 11.5px; opacity: 0.85;">30% de toda a monetiza��o e doa��es deste app s�o destinadas � sua comunidade no fechamento mensal.</span>`;
         }
       }
       if (headerBtn) {
-        headerBtn.title = `Minha Paróquia: ${p.paroquia} (${p.cidade}/${p.estado})`;
+        headerBtn.title = `Minha Par�quia: ${p.paroquia} (${p.cidade}/${p.estado})`;
         headerBtn.style.color = '#38bdf8';
       }
       if (donateBannerText) {
-        donateBannerText.innerHTML = `<strong>⛪ Partilha de 30% Garantida:</strong> 30% desta sua contribuição será transferida via PIX para apoiar a <strong>${p.paroquia}</strong> (${p.cidade} - ${p.estado}) no fechamento mensal.`;
+        donateBannerText.innerHTML = `<strong>? Partilha de 30% Garantida:</strong> 30% desta sua contribui��o ser� transferida via PIX para apoiar a <strong>${p.paroquia}</strong> (${p.cidade} - ${p.estado}) no fechamento mensal.`;
       }
     } else {
       if (card) {
         card.classList.remove('paroquia-mode');
-        if (tag) tag.innerHTML = '<i class="fas fa-cross"></i> Minha Paróquia & Comunidade';
-        if (cta) cta.innerHTML = 'Vincular Paróquia <i class="fas fa-chevron-right"></i>';
+        if (tag) tag.innerHTML = '<i class="fas fa-cross"></i> Minha Par�quia & Comunidade';
+        if (cta) cta.innerHTML = 'Vincular Par�quia <i class="fas fa-chevron-right"></i>';
         if (text) {
-          text.innerHTML = `Toque aqui para vincular sua paróquia. <strong>30% da monetização e doações</strong> deste aplicativo são repassadas à sua comunidade no fechamento de cada mês!`;
+          text.innerHTML = `Toque aqui para vincular sua par�quia. <strong>30% da monetiza��o e doa��es</strong> deste aplicativo s�o repassadas � sua comunidade no fechamento de cada m�s!`;
         }
       }
       if (headerBtn) {
-        headerBtn.title = 'Vincular Minha Paróquia (Apoio de 30%)';
+        headerBtn.title = 'Vincular Minha Par�quia (Apoio de 30%)';
         headerBtn.style.color = '#60a5fa';
       }
       if (donateBannerText) {
-        donateBannerText.innerHTML = `<strong style="color: #93c5fd;">Partilha Fraterna de 30%:</strong> Toda contribuição tem 30% repassado à sua Paróquia no final do mês. <span style="text-decoration: underline; color: #60a5fa;">Toque para vincular sua paróquia agora.</span>`;
+        donateBannerText.innerHTML = `<strong style="color: #93c5fd;">Partilha Fraterna de 30%:</strong> Toda contribui��o tem 30% repassado � sua Par�quia no final do m�s. <span style="text-decoration: underline; color: #60a5fa;">Toque para vincular sua par�quia agora.</span>`;
       }
     }
   } catch (err) {
@@ -5434,24 +5434,24 @@ export async function updateHomeParoquiaCard(cachedParoquia = null) {
 }
 window.updateHomeParoquiaCard = updateHomeParoquiaCard;
 
-// ===== ADMIN: GESTÃO E FECHAMENTO DE PARÓQUIAS (30% PIX) =====
+// ===== ADMIN: GEST�O E FECHAMENTO DE PAR�QUIAS (30% PIX) =====
 let cachedAdminParoquiasList = [];
 
 window.carregarParoquiasAdmin = async function () {
   const container = document.getElementById('adminParoquiasContainer');
   if (!container) return;
-  container.innerHTML = '<p style="text-align: center; color: var(--gold-400); margin: 12px 0;"><i class="fas fa-spinner fa-spin"></i> Consultando paróquias cadastradas na nuvem...</p>';
+  container.innerHTML = '<p style="text-align: center; color: var(--gold-400); margin: 12px 0;"><i class="fas fa-spinner fa-spin"></i> Consultando par�quias cadastradas na nuvem...</p>';
 
   try {
     const list = await fetchAllParoquiasFromFirebase();
     cachedAdminParoquiasList = list;
 
     if (!list || list.length === 0) {
-      container.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin: 12px 0;">Nenhuma paróquia cadastrada na nuvem até o momento.</p>';
+      container.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin: 12px 0;">Nenhuma par�quia cadastrada na nuvem at� o momento.</p>';
       return;
     }
 
-    // Agrupa por Paróquia + Cidade + Estado
+    // Agrupa por Par�quia + Cidade + Estado
     const agrupado = {};
     list.forEach(item => {
       const chave = `${(item.paroquia || '').toLowerCase()}|${(item.cidade || '').toLowerCase()}|${(item.estado || '').toLowerCase()}`;
@@ -5474,8 +5474,8 @@ window.carregarParoquiasAdmin = async function () {
 
     let html = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 600; color: #10b981; font-size: 11.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
-        <span>Total de Fiéis: <strong>${list.length}</strong></span>
-        <span>Paróquias Distintas: <strong>${entries.length}</strong></span>
+        <span>Total de Fi�is: <strong>${list.length}</strong></span>
+        <span>Par�quias Distintas: <strong>${entries.length}</strong></span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
     `;
@@ -5503,7 +5503,7 @@ window.carregarParoquiasAdmin = async function () {
     container.innerHTML = html;
   } catch (err) {
     console.error('[AdminParoquias] Erro:', err);
-    container.innerHTML = '<p style="text-align: center; color: #ef4444; margin: 12px 0;">Erro ao consultar nuvem. Verifique a conexão de internet.</p>';
+    container.innerHTML = '<p style="text-align: center; color: #ef4444; margin: 12px 0;">Erro ao consultar nuvem. Verifique a conex�o de internet.</p>';
   }
 };
 
@@ -5515,7 +5515,7 @@ window.copiarRelatorioParoquiasAdmin = async function () {
   }
 
   if (!cachedAdminParoquiasList || cachedAdminParoquiasList.length === 0) {
-    showToast('Carregue as paróquias primeiro tocando em Atualizar.');
+    showToast('Carregue as par�quias primeiro tocando em Atualizar.');
     return;
   }
 
@@ -5538,24 +5538,24 @@ window.copiarRelatorioParoquiasAdmin = async function () {
   const entries = Object.values(agrupado).sort((a, b) => b.contagem - a.contagem);
   const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-  let relatorio = `⛪ RELATÓRIO DE PARÓQUIAS E RATEIO DE 30% (BÍBLIA SAGRADA CATÓLICA)\n`;
+  let relatorio = `? RELAT�RIO DE PAR�QUIAS E RATEIO DE 30% (B�BLIA SAGRADA CAT�LICA)\n`;
   relatorio += `Data do Fechamento: ${dataHoje}\n`;
-  relatorio += `Total de Fiéis Cadastrados: ${cachedAdminParoquiasList.length}\n`;
-  relatorio += `Total de Paróquias Vinculadas: ${entries.length}\n`;
+  relatorio += `Total de Fi�is Cadastrados: ${cachedAdminParoquiasList.length}\n`;
+  relatorio += `Total de Par�quias Vinculadas: ${entries.length}\n`;
   relatorio += `--------------------------------------------------------\n\n`;
 
   entries.forEach((e, idx) => {
     relatorio += `${idx + 1}. ${e.paroquia}\n`;
     relatorio += `   Localidade: ${e.cidade} - ${e.estado}\n`;
-    relatorio += `   Fiéis Vinculados: ${e.contagem}\n`;
-    relatorio += `   Chave PIX: ${e.pix || 'Solicitar à secretaria paroquial'}\n\n`;
+    relatorio += `   Fi�is Vinculados: ${e.contagem}\n`;
+    relatorio += `   Chave PIX: ${e.pix || 'Solicitar � secretaria paroquial'}\n\n`;
   });
 
   relatorio += `--------------------------------------------------------\n`;
-  relatorio += `Observação: 30% do saldo mensal de monetização e doações arrecadadas no app devem ser repassados para as paróquias acima conforme o número de fiéis.\n`;
+  relatorio += `Observa��o: 30% do saldo mensal de monetiza��o e doa��es arrecadadas no app devem ser repassados para as par�quias acima conforme o n�mero de fi�is.\n`;
 
   await copyToClipboard(relatorio);
-  showToast('📋 Relatório de fechamento copiado para a área de transferência!');
+  showToast('?? Relat�rio de fechamento copiado para a �rea de transfer�ncia!');
 };
 
 function updateAdminKeyBadge(key) {
@@ -5564,15 +5564,15 @@ function updateAdminKeyBadge(key) {
   const currentKey = typeof key === 'string' ? key.trim() : (getAiApiKey() || '');
   if (currentKey) {
     if (currentKey.startsWith('gsk_')) {
-      badge.textContent = 'Groq IA Ativa (100% Grátis ⚡)';
+      badge.textContent = 'Groq IA Ativa (100% Gr�tis ?)';
       badge.style.background = 'rgba(249, 115, 22, 0.15)';
       badge.style.color = '#f97316';
     } else if (currentKey.startsWith('AIza')) {
-      badge.textContent = 'Google Gemini Ativo ✨';
+      badge.textContent = 'Google Gemini Ativo ?';
       badge.style.background = 'rgba(16, 185, 129, 0.15)';
       badge.style.color = '#10b981';
     } else {
-      badge.textContent = 'Chave IA Ativa ✨';
+      badge.textContent = 'Chave IA Ativa ?';
       badge.style.background = 'rgba(16, 185, 129, 0.15)';
       badge.style.color = '#10b981';
     }
@@ -5605,8 +5605,8 @@ window.saveAdminAiKey = window.saveAdminGeminiKey = async function () {
     });
   } catch (e) {}
 
-  const provider = key.startsWith('gsk_') ? 'Groq IA (100% Gratuita)' : (key.startsWith('AIza') ? 'Google Gemini' : 'Inteligência Artificial');
-  showToast(`✨ Chave da ${provider} salva com sucesso pelo Administrador!`);
+  const provider = key.startsWith('gsk_') ? 'Groq IA (100% Gratuita)' : (key.startsWith('AIza') ? 'Google Gemini' : 'Intelig�ncia Artificial');
+  showToast(`? Chave da ${provider} salva com sucesso pelo Administrador!`);
 };
 
 window.saveAdminAiKeyInstant = function (rawVal) {
@@ -5638,9 +5638,9 @@ async function getBestGroqModel(apiKey) {
     if (res.ok) {
       const json = await res.json();
       const ids = (json.data || []).map(m => m.id);
-      console.log("[Groq API] Modelos disponíveis na conta:", ids);
+      console.log("[Groq API] Modelos dispon�veis na conta:", ids);
 
-      // Modelos ativos prioritários para a chave do app
+      // Modelos ativos priorit�rios para a chave do app
       const preferred = [
         'qwen/qwen3.8-27b',
         'openai/gpt-oss-120b',
@@ -5660,7 +5660,7 @@ async function getBestGroqModel(apiKey) {
       if (ids.length > 0) return ids[0];
     }
   } catch (err) {
-    console.warn("Não foi possível listar modelos dinamicamente da Groq:", err);
+    console.warn("N�o foi poss�vel listar modelos dinamicamente da Groq:", err);
   }
   return 'qwen/qwen3.8-27b';
 }
@@ -5681,9 +5681,9 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
   if (statusDiv) {
     statusDiv.style.display = 'block';
     if (isGroq) {
-      statusDiv.innerHTML = '<span style="color: #f97316;"><i class="fas fa-spinner fa-spin"></i> Conectando à Groq IA e testando modelos ativos...</span>';
+      statusDiv.innerHTML = '<span style="color: #f97316;"><i class="fas fa-spinner fa-spin"></i> Conectando � Groq IA e testando modelos ativos...</span>';
     } else {
-      statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunicação com Google Gemini IA...</span>';
+      statusDiv.innerHTML = '<span style="color: #60a5fa;"><i class="fas fa-spinner fa-spin"></i> Testando comunica��o com Google Gemini IA...</span>';
     }
   }
 
@@ -5730,13 +5730,13 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
             const errJson = await res.json().catch(() => ({}));
             const errMsg = errJson.error?.message || `HTTP ${res.status}`;
             console.warn(`[Groq Test] ${modelToTest}:`, errMsg);
-            attemptedDetails.push(`• ${modelToTest}: ${errMsg}`);
+            attemptedDetails.push(`� ${modelToTest}: ${errMsg}`);
             if (res.status === 401 || res.status === 403) {
               break;
             }
           }
         } catch (e) {
-          attemptedDetails.push(`• ${modelToTest}: ${e.message}`);
+          attemptedDetails.push(`� ${modelToTest}: ${e.message}`);
         }
       }
 
@@ -5747,12 +5747,12 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
         localStorage.setItem('biblia_groq_detected_model', workingModel);
         updateAdminKeyBadge(testKey);
         if (statusDiv) {
-          statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a Groq IA validada e ativada com sucesso! Modelo: <code>${workingModel}</code> (Latência: ${elapsed}ms) ⚡</span>`;
+          statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conex�o com a Groq IA validada e ativada com sucesso! Modelo: <code>${workingModel}</code> (Lat�ncia: ${elapsed}ms) ?</span>`;
         }
-        showToast(`✨ Chave da Groq ativada com sucesso (${workingModel})!`);
+        showToast(`? Chave da Groq ativada com sucesso (${workingModel})!`);
       } else {
         if (statusDiv) {
-          statusDiv.innerHTML = `<div style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha ao validar conexão com a Groq:</div><div style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">${attemptedDetails.join('<br>')}</div><div style="font-size: 11px; margin-top: 6px; color: var(--gold-400);">Dica: Verifique se copiou a chave completa gerada no console.groq.com/keys.</div>`;
+          statusDiv.innerHTML = `<div style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha ao validar conex�o com a Groq:</div><div style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">${attemptedDetails.join('<br>')}</div><div style="font-size: 11px; margin-top: 6px; color: var(--gold-400);">Dica: Verifique se copiou a chave completa gerada no console.groq.com/keys.</div>`;
         }
       }
     } catch (err) {
@@ -5780,12 +5780,12 @@ window.testAdminAiKey = window.testAdminGeminiKey = async function () {
       localStorage.setItem('biblia_gemini_api_key', testKey);
       updateAdminKeyBadge(testKey);
       if (statusDiv) {
-        statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conexão com a IA validada e ativada com sucesso! (Latência: ${elapsed}ms)</span>`;
+        statusDiv.innerHTML = `<span style="color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> Conex�o com a IA validada e ativada com sucesso! (Lat�ncia: ${elapsed}ms)</span>`;
       }
-      showToast('✨ Conexão com o Google Gemini funcionando perfeitamente!');
+      showToast('? Conex�o com o Google Gemini funcionando perfeitamente!');
     } else {
       if (statusDiv) {
-        statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha: Código HTTP ${res.status}. Verifique se a chave é válida no Google AI Studio.</span>`;
+        statusDiv.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Falha: C�digo HTTP ${res.status}. Verifique se a chave � v�lida no Google AI Studio.</span>`;
       }
     }
   } catch (err) {
@@ -5817,7 +5817,7 @@ window.updateAdminPin = async function () {
   if (!input) return;
   const newPin = input.value.trim();
   if (!newPin || newPin.length < 4) {
-    showToast('O novo PIN precisa ter no mínimo 4 caracteres.');
+    showToast('O novo PIN precisa ter no m�nimo 4 caracteres.');
     return;
   }
   localStorage.setItem('biblia_admin_pin', newPin);
@@ -5829,7 +5829,7 @@ window.updateAdminPin = async function () {
       body: JSON.stringify({ pin: getAdminPin(), newPin: newPin })
     });
   } catch (e) {}
-  showToast('🔑 Senha/PIN de Administrador atualizada com sucesso!');
+  showToast('?? Senha/PIN de Administrador atualizada com sucesso!');
 };
 
 // ===== AI HOMILY & DEVOTIONAL REFLECTION =====
@@ -5879,7 +5879,7 @@ window.generateHomilyForChapter = async function () {
   generateHomily(currentBook.nome, currentChapter, "completo", text);
 };
 
-// Gera a homilia devocional católica com exegese bíblica e Tradição da Igreja
+// Gera a homilia devocional cat�lica com exegese b�blica e Tradi��o da Igreja
 window.generateHomily = function (bookName, chapter, verse, text) {
   const modal = document.getElementById('homilyModal');
   const title = document.getElementById('homilyTitle');
@@ -5896,33 +5896,33 @@ window.generateHomily = function (bookName, chapter, verse, text) {
   excerpt.textContent = `"${text.length > 150 ? text.substring(0, 150) + '...' : text}"`;
 
   const apiKey = getAiApiKey();
-  console.log("[generateHomily] Provedor de IA ativo:", apiKey ? (apiKey.startsWith('gsk_') ? 'Groq IA' : 'Google Gemini') : 'Motor Católico Nativo (Offline)');
+  console.log("[generateHomily] Provedor de IA ativo:", apiKey ? (apiKey.startsWith('gsk_') ? 'Groq IA' : 'Google Gemini') : 'Motor Cat�lico Nativo (Offline)');
 
   if (apiKey) {
     generateDynamicAiHomily(bookName, chapter, verse, text);
     return;
   }
 
-  // Gera homilia católica profunda e contextualizada via motor exegético nativo
+  // Gera homilia cat�lica profunda e contextualizada via motor exeg�tico nativo
   const devotional = getDevotionalHomily(bookName, chapter, verse, text);
   
   body.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
       <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
-        <i class="fas fa-church"></i> Meditação Católica Nativa
+        <i class="fas fa-church"></i> Medita��o Cat�lica Nativa
       </span>
       <button onclick="openAdminModal()" style="font-size: 10.5px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 5px; padding: 2px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-        <i class="fas fa-bolt"></i> Ativar Padre de IA (Groq Grátis)
+        <i class="fas fa-bolt"></i> Ativar Padre de IA (Groq Gr�tis)
       </button>
     </div>
     ${devotional.html}
     <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
               style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-        <i class="fas fa-redo"></i> Nova Meditação
+        <i class="fas fa-redo"></i> Nova Medita��o
       </button>
       <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
-        <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+        <i class="fas fa-church" style="color: var(--gold-400);"></i> Medita��o B�blica Cat�lica
       </span>
     </div>
   `;
@@ -5974,7 +5974,7 @@ async function callGroqAPI(prompt, apiKey) {
             messages: [
               {
                 role: 'system',
-                content: 'Você é um padre católico profundamente piedoso, sábio e acolhedor, com sólida formação teológica, patrística e pastoral da Santa Igreja Católica Apostólica Romana.'
+                content: 'Voc� � um padre cat�lico profundamente piedoso, s�bio e acolhedor, com s�lida forma��o teol�gica, patr�stica e pastoral da Santa Igreja Cat�lica Apost�lica Romana.'
               },
               {
                 role: 'user',
@@ -6001,15 +6001,15 @@ async function callGroqAPI(prompt, apiKey) {
         console.warn(`Groq modelo ${model} erro (tentativa ${attempt + 1}, status ${response.status}):`, errorText);
 
         if (response.status === 401 || response.status === 403) {
-          throw new Error("Chave da Groq inválida ou sem permissão. Verifique sua chave em console.groq.com/keys.");
+          throw new Error("Chave da Groq inv�lida ou sem permiss�o. Verifique sua chave em console.groq.com/keys.");
         }
 
-        // Se o modelo não existir ou não estiver liberado (404 ou 400), pula imediatamente para o próximo modelo
+        // Se o modelo n�o existir ou n�o estiver liberado (404 ou 400), pula imediatamente para o pr�ximo modelo
         if (response.status === 404 || response.status === 400) {
           break;
         }
 
-        lastError = new Error(`Código ${response.status}: Servidor da Groq retornou erro.`);
+        lastError = new Error(`C�digo ${response.status}: Servidor da Groq retornou erro.`);
 
         if (response.status === 429 || response.status >= 500) {
           await new Promise(res => setTimeout(res, 600 * (attempt + 1)));
@@ -6022,25 +6022,25 @@ async function callGroqAPI(prompt, apiKey) {
         if (err.name === 'AbortError') {
           console.warn(`Modelo Groq ${model} timeout. Alternando modelo...`);
           lastError = new Error("Tempo de resposta da IA esgotado.");
-        } else if (err.message && err.message.includes('inválida')) {
+        } else if (err.message && err.message.includes('inv�lida')) {
           throw err;
         }
       }
     }
   }
 
-  throw lastError || new Error("Servidor da Groq indisponível no momento.");
+  throw lastError || new Error("Servidor da Groq indispon�vel no momento.");
 }
 
 async function callAiAPI(prompt) {
   const apiKey = getAiApiKey();
 
-  // 1. Chave da Groq (gsk_...) - 100% Gratuita e Instantânea
+  // 1. Chave da Groq (gsk_...) - 100% Gratuita e Instant�nea
   if (apiKey && apiKey.startsWith('gsk_')) {
     return await callGroqAPI(prompt, apiKey);
   }
 
-  // 2. Chave do Google Gemini (AIza...) com fallback automático para Groq
+  // 2. Chave do Google Gemini (AIza...) com fallback autom�tico para Groq
   if (apiKey && apiKey.startsWith('AIza')) {
     try {
       const data = await callGeminiAPIWithFallback(prompt);
@@ -6057,12 +6057,12 @@ async function callAiAPI(prompt) {
     }
   }
 
-  // 3. Fallback genérico: tenta Groq Global
+  // 3. Fallback gen�rico: tenta Groq Global
   if (GLOBAL_DEFAULT_GROQ_KEY) {
     return await callGroqAPI(prompt, GLOBAL_DEFAULT_GROQ_KEY);
   }
 
-  throw new Error("Chave de IA não configurada.");
+  throw new Error("Chave de IA n�o configurada.");
 }
 
 window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async function (bookName, chapter, verse, text) {
@@ -6071,32 +6071,32 @@ window.generateDynamicAiHomily = window.generateDynamicGeminiHomily = async func
   const title = document.getElementById('homilyTitle');
   if (title) title.innerHTML = '<span style="color: #10b981;"><i class="fas fa-church"></i> Padre de IA</span>';
 
-  // MENSAGEM VERDE SOLICITADA PELO USUÁRIO: "Padre de IA gerando homilia"
+  // MENSAGEM VERDE SOLICITADA PELO USU�RIO: "Padre de IA gerando homilia"
   body.innerHTML = `
     <div style="text-align: center; padding: 32px 16px;">
         <div class="loading-spinner" style="border-color: rgba(16, 185, 129, 0.25); border-top-color: #10b981; width: 44px; height: 44px; margin: 0 auto 16px; border-width: 3.5px;"></div>
         <p style="color: #10b981; font-weight: 700; font-size: 16.5px; margin: 0 0 8px 0; animation: pulse-glow 1.5s infinite; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <i class="fas fa-church"></i> Padre de IA gerando homilia...
         </p>
-        <span style="font-size: 12.5px; color: var(--text-muted); display: block;">Iluminando o coração com a Sagrada Escritura e o Magistério da Igreja...</span>
+        <span style="font-size: 12.5px; color: var(--text-muted); display: block;">Iluminando o cora��o com a Sagrada Escritura e o Magist�rio da Igreja...</span>
     </div>
   `;
 
   try {
     const cleanText = (text || '').trim();
     // Limita tamanho do texto para respeitar TPM (Tokens Per Minute) da Groq
-    const promptText = cleanText.length > 2000 ? cleanText.substring(0, 2000) + '... [trecho principal do capítulo]' : cleanText;
+    const promptText = cleanText.length > 2000 ? cleanText.substring(0, 2000) + '... [trecho principal do cap�tulo]' : cleanText;
 
-    const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
-Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para a seguinte passagem bíblica:
+    const prompt = `Voc� � um padre cat�lico acolhedor, profundamente piedoso, s�bio e com s�lida forma��o teol�gica e pastoral.
+Fa�a uma bela e tocante homilia devocional (entre 3 e 4 par�grafos substanciais) para a seguinte passagem b�blica:
 ${bookName} ${chapter}${verse === 'completo' ? '' : ':' + verse} - "${promptText}"
 
-Instruções para a homilia:
-1. Comece com uma saudação cristã paternal e calorosa.
-2. Explique o sentido espiritual profundo e teológico desta passagem no contexto do livro de ${bookName}.
-3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, São Tomás de Aquino, São João Crisóstomo ou Santa Teresa).
-4. Dê 3 ensinamentos ou compromissos práticos para a vida diária do fiel moderno (família, trabalho, oração).
-5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
+Instru��es para a homilia:
+1. Comece com uma sauda��o crist� paternal e calorosa.
+2. Explique o sentido espiritual profundo e teol�gico desta passagem no contexto do livro de ${bookName}.
+3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, S�o Tom�s de Aquino, S�o Jo�o Cris�stomo ou Santa Teresa).
+4. D� 3 ensinamentos ou compromissos pr�ticos para a vida di�ria do fiel moderno (fam�lia, trabalho, ora��o).
+5. Termine com uma ora��o e b�n��o sacerdotal solene em nome da Sant�ssima Trindade.
 Destaque frases e conceitos espirituais centrais em negrito.`;
 
     const result = await callAiAPI(prompt);
@@ -6111,10 +6111,10 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     body.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
         <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700;">
-          <i class="fas fa-church"></i> Padre de IA • Homilia Concluída (${modelUsed})
+          <i class="fas fa-church"></i> Padre de IA � Homilia Conclu�da (${modelUsed})
         </span>
         <span style="font-size: 11px; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
-          <i class="fas fa-check-circle"></i> Sacerdócio Católico & Tradição
+          <i class="fas fa-check-circle"></i> Sacerd�cio Cat�lico & Tradi��o
         </span>
       </div>
       ${formattedHomily}
@@ -6124,7 +6124,7 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
           <i class="fas fa-redo"></i> Nova Homilia IA
         </button>
         <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
-          <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+          <i class="fas fa-church" style="color: var(--gold-400);"></i> Medita��o B�blica Cat�lica
         </span>
       </div>
     `;
@@ -6134,23 +6134,23 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     updateSpeakBtnState(false);
 
   } catch (err) {
-    console.warn("Falha na chamada da IA, exibindo aviso e meditação católica:", err.message || err);
+    console.warn("Falha na chamada da IA, exibindo aviso e medita��o cat�lica:", err.message || err);
     const devotional = getDevotionalHomily(bookName, chapter, verse, text);
     body.innerHTML = `
       <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #ef4444;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
           <span style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
-            <i class="fas fa-exclamation-triangle"></i> Falha no Padre de IA: ${err.message || 'Erro de comunicação'}
+            <i class="fas fa-exclamation-triangle"></i> Falha no Padre de IA: ${err.message || 'Erro de comunica��o'}
           </span>
           <button onclick="openAdminModal()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 10.5px; padding: 3px 8px; border-radius: 5px; cursor: pointer;">
             <i class="fas fa-key"></i> Ajustar Chave
           </button>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Exibindo meditação católica nativa como alternativa offline:</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Exibindo medita��o cat�lica nativa como alternativa offline:</div>
       </div>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
         <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(212, 175, 55, 0.15); color: var(--gold-400); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
-          <i class="fas fa-church"></i> Meditação Católica Nativa
+          <i class="fas fa-church"></i> Medita��o Cat�lica Nativa
         </span>
         <span style="font-size: 10.5px; color: var(--text-muted);">
           <i class="fas fa-shield-alt"></i> Modo Offline Seguro
@@ -6160,10 +6160,10 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
       <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <button onclick="generateHomily('${bookName.replace(/'/g, "\\'")}', '${chapter}', '${verse}', '${text.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"
                 style="background: rgba(212, 168, 83, 0.12); border: 1px solid rgba(212, 168, 83, 0.35); color: var(--gold-300); font-size: 11px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-redo"></i> Nova Meditação
+          <i class="fas fa-redo"></i> Nova Medita��o
         </button>
         <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
-          <i class="fas fa-church" style="color: var(--gold-400);"></i> Meditação Bíblica Católica
+          <i class="fas fa-church" style="color: var(--gold-400);"></i> Medita��o B�blica Cat�lica
         </span>
       </div>
     `;
@@ -6221,7 +6221,7 @@ async function callGeminiAPIWithFallback(prompt) {
           throw new Error("INVALID_OR_EXPIRED_KEY");
         }
 
-        lastError = new Error(`Código ${response.status}: Servidor do Gemini indisponível.`);
+        lastError = new Error(`C�digo ${response.status}: Servidor do Gemini indispon�vel.`);
         
         if (response.status === 503 || response.status === 429 || response.status >= 500) {
           await new Promise(res => setTimeout(res, 500 * (attempt + 1)));
@@ -6233,7 +6233,7 @@ async function callGeminiAPIWithFallback(prompt) {
         lastError = err;
         if (err.name === 'AbortError') {
           console.warn(`Modelo ${model} demorou mais de 12s e foi cancelado (timeout). Alternando modelo...`);
-          lastError = new Error("Tempo de resposta esgotado. Tentando modelo mais rápido...");
+          lastError = new Error("Tempo de resposta esgotado. Tentando modelo mais r�pido...");
         } else if (err.message === 'INVALID_OR_EXPIRED_KEY' || err.message === 'KEY_NOT_CONFIGURED') {
           throw err;
         }
@@ -6242,7 +6242,7 @@ async function callGeminiAPIWithFallback(prompt) {
   }
 
   if (lastError && lastError.message !== 'INVALID_OR_EXPIRED_KEY' && lastError.message !== 'KEY_NOT_CONFIGURED') {
-    throw new Error("Os servidores do Gemini estão enfrentando alta demanda no momento (sobrecarga temporária). Por favor, tente novamente em alguns instantes.");
+    throw new Error("Os servidores do Gemini est�o enfrentando alta demanda no momento (sobrecarga tempor�ria). Por favor, tente novamente em alguns instantes.");
   }
   throw lastError;
 }
@@ -6284,14 +6284,14 @@ window.speakHomily = function () {
   const btn = document.getElementById('homilySpeakBtn');
   let textToSpeak = btn ? btn.dataset.homily : null;
 
-  // Fallback garantido: extrai o texto exato renderizado na tela (ignorando botões de rodapé)
+  // Fallback garantido: extrai o texto exato renderizado na tela (ignorando bot�es de rodap�)
   if (!textToSpeak) {
     const body = document.getElementById('homilyBody');
     if (body) {
       const clone = body.cloneNode(true);
       const footer = clone.querySelector('div[style*="border-top"]');
       if (footer) footer.remove();
-      textToSpeak = (clone.innerText || clone.textContent || '').replace(/✝/g, '').trim();
+      textToSpeak = (clone.innerText || clone.textContent || '').replace(/?/g, '').trim();
     }
   }
 
@@ -6316,7 +6316,7 @@ window.speakHomily = function () {
   } else if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
 
-    // Divide em sentenças para pronúncia clara e contínua
+    // Divide em senten�as para pron�ncia clara e cont�nua
     const sentences = textToSpeak
       .split(/(?<=[.?!:])\s+|\n+/)
       .map(s => s.trim())
@@ -6353,12 +6353,12 @@ window.speakHomily = function () {
     speakNextSentence();
   } else {
     updateSpeakBtnState(false);
-    showToast("Seu dispositivo não suporta leitura em voz alta.");
+    showToast("Seu dispositivo n�o suporta leitura em voz alta.");
   }
 };
 
 // ==========================================================================
-// LITURGIA DIÁRIA & SANTO DO DIA
+// LITURGIA DI�RIA & SANTO DO DIA
 // ==========================================================================
 let currentLiturgiaDate = new Date();
 let currentLiturgiaData = null;
@@ -6367,7 +6367,7 @@ let isLiturgiaSpeaking = false;
 function showLiturgia(date = null) {
   showView('liturgiaView');
 
-  // Garante que a data e o botão 'Hoje' sejam carregados e ativados automaticamente
+  // Garante que a data e o bot�o 'Hoje' sejam carregados e ativados automaticamente
   if (!date || date instanceof Event) {
     loadLiturgiaHoje();
   } else {
@@ -6433,7 +6433,7 @@ async function loadLiturgiaData() {
   stopLiturgiaSpeech();
   stopHomiliaLiturgiaSpeech();
 
-  // Garante que a data seja 100% válida em qualquer situação
+  // Garante que a data seja 100% v�lida em qualquer situa��o
   currentLiturgiaDate = sanitizeLiturgiaDate(currentLiturgiaDate);
 
   const now = new Date();
@@ -6446,15 +6446,15 @@ async function loadLiturgiaData() {
     dateInput.value = `${y}-${m}-${d}`;
   }
 
-  // 1. CARREGAMENTO ULTRA INSTANTÂNEO (0ms de espera, SEM NENHUM SPINNER)
-  // Exibe na hora os dados completos (do cache ou do gerador canônico de alta fidelidade)
+  // 1. CARREGAMENTO ULTRA INSTANT�NEO (0ms de espera, SEM NENHUM SPINNER)
+  // Exibe na hora os dados completos (do cache ou do gerador can�nico de alta fidelidade)
   const initialData = getImmediateLiturgia(currentLiturgiaDate);
   currentLiturgiaData = initialData;
   if (subtitleEl) subtitleEl.textContent = `${currentLiturgiaData.dataExtenso}`;
   renderLiturgiaView(currentLiturgiaData);
   autoFetchAiHomilyForLiturgia(currentLiturgiaData);
 
-  // 2. Busca atualização remota em segundo plano de forma silenciosa e transparente
+  // 2. Busca atualiza��o remota em segundo plano de forma silenciosa e transparente
   getLiturgiaDiaria(currentLiturgiaDate).then(fresh => {
     if (fresh) {
       currentLiturgiaData = fresh;
@@ -6463,7 +6463,7 @@ async function loadLiturgiaData() {
       autoFetchAiHomilyForLiturgia(fresh);
     }
   }).catch(err => {
-    console.warn("[Liturgia] Mantendo dados imediatos canônicos:", err);
+    console.warn("[Liturgia] Mantendo dados imediatos can�nicos:", err);
   });
 }
 
@@ -6480,7 +6480,7 @@ function renderLiturgiaView(data) {
     <div class="liturgia-header-banner" style="border-left: 5px solid ${corHex};">
       <div class="liturgia-color-tag" style="background: ${corHex}22; color: ${corHex}; border: 1px solid ${corHex}55;">
         <span style="width: 8px; height: 8px; border-radius: 50%; background: ${corHex}; display: inline-block;"></span>
-        Cor Litúrgica: ${corNome} (${corDesc})
+        Cor Lit�rgica: ${corNome} (${corDesc})
       </div>
       <div class="liturgia-date-display">${data.dataExtenso}</div>
       <div class="liturgia-tempo-display"><i class="fas fa-church"></i> ${data.tempoLiturgico}</div>
@@ -6495,7 +6495,7 @@ function renderLiturgiaView(data) {
       <p class="liturgia-reading-text">${data.primeiraLeitura?.texto || ''}</p>
       <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
         <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.primeiraLeitura?.referencia || '').replace(/'/g, "\\'")}')">
-          <i class="fas fa-bible"></i> Ler na Bíblia
+          <i class="fas fa-bible"></i> Ler na B�blia
         </button>
       </div>
     </div>
@@ -6507,13 +6507,13 @@ function renderLiturgiaView(data) {
         <span class="liturgia-section-ref">${data.salmo?.referencia || ''}</span>
       </div>
       <div class="liturgia-psalm-refrao">
-        <strong>Refrão:</strong> ${data.salmo?.refrao || ''}
+        <strong>Refr�o:</strong> ${data.salmo?.refrao || ''}
       </div>
       <p class="liturgia-reading-text" style="white-space: pre-line;">${data.salmo?.texto || ''}</p>
       ${data.salmo?.referencia ? `
       <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
         <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.salmo.referencia || '').replace(/'/g, "\\'")}')">
-          <i class="fas fa-bible"></i> Ler Salmo na Bíblia
+          <i class="fas fa-bible"></i> Ler Salmo na B�blia
         </button>
       </div>` : ''}
     </div>
@@ -6530,7 +6530,7 @@ function renderLiturgiaView(data) {
         <p class="liturgia-reading-text">${data.segundaLeitura.texto}</p>
         <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
           <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.segundaLeitura?.referencia || '').replace(/'/g, "\\'")}')">
-            <i class="fas fa-bible"></i> Ler na Bíblia
+            <i class="fas fa-bible"></i> Ler na B�blia
           </button>
         </div>
       </div>
@@ -6553,12 +6553,12 @@ function renderLiturgiaView(data) {
           <i class="fas fa-church"></i> Homilia com Padre de IA
         </button>
         <button class="upload-btn-secondary" style="padding: 6px 12px; font-size: 11.5px;" onclick="openBibleByRef('${(data.evangelho?.referencia || '').replace(/'/g, "\\'")}')">
-          <i class="fas fa-bible"></i> Ler na Bíblia
+          <i class="fas fa-bible"></i> Ler na B�blia
         </button>
       </div>
     </div>
 
-    <!-- Homilia Teológica do Santo Evangelho -->
+    <!-- Homilia Teol�gica do Santo Evangelho -->
     <div class="liturgia-section-card homilia-evangelho-card" style="border: 1px solid rgba(16, 185, 129, 0.35); background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.08) 0%, var(--bg-card) 75%);">
       <div class="liturgia-section-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.2); padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
@@ -6566,7 +6566,7 @@ function renderLiturgiaView(data) {
             <i class="fas fa-church" style="color: #10b981;"></i> Homilia do Evangelho
           </h3>
           <span style="font-size: 11px; color: var(--gold-300); display: block; margin-top: 2px;">
-            <i class="fas fa-cross"></i> Padre de IA & Tradição Católica
+            <i class="fas fa-cross"></i> Padre de IA & Tradi��o Cat�lica
           </span>
         </div>
         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
@@ -6589,13 +6589,13 @@ function renderLiturgiaView(data) {
     <!-- Santo do Dia -->
     ${data.santo ? `
     <div class="santo-card">
-      <div class="santo-badge-tag"><i class="fas fa-halo"></i> Santo do Dia • ${data.santo.dataLegivel || ''}</div>
+      <div class="santo-badge-tag"><i class="fas fa-halo"></i> Santo do Dia � ${data.santo.dataLegivel || ''}</div>
       <h3 class="santo-name">${data.santo.nome}</h3>
       <div class="santo-title-sub">${data.santo.titulo}</div>
       <p class="liturgia-reading-text" style="font-size: 15px;">${data.santo.resumo}</p>
       <div class="santo-oracao-box">
-        <div class="santo-oracao-label"><i class="fas fa-praying-hands"></i> Oração de Intercessão:</div>
-        <p class="santo-oracao-text">“${data.santo.oracao}”</p>
+        <div class="santo-oracao-label"><i class="fas fa-praying-hands"></i> Ora��o de Intercess�o:</div>
+        <p class="santo-oracao-text">�${data.santo.oracao}�</p>
       </div>
       <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px;">
         <button class="hero-share-btn" style="padding: 8px 14px; font-size: 12px;" onclick="shareSantoWhatsApp()">
@@ -6643,7 +6643,7 @@ window.toggleSpeakLiturgia = async function () {
   }
   isLiturgiaSpeaking = true;
 
-  const fullText = `Liturgia Diária. ${currentLiturgiaData.dataExtenso}. ${currentLiturgiaData.tempoLiturgico}. Primeira Leitura: ${currentLiturgiaData.primeiraLeitura?.referencia || ''}. ${currentLiturgiaData.primeiraLeitura?.texto || ''}. Salmo Responsorial. Refrão: ${currentLiturgiaData.salmo?.refrao || ''}. Evangelho de Nosso Senhor Jesus Cristo: ${currentLiturgiaData.evangelho?.referencia || ''}. ${currentLiturgiaData.evangelho?.texto || ''}.`;
+  const fullText = `Liturgia Di�ria. ${currentLiturgiaData.dataExtenso}. ${currentLiturgiaData.tempoLiturgico}. Primeira Leitura: ${currentLiturgiaData.primeiraLeitura?.referencia || ''}. ${currentLiturgiaData.primeiraLeitura?.texto || ''}. Salmo Responsorial. Refr�o: ${currentLiturgiaData.salmo?.refrao || ''}. Evangelho de Nosso Senhor Jesus Cristo: ${currentLiturgiaData.evangelho?.referencia || ''}. ${currentLiturgiaData.evangelho?.texto || ''}.`;
 
   try {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
@@ -6678,22 +6678,22 @@ window.toggleSpeakLiturgia = async function () {
 // ===== HOMILIA DO EVANGELHO COM PADRE DE IA =====
 window.gerarHomiliaEvangelhoIA = function () {
   if (!currentLiturgiaData || !currentLiturgiaData.evangelho) {
-    showToast("Evangelho não disponível no momento.");
+    showToast("Evangelho n�o dispon�vel no momento.");
     return;
   }
   const ev = currentLiturgiaData.evangelho;
   const refStr = ev.referencia || 'Evangelho';
   const texto = ev.texto || '';
 
-  let book = 'São Mateus';
+  let book = 'S�o Mateus';
   let chap = 1;
   let verses = 'completo';
 
   const combined = (refStr + ' ' + (ev.titulo || '')).toLowerCase();
-  if (combined.includes('luc') || combined.includes('lc')) book = 'São Lucas';
-  else if (combined.includes('mar') || combined.includes('mc')) book = 'São Marcos';
-  else if (combined.includes('jo')) book = 'São João';
-  else if (combined.includes('mat') || combined.includes('mt')) book = 'São Mateus';
+  if (combined.includes('luc') || combined.includes('lc')) book = 'S�o Lucas';
+  else if (combined.includes('mar') || combined.includes('mc')) book = 'S�o Marcos';
+  else if (combined.includes('jo')) book = 'S�o Jo�o';
+  else if (combined.includes('mat') || combined.includes('mt')) book = 'S�o Mateus';
 
   const match = refStr.match(/(\d+)[\s,:]+(\d+.*)?/);
   if (match) {
@@ -6710,7 +6710,7 @@ async function autoFetchAiHomilyForLiturgia(liturgiaData) {
   const ev = liturgiaData.evangelho;
   const dateKey = liturgiaData.data || new Date().toISOString().split('T')[0];
 
-  // 1. Se já temos a homilia com IA salva para esta data, aplica imediatamente
+  // 1. Se j� temos a homilia com IA salva para esta data, aplica imediatamente
   const cachedAiHomily = localStorage.getItem(`liturgia_ai_homilia_${dateKey}`);
   if (cachedAiHomily) {
     try {
@@ -6725,21 +6725,21 @@ async function autoFetchAiHomilyForLiturgia(liturgiaData) {
     } catch (e) {}
   }
 
-  // 2. Se não tem em cache, busca na IA (Groq) em background
+  // 2. Se n�o tem em cache, busca na IA (Groq) em background
   try {
     const refStr = ev.referencia || 'Evangelho';
     const cleanText = (ev.texto || '').trim();
     const promptText = cleanText.length > 2000 ? cleanText.substring(0, 2000) + '...' : cleanText;
-    const prompt = `Você é um padre católico acolhedor, profundamente piedoso, sábio e com sólida formação teológica e pastoral.
-Faça uma bela e tocante homilia devocional (entre 3 e 4 parágrafos substanciais) para o Santo Evangelho do dia na Liturgia da Igreja Católica:
+    const prompt = `Voc� � um padre cat�lico acolhedor, profundamente piedoso, s�bio e com s�lida forma��o teol�gica e pastoral.
+Fa�a uma bela e tocante homilia devocional (entre 3 e 4 par�grafos substanciais) para o Santo Evangelho do dia na Liturgia da Igreja Cat�lica:
 ${refStr} - "${promptText}"
 
-Instruções para a homilia:
-1. Comece com uma saudação cristã paternal e calorosa.
-2. Explique o sentido espiritual profundo e teológico desta passagem no contexto do Evangelho.
-3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, São Tomás de Aquino, São João Crisóstomo ou Santa Teresa).
-4. Dê 3 ensinamentos ou compromissos práticos para a vida diária do fiel moderno (família, trabalho, oração).
-5. Termine com uma oração e bênção sacerdotal solene em nome da Santíssima Trindade.
+Instru��es para a homilia:
+1. Comece com uma sauda��o crist� paternal e calorosa.
+2. Explique o sentido espiritual profundo e teol�gico desta passagem no contexto do Evangelho.
+3. Conecte com os ensinamentos dos Santos Padres da Igreja (como Santo Agostinho, S�o Tom�s de Aquino, S�o Jo�o Cris�stomo ou Santa Teresa).
+4. D� 3 ensinamentos ou compromissos pr�ticos para a vida di�ria do fiel moderno (fam�lia, trabalho, ora��o).
+5. Termine com uma ora��o e b�n��o sacerdotal solene em nome da Sant�ssima Trindade.
 Destaque frases e conceitos espirituais centrais em negrito.`;
 
     const result = await callAiAPI(prompt);
@@ -6749,10 +6749,10 @@ Destaque frases e conceitos espirituais centrais em negrito.`;
     const formattedHtml = `
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
         <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700;">
-          <i class="fas fa-church"></i> Padre de IA • Homilia do Evangelho (${modelUsed})
+          <i class="fas fa-church"></i> Padre de IA � Homilia do Evangelho (${modelUsed})
         </span>
         <span style="font-size: 11px; color: #10b981; display: inline-flex; align-items: center; gap: 4px;">
-          <i class="fas fa-check-circle"></i> Sacerdócio Católico & Tradição
+          <i class="fas fa-check-circle"></i> Sacerd�cio Cat�lico & Tradi��o
         </span>
       </div>
     ` + homilyRaw
@@ -6922,40 +6922,40 @@ window.shareHomiliaLiturgiaWhatsApp = function () {
   if (!currentLiturgiaData || !currentLiturgiaData.homilia) return;
   const d = currentLiturgiaData;
   const h = d.homilia;
-  let msg = `✝️ *Homilia do Evangelho — ${d.evangelho?.referencia || ''}*\n_${d.dataExtenso} • ${d.tempoLiturgico}_\n\n`;
-  msg += `📖 *${h.themeTitle || 'Meditação e Doutrina Católica'}*\n\n`;
+  let msg = `?? *Homilia do Evangelho � ${d.evangelho?.referencia || ''}*\n_${d.dataExtenso} � ${d.tempoLiturgico}_\n\n`;
+  msg += `?? *${h.themeTitle || 'Medita��o e Doutrina Cat�lica'}*\n\n`;
   msg += `${h.textToSpeak || d.reflexao}\n\n`;
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.shareLiturgiaWhatsApp = function () {
   if (!currentLiturgiaData) return;
   const d = currentLiturgiaData;
-  let msg = `📅 *Liturgia Diária — ${d.dataExtenso}*\n_${d.tempoLiturgico}_\n\n`;
+  let msg = `?? *Liturgia Di�ria � ${d.dataExtenso}*\n_${d.tempoLiturgico}_\n\n`;
   if (d.primeiraLeitura) {
-    msg += `📖 *1ª Leitura (${d.primeiraLeitura.referencia})*\n${d.primeiraLeitura.texto}\n\n`;
+    msg += `?? *1� Leitura (${d.primeiraLeitura.referencia})*\n${d.primeiraLeitura.texto}\n\n`;
   }
   if (d.salmo) {
-    msg += `🎶 *Salmo Responsorial*\n_Refrão:_ ${d.salmo.refrao}\n\n`;
+    msg += `?? *Salmo Responsorial*\n_Refr�o:_ ${d.salmo.refrao}\n\n`;
   }
   if (d.evangelho) {
-    msg += `✝️ *Evangelho (${d.evangelho.referencia})*\n${d.evangelho.texto}\n\n`;
+    msg += `?? *Evangelho (${d.evangelho.referencia})*\n${d.evangelho.texto}\n\n`;
   }
   if (d.homilia && d.homilia.themeTitle) {
-    msg += `🕊️ *Homilia:* ${d.homilia.themeTitle}\n\n`;
+    msg += `??? *Homilia:* ${d.homilia.themeTitle}\n\n`;
   }
   if (d.santo) {
-    msg += `🕊️ *Santo do Dia: ${d.santo.nome}*\n_${d.santo.oracao}_\n\n`;
+    msg += `??? *Santo do Dia: ${d.santo.nome}*\n_${d.santo.oracao}_\n\n`;
   }
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.shareSantoWhatsApp = function () {
   if (!currentLiturgiaData || !currentLiturgiaData.santo) return;
   const s = currentLiturgiaData.santo;
-  let msg = `🕊️ *Santo do Dia: ${s.nome}*\n_${s.titulo}_\n\n${s.resumo}\n\n🙏 *Oração de Intercessão:*\n“${s.oracao}”\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Santo do Dia: ${s.nome}*\n_${s.titulo}_\n\n${s.resumo}\n\n?? *Ora��o de Intercess�o:*\n�${s.oracao}�\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -6965,28 +6965,28 @@ window.shareSantoWhatsApp = function () {
 const BIBLE_BOOK_MAP = [
   // Antigo Testamento (46 livros)
   { id: 1, aliases: ['genesis', 'genese', 'gn', 'gen', 'ge'] },
-  { id: 2, aliases: ['exodo', 'ex', 'êx', 'exo'] },
+  { id: 2, aliases: ['exodo', 'ex', '�x', 'exo'] },
   { id: 3, aliases: ['levitico', 'lv', 'lev'] },
   { id: 4, aliases: ['numeros', 'nm', 'num', 'nu'] },
   { id: 5, aliases: ['deuteronomio', 'dt', 'deut', 'de'] },
   { id: 6, aliases: ['josue', 'js', 'jos'] },
   { id: 7, aliases: ['juizes', 'jz', 'juiz', 'jui'] },
   { id: 8, aliases: ['rute', 'rt', 'rut'] },
-  { id: 9, aliases: ['1 samuel', '1samuel', '1sm', '1 sm', '1sam', '1 s', 'i samuel', 'isamuel', 'ism', 'i sm', '1º samuel', 'primeiro samuel'] },
-  { id: 10, aliases: ['2 samuel', '2samuel', '2sm', '2 sm', '2sam', '2 s', 'ii samuel', 'iisamuel', 'iism', 'ii sm', '2º samuel', 'segundo samuel'] },
-  { id: 11, aliases: ['1 reis', '1reis', '1rs', '1 rs', '1re', '1 re', 'i reis', 'ireis', 'irs', 'i rs', '1º reis', 'primeiro reis'] },
-  { id: 12, aliases: ['2 reis', '2reis', '2rs', '2 rs', '2re', '2 re', 'ii reis', 'iireis', 'iirs', 'ii rs', '2º reis', 'segundo reis'] },
-  { id: 13, aliases: ['1 cronicas', '1cronicas', '1cr', '1 cr', '1cro', 'i cronicas', 'icronicas', 'icr', 'i cr', '1º cronicas', 'primeiro cronicas'] },
-  { id: 14, aliases: ['2 cronicas', '2cronicas', '2cr', '2 cr', '2cro', 'ii cronicas', 'iicronicas', 'iicr', 'ii cr', '2º cronicas', 'segundo cronicas'] },
+  { id: 9, aliases: ['1 samuel', '1samuel', '1sm', '1 sm', '1sam', '1 s', 'i samuel', 'isamuel', 'ism', 'i sm', '1� samuel', 'primeiro samuel'] },
+  { id: 10, aliases: ['2 samuel', '2samuel', '2sm', '2 sm', '2sam', '2 s', 'ii samuel', 'iisamuel', 'iism', 'ii sm', '2� samuel', 'segundo samuel'] },
+  { id: 11, aliases: ['1 reis', '1reis', '1rs', '1 rs', '1re', '1 re', 'i reis', 'ireis', 'irs', 'i rs', '1� reis', 'primeiro reis'] },
+  { id: 12, aliases: ['2 reis', '2reis', '2rs', '2 rs', '2re', '2 re', 'ii reis', 'iireis', 'iirs', 'ii rs', '2� reis', 'segundo reis'] },
+  { id: 13, aliases: ['1 cronicas', '1cronicas', '1cr', '1 cr', '1cro', 'i cronicas', 'icronicas', 'icr', 'i cr', '1� cronicas', 'primeiro cronicas'] },
+  { id: 14, aliases: ['2 cronicas', '2cronicas', '2cr', '2 cr', '2cro', 'ii cronicas', 'iicronicas', 'iicr', 'ii cr', '2� cronicas', 'segundo cronicas'] },
   { id: 15, aliases: ['esdras', 'esd', 'ed', 'es'] },
   { id: 16, aliases: ['neemias', 'ne', 'neem'] },
   { id: 17, aliases: ['tobias', 'tb', 'tob'] },
   { id: 18, aliases: ['judite', 'jdt', 'jt', 'jud'] },
   { id: 19, aliases: ['ester', 'est', 'et'] },
-  { id: 20, aliases: ['jó', 'job'] },
+  { id: 20, aliases: ['j�', 'job'] },
   { id: 21, aliases: ['salmos', 'salmo', 'sl', 'psm', 'ps'] },
-  { id: 22, aliases: ['1 macabeus', '1macabeus', '1mc', '1 mc', '1mac', '1 mac', 'i macabeus', 'imacabeus', 'imc', 'i mc', '1º macabeus', 'primeiro macabeus'] },
-  { id: 23, aliases: ['2 macabeus', '2macabeus', '2mc', '2 mc', '2mac', '2 mac', 'ii macabeus', 'iimacabeus', 'iimc', 'ii mc', '2º macabeus', 'segundo macabeus'] },
+  { id: 22, aliases: ['1 macabeus', '1macabeus', '1mc', '1 mc', '1mac', '1 mac', 'i macabeus', 'imacabeus', 'imc', 'i mc', '1� macabeus', 'primeiro macabeus'] },
+  { id: 23, aliases: ['2 macabeus', '2macabeus', '2mc', '2 mc', '2mac', '2 mac', 'ii macabeus', 'iimacabeus', 'iimc', 'ii mc', '2� macabeus', 'segundo macabeus'] },
   { id: 24, aliases: ['proverbios', 'pr', 'prov', 'pro'] },
   { id: 25, aliases: ['eclesiastes', 'ec', 'ecl', 'qo', 'qoh'] },
   { id: 26, aliases: ['cantico dos canticos', 'canticos', 'cantico', 'ct', 'cnt', 'cant', 'can'] },
@@ -6998,12 +6998,12 @@ const BIBLE_BOOK_MAP = [
   { id: 32, aliases: ['baruc', 'baruque', 'br', 'bar'] },
   { id: 33, aliases: ['ezequiel', 'ez', 'eze'] },
   { id: 34, aliases: ['daniel', 'dn', 'dan'] },
-  { id: 35, aliases: ['oseias', 'oséias', 'os', 'ose'] },
+  { id: 35, aliases: ['oseias', 'os�ias', 'os', 'ose'] },
   { id: 36, aliases: ['joel', 'jl', 'joe'] },
-  { id: 37, aliases: ['amos', 'amós', 'am'] },
+  { id: 37, aliases: ['amos', 'am�s', 'am'] },
   { id: 38, aliases: ['abdias', 'ab', 'abd', 'ob'] },
   { id: 39, aliases: ['jonas', 'jn', 'jon'] },
-  { id: 40, aliases: ['miqueias', 'miquéias', 'mq', 'miq', 'mic'] },
+  { id: 40, aliases: ['miqueias', 'miqu�ias', 'mq', 'miq', 'mic'] },
   { id: 41, aliases: ['naum', 'na', 'nah'] },
   { id: 42, aliases: ['habacuc', 'habacuque', 'hab', 'hc'] },
   { id: 43, aliases: ['sofonias', 'sf', 'sof'] },
@@ -7018,25 +7018,25 @@ const BIBLE_BOOK_MAP = [
   { id: 50, aliases: ['sao joao', 'joao', 'jo', 'joh', 's. joao', 'evangelho de joao', 'evangelho de sao joao'] },
   { id: 51, aliases: ['atos dos apostolos', 'atos', 'at', 'act'] },
   { id: 52, aliases: ['romanos', 'rm', 'rom', 'ro'] },
-  { id: 53, aliases: ['1 corintios', '1corintios', '1cor', '1 cor', '1co', '1 co', 'i corintios', 'icorintios', 'icor', 'i cor', '1º corintios', 'primeiro corintios'] },
-  { id: 54, aliases: ['2 corintios', '2corintios', '2cor', '2 cor', '2co', '2 co', 'ii corintios', 'iicorintios', 'iicor', 'ii cor', '2º corintios', 'segundo corintios'] },
+  { id: 53, aliases: ['1 corintios', '1corintios', '1cor', '1 cor', '1co', '1 co', 'i corintios', 'icorintios', 'icor', 'i cor', '1� corintios', 'primeiro corintios'] },
+  { id: 54, aliases: ['2 corintios', '2corintios', '2cor', '2 cor', '2co', '2 co', 'ii corintios', 'iicorintios', 'iicor', 'ii cor', '2� corintios', 'segundo corintios'] },
   { id: 55, aliases: ['galatas', 'gl', 'gal'] },
   { id: 56, aliases: ['efesios', 'ef', 'efe', 'ep'] },
   { id: 57, aliases: ['filipenses', 'fl', 'flp', 'fp', 'fil'] },
   { id: 58, aliases: ['colossenses', 'cl', 'col'] },
-  { id: 59, aliases: ['1 tessalonicenses', '1tessalonicenses', '1ts', '1 ts', '1tes', '1 tes', 'i tessalonicenses', 'itessalonicenses', 'its', 'i ts', '1º tessalonicenses', 'primeiro tessalonicenses'] },
-  { id: 60, aliases: ['2 tessalonicenses', '2tessalonicenses', '2ts', '2 ts', '2tes', '2 tes', 'ii tessalonicenses', 'iitessalonicenses', 'iits', 'ii ts', '2º tessalonicenses', 'segundo tessalonicenses'] },
-  { id: 61, aliases: ['1 timoteo', '1timoteo', '1tm', '1 tm', '1ti', '1 ti', 'i timoteo', 'itimoteo', 'itm', 'i tm', '1º timoteo', 'primeiro timoteo'] },
-  { id: 62, aliases: ['2 timoteo', '2timoteo', '2tm', '2 tm', '2ti', '2 ti', 'ii timoteo', 'iitimoteo', 'iitm', 'ii tm', '2º timoteo', 'segundo timoteo'] },
+  { id: 59, aliases: ['1 tessalonicenses', '1tessalonicenses', '1ts', '1 ts', '1tes', '1 tes', 'i tessalonicenses', 'itessalonicenses', 'its', 'i ts', '1� tessalonicenses', 'primeiro tessalonicenses'] },
+  { id: 60, aliases: ['2 tessalonicenses', '2tessalonicenses', '2ts', '2 ts', '2tes', '2 tes', 'ii tessalonicenses', 'iitessalonicenses', 'iits', 'ii ts', '2� tessalonicenses', 'segundo tessalonicenses'] },
+  { id: 61, aliases: ['1 timoteo', '1timoteo', '1tm', '1 tm', '1ti', '1 ti', 'i timoteo', 'itimoteo', 'itm', 'i tm', '1� timoteo', 'primeiro timoteo'] },
+  { id: 62, aliases: ['2 timoteo', '2timoteo', '2tm', '2 tm', '2ti', '2 ti', 'ii timoteo', 'iitimoteo', 'iitm', 'ii tm', '2� timoteo', 'segundo timoteo'] },
   { id: 63, aliases: ['tito', 'tt', 'tit'] },
-  { id: 64, aliases: ['filemon', 'filêmon', 'fm', 'flm', 'phm'] },
+  { id: 64, aliases: ['filemon', 'fil�mon', 'fm', 'flm', 'phm'] },
   { id: 65, aliases: ['hebreus', 'hb', 'heb'] },
   { id: 66, aliases: ['sao tiago', 'tiago', 'tg', 'tia', 's. tiago', 'epistola de tiago'] },
-  { id: 67, aliases: ['1 pedro', '1pedro', '1pd', '1 pd', '1pe', '1 pe', '1p', '1 p', '1 sao pedro', '1sao pedro', 'i pedro', 'ipedro', 'ipd', 'i pd', 'ipe', 'i pe', 'i sao pedro', 'isao pedro', '1º pedro', 'primeiro pedro'] },
-  { id: 68, aliases: ['2 pedro', '2pedro', '2pd', '2 pd', '2pe', '2 pe', '2p', '2 p', '2 sao pedro', '2sao pedro', 'ii pedro', 'iipedro', 'iipd', 'ii pd', 'iipe', 'ii pe', 'ii sao pedro', 'iisao pedro', '2º pedro', 'segundo pedro'] },
-  { id: 69, aliases: ['1 joao', '1joao', '1jo', '1 jo', '1j', '1 j', '1 sao joao', '1sao joao', 'i joao', 'ijoao', 'ijo', 'i jo', 'i sao joao', 'isao joao', '1º joao', 'primeiro joao'] },
-  { id: 70, aliases: ['2 joao', '2joao', '2jo', '2 jo', '2j', '2 j', '2 sao joao', '2sao joao', 'ii joao', 'iijoao', 'iijo', 'ii jo', 'ii sao joao', 'iisao joao', '2º joao', 'segundo joao'] },
-  { id: 71, aliases: ['3 joao', '3joao', '3jo', '3 jo', '3j', '3 j', '3 sao joao', '3sao joao', 'iii joao', 'iiijoao', 'iiijo', 'iii jo', 'iii sao joao', 'iiisao joao', '3º joao', 'terceiro joao'] },
+  { id: 67, aliases: ['1 pedro', '1pedro', '1pd', '1 pd', '1pe', '1 pe', '1p', '1 p', '1 sao pedro', '1sao pedro', 'i pedro', 'ipedro', 'ipd', 'i pd', 'ipe', 'i pe', 'i sao pedro', 'isao pedro', '1� pedro', 'primeiro pedro'] },
+  { id: 68, aliases: ['2 pedro', '2pedro', '2pd', '2 pd', '2pe', '2 pe', '2p', '2 p', '2 sao pedro', '2sao pedro', 'ii pedro', 'iipedro', 'iipd', 'ii pd', 'iipe', 'ii pe', 'ii sao pedro', 'iisao pedro', '2� pedro', 'segundo pedro'] },
+  { id: 69, aliases: ['1 joao', '1joao', '1jo', '1 jo', '1j', '1 j', '1 sao joao', '1sao joao', 'i joao', 'ijoao', 'ijo', 'i jo', 'i sao joao', 'isao joao', '1� joao', 'primeiro joao'] },
+  { id: 70, aliases: ['2 joao', '2joao', '2jo', '2 jo', '2j', '2 j', '2 sao joao', '2sao joao', 'ii joao', 'iijoao', 'iijo', 'ii jo', 'ii sao joao', 'iisao joao', '2� joao', 'segundo joao'] },
+  { id: 71, aliases: ['3 joao', '3joao', '3jo', '3 jo', '3j', '3 j', '3 sao joao', '3sao joao', 'iii joao', 'iiijoao', 'iiijo', 'iii jo', 'iii sao joao', 'iiisao joao', '3� joao', 'terceiro joao'] },
   { id: 72, aliases: ['sao judas', 'judas', 'jd', 'jud', 's. judas', 'epistola de judas'] },
   { id: 73, aliases: ['apocalipse', 'ap', 'apoc', 'apc', 'rev'] }
 ];
@@ -7055,17 +7055,17 @@ function findBiblicalBook(rawQuery) {
   const trimmed = rawQuery.trim();
   const lower = trimmed.toLowerCase();
 
-  // Desambiguação explícita de Jó vs João
-  if (lower === 'jó' || lower === 'job') {
+  // Desambigua��o expl�cita de J� vs Jo�o
+  if (lower === 'j�' || lower === 'job') {
     return allBooks.find(b => b.id_livro === 20) || null;
   }
-  if (lower === 'jo' || lower === 'joao' || lower === 'joão') {
+  if (lower === 'jo' || lower === 'joao' || lower === 'jo�o') {
     return allBooks.find(b => b.id_livro === 50) || null;
   }
 
-  // Desambiguação explícita de Judas vs Judite
+  // Desambigua��o expl�cita de Judas vs Judite
   if (lower === 'jd') {
-    return allBooks.find(b => b.id_livro === 72) || null; // São Judas
+    return allBooks.find(b => b.id_livro === 72) || null; // S�o Judas
   }
   if (lower === 'jdt' || lower === 'jt') {
     return allBooks.find(b => b.id_livro === 18) || null; // Judite
@@ -7089,7 +7089,7 @@ function findBiblicalBook(rawQuery) {
     }
   }
 
-  // 3. Busca por correspondência de prefixo
+  // 3. Busca por correspond�ncia de prefixo
   for (const item of BIBLE_BOOK_MAP) {
     for (const al of item.aliases) {
       const na = normalizeBibleStr(al);
@@ -7112,7 +7112,7 @@ function findBiblicalBook(rawQuery) {
 
 function parseVerseNumbers(versePart) {
   if (!versePart) return [];
-  // Considera a primeira cláusula antes de ponto-e-vírgula caso haja múltiplos capítulos
+  // Considera a primeira cl�usula antes de ponto-e-v�rgula caso haja m�ltiplos cap�tulos
   const clause = versePart.split(';')[0].trim();
   const tokens = clause.split(/[\.\s,]+/).filter(Boolean);
   const verses = new Set();
@@ -7138,17 +7138,17 @@ function parseVerseNumbers(versePart) {
 function parseBiblicalRef(refStr) {
   if (!refStr || typeof refStr !== 'string') return null;
 
-  // 1. Remove notas litúrgicas de resposta como (R. 11), (R. 1a) ou (ou ...)
+  // 1. Remove notas lit�rgicas de resposta como (R. 11), (R. 1a) ou (ou ...)
   let clean = refStr.replace(/\(\s*r\.?\s*\d+[^)]*\)/gi, '').trim();
   clean = clean.replace(/\(\s*ou\s+[^)]+\)/gi, '').trim();
 
-  // 2. Trata numeração dupla de Salmos: "Sl 90(91)" -> "Sl 90"
+  // 2. Trata numera��o dupla de Salmos: "Sl 90(91)" -> "Sl 90"
   clean = clean.replace(/(\d+)\s*\(\s*\d+\s*\)/g, (m, p1) => p1);
 
-  // 3. Captura Livro, Capítulo e Versículos
-  // Ex: "Êx 23, 20-23" -> Book: "Êx", Cap: 23, VersesPart: "20-23"
+  // 3. Captura Livro, Cap�tulo e Vers�culos
+  // Ex: "�x 23, 20-23" -> Book: "�x", Cap: 23, VersesPart: "20-23"
   // Ex: "Mt 18, 1-5. 10" -> Book: "Mt", Cap: 18, VersesPart: "1-5. 10"
-  const regex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)(?:[,\s:]+([\d\w\s\.\-;]+))?/;
+  const regex = /^([1-3iI]{0,3}\s*[a-zA-Z�-�\.\s]+?)\s*(\d+)(?:[,\s:]+([\d\w\s\.\-;]+))?/;
   const match = clean.match(regex);
 
   if (match) {
@@ -7162,8 +7162,8 @@ function parseBiblicalRef(refStr) {
     return { rawBook, cap, verseList, startVer, endVer, cleanRef: clean };
   }
 
-  // 4. Fallback para livros de capítulo único (ex: Fm 9-10, Jd 17-25)
-  const singleCapRegex = /^([1-3iI]{0,3}\s*[a-zA-ZÀ-ÿ\.\s]+?)\s*(\d+)/;
+  // 4. Fallback para livros de cap�tulo �nico (ex: Fm 9-10, Jd 17-25)
+  const singleCapRegex = /^([1-3iI]{0,3}\s*[a-zA-Z�-�\.\s]+?)\s*(\d+)/;
   const singleMatch = clean.match(singleCapRegex);
   if (singleMatch) {
     const rawBook = singleMatch[1].trim();
@@ -7174,7 +7174,7 @@ function parseBiblicalRef(refStr) {
   return null;
 }
 
-// Abrir livro e capítulo diretamente pela referência da leitura litúrgica com áudio e destaque contínuo
+// Abrir livro e cap�tulo diretamente pela refer�ncia da leitura lit�rgica com �udio e destaque cont�nuo
 window.openBibleByRef = async function (refStr) {
   if (!refStr) return;
 
@@ -7189,36 +7189,36 @@ window.openBibleByRef = async function (refStr) {
 
   const parsed = parseBiblicalRef(refStr);
   if (!parsed) {
-    showToast(`Referência bíblica: ${refStr}`);
+    showToast(`Refer�ncia b�blica: ${refStr}`);
     return;
   }
 
   const targetBook = findBiblicalBook(parsed.rawBook);
   if (targetBook) {
     const cap = Math.max(1, Math.min(targetBook.total_capitulos, parsed.cap));
-    console.log(`[openBibleByRef] Abrindo ${targetBook.nome_livro} capítulo ${cap} (ref: ${refStr})`);
+    console.log(`[openBibleByRef] Abrindo ${targetBook.nome_livro} cap�tulo ${cap} (ref: ${refStr})`);
     
-    // Abre diretamente o livro e o capítulo correto
+    // Abre diretamente o livro e o cap�tulo correto
     await openBook(targetBook.id_livro, targetBook.nome_livro, targetBook.total_capitulos, cap);
     
     const rangeLabel = (parsed.verseList && parsed.verseList.length > 0)
       ? `${parsed.verseList[0]}${parsed.verseList.length > 1 ? '-' + parsed.verseList[parsed.verseList.length - 1] : ''}`
       : `${parsed.startVer}`;
 
-    showToast(`🔊 Lendo ${targetBook.nome_livro} ${cap}, ${rangeLabel}...`);
+    showToast(`?? Lendo ${targetBook.nome_livro} ${cap}, ${rangeLabel}...`);
 
-    // Inicia a leitura sequencial em áudio percorrendo versículo por versículo até o final da passagem
+    // Inicia a leitura sequencial em �udio percorrendo vers�culo por vers�culo at� o final da passagem
     setTimeout(() => {
       readVersesRange(parsed.verseList);
     }, 350);
   } else {
-    console.warn(`[openBibleByRef] Livro não reconhecido para "${parsed.rawBook}" (ref: ${refStr})`);
-    showToast(`Livro não localizado: ${refStr}`);
+    console.warn(`[openBibleByRef] Livro n�o reconhecido para "${parsed.rawBook}" (ref: ${refStr})`);
+    showToast(`Livro n�o localizado: ${refStr}`);
   }
 };
 
 // ==========================================================================
-// SANTO ROSÁRIO & TERÇO INTERATIVO
+// SANTO ROS�RIO & TER�O INTERATIVO
 // ==========================================================================
 let currentRosarioState = null;
 let currentRosarioStepIndex = 0;
@@ -7249,13 +7249,13 @@ function initRosary(misterioKey = null) {
 
 window.switchRosarioMisterio = function (misterioKey) {
   initRosary(misterioKey);
-  showToast(`Mistérios ${MISTERIOS_DATA[misterioKey].nome} selecionados`);
+  showToast(`Mist�rios ${MISTERIOS_DATA[misterioKey].nome} selecionados`);
 };
 
 function updateRosarioLiveCounter() {
   const el = document.getElementById('rosarioLiveCountText');
   if (el) {
-    el.innerHTML = `<i class="fas fa-praying-hands" style="color: var(--gold-400);"></i> <strong>${liveCommunityCount.toLocaleString('pt-BR')} fiéis</strong> rezando este Santo Terço em comunhão com você agora`;
+    el.innerHTML = `<i class="fas fa-praying-hands" style="color: var(--gold-400);"></i> <strong>${liveCommunityCount.toLocaleString('pt-BR')} fi�is</strong> rezando este Santo Ter�o em comunh�o com voc� agora`;
   }
 }
 
@@ -7278,7 +7278,7 @@ function renderRosarioStep() {
   const prevBtn = document.getElementById('btnPrevStep');
   const nextBtn = document.getElementById('btnNextStep');
 
-  if (badgeEl) badgeEl.textContent = step.progressLabel || 'Oração';
+  if (badgeEl) badgeEl.textContent = step.progressLabel || 'Ora��o';
   if (counterEl) counterEl.textContent = `Passo ${currentRosarioStepIndex + 1} de ${total}`;
   if (barEl) barEl.style.width = `${pct}%`;
   if (titleEl) titleEl.textContent = step.titulo;
@@ -7296,9 +7296,9 @@ function renderRosarioStep() {
   if (prevBtn) prevBtn.disabled = currentRosarioStepIndex === 0;
   if (nextBtn) {
     if (currentRosarioStepIndex >= total - 1) {
-      nextBtn.innerHTML = '<i class="fas fa-check-circle"></i> Concluir Terço';
+      nextBtn.innerHTML = '<i class="fas fa-check-circle"></i> Concluir Ter�o';
     } else {
-      nextBtn.innerHTML = 'Avançar Conta <i class="fas fa-chevron-right"></i>';
+      nextBtn.innerHTML = 'Avan�ar Conta <i class="fas fa-chevron-right"></i>';
     }
   }
 
@@ -7338,7 +7338,7 @@ window.nextRosarioStep = function () {
       speakCurrentRosarioStep();
     }
   } else {
-    showToast('🙏 Terço concluído com as bênçãos de Deus e Nossa Senhora!');
+    showToast('?? Ter�o conclu�do com as b�n��os de Deus e Nossa Senhora!');
     showRosaryCompletedModal();
   }
 };
@@ -7363,9 +7363,9 @@ window.jumpToRosarioStep = function (idx) {
 };
 
 window.restartRosary = function () {
-  if (confirm('Deseja reiniciar a oração do Terço desde o início?')) {
+  if (confirm('Deseja reiniciar a ora��o do Ter�o desde o in�cio?')) {
     initRosary(currentRosarioState?.misterio?.id);
-    showToast('Terço reiniciado.');
+    showToast('Ter�o reiniciado.');
   }
 };
 
@@ -7373,7 +7373,7 @@ function stopRosarioSpeech() {
   isRosarioSpeaking = false;
   const btn = document.getElementById('btnReadRosarioStep');
   if (btn) {
-    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Oração';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Ora��o';
     btn.style.background = '';
     btn.style.color = '';
   }
@@ -7427,15 +7427,15 @@ window.toggleSpeakRosarioStep = function () {
 window.shareRosarioWhatsApp = function () {
   if (!currentRosarioState) return;
   const m = currentRosarioState.misterio;
-  const msg = `📿 *Santo Rosário & Terço Católico*\n_${m.nome} (${m.diasTexto})_\n\n“${m.descricao}”\n\nEstou rezando o Santo Terço na Bíblia Sagrada Católica. Reze você também e sinta a paz de Nossa Senhora!\n\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `?? *Santo Ros�rio & Ter�o Cat�lico*\n_${m.nome} (${m.diasTexto})_\n\n�${m.descricao}�\n\nEstou rezando o Santo Ter�o na B�blia Sagrada Cat�lica. Reze voc� tamb�m e sinta a paz de Nossa Senhora!\n\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 function showRosaryCompletedModal() {
-  const m = currentRosarioState?.misterio?.nome || 'Santo Rosário';
-  showToast(`🎉 Você concluiu a oração dos ${m}! Que Deus te abençoe! 🙏`);
+  const m = currentRosarioState?.misterio?.nome || 'Santo Ros�rio';
+  showToast(`?? Voc� concluiu a ora��o dos ${m}! Que Deus te aben�oe! ??`);
 
-  // Convite fraterno pós-oração: após concluir o Terço, convida suavemente a apoiar o projeto (se não foi silenciado hoje)
+  // Convite fraterno p�s-ora��o: ap�s concluir o Ter�o, convida suavemente a apoiar o projeto (se n�o foi silenciado hoje)
   setTimeout(async () => {
     try {
       const disabled = await isDonatePopupDisabledByAdmin();
@@ -7451,7 +7451,7 @@ function showRosaryCompletedModal() {
 }
 
 // ==========================================================================
-// MURAL DE INTENÇÕES: "ACENDA UMA VELA VIRTUAL"
+// MURAL DE INTEN��ES: "ACENDA UMA VELA VIRTUAL"
 // ==========================================================================
 let allVelasList = [];
 let currentVelasCategory = 'todos';
@@ -7494,11 +7494,11 @@ async function loadVelasData(forceRefresh = false) {
     renderVelasGrid();
     grid.dataset.loaded = '1';
   } catch (err) {
-    console.error('[Velas] Erro ao carregar velas de oração:', err);
+    console.error('[Velas] Erro ao carregar velas de ora��o:', err);
     grid.innerHTML = `<div class="gallery-empty-state" style="grid-column: 1 / -1;">
       <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #ef4444; margin-bottom: 12px;"></i>
-      <h3 style="font-size: 16px; margin-bottom: 6px;">Não foi possível carregar o mural</h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Verifique sua conexão e tente novamente.</p>
+      <h3 style="font-size: 16px; margin-bottom: 6px;">N�o foi poss�vel carregar o mural</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Verifique sua conex�o e tente novamente.</p>
       <button class="hero-donate-btn" onclick="loadVelasData(true)"><i class="fas fa-redo"></i> Recarregar</button>
     </div>`;
   }
@@ -7518,7 +7518,7 @@ function renderVelasGrid() {
       <div class="gallery-empty-state" style="grid-column: 1 / -1; padding: 50px 20px;">
         <i class="fas fa-fire" style="font-size: 36px; color: var(--gold-400); margin-bottom: 12px;"></i>
         <h3 style="font-size: 17px; margin-bottom: 6px; font-family: var(--font-display);">Nenhuma vela nesta categoria</h3>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Seja o primeiro a acender uma vela e partilhar sua intenção de oração!</p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Seja o primeiro a acender uma vela e partilhar sua inten��o de ora��o!</p>
         <button class="hero-donate-btn pulse-animation" onclick="openAcenderVelaModal()"><i class="fas fa-fire"></i> Acender Primeira Vela</button>
       </div>`;
     return;
@@ -7530,8 +7530,8 @@ function renderVelasGrid() {
     const isRezado = velasRezadasCache.includes(v.id);
     const statusTxt = formatarStatusVela(v.dataCriacao);
     const count = parseInt(v.oracoesCount) || 0;
-    const autor = v.autor || 'Anônimo';
-    const local = v.cidade ? ` • ${v.cidade}` : '';
+    const autor = v.autor || 'An�nimo';
+    const local = v.cidade ? ` � ${v.cidade}` : '';
 
     html += `
       <div class="vela-card" id="card_${v.id}">
@@ -7556,7 +7556,7 @@ function renderVelasGrid() {
           </div>
 
           <div class="vela-intencao-box">
-            <p class="vela-intencao-text">“${v.intencao}”</p>
+            <p class="vela-intencao-text">�${v.intencao}�</p>
           </div>
         </div>
 
@@ -7564,7 +7564,7 @@ function renderVelasGrid() {
           <div class="vela-meta-info">
             <span class="vela-autor"><i class="fas fa-user-circle"></i> ${autor}${local}</span>
             <span id="count_txt_${v.id}" style="color: ${isRezado ? '#22c55e' : 'var(--text-muted)'}; font-weight: 600;">
-              <i class="fas fa-praying-hands"></i> ${count} ${count === 1 ? 'oração' : 'orações'}
+              <i class="fas fa-praying-hands"></i> ${count} ${count === 1 ? 'ora��o' : 'ora��es'}
             </span>
           </div>
 
@@ -7572,7 +7572,7 @@ function renderVelasGrid() {
             <button class="vela-btn-interceder ${isRezado ? 'rezado' : ''}" 
                     id="btn_rezar_${v.id}"
                     onclick="intercederPorVela(event, '${v.id}', ${count})">
-              <i class="fas fa-hands-praying"></i> <span>${isRezado ? 'Rezei 🙏' : 'Rezei por você 🙏'}</span>
+              <i class="fas fa-hands-praying"></i> <span>${isRezado ? 'Rezei ??' : 'Rezei por voc� ??'}</span>
             </button>
             <button class="vela-btn-share" 
                     title="Compartilhar no WhatsApp" 
@@ -7623,7 +7623,7 @@ window.handleAcenderVelaSubmit = async function (e) {
   const intencao = document.getElementById('velaIntencaoInput')?.value || '';
 
   if (!intencao.trim()) {
-    showToast('Por favor, escreva sua intenção de oração.');
+    showToast('Por favor, escreva sua inten��o de ora��o.');
     return;
   }
 
@@ -7646,7 +7646,7 @@ window.handleAcenderVelaSubmit = async function (e) {
     const form = document.getElementById('acenderVelaForm');
     if (form) form.reset();
 
-    showToast('🔥 Sua vela virtual foi acesa! Que Deus abençoe sua intenção.');
+    showToast('?? Sua vela virtual foi acesa! Que Deus aben�oe sua inten��o.');
     await loadVelasData(true);
   } catch (err) {
     console.error('[Velas] Erro ao acender vela:', err);
@@ -7663,7 +7663,7 @@ window.intercederPorVela = async function (e, id, currentCount) {
   if (e) e.stopPropagation();
 
   if (velasRezadasCache.includes(id)) {
-    showToast('Você já se uniu em oração por esta intenção 🙏');
+    showToast('Voc� j� se uniu em ora��o por esta inten��o ??');
     return;
   }
 
@@ -7674,13 +7674,13 @@ window.intercederPorVela = async function (e, id, currentCount) {
   const btn = document.getElementById(`btn_rezar_${id}`);
   if (btn) {
     btn.classList.add('rezado');
-    btn.innerHTML = '<i class="fas fa-hands-praying"></i> <span>Rezei 🙏</span>';
+    btn.innerHTML = '<i class="fas fa-hands-praying"></i> <span>Rezei ??</span>';
   }
 
   const countTxt = document.getElementById(`count_txt_${id}`);
   if (countTxt) {
     countTxt.style.color = '#22c55e';
-    countTxt.innerHTML = `<i class="fas fa-praying-hands"></i> ${newCount} ${newCount === 1 ? 'oração' : 'orações'}`;
+    countTxt.innerHTML = `<i class="fas fa-praying-hands"></i> ${newCount} ${newCount === 1 ? 'ora��o' : 'ora��es'}`;
   }
 
   // Update total prayers stat
@@ -7690,7 +7690,7 @@ window.intercederPorVela = async function (e, id, currentCount) {
     statOracoesEl.textContent = (curVal + 1).toLocaleString('pt-BR');
   }
 
-  showToast('🙏 Oração registrada! Que Deus ouça esta intercessão.');
+  showToast('?? Ora��o registrada! Que Deus ou�a esta intercess�o.');
 
   // Sync with cloud
   try {
@@ -7706,13 +7706,13 @@ window.shareVelaWhatsApp = function (e, id) {
   if (!vela) return;
 
   const catInfo = VELAS_CATEGORIAS[vela.categoria] || VELAS_CATEGORIAS.graca;
-  const autor = vela.autor || 'Anônimo';
+  const autor = vela.autor || 'An�nimo';
   const local = vela.cidade ? ` (${vela.cidade})` : '';
 
-  let msg = `🔥 *Vela Virtual Acesa no Mural de Intenções*\n`;
-  msg += `🙏 *Prece de:* ${autor}${local}\n`;
-  msg += `✨ *Intenção (${catInfo.label}):*\n“${vela.intencao}”\n\n`;
-  msg += `Una-se em oração e clique em "Rezei por você 🙏" no aplicativo da Bíblia Sagrada Católica:\n`;
+  let msg = `?? *Vela Virtual Acesa no Mural de Inten��es*\n`;
+  msg += `?? *Prece de:* ${autor}${local}\n`;
+  msg += `? *Inten��o (${catInfo.label}):*\n�${vela.intencao}�\n\n`;
+  msg += `Una-se em ora��o e clique em "Rezei por voc� ??" no aplicativo da B�blia Sagrada Cat�lica:\n`;
   msg += `https://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -7720,7 +7720,7 @@ window.shareVelaWhatsApp = function (e, id) {
 
 
 // ==========================================================================
-// IA TEOLÓGICA CATÓLICA: DOUTORES DA IGREJA & MAGISTÉRIO
+// IA TEOL�GICA CAT�LICA: DOUTORES DA IGREJA & MAGIST�RIO
 // ==========================================================================
 let currentTeologiaPersona = 'santo_tomas';
 let lastTeologiaResponseText = '';
@@ -7777,7 +7777,7 @@ function updateTeologiaPersonaBanner() {
   if (nameEl) nameEl.textContent = p.nome;
   if (titleEl) titleEl.textContent = p.avatarDesc;
   if (badgeEl) badgeEl.textContent = p.titulo;
-  if (saudacaoEl) saudacaoEl.textContent = `“${p.saudacao}”`;
+  if (saudacaoEl) saudacaoEl.textContent = `�${p.saudacao}�`;
 
   // Update tabs
   document.querySelectorAll('.teologia-persona-btn').forEach(btn => {
@@ -7808,7 +7808,7 @@ window.handleTeologiaSubmit = async function (e) {
   const pergunta = input ? input.value.trim() : '';
 
   if (!pergunta) {
-    showToast('Por favor, digite sua pergunta teológica.');
+    showToast('Por favor, digite sua pergunta teol�gica.');
     return;
   }
 
@@ -7825,13 +7825,13 @@ window.handleTeologiaSubmit = async function (e) {
     container.innerHTML = `
       <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
         <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-question-circle"></i> Sua Pergunta:</span>
-        <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">“${pergunta}”</p>
+        <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">�${pergunta}�</p>
       </div>
 
       <div style="text-align: center; padding: 30px 20px;">
         <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
-        <p style="font-family: var(--font-display); font-size: 15px; color: var(--gold-300); margin-bottom: 4px;">Consultando a Tradição Católica & Doutores da Igreja...</p>
-        <span style="font-size: 12px; color: var(--text-muted);">Buscando ensinamentos na Sagrada Escritura, no Magistério e no CIC</span>
+        <p style="font-family: var(--font-display); font-size: 15px; color: var(--gold-300); margin-bottom: 4px;">Consultando a Tradi��o Cat�lica & Doutores da Igreja...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">Buscando ensinamentos na Sagrada Escritura, no Magist�rio e no CIC</span>
       </div>`;
   }
 
@@ -7851,7 +7851,7 @@ window.handleTeologiaSubmit = async function (e) {
       container.innerHTML = `
         <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
           <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-question-circle"></i> Sua Pergunta:</span>
-          <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">“${pergunta}”</p>
+          <p style="margin: 4px 0 0; font-size: 14.5px; font-weight: 600; color: var(--text-primary);">�${pergunta}�</p>
         </div>
 
         <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
@@ -7869,7 +7869,7 @@ window.handleTeologiaSubmit = async function (e) {
   } catch (err) {
     console.error('[Teologia] Erro:', err);
     if (container) {
-      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Não foi possível obter a resposta teológica no momento. Tente novamente.</p>`;
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">N�o foi poss�vel obter a resposta teol�gica no momento. Tente novamente.</p>`;
     }
   } finally {
     if (submitBtn) {
@@ -7906,8 +7906,8 @@ window.explicarCapituloTeologia = async function () {
     container.innerHTML = `
       <div style="text-align: center; padding: 40px 20px;">
         <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
-        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${nome} Capítulo ${cap} segundo a Tradição Católica...</p>
-        <span style="font-size: 12px; color: var(--text-muted);">Consultando Doutores da Igreja, Sentido Espiritual e Magistério</span>
+        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${nome} Cap�tulo ${cap} segundo a Tradi��o Cat�lica...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">Consultando Doutores da Igreja, Sentido Espiritual e Magist�rio</span>
       </div>`;
   }
 
@@ -7924,21 +7924,21 @@ window.explicarCapituloTeologia = async function () {
     if (container) {
       container.innerHTML = `
         <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
-          <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-book-bible"></i> Estudo Bíblico Católico:</span>
-          <h3 style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: var(--gold-300);">${nome} — Capítulo ${cap}</h3>
+          <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-book-bible"></i> Estudo B�blico Cat�lico:</span>
+          <h3 style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: var(--gold-300);">${nome} � Cap�tulo ${cap}</h3>
         </div>
         <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
           ${formattedHtml}
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
-          <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('Explicação de ${nome} ${cap}')" style="font-size: 12.5px; padding: 8px 14px;">
+          <button class="upload-btn-secondary" onclick="shareTeologiaWhatsApp('Explica��o de ${nome} ${cap}')" style="font-size: 12.5px; padding: 8px 14px;">
             <i class="fab fa-whatsapp" style="color: #22c55e;"></i> WhatsApp
           </button>
         </div>`;
     }
   } catch (err) {
     if (container) {
-      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar estudo teológico.</p>`;
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar estudo teol�gico.</p>`;
     }
   }
 };
@@ -7951,8 +7951,8 @@ window.explicarVersiculoTeologia = async function (livro, cap, ver, txt) {
     container.innerHTML = `
       <div style="text-align: center; padding: 40px 20px;">
         <div class="ai-spinner-ring" style="width: 48px; height: 48px; margin: 0 auto 12px;"></div>
-        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${livro} ${cap},${ver} segundo a Tradição Católica...</p>
-        <span style="font-size: 12px; color: var(--text-muted);">“${txt}”</span>
+        <p style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 4px;">Explicando ${livro} ${cap},${ver} segundo a Tradi��o Cat�lica...</p>
+        <span style="font-size: 12px; color: var(--text-muted);">�${txt}�</span>
       </div>`;
   }
 
@@ -7973,7 +7973,7 @@ window.explicarVersiculoTeologia = async function (livro, cap, ver, txt) {
         <div style="margin-bottom: 18px; padding: 12px 16px; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--gold-400); border-radius: 0 12px 12px 0;">
           <span style="font-size: 11.5px; font-weight: 700; color: var(--gold-400); text-transform: uppercase;"><i class="fas fa-bible"></i> Passagem Explicada:</span>
           <h3 style="margin: 4px 0 0; font-size: 16px; font-weight: 700; color: var(--gold-300);">${livro} ${cap},${ver}</h3>
-          <p style="margin: 4px 0 0; font-size: 13.5px; font-style: italic; color: var(--text-secondary);">“${txt}”</p>
+          <p style="margin: 4px 0 0; font-size: 13.5px; font-style: italic; color: var(--text-secondary);">�${txt}�</p>
         </div>
         <div class="teologia-answer-box" style="animation: modalEnter 0.3s ease;">
           ${formattedHtml}
@@ -7986,7 +7986,7 @@ window.explicarVersiculoTeologia = async function (livro, cap, ver, txt) {
     }
   } catch (err) {
     if (container) {
-      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar explicação do versículo.</p>`;
+      container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 30px;">Erro ao carregar explica��o do vers�culo.</p>`;
     }
   }
 };
@@ -8054,13 +8054,13 @@ window.toggleSpeakTeologiaResponse = async function () {
 window.shareTeologiaWhatsApp = function (titulo) {
   if (!lastTeologiaResponseText) return;
   const clean = lastTeologiaResponseText.replace(/[#*`_>]/g, '').slice(0, 700);
-  let msg = `🕊️ *Reflexão & Teologia Católica — ${titulo}*\n\n${clean}...\n\n_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Reflex�o & Teologia Cat�lica � ${titulo}*\n\n${clean}...\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 
 // ==========================================================================
-// 1. MODO LECTIO DIVINA GUIADA (ORAÇÃO DOS MONGES EM 4 PASSOS)
+// 1. MODO LECTIO DIVINA GUIADA (ORA��O DOS MONGES EM 4 PASSOS)
 // ==========================================================================
 let currentLectioStep = 1;
 let currentLectioPassagem = LECTIO_SUGESTOES[0];
@@ -8096,10 +8096,10 @@ function initLectioPassagensChips() {
     `;
   });
 
-  // Se tivermos capítulo bíblico aberto, adiciona chip rápido
+  // Se tivermos cap�tulo b�blico aberto, adiciona chip r�pido
   if (currentBook) {
     html = `<button class="lectio-passage-chip" onclick="startLectioDivinaCurrentChapter()" style="border-color: #38bdf8; color: #38bdf8;">
-      📖 ${currentBook.nome} ${currentChapter}
+      ?? ${currentBook.nome} ${currentChapter}
     </button>` + html;
   }
 
@@ -8135,12 +8135,12 @@ window.goToLectioStep = function (stepNum) {
   currentLectioStep = stepNum;
   const step = LECTIO_STEPS.find(s => s.id === stepNum) || LECTIO_STEPS[0];
 
-  // Atualiza botões de passos
+  // Atualiza bot�es de passos
   document.querySelectorAll('.lectio-step-tab').forEach(tab => {
     tab.classList.toggle('active', parseInt(tab.dataset.step) === stepNum);
   });
 
-  // Atualiza cabeçalho do passo
+  // Atualiza cabe�alho do passo
   const iconWrap = document.getElementById('lectioStepIconWrap');
   const icon = document.getElementById('lectioStepIcon');
   const title = document.getElementById('lectioStepTitle');
@@ -8154,7 +8154,7 @@ window.goToLectioStep = function (stepNum) {
     iconWrap.style.color = step.cor;
   }
   if (icon) icon.className = `fas ${step.icone}`;
-  if (title) title.textContent = `${step.id}. ${step.nome} — ${step.subtitulo}`;
+  if (title) title.textContent = `${step.id}. ${step.nome} � ${step.subtitulo}`;
   if (latin) latin.textContent = step.latin;
   if (desc) desc.textContent = step.descricao;
   if (instr) instr.textContent = step.instrucao;
@@ -8162,10 +8162,10 @@ window.goToLectioStep = function (stepNum) {
 
   if (input) {
     input.value = lectioSessionNotes[stepNum] || '';
-    input.placeholder = stepNum === 4 ? "Ex: Hoje serei paciente com minha família e rezarei pelas pessoas necessitadas..." : "Escreva suas impressões espirituais aqui...";
+    input.placeholder = stepNum === 4 ? "Ex: Hoje serei paciente com minha fam�lia e rezarei pelas pessoas necessitadas..." : "Escreva suas impress�es espirituais aqui...";
   }
 
-  // Atualiza botões Anterior / Próximo
+  // Atualiza bot�es Anterior / Pr�ximo
   const btnPrev = document.getElementById('btnLectioPrev');
   const btnNext = document.getElementById('btnLectioNext');
   const btnFinish = document.getElementById('btnLectioFinish');
@@ -8182,7 +8182,7 @@ window.goToLectioStep = function (stepNum) {
     if (btnNext) {
       btnNext.classList.remove('hidden');
       const nextStep = LECTIO_STEPS.find(s => s.id === stepNum + 1);
-      btnNext.innerHTML = `<span>Avançar para ${nextStep ? nextStep.nome : 'Próximo'}</span> <i class="fas fa-chevron-right"></i>`;
+      btnNext.innerHTML = `<span>Avan�ar para ${nextStep ? nextStep.nome : 'Pr�ximo'}</span> <i class="fas fa-chevron-right"></i>`;
     }
     if (btnFinish) btnFinish.classList.add('hidden');
   }
@@ -8235,7 +8235,7 @@ window.toggleLectioTimer = function () {
         lectioTimerInterval = null;
         isLectioTimerRunning = false;
         if (icon) icon.className = 'fas fa-play';
-        showToast('🕊️ Tempo de Silêncio concluído. Em nome do Pai, do Filho e do Espírito Santo.');
+        showToast('??? Tempo de Sil�ncio conclu�do. Em nome do Pai, do Filho e do Esp�rito Santo.');
       }
     }, 1000);
   }
@@ -8255,19 +8255,19 @@ window.concluirLectioDivina = async function () {
 
   try {
     await salvarSessaoLectio({
-      passagemRef: currentLectioPassagem.ref || currentLectioPassagem.titulo || 'Passagem Bíblica',
+      passagemRef: currentLectioPassagem.ref || currentLectioPassagem.titulo || 'Passagem B�blica',
       passagemTexto: currentLectioPassagem.texto || '',
       meditacao: lectioSessionNotes[2] || lectioSessionNotes[1] || '',
       oracao: lectioSessionNotes[3] || '',
       proposito: lectioSessionNotes[4] || ''
     });
 
-    showToast('✨ Lectio Divina concluída e salva no seu histórico com as bênçãos de Deus!');
+    showToast('? Lectio Divina conclu�da e salva no seu hist�rico com as b�n��os de Deus!');
     setTimeout(() => {
       goHome();
     }, 1200);
   } catch (e) {
-    showToast('✨ Lectio Divina concluída com sucesso!');
+    showToast('? Lectio Divina conclu�da com sucesso!');
     goHome();
   }
 };
@@ -8286,9 +8286,9 @@ window.openLectioHistoricoModal = async function () {
             <strong style="color: var(--gold-300); font-size: 14.5px;">${item.passagemRef}</strong>
             <span style="font-size: 11px; color: var(--text-muted);">${item.dataFormatada || ''}</span>
           </div>
-          ${item.meditacao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Meditação:</strong> “${item.meditacao}”</p>` : ''}
-          ${item.oracao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Oração:</strong> “${item.oracao}”</p>` : ''}
-          ${item.proposito ? `<p style="font-size: 13px; color: #22c55e; margin: 4px 0;"><strong>Propósito do Dia:</strong> “${item.proposito}”</p>` : ''}
+          ${item.meditacao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Medita��o:</strong> �${item.meditacao}�</p>` : ''}
+          ${item.oracao ? `<p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0;"><strong>Ora��o:</strong> �${item.oracao}�</p>` : ''}
+          ${item.proposito ? `<p style="font-size: 13px; color: #22c55e; margin: 4px 0;"><strong>Prop�sito do Dia:</strong> �${item.proposito}�</p>` : ''}
           <div style="text-align: right; margin-top: 8px;">
             <button onclick="deletarLectioHistorico('${item.id}')" style="background: none; border: none; color: #ef4444; font-size: 11.5px; cursor: pointer;">
               <i class="fas fa-trash-alt"></i> Excluir
@@ -8297,7 +8297,7 @@ window.openLectioHistoricoModal = async function () {
         </div>
       `).join('');
     } else {
-      listEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma sessão de Lectio Divina registrada ainda.</p>';
+      listEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhuma sess�o de Lectio Divina registrada ainda.</p>';
     }
   }
 };
@@ -8310,7 +8310,7 @@ window.closeLectioHistoricoModal = function () {
 window.deletarLectioHistorico = async function (id) {
   await excluirSessaoLectio(id);
   openLectioHistoricoModal();
-  showToast('Sessão removida do histórico.');
+  showToast('Sess�o removida do hist�rico.');
 };
 
 window.startLectioDivinaCurrentChapter = async function () {
@@ -8329,7 +8329,7 @@ window.startLectioDivinaCurrentChapter = async function () {
 
 
 // ==========================================================================
-// 2. EXAME DE CONSCIÊNCIA & SANTA CONFISSÃO
+// 2. EXAME DE CONSCI�NCIA & SANTA CONFISS�O
 // ==========================================================================
 let pecadosMarcadosCache = [];
 
@@ -8357,9 +8357,9 @@ async function updateConfissaoStatusBanner() {
   if (ultimaDataTexto) {
     if (ultimaData) {
       const dataFormatada = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ultimaData));
-      ultimaDataTexto.innerHTML = `<strong>Última confissão:</strong> ${dataFormatada}. Que a misericórdia de Deus renove seu coração!`;
+      ultimaDataTexto.innerHTML = `<strong>�ltima confiss�o:</strong> ${dataFormatada}. Que a miseric�rdia de Deus renove seu cora��o!`;
     } else {
-      ultimaDataTexto.textContent = "“Ainda que os vossos pecados sejam como o escarlate, eles se tornarão brancos como a neve.” (Is 1,18)";
+      ultimaDataTexto.textContent = "�Ainda que os vossos pecados sejam como o escarlate, eles se tornar�o brancos como a neve.� (Is 1,18)";
     }
   }
 }
@@ -8444,8 +8444,8 @@ window.abrirResumoConfissao = async function () {
       listEl.innerHTML = `
         <div style="text-align: center; padding: 30px; color: var(--text-muted);">
           <i class="fas fa-dove" style="font-size: 32px; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
-          <p>Nenhum item marcado no exame de consciência.</p>
-          <p style="font-size: 12.5px;">Se você já realizou seu exame mentalmente, vá com confiança e paz ao confessionário!</p>
+          <p>Nenhum item marcado no exame de consci�ncia.</p>
+          <p style="font-size: 12.5px;">Se voc� j� realizou seu exame mentalmente, v� com confian�a e paz ao confession�rio!</p>
         </div>
       `;
     } else {
@@ -8455,10 +8455,10 @@ window.abrirResumoConfissao = async function () {
         if (itensDesteMandamento.length > 0) {
           html += `
             <li style="margin-top: 8px;">
-              <span style="font-size: 12px; font-weight: 800; color: var(--gold-400); text-transform: uppercase;">${m.numero} — ${m.titulo}</span>
+              <span style="font-size: 12px; font-weight: 800; color: var(--gold-400); text-transform: uppercase;">${m.numero} � ${m.titulo}</span>
               ${itensDesteMandamento.map(item => `
                 <div style="background: rgba(244, 63, 94, 0.08); border-left: 2px solid #f43f5e; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-top: 4px; font-size: 13.5px; color: var(--text-primary);">
-                  • ${item.texto}
+                  � ${item.texto}
                 </div>
               `).join('')}
             </li>
@@ -8482,12 +8482,12 @@ window.marcarConfissaoConcluida = async function () {
   closeConfissaoResumoModal();
   renderMandamentosList();
   updateConfissaoStatusBanner();
-  showToast('🕊️ Louvado seja Nosso Senhor Jesus Cristo! Sua confissão foi registrada.');
+  showToast('??? Louvado seja Nosso Senhor Jesus Cristo! Sua confiss�o foi registrada.');
 };
 
 
 // ==========================================================================
-// 3. DIÁRIO ESPIRITUAL & MURAL DE GRAÇAS ALCANÇADAS ("LIVRO DA GRATIDÃO")
+// 3. DI�RIO ESPIRITUAL & MURAL DE GRA�AS ALCAN�ADAS ("LIVRO DA GRATID�O")
 // ==========================================================================
 let diarioFilterActive = 'todos';
 
@@ -8527,7 +8527,7 @@ async function renderDiarioItens() {
     container.innerHTML = `
       <div style="text-align: center; padding: 40px; color: var(--text-muted);">
         <i class="fas fa-book-bookmark" style="font-size: 32px; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
-        <p>Nenhuma oração encontrada nesta categoria.</p>
+        <p>Nenhuma ora��o encontrada nesta categoria.</p>
         <button class="hero-donate-btn pulse-animation" onclick="abrirModalNovaOracao()" style="margin-top: 10px; padding: 8px 18px; font-size: 13px;">
           <i class="fas fa-plus-circle"></i> Adicionar Nova Prece
         </button>
@@ -8550,7 +8550,7 @@ async function renderDiarioItens() {
               <i class="fas ${cat.icone}"></i> ${cat.nome}
             </span>
             <span class="diario-status-badge ${isGraca ? 'alcancada' : 'em-oracao'}">
-              ${isGraca ? '✨ Graça Alcançada!' : '⏳ Em Oração'}
+              ${isGraca ? '? Gra�a Alcan�ada!' : '? Em Ora��o'}
             </span>
           </div>
           <span style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-calendar-alt"></i> Desde ${dataInicioFmt}</span>
@@ -8561,8 +8561,8 @@ async function renderDiarioItens() {
 
         ${isGraca ? `
           <div class="diario-graca-box">
-            <strong><i class="fas fa-sparkles"></i> Testemunho da Graça (${dataGracaFmt}):</strong>
-            <p style="font-size: 13.5px; color: var(--text-primary); margin: 2px 0 6px; font-style: italic;">“${item.testemunho}”</p>
+            <strong><i class="fas fa-sparkles"></i> Testemunho da Gra�a (${dataGracaFmt}):</strong>
+            <p style="font-size: 13.5px; color: var(--text-primary); margin: 2px 0 6px; font-style: italic;">�${item.testemunho}�</p>
             ${item.versiculo ? `<span style="font-size: 12px; color: var(--gold-300); font-weight: 600;"><i class="fas fa-book-bible"></i> ${item.versiculo}</span>` : ''}
           </div>
         ` : ''}
@@ -8570,7 +8570,7 @@ async function renderDiarioItens() {
         <div class="diario-card-actions">
           ${!isGraca ? `
             <button class="hero-donate-btn" onclick="abrirModalGracaAlcancada('${item.id}', '${item.titulo.replace(/'/g, "\\'")}')" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 6px 14px; font-size: 12px;">
-              <i class="fas fa-sparkles"></i> Graça Alcançada!
+              <i class="fas fa-sparkles"></i> Gra�a Alcan�ada!
             </button>
           ` : `
             <button class="upload-btn-secondary" onclick="compartilharTestemunhoWhatsApp('${item.id}')" style="font-size: 12px; padding: 6px 14px;">
@@ -8614,11 +8614,11 @@ window.handleSalvarNovaOracao = async function (e) {
   const pedido = document.getElementById('diarioPedidoTextarea')?.value;
 
   if (!titulo || !titulo.trim()) {
-    showToast('Por favor, informe o título da sua intenção.');
+    showToast('Por favor, informe o t�tulo da sua inten��o.');
     return;
   }
   if (!pedido || !pedido.trim()) {
-    showToast('Por favor, escreva os detalhes da sua oração.');
+    showToast('Por favor, escreva os detalhes da sua ora��o.');
     return;
   }
 
@@ -8634,10 +8634,10 @@ window.handleSalvarNovaOracao = async function (e) {
     const form = document.getElementById('diarioNovoForm');
     if (form) form.reset();
     await renderDiarioItens();
-    showToast('🙏 Intenção guardada no seu Diário Espiritual.');
+    showToast('?? Inten��o guardada no seu Di�rio Espiritual.');
   } catch (err) {
     console.error('[Diario] Erro ao salvar prece:', err);
-    showToast('Não foi possível salvar a prece. Tente novamente.');
+    showToast('N�o foi poss�vel salvar a prece. Tente novamente.');
   }
 };
 
@@ -8663,11 +8663,11 @@ window.handleSalvarGracaAlcancada = async function (e) {
   const versiculo = document.getElementById('diarioGracaVersiculoInput')?.value;
 
   if (!id) {
-    showToast('Identificador de oração inválido.');
+    showToast('Identificador de ora��o inv�lido.');
     return;
   }
   if (!testemunho || !testemunho.trim()) {
-    showToast('Por favor, relate o testemunho da graça alcançada.');
+    showToast('Por favor, relate o testemunho da gra�a alcan�ada.');
     return;
   }
 
@@ -8677,23 +8677,23 @@ window.handleSalvarGracaAlcancada = async function (e) {
     const form = document.getElementById('diarioGracaForm');
     if (form) form.reset();
     await renderDiarioItens();
-    showToast('🎉 Glória a Deus! Graça alcançada registrada com sucesso!');
+    showToast('?? Gl�ria a Deus! Gra�a alcan�ada registrada com sucesso!');
   } catch (err) {
-    console.error('[Diario] Erro ao marcar graça:', err);
-    showToast('Não foi possível registrar a graça. Tente novamente.');
+    console.error('[Diario] Erro ao marcar gra�a:', err);
+    showToast('N�o foi poss�vel registrar a gra�a. Tente novamente.');
   }
 };
 
 window.toggleReabrirOracao = async function (id) {
   await reabrirEmOracao(id);
   await renderDiarioItens();
-  showToast('Intenção reaberta em oração.');
+  showToast('Inten��o reaberta em ora��o.');
 };
 
 window.deletarItemDiario = async function (id) {
   await excluirItemDiario(id);
   await renderDiarioItens();
-  showToast('Registro removido do diário.');
+  showToast('Registro removido do di�rio.');
 };
 
 window.compartilharTestemunhoWhatsApp = async function (id) {
@@ -8749,7 +8749,7 @@ async function renderNovenasGrid() {
             <div class="novena-beads-header">
               <span><i class="fas fa-calendar-check"></i> Progresso da Novena</span>
               <span style="color: ${isConcluida ? '#22c55e' : (isEmAndamento ? 'var(--gold-400)' : 'var(--text-muted)')}; font-weight: 800;">
-                ${isConcluida ? '9 de 9 (Concluída)' : (isEmAndamento ? `Dia ${diaAtual} de 9` : 'Não Iniciada')}
+                ${isConcluida ? '9 de 9 (Conclu�da)' : (isEmAndamento ? `Dia ${diaAtual} de 9` : 'N�o Iniciada')}
               </span>
             </div>
             <div class="novena-beads-row">
@@ -8770,7 +8770,7 @@ async function renderNovenasGrid() {
               </button>
             ` : (isConcluida ? `
               <button type="button" class="hero-donate-btn" onclick="verConclusaoNovena('${n.id}')" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; flex: 1; justify-content: center; font-size: 12.5px; padding: 10px 12px;">
-                <i class="fas fa-crown"></i> Ver Conclusão
+                <i class="fas fa-crown"></i> Ver Conclus�o
               </button>
               <button type="button" class="upload-btn-secondary" onclick="reiniciarNovenaConfirm('${n.id}')" title="Rezar Novamente" style="padding: 10px 14px;">
                 <i class="fas fa-redo"></i>
@@ -8796,7 +8796,7 @@ window.iniciarENovena = async function (novenaId) {
 window.reiniciarNovenaConfirm = async function (novenaId) {
   await reiniciarNovena(novenaId);
   await renderNovenasGrid();
-  showToast('Novena reiniciada. Que Deus abençoe suas orações!');
+  showToast('Novena reiniciada. Que Deus aben�oe suas ora��es!');
   abrirNovenaDia(novenaId, 1);
 };
 
@@ -8824,37 +8824,37 @@ window.abrirNovenaDia = function (novenaId, diaNum) {
         </div>
       </div>
 
-      <!-- 1. Oração Inicial -->
+      <!-- 1. Ora��o Inicial -->
       <div class="novena-prayer-box initial">
-        <div class="novena-prayer-title"><i class="fas fa-cross"></i> Oração Preparatória Inicial:</div>
+        <div class="novena-prayer-title"><i class="fas fa-cross"></i> Ora��o Preparat�ria Inicial:</div>
         <p class="novena-prayer-text">${novena.oracaoInicial}</p>
       </div>
 
-      <!-- 2. Meditação do Dia -->
+      <!-- 2. Medita��o do Dia -->
       <div class="novena-prayer-box specific">
-        <div class="novena-prayer-title" style="color: ${novena.cor};"><i class="fas fa-dove"></i> Meditação do Dia ${diaNum}:</div>
-        <p class="novena-prayer-text" style="font-style: italic; margin-bottom: 12px;">“${diaData.reflexao}”</p>
+        <div class="novena-prayer-title" style="color: ${novena.cor};"><i class="fas fa-dove"></i> Medita��o do Dia ${diaNum}:</div>
+        <p class="novena-prayer-text" style="font-style: italic; margin-bottom: 12px;">�${diaData.reflexao}�</p>
         <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-          <strong style="color: var(--text-primary); font-size: 13.5px; display: block; margin-bottom: 6px;">Oração do ${diaNum}º Dia:</strong>
+          <strong style="color: var(--text-primary); font-size: 13.5px; display: block; margin-bottom: 6px;">Ora��o do ${diaNum}� Dia:</strong>
           <p class="novena-prayer-text">${diaData.oracao}</p>
         </div>
       </div>
 
-      <!-- 3. Jaculatória -->
+      <!-- 3. Jaculat�ria -->
       <div class="novena-jaculatoria-box">
-        <p class="novena-jaculatoria-text">“${diaData.jaculatoria}”</p>
+        <p class="novena-jaculatoria-text">�${diaData.jaculatoria}�</p>
       </div>
 
-      <!-- 4. Oração Final -->
+      <!-- 4. Ora��o Final -->
       <div class="novena-prayer-box final">
-        <div class="novena-prayer-title" style="color: #c084fc;"><i class="fas fa-hands-praying"></i> Oração Final & Bênção:</div>
+        <div class="novena-prayer-title" style="color: #c084fc;"><i class="fas fa-hands-praying"></i> Ora��o Final & B�n��o:</div>
         <p class="novena-prayer-text">${novena.oracaoFinal}</p>
       </div>
 
-      <!-- Ações do Modal -->
+      <!-- A��es do Modal -->
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
         <button type="button" class="upload-btn-secondary" id="btnSpeakNovena" style="padding: 10px 14px; font-size: 12.5px;" onclick="toggleSpeakNovena()">
-          <i class="fas fa-volume-up"></i> Ouvir Oração
+          <i class="fas fa-volume-up"></i> Ouvir Ora��o
         </button>
         <button type="button" class="hero-share-btn" style="padding: 10px 14px; font-size: 12.5px;" onclick="shareNovenaWhatsApp()">
           <i class="fab fa-whatsapp"></i> Compartilhar
@@ -8885,7 +8885,7 @@ window.executarConcluirDiaNovena = async function (novenaId, diaNum) {
   if (diaNum >= 9) {
     verConclusaoNovena(novenaId);
   } else {
-    showToast(`🙏 Dia ${diaNum} concluído com sucesso! Amanhã reze o Dia ${diaNum + 1}.`);
+    showToast(`?? Dia ${diaNum} conclu�do com sucesso! Amanh� reze o Dia ${diaNum + 1}.`);
   }
 };
 
@@ -8898,8 +8898,8 @@ window.verConclusaoNovena = function (novenaId) {
   const sub = document.getElementById('novenaConcluidaSub');
   const oracao = document.getElementById('novenaConcluidaOracao');
 
-  if (sub) sub.textContent = `Parabéns por perseverar nos 9 dias da Novena de ${novena.titulo}!`;
-  if (oracao) oracao.textContent = `“${novena.oracaoAcaoDeGracas}”`;
+  if (sub) sub.textContent = `Parab�ns por perseverar nos 9 dias da Novena de ${novena.titulo}!`;
+  if (oracao) oracao.textContent = `�${novena.oracaoAcaoDeGracas}�`;
 
   if (modal) modal.classList.remove('hidden');
 };
@@ -8913,7 +8913,7 @@ function stopNovenaSpeech() {
   isNovenaSpeaking = false;
   const btn = document.getElementById('btnSpeakNovena');
   if (btn) {
-    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Oração';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Ouvir Ora��o';
     btn.style.background = '';
     btn.style.color = '';
   }
@@ -8943,7 +8943,7 @@ window.toggleSpeakNovena = async function () {
   }
   isNovenaSpeaking = true;
 
-  const fullText = `Novena de ${novena.titulo}. Dia ${currentNovenaDiaActive}. ${diaData.tema}.\n\nOração Inicial: ${novena.oracaoInicial}.\n\nMeditação: ${diaData.reflexao}.\n\nOração do Dia: ${diaData.oracao}.\n\nJaculatória: ${diaData.jaculatoria}.\n\nOração Final: ${novena.oracaoFinal}.`;
+  const fullText = `Novena de ${novena.titulo}. Dia ${currentNovenaDiaActive}. ${diaData.tema}.\n\nOra��o Inicial: ${novena.oracaoInicial}.\n\nMedita��o: ${diaData.reflexao}.\n\nOra��o do Dia: ${diaData.oracao}.\n\nJaculat�ria: ${diaData.jaculatoria}.\n\nOra��o Final: ${novena.oracaoFinal}.`;
 
   try {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) {
@@ -8975,10 +8975,10 @@ window.shareNovenaWhatsApp = function () {
   const novena = currentNovenaActive;
   const diaData = novena.dias.find(d => d.dia === currentNovenaDiaActive) || novena.dias[0];
 
-  let msg = `🕊️ *Novena de ${novena.titulo}*\n📅 *Dia ${currentNovenaDiaActive} de 9: ${diaData.tema}*\n\n`;
-  msg += `✝️ *Oração do Dia:*\n${diaData.oracao}\n\n`;
-  msg += `🙏 *Jaculatória:*\n“${diaData.jaculatoria}”\n\n`;
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Novena de ${novena.titulo}*\n?? *Dia ${currentNovenaDiaActive} de 9: ${diaData.tema}*\n\n`;
+  msg += `?? *Ora��o do Dia:*\n${diaData.oracao}\n\n`;
+  msg += `?? *Jaculat�ria:*\n�${diaData.jaculatoria}�\n\n`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -8986,14 +8986,14 @@ window.shareNovenaConcluidaWhatsApp = function () {
   if (!currentNovenaActive) return;
   const novena = currentNovenaActive;
 
-  let msg = `✨ *Novena Concluída com Fé!* ✨\n\n`;
-  msg += `Concluí hoje os 9 dias de oração da *Novena de ${novena.titulo}*! 🙏🕊️\n\n`;
-  msg += `“${novena.oracaoAcaoDeGracas}”\n\n`;
-  msg += `_Bíblia Sagrada Católica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `? *Novena Conclu�da com F�!* ?\n\n`;
+  msg += `Conclu� hoje os 9 dias de ora��o da *Novena de ${novena.titulo}*! ?????\n\n`;
+  msg += `�${novena.oracaoAcaoDeGracas}�\n\n`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
-// ===== CARTAS APOSTÓLICAS (EPÍSTOLAS DO NOVO TESTAMENTO) =====
+// ===== CARTAS APOST�LICAS (EP�STOLAS DO NOVO TESTAMENTO) =====
 let currentCartasCategoria = 'todas';
 let currentCartasSearch = '';
 
@@ -9101,7 +9101,7 @@ window.renderCartasGrid = function () {
       return searchTerms.every(term => fullContent.includes(term));
     });
 
-    // Se não encontrou na categoria atual, busca em todas as 21 cartas
+    // Se n�o encontrou na categoria atual, busca em todas as 21 cartas
     if (filtered.length === 0 && currentCartasCategoria !== 'todas') {
       const allCartas = getCartasPorCategoria('todas');
       filtered = allCartas.filter(c => {
@@ -9130,7 +9130,7 @@ window.renderCartasGrid = function () {
       <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
         <i class="fas fa-scroll" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
         <p style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Nenhuma carta encontrada para "${currentCartasSearch}"</p>
-        <p style="font-size: 12.5px; margin-top: 4px;">Tente pesquisar por temas como <em>amor, fé, graça, obras, armadura, união, ressurreição</em> ou por apóstolos como <em>São Paulo, São Pedro, São João, Tiago, Judas</em>.</p>
+        <p style="font-size: 12.5px; margin-top: 4px;">Tente pesquisar por temas como <em>amor, f�, gra�a, obras, armadura, uni�o, ressurrei��o</em> ou por ap�stolos como <em>S�o Paulo, S�o Pedro, S�o Jo�o, Tiago, Judas</em>.</p>
         <button class="upload-btn-secondary" onclick="clearCartasSearch()" style="margin-top: 14px; font-size: 12px; padding: 7px 16px;">
           <i class="fas fa-times"></i> Limpar Busca
         </button>
@@ -9148,17 +9148,17 @@ window.renderCartasGrid = function () {
       passagensHtml = `
         <div class="carta-highlights-wrap">
           <div class="carta-highlights-header">
-            <i class="fas fa-bookmark" style="color: var(--gold-400);"></i> Destaques Litúrgicos na Santa Missa
+            <i class="fas fa-bookmark" style="color: var(--gold-400);"></i> Destaques Lit�rgicos na Santa Missa
           </div>
           ${carta.passagensDestaque.map(p => `
             <div class="carta-highlight-item">
               <div class="carta-highlight-top">
-                <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} — ${isSearching ? highlightSearchTerms(p.titulo, currentCartasSearch) : p.titulo}</span>
-                <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este capítulo na Bíblia">
+                <span class="carta-highlight-ref"><i class="fas fa-quote-left"></i> ${p.referencia} � ${isSearching ? highlightSearchTerms(p.titulo, currentCartasSearch) : p.titulo}</span>
+                <button class="carta-highlight-btn" onclick="abrirCartaCapitulo(${carta.id_livro}, '${carta.nomeCurto}', ${p.capitulo})" title="Ler este cap�tulo na B�blia">
                   <i class="fas fa-book-open"></i> Cap. ${p.capitulo}
                 </button>
               </div>
-              <p class="carta-highlight-quote">“${isSearching ? highlightSearchTerms(p.texto, currentCartasSearch) : p.texto}”</p>
+              <p class="carta-highlight-quote">�${isSearching ? highlightSearchTerms(p.texto, currentCartasSearch) : p.texto}�</p>
             </div>
           `).join('')}
         </div>
@@ -9177,7 +9177,7 @@ window.renderCartasGrid = function () {
             <i class="fas ${carta.icone}"></i>
           </div>
           <div class="carta-card-title-group">
-            <span class="carta-liturgical-badge">${carta.categoriaNome} • ${carta.totalCapitulos} Cap${carta.totalCapitulos > 1 ? 'ítulos' : 'ítulo'}</span>
+            <span class="carta-liturgical-badge">${carta.categoriaNome} � ${carta.totalCapitulos} Cap${carta.totalCapitulos > 1 ? '�tulos' : '�tulo'}</span>
             <h3 class="carta-card-title">${titleHl}</h3>
             <div class="carta-card-meta">
               <span><i class="fas fa-pen-nib" style="color: var(--gold-400);"></i> ${autorHl}</span>
@@ -9210,7 +9210,7 @@ window.renderCartasGrid = function () {
 
 
 // ==========================================================================
-// AS APARIÇÕES DA VIRGEM MARIA & DEVOÇÃO MARIANA
+// AS APARI��ES DA VIRGEM MARIA & DEVO��O MARIANA
 // ==========================================================================
 let currentMariaAba = 'aparicoes';
 let currentAparicoesSubcategoria = 'todas';
@@ -9389,17 +9389,17 @@ window.renderMariaGrid = function () {
 
             ${t.segredosProfecias && t.segredosProfecias.length > 0 ? `
               <div class="maria-prophecies-count-badge">
-                <i class="fas fa-scroll"></i> ${t.segredosProfecias.length} ${t.segredosProfecias.length > 1 ? 'Segredos & Mensagens Proféticas' : 'Mensagem Profética'}
+                <i class="fas fa-scroll"></i> ${t.segredosProfecias.length} ${t.segredosProfecias.length > 1 ? 'Segredos & Mensagens Prof�ticas' : 'Mensagem Prof�tica'}
               </div>
             ` : ''}
 
             <div class="maria-card-actions">
               <button class="maria-read-btn" onclick="openMariaDetail('${t.id}', 'aparicao')">
-                <i class="fas fa-book-open"></i> História & Profecias
+                <i class="fas fa-book-open"></i> Hist�ria & Profecias
               </button>
               <button class="maria-action-icon-btn ${isSpeaking ? 'playing' : ''}" 
                       onclick="speakMariaItem('${t.id}', 'aparicao')" 
-                      title="${isSpeaking ? 'Parar Narração' : 'Ouvir História Narrada'}">
+                      title="${isSpeaking ? 'Parar Narra��o' : 'Ouvir Hist�ria Narrada'}">
                 <i class="fas ${isSpeaking ? 'fa-stop' : 'fa-volume-high'}"></i>
               </button>
               <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${t.id}', 'aparicao')" title="Compartilhar no WhatsApp">
@@ -9454,7 +9454,7 @@ window.renderMariaGrid = function () {
                       onclick="speakMariaItem('${o.id}', 'oracao')" title="Ouvir em Voz Alta">
                 <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === o.id ? 'fa-stop' : 'fa-volume-up'}"></i>
               </button>
-              <button class="maria-action-icon-btn" onclick="copyMariaText('${o.id}', 'oracao')" title="Copiar Oração">
+              <button class="maria-action-icon-btn" onclick="copyMariaText('${o.id}', 'oracao')" title="Copiar Ora��o">
                 <i class="fas fa-copy"></i>
               </button>
               <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${o.id}', 'oracao')" title="Compartilhar no WhatsApp">
@@ -9486,7 +9486,7 @@ window.renderMariaGrid = function () {
             <span class="maria-dogma-num-badge">${d.numero}</span>
             <div>
               <h3 class="maria-dogma-title">${d.titulo}</h3>
-              <div class="maria-dogma-meta"><i class="fas fa-scroll"></i> ${d.proclamacao} • ${d.papaConcilio}</div>
+              <div class="maria-dogma-meta"><i class="fas fa-scroll"></i> ${d.proclamacao} � ${d.papaConcilio}</div>
             </div>
           </div>
 
@@ -9494,15 +9494,15 @@ window.renderMariaGrid = function () {
             ${d.resumo}
           </div>
 
-          <div class="maria-dogma-section-title"><i class="fas fa-book-bible"></i> Fundamento Bíblico</div>
+          <div class="maria-dogma-section-title"><i class="fas fa-book-bible"></i> Fundamento B�blico</div>
           <p class="maria-dogma-text" style="font-style: italic; color: var(--gold-300);">${d.fundamentoBiblico}</p>
 
-          <div class="maria-dogma-section-title"><i class="fas fa-church"></i> Explicação Teológica & Magistério</div>
+          <div class="maria-dogma-section-title"><i class="fas fa-church"></i> Explica��o Teol�gica & Magist�rio</div>
           <p class="maria-dogma-text">${d.explicacaoTeologica}</p>
 
           <div class="maria-card-actions" style="margin-top: 14px;">
             <button class="maria-read-btn" onclick="speakMariaItem('${d.id}', 'dogma')">
-              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === d.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explicação
+              <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === d.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explica��o
             </button>
             <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${d.id}', 'dogma')" title="Compartilhar no WhatsApp">
               <i class="fab fa-whatsapp"></i>
@@ -9522,7 +9522,7 @@ window.renderMariaGrid = function () {
                 <i class="fas ${p.icone}"></i>
               </div>
               <div class="maria-card-title-group">
-                <span class="maria-liturgical-badge">Devoção Solene</span>
+                <span class="maria-liturgical-badge">Devo��o Solene</span>
                 <h3 class="maria-card-title">${p.titulo}</h3>
                 <div class="maria-card-meta"><span>${p.subtitulo}</span></div>
               </div>
@@ -9546,7 +9546,7 @@ window.renderMariaGrid = function () {
 
             <div class="maria-card-actions">
               <button class="maria-read-btn" onclick="speakMariaItem('${p.id}', 'pratica')">
-                <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === p.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Devoção
+                <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === p.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Devo��o
               </button>
               <button class="maria-action-icon-btn whatsapp-btn" onclick="shareMariaWhatsApp('${p.id}', 'pratica')" title="Compartilhar no WhatsApp">
                 <i class="fab fa-whatsapp"></i>
@@ -9565,8 +9565,8 @@ function renderMariaEmptySearch() {
   return `
     <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); grid-column: 1 / -1;">
       <i class="fas fa-crown" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block; color: #60a5fa;"></i>
-      <p style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Nenhuma aparição ou conteúdo encontrado para "${currentMariaSearch}"</p>
-      <p style="font-size: 12.5px; margin-top: 4px;">Tente buscar por <em>Anguera, Fátima, Guadalupe, Lourdes, Akita, Kibeho, Garabandal, Medjugorje, Rosa Mística, Aparecida</em>.</p>
+      <p style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Nenhuma apari��o ou conte�do encontrado para "${currentMariaSearch}"</p>
+      <p style="font-size: 12.5px; margin-top: 4px;">Tente buscar por <em>Anguera, F�tima, Guadalupe, Lourdes, Akita, Kibeho, Garabandal, Medjugorje, Rosa M�stica, Aparecida</em>.</p>
       <button class="upload-btn-secondary" onclick="clearMariaSearch()" style="margin-top: 14px; font-size: 12px; padding: 7px 16px;">
         <i class="fas fa-times"></i> Limpar Busca
       </button>
@@ -9613,7 +9613,7 @@ window.openMariaDetail = function (id, tipo) {
         </div>
 
         <div class="maria-modal-header-info">
-          <span class="maria-liturgical-badge">Festa Litúrgica: ${item.dataFesta}</span>
+          <span class="maria-liturgical-badge">Festa Lit�rgica: ${item.dataFesta}</span>
           <h2 class="maria-modal-title">${item.nome}</h2>
           <div class="maria-modal-sub">${item.subtitulo}</div>
           <div class="maria-modal-meta-row">
@@ -9630,7 +9630,7 @@ window.openMariaDetail = function (id, tipo) {
 
       <div class="maria-modal-section">
         <h4 class="maria-modal-sec-title">
-          <i class="fas fa-scroll" style="color: var(--gold-400);"></i> A História Sagrada da Aparição
+          <i class="fas fa-scroll" style="color: var(--gold-400);"></i> A Hist�ria Sagrada da Apari��o
         </h4>
         <div class="maria-modal-full-text">${item.historia}</div>
       </div>
@@ -9658,20 +9658,20 @@ window.openMariaDetail = function (id, tipo) {
 
       <div class="maria-modal-section">
         <h4 class="maria-modal-sec-title" style="color: #60a5fa;">
-          <i class="fas fa-hands-praying"></i> Oração Oficial da Aparição
+          <i class="fas fa-hands-praying"></i> Ora��o Oficial da Apari��o
         </h4>
         <div class="maria-modal-oracao-highlight">${item.oracao}</div>
       </div>
 
       <div class="maria-modal-bottom-actions">
         <button class="maria-read-btn" onclick="speakMariaItem('${item.id}', 'aparicao')" style="flex: 1.2;">
-          <i class="fas ${isSpeaking ? 'fa-stop' : 'fa-volume-high'}"></i> ${isSpeaking ? 'Parar Narração' : 'Ouvir História Narrada'}
+          <i class="fas ${isSpeaking ? 'fa-stop' : 'fa-volume-high'}"></i> ${isSpeaking ? 'Parar Narra��o' : 'Ouvir Hist�ria Narrada'}
         </button>
         <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'aparicao')">
           <i class="fab fa-whatsapp"></i> WhatsApp
         </button>
         <button class="upload-btn-secondary" onclick="copyMariaText('${item.id}', 'aparicao')">
-          <i class="fas fa-copy"></i> Copiar Oração
+          <i class="fas fa-copy"></i> Copiar Ora��o
         </button>
       </div>
     `;
@@ -9694,7 +9694,7 @@ window.openMariaDetail = function (id, tipo) {
 
       <div class="maria-modal-bottom-actions">
         <button class="maria-read-btn" style="background: linear-gradient(135deg, var(--gold-500), var(--gold-600)); color: #111;" onclick="speakMariaItem('${item.id}', 'oracao')">
-          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Oração
+          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Ora��o
         </button>
         <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'oracao')">
           <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
@@ -9713,25 +9713,25 @@ window.openMariaDetail = function (id, tipo) {
         <div class="maria-modal-title-wrap">
           <span class="maria-liturgical-badge" style="color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.1);">${item.numero}</span>
           <h3>${item.titulo}</h3>
-          <span class="maria-modal-subtitle">${item.proclamacao} • ${item.papaConcilio}</span>
+          <span class="maria-modal-subtitle">${item.proclamacao} � ${item.papaConcilio}</span>
         </div>
       </div>
 
       <div class="maria-dogma-resumo" style="margin: 12px 0;">${item.resumo}</div>
 
       <h4 style="font-size: 13px; font-weight: 700; color: var(--gold-400); text-transform: uppercase; margin-top: 14px;">
-        <i class="fas fa-book-bible"></i> Fundamento Bíblico
+        <i class="fas fa-book-bible"></i> Fundamento B�blico
       </h4>
       <div class="maria-modal-full-text" style="font-style: italic; color: var(--gold-300);">${item.fundamentoBiblico}</div>
 
       <h4 style="font-size: 13px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; margin-top: 14px;">
-        <i class="fas fa-church"></i> Explicação Teológica & Magistério
+        <i class="fas fa-church"></i> Explica��o Teol�gica & Magist�rio
       </h4>
       <div class="maria-modal-full-text">${item.explicacaoTeologica}</div>
 
       <div class="maria-modal-bottom-actions">
         <button class="maria-read-btn" onclick="speakMariaItem('${item.id}', 'dogma')">
-          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explicação
+          <i class="fas ${isMariaAudioSpeaking && currentMariaSpeakingId === item.id ? 'fa-stop' : 'fa-volume-up'}"></i> Ouvir Explica��o
         </button>
         <button class="hero-share-btn" onclick="shareMariaWhatsApp('${item.id}', 'dogma')">
           <i class="fab fa-whatsapp"></i> Compartilhar no WhatsApp
@@ -9776,11 +9776,11 @@ window.speakMariaItem = async function (id, tipo) {
 
   let speakText = '';
   if (tipo === 'aparicao' || tipo === 'titulo') {
-    speakText = `${item.nome}. ${item.subtitulo}. Local e ano: ${item.localAno}. ${item.videntes ? 'Videntes: ' + item.videntes + '.' : ''} Palavras de Nossa Senhora: ${item.citacaoBiblica}. História da Aparição: ${item.narracaoTexto || item.historia}. Mensagem para nossas vidas: ${item.mensagem}. Oração: ${item.oracao}`;
+    speakText = `${item.nome}. ${item.subtitulo}. Local e ano: ${item.localAno}. ${item.videntes ? 'Videntes: ' + item.videntes + '.' : ''} Palavras de Nossa Senhora: ${item.citacaoBiblica}. Hist�ria da Apari��o: ${item.narracaoTexto || item.historia}. Mensagem para nossas vidas: ${item.mensagem}. Ora��o: ${item.oracao}`;
   } else if (tipo === 'oracao') {
     speakText = `${item.titulo}. ${item.subtitulo}. ${item.texto}`;
   } else if (tipo === 'dogma') {
-    speakText = `${item.numero}. ${item.titulo}. ${item.proclamacao}. Resumo: ${item.resumo}. Fundamento Bíblico: ${item.fundamentoBiblico}. Explicação Teológica: ${item.explicacaoTeologica}`;
+    speakText = `${item.numero}. ${item.titulo}. ${item.proclamacao}. Resumo: ${item.resumo}. Fundamento B�blico: ${item.fundamentoBiblico}. Explica��o Teol�gica: ${item.explicacaoTeologica}`;
   } else if (tipo === 'pratica') {
     speakText = `${item.titulo}. ${item.subtitulo}. Promessa: ${item.promessa}`;
   }
@@ -9820,16 +9820,16 @@ window.copyMariaText = async function (id, tipo) {
 
   let textToCopy = '';
   if (tipo === 'aparicao' || tipo === 'titulo') {
-    textToCopy = `🌹 *${item.nome}* (${item.subtitulo})\n📍 *Local & Ano:* ${item.localAno}\n\n${item.citacaoBiblica}\n\n📖 *História:*\n${item.historia}\n\n🙏 *Oração:*\n${item.oracao}\n\n📲 *Aplicativo Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+    textToCopy = `?? *${item.nome}* (${item.subtitulo})\n?? *Local & Ano:* ${item.localAno}\n\n${item.citacaoBiblica}\n\n?? *Hist�ria:*\n${item.historia}\n\n?? *Ora��o:*\n${item.oracao}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
   } else if (tipo === 'oracao') {
-    textToCopy = `📿 *${item.titulo}*\n_${item.subtitulo}_\n\n${item.texto}\n\n📲 *Aplicativo Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+    textToCopy = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n${item.texto}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
   }
 
   const ok = await copyToClipboard(textToCopy);
   if (ok) {
-    showToast('✨ Conteúdo copiado com sucesso!');
+    showToast('? Conte�do copiado com sucesso!');
   } else {
-    showToast('❌ Não foi possível copiar.');
+    showToast('? N�o foi poss�vel copiar.');
   }
 };
 
@@ -9839,30 +9839,30 @@ window.shareMariaWhatsApp = function (id, tipo) {
 
   let msg = '';
   if (tipo === 'aparicao' || tipo === 'titulo') {
-    msg = `🌹 *${item.nome}* — ${item.subtitulo}\n📍 *Local:* ${item.localAno}\n\n`;
-    msg += `📖 *Mensagem de Nossa Senhora:*\n${item.citacaoBiblica}\n\n`;
-    msg += `🙏 *Oração Oficial:*\n${item.oracao}\n\n`;
-    msg += `✨ *Conheça todas as Aparições no App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg = `?? *${item.nome}* � ${item.subtitulo}\n?? *Local:* ${item.localAno}\n\n`;
+    msg += `?? *Mensagem de Nossa Senhora:*\n${item.citacaoBiblica}\n\n`;
+    msg += `?? *Ora��o Oficial:*\n${item.oracao}\n\n`;
+    msg += `? *Conhe�a todas as Apari��es no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
   } else if (tipo === 'oracao') {
-    msg = `📿 *${item.titulo}*\n_${item.subtitulo}_\n\n`;
+    msg = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n`;
     msg += `${item.texto}\n\n`;
-    msg += `✨ *Reze com o App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `? *Reze com o App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
   } else if (tipo === 'dogma') {
-    msg = `🕊️ *${item.numero}: ${item.titulo}*\n_${item.proclamacao}_\n\n`;
-    msg += `✨ *Doutrina da Igreja:*\n${item.resumo}\n\n`;
-    msg += `📖 *Fundamento Bíblico:*\n${item.fundamentoBiblico}\n\n`;
-    msg += `📲 *Aplicativo Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg = `??? *${item.numero}: ${item.titulo}*\n_${item.proclamacao}_\n\n`;
+    msg += `? *Doutrina da Igreja:*\n${item.resumo}\n\n`;
+    msg += `?? *Fundamento B�blico:*\n${item.fundamentoBiblico}\n\n`;
+    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
   } else if (tipo === 'pratica') {
-    msg = `📜 *${item.titulo}*\n_${item.subtitulo}_\n\n`;
-    msg += `✨ *Promessa de Nossa Senhora:*\n${item.promessa}\n\n`;
-    msg += `📲 *Aplicativo Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n`;
+    msg += `? *Promessa de Nossa Senhora:*\n${item.promessa}\n\n`;
+    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
   }
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 // ==========================================================================
-// RÁDIOS & PODCASTS CATÓLICOS - CONTROLLER & UI MANAGEMENT
+// R�DIOS & PODCASTS CAT�LICOS - CONTROLLER & UI MANAGEMENT
 // ==========================================================================
 let currentRadioTab = 'all';
 let currentRadioSearch = '';
@@ -9874,7 +9874,7 @@ function initAudioStreamingListener() {
     updateMiniPlayerUI(state);
     updateRadioCardsUI(state);
     if (state.error) {
-      showToast(`⚠️ ${state.error}`);
+      showToast(`?? ${state.error}`);
     }
   });
 }
@@ -9906,11 +9906,11 @@ function updateMiniPlayerUI(state) {
   
   if (liveTagEl) {
     if (state.currentTrack.isLive) {
-      liveTagEl.textContent = '🔴 AO VIVO';
+      liveTagEl.textContent = '?? AO VIVO';
       liveTagEl.style.color = '#ef4444';
       liveTagEl.style.background = 'rgba(239, 68, 68, 0.15)';
     } else {
-      liveTagEl.textContent = '🎙️ PODCAST';
+      liveTagEl.textContent = '??? PODCAST';
       liveTagEl.style.color = '#c084fc';
       liveTagEl.style.background = 'rgba(139, 92, 246, 0.18)';
     }
@@ -9996,7 +9996,7 @@ function updateRadioCardsUI(state) {
     }
   });
 
-  // Atualiza também itens da lista de episódios no modal (se aberto)
+  // Atualiza tamb�m itens da lista de epis�dios no modal (se aberto)
   const modalEpItems = document.querySelectorAll('.podcast-ep-item');
   modalEpItems.forEach(item => {
     const epTrackId = item.getAttribute('data-track-id');
@@ -10064,7 +10064,7 @@ window.renderRadiosGrid = function () {
   const audioState = audioService.getState();
   const currentId = audioState.currentTrack ? audioState.currentTrack.raw?.id || audioState.currentTrack.id : null;
 
-  // Filtra rádios
+  // Filtra r�dios
   const filteredRadios = CATHOLIC_RADIOS.filter(r => {
     if (currentRadioTab === 'padres' || currentRadioTab === 'devocional') return false;
     if (!currentRadioSearch) return true;
@@ -10105,7 +10105,7 @@ window.renderRadiosGrid = function () {
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--text-secondary);">
         <i class="fas fa-radio" style="font-size: 42px; color: var(--gold-400); margin-bottom: 14px; opacity: 0.7;"></i>
         <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma emissora ou podcast encontrado</h3>
-        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Fábio de Melo", "Zezinho", "Manzotti", "Paulo Ricardo", "Marcelo Rossi" ou "Aparecida".</p>
+        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "F�bio de Melo", "Zezinho", "Manzotti", "Paulo Ricardo", "Marcelo Rossi" ou "Aparecida".</p>
         <button class="hero-share-btn" onclick="clearRadioSearch()" style="display: inline-flex; padding: 8px 18px; font-size: 13px;">
           <i class="fas fa-rotate-left"></i> Limpar Filtro
         </button>
@@ -10116,7 +10116,7 @@ window.renderRadiosGrid = function () {
 
   let html = '';
 
-  // Renderiza Rádios 24h
+  // Renderiza R�dios 24h
   for (const r of filteredRadios) {
     const isPlayingThis = currentId === r.id;
     const btnContent = isPlayingThis
@@ -10135,7 +10135,7 @@ window.renderRadiosGrid = function () {
           </div>
           <div class="radio-card-details">
             <h3 class="radio-card-name">${r.name}</h3>
-            <div class="radio-card-location"><i class="fas fa-location-dot"></i> ${r.city} • ${r.freq}</div>
+            <div class="radio-card-location"><i class="fas fa-location-dot"></i> ${r.city} � ${r.freq}</div>
             <p class="radio-card-desc">${r.description}</p>
           </div>
         </div>
@@ -10166,7 +10166,7 @@ window.renderRadiosGrid = function () {
         <div class="radio-card-header">
           <span class="radio-badge-podcast"><i class="fas fa-podcast"></i> ${p.genre}</span>
           <span class="radio-badge-live" style="background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.3);">
-            <i class="fas fa-headphones"></i> ${epCount} ${epCount > 1 ? 'Episódios' : 'Áudio'}
+            <i class="fas fa-headphones"></i> ${epCount} ${epCount > 1 ? 'Epis�dios' : '�udio'}
           </span>
         </div>
         <div class="radio-card-body">
@@ -10189,7 +10189,7 @@ window.renderRadiosGrid = function () {
         </div>
         ${epCount > 1 ? `
           <button class="radio-btn-episodes" onclick="openPodcastEpisodesModal('${p.id}')">
-            <i class="fas fa-list-ul"></i> Ver Todos os ${epCount} Episódios & Meditações
+            <i class="fas fa-list-ul"></i> Ver Todos os ${epCount} Epis�dios & Medita��es
           </button>
         ` : ''}
       </div>
@@ -10210,7 +10210,7 @@ window.playAudioStation = function (stationId) {
   stopOracaoAudio();
 
   audioService.playRadio(stationId);
-  showToast('📻 Conectando à transmissão ao vivo...');
+  showToast('?? Conectando � transmiss�o ao vivo...');
 };
 
 window.playAudioPodcast = function (podcastId, epIndex = 0) {
@@ -10224,7 +10224,7 @@ window.playAudioPodcast = function (podcastId, epIndex = 0) {
   stopOracaoAudio();
 
   audioService.playPodcast(podcastId, epIndex);
-  showToast('🎙️ Iniciando áudio devocional...');
+  showToast('??? Iniciando �udio devocional...');
 };
 
 window.openPodcastEpisodesModal = function (podcastId) {
@@ -10249,10 +10249,10 @@ window.openPodcastEpisodesModal = function (podcastId) {
           <h4 class="podcast-ep-title"><span style="color: var(--gold-400); margin-right: 6px;">#${idx + 1}</span> ${ep.title}</h4>
           <div class="podcast-ep-sub">
             <span><i class="fas fa-user"></i> ${ep.author || p.author}</span>
-            <span>•</span>
-            <span><i class="fas fa-clock"></i> ${ep.duration || 'Áudio'}</span>
-            <span>•</span>
-            <span>${ep.pubDate || 'Edição'}</span>
+            <span>�</span>
+            <span><i class="fas fa-clock"></i> ${ep.duration || '�udio'}</span>
+            <span>�</span>
+            <span>${ep.pubDate || 'Edi��o'}</span>
           </div>
         </div>
         <div class="podcast-ep-actions">
@@ -10280,7 +10280,7 @@ window.openPodcastEpisodesModal = function (podcastId) {
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
       <h4 style="color: var(--gold-300); font-size: 14px; margin: 0;">
-        <i class="fas fa-list"></i> Acervo de Meditações & Pregações (${p.episodes.length})
+        <i class="fas fa-list"></i> Acervo de Medita��es & Prega��es (${p.episodes.length})
       </h4>
       <span class="radio-badge-podcast" style="font-size: 11px;"><i class="fas fa-user-tie"></i> ${p.author}</span>
     </div>
@@ -10308,10 +10308,10 @@ window.sharePodcastEpisodeWhatsApp = function (podcastId, epIndex) {
   const ep = p.episodes && p.episodes[epIndex] ? p.episodes[epIndex] : null;
   const title = ep ? ep.title : p.name;
 
-  let msg = `🎙️ *Ouça este áudio abençoado:* "${title}"\n`;
-  msg += `👤 *Com:* ${p.author}\n\n`;
-  msg += `✨ Encontrei no aplicativo da Bíblia Sagrada Católica, com acervo de grandes Padres, Santo Terço, homilias e rádios 24h!\n\n`;
-  msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Ou�a este �udio aben�oado:* "${title}"\n`;
+  msg += `?? *Com:* ${p.author}\n\n`;
+  msg += `? Encontrei no aplicativo da B�blia Sagrada Cat�lica, com acervo de grandes Padres, Santo Ter�o, homilias e r�dios 24h!\n\n`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -10322,7 +10322,7 @@ window.toggleAudioServicePlay = function () {
 
 window.stopAudioService = function () {
   audioService.stop();
-  showToast('Áudio encerrado.');
+  showToast('�udio encerrado.');
 };
 
 window.toggleMiniMute = function () {
@@ -10342,20 +10342,20 @@ window.changeMiniVolume = function (val) {
 window.shareRadiosWhatsApp = function (specificName = '') {
   let msg = '';
   if (specificName) {
-    msg = `📻 *Estou ouvindo ${specificName}* no aplicativo da Bíblia Sagrada Católica!\n\n`;
-    msg += `✨ Ouça ao vivo as melhores rádios católicas do Brasil (Canção Nova, Aparecida, Evangelizar com Pe. Manzotti, Homilias e Terço) gratuitamente:\n\n`;
-    msg += `📲 *Acesse agora:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg = `?? *Estou ouvindo ${specificName}* no aplicativo da B�blia Sagrada Cat�lica!\n\n`;
+    msg += `? Ou�a ao vivo as melhores r�dios cat�licas do Brasil (Can��o Nova, Aparecida, Evangelizar com Pe. Manzotti, Homilias e Ter�o) gratuitamente:\n\n`;
+    msg += `?? *Acesse agora:*\nhttps://bibliasagradaavemaria.com.br`;
   } else {
-    msg = `📻 *Rádios e Podcasts Católicos 24h Ao Vivo!*\n\n`;
-    msg += `✨ Venha rezar e ouvir a Rádio Canção Nova, Rádio Aparecida, Rádio Evangelizar (Pe. Reginaldo Manzotti), homilias diárias e o Santo Terço direto no app da Bíblia Sagrada:\n\n`;
-    msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg = `?? *R�dios e Podcasts Cat�licos 24h Ao Vivo!*\n\n`;
+    msg += `? Venha rezar e ouvir a R�dio Can��o Nova, R�dio Aparecida, R�dio Evangelizar (Pe. Reginaldo Manzotti), homilias di�rias e o Santo Ter�o direto no app da B�blia Sagrada:\n\n`;
+    msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
   }
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 // ==========================================================================
-// LIVRO DE ORAÇÕES CATÓLICAS & DEVOCIONÁRIO (SALVAI ALMAS) - CONTROLLER
+// LIVRO DE ORA��ES CAT�LICAS & DEVOCION�RIO (SALVAI ALMAS) - CONTROLLER
 // ==========================================================================
 let currentOracaoTab = 'all';
 let currentOracoesSearch = '';
@@ -10413,10 +10413,10 @@ window.renderOracoesGrid = function () {
     container.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: var(--text-secondary);">
         <i class="fas fa-hands-praying" style="font-size: 42px; color: #c084fc; margin-bottom: 14px; opacity: 0.7;"></i>
-        <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma oração encontrada</h3>
-        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Ladainha", "Terço", "Salvai Almas", "São Bento", "São Miguel" ou "Montfort".</p>
+        <h3 style="color: var(--text-primary); margin-bottom: 8px;">Nenhuma ora��o encontrada</h3>
+        <p style="font-size: 14px; max-width: 420px; margin: 0 auto 16px;">Tente buscar por "Ladainha", "Ter�o", "Salvai Almas", "S�o Bento", "S�o Miguel" ou "Montfort".</p>
         <button class="hero-share-btn" onclick="clearOracoesSearch()" style="display: inline-flex; padding: 8px 18px; font-size: 13px;">
-          <i class="fas fa-rotate-left"></i> Ver Todas as Orações
+          <i class="fas fa-rotate-left"></i> Ver Todas as Ora��es
         </button>
       </div>
     `;
@@ -10436,22 +10436,22 @@ window.renderOracoesGrid = function () {
   };
 
   const categoryLabels = {
-    longas: '📜 Grande Devoção',
-    almas: '🕯️ Salvai Almas',
-    santos: '🕊️ Santo da Igreja',
-    manha_noite: '☀️ Cotidiana',
-    jesus: '✝️ Jesus & Misericórdia',
-    maria: '🌹 Mariana',
-    protecao: '🛡️ Proteção',
-    familia_cura: '🏠 Família & Cura',
-    espiritosanto: '🕊️ Espírito Santo'
+    longas: '?? Grande Devo��o',
+    almas: '??? Salvai Almas',
+    santos: '??? Santo da Igreja',
+    manha_noite: '?? Cotidiana',
+    jesus: '?? Jesus & Miseric�rdia',
+    maria: '?? Mariana',
+    protecao: '??? Prote��o',
+    familia_cura: '?? Fam�lia & Cura',
+    espiritosanto: '??? Esp�rito Santo'
   };
 
   let html = '';
 
   for (const o of list) {
     const icon = categoryIcons[o.categoria] || 'fas fa-hands-praying';
-    const catLabel = o.tipoBadge || categoryLabels[o.categoria] || 'Oração';
+    const catLabel = o.tipoBadge || categoryLabels[o.categoria] || 'Ora��o';
 
     html += `
       <div class="oracao-card" onclick="openOracaoModal('${o.id}')">
@@ -10474,9 +10474,9 @@ window.renderOracoesGrid = function () {
         <p class="oracao-card-intro">${o.introducao || o.texto.slice(0, 140)}...</p>
         <div class="oracao-card-actions" onclick="event.stopPropagation()">
           <button class="oracao-btn-read" onclick="openOracaoModal('${o.id}')">
-            <i class="fas fa-book-open"></i> Rezar Oração
+            <i class="fas fa-book-open"></i> Rezar Ora��o
           </button>
-          <button class="oracao-btn-icon" onclick="copyCurrentOracao('${o.id}')" title="Copiar oração">
+          <button class="oracao-btn-icon" onclick="copyCurrentOracao('${o.id}')" title="Copiar ora��o">
             <i class="fas fa-copy"></i>
           </button>
           <button class="oracao-btn-icon" onclick="shareCurrentOracaoWhatsApp('${o.id}')" title="Compartilhar no WhatsApp" style="color: #22c55e;">
@@ -10505,13 +10505,13 @@ window.openOracaoModal = function (id) {
   const textEl = document.getElementById('oracaoModalText');
 
   if (badgeEl) {
-    badgeEl.textContent = o.autor || 'Tradição Católica';
+    badgeEl.textContent = o.autor || 'Tradi��o Cat�lica';
   }
   if (titleEl) {
     titleEl.textContent = o.titulo;
   }
   if (subtitleEl) {
-    subtitleEl.textContent = o.subtitulo + (o.promessa ? ` • ${o.promessa}` : '');
+    subtitleEl.textContent = o.subtitulo + (o.promessa ? ` � ${o.promessa}` : '');
   }
   if (introEl) {
     if (o.introducao) {
@@ -10528,8 +10528,8 @@ window.openOracaoModal = function (id) {
 
   if (modal) modal.classList.remove('hidden');
 
-  // Registro de Oração no GA4
-  trackPageView(`Oração: ${o.titulo}`, `/oracao/${o.id}`);
+  // Registro de Ora��o no GA4
+  trackPageView(`Ora��o: ${o.titulo}`, `/oracao/${o.id}`);
   trackEvent('read_prayer', { oracao_id: o.id, oracao_titulo: o.titulo, oracao_categoria: o.categoria });
 };
 
@@ -10583,7 +10583,7 @@ window.toggleOracaoAudio = function () {
 
     window.speechSynthesis.speak(utterance);
   } else {
-    showToast('Leitura em voz alta não suportada neste dispositivo.');
+    showToast('Leitura em voz alta n�o suportada neste dispositivo.');
   }
 };
 
@@ -10602,11 +10602,11 @@ function updateOracaoAudioBtn(speaking) {
 
   if (speaking) {
     if (icon) icon.className = 'fas fa-stop';
-    if (text) text.textContent = 'Parar Áudio';
+    if (text) text.textContent = 'Parar �udio';
     if (btn) btn.style.background = '#ef4444';
   } else {
     if (icon) icon.className = 'fas fa-volume-up';
-    if (text) text.textContent = 'Ouvir Oração';
+    if (text) text.textContent = 'Ouvir Ora��o';
     if (btn) btn.style.background = '';
   }
 }
@@ -10615,13 +10615,13 @@ window.copyCurrentOracao = async function (optionalId = null) {
   const o = optionalId ? getOracaoPorId(optionalId) : currentActiveOracao;
   if (!o) return;
 
-  const textToCopy = `✝️ *${o.titulo}*\n_${o.subtitulo}_\n\n${o.texto}\n\n📲 *Livro de Orações - Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+  const textToCopy = `?? *${o.titulo}*\n_${o.subtitulo}_\n\n${o.texto}\n\n?? *Livro de Ora��es - B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
 
   const ok = await copyToClipboard(textToCopy);
   if (ok) {
-    showToast('✨ Oração copiada com sucesso!');
+    showToast('? Ora��o copiada com sucesso!');
   } else {
-    showToast('❌ Não foi possível copiar.');
+    showToast('? N�o foi poss�vel copiar.');
   }
 };
 
@@ -10629,27 +10629,27 @@ window.shareCurrentOracaoWhatsApp = function (optionalId = null) {
   const o = optionalId ? getOracaoPorId(optionalId) : currentActiveOracao;
   if (!o) return;
 
-  let msg = `✝️ *${o.titulo}*\n`;
+  let msg = `?? *${o.titulo}*\n`;
   msg += `_${o.subtitulo}_\n\n`;
   if (o.promessa) {
-    msg += `✨ *Promessa:* ${o.promessa}\n\n`;
+    msg += `? *Promessa:* ${o.promessa}\n\n`;
   }
-  msg += `🙏 *Oração:*\n${o.texto}\n\n`;
-  msg += `📲 *Reze mais no App da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Ora��o:*\n${o.texto}\n\n`;
+  msg += `?? *Reze mais no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 window.shareLivroOracoesWhatsApp = function () {
-  let msg = `📖 *Livro de Orações Católicas Tradicionais & Salvai Almas*\n\n`;
-  msg += `✨ Encontrei no aplicativo da Bíblia Sagrada uma coletânea completa com as orações dos Santos (São Bento, São Miguel, Santa Rita, Santo Expedito, Padre Pio), clamores de libertação e súplicas pelas almas do Purgatório!\n\n`;
-  msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `?? *Livro de Ora��es Cat�licas Tradicionais & Salvai Almas*\n\n`;
+  msg += `? Encontrei no aplicativo da B�blia Sagrada uma colet�nea completa com as ora��es dos Santos (S�o Bento, S�o Miguel, Santa Rita, Santo Expedito, Padre Pio), clamores de liberta��o e s�plicas pelas almas do Purgat�rio!\n\n`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 // ==========================================================================
-// DIRETOR ESPIRITUAL & PALAVRA AMIGA (IA CATÓLICA) — CONTROLLER
+// DIRETOR ESPIRITUAL & PALAVRA AMIGA (IA CAT�LICA) � CONTROLLER
 // ==========================================================================
 let currentDiretorPersonaId = 'padre_conselheiro';
 let currentDiretorResult = null;
@@ -10720,7 +10720,7 @@ function updateDiretorPersonaSpeech() {
     nameEl.style.color = p.cor;
   }
   if (textEl) {
-    textEl.textContent = `“${p.saudacao}”`;
+    textEl.textContent = `�${p.saudacao}�`;
   }
 }
 
@@ -10746,7 +10746,7 @@ window.submitDiretorConsulta = async function () {
   const text = (input?.value || '').trim();
 
   if (!text) {
-    showToast('Por favor, escreva o que você está sentindo ou passando.');
+    showToast('Por favor, escreva o que voc� est� sentindo ou passando.');
     input?.focus();
     return;
   }
@@ -10768,7 +10768,7 @@ window.submitDiretorConsulta = async function () {
     const result = await consultarDiretorEspiritual(text, currentDiretorPersonaId, apiKey);
     currentDiretorResult = result;
 
-    // Salva no histórico local
+    // Salva no hist�rico local
     salvarConsultaDiretorHistorico({
       personaId: result.persona?.id || currentDiretorPersonaId,
       personaNome: result.persona?.nome || 'Diretor Espiritual',
@@ -10790,7 +10790,7 @@ window.submitDiretorConsulta = async function () {
     if (loadingContainer) loadingContainer.classList.add('hidden');
     if (btnSubmit) {
       btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<i class="fas fa-dove"></i> <span>Receber Conselho & Oração Pastoral</span>';
+      btnSubmit.innerHTML = '<i class="fas fa-dove"></i> <span>Receber Conselho & Ora��o Pastoral</span>';
     }
   }
 };
@@ -10799,7 +10799,7 @@ window.renderDiretorResponseCard = function (result) {
   const cardEl = document.getElementById('diretorCardResponse');
   if (!cardEl || !result) return;
 
-  // Garante que o resultado atual está salvo globalmente para o áudio e ações
+  // Garante que o resultado atual est� salvo globalmente para o �udio e a��es
   currentDiretorResult = result;
   stopDiretorAudio();
 
@@ -10819,18 +10819,18 @@ window.renderDiretorResponseCard = function (result) {
     oracao = result.conselhoObj.oracao || '';
     proposito = result.conselhoObj.proposito || '';
   } else {
-    const sections = markdown.split(/\n(?=(?:\d+\.|\#{1,3})\s*(?:\*\*|🕊️|📖|⚜️|🙏|✨))/gi);
+    const sections = markdown.split(/\n(?=(?:\d+\.|\#{1,3})\s*(?:\*\*|???|??|??|??|?))/gi);
     sections.forEach(sec => {
       const lower = sec.toLowerCase();
       if (lower.includes('acolhimento') || lower.includes('conforto') || lower.includes('palavra de acolhimento')) {
         acolhimento = sec.replace(/^.*?[:\n]/, '').trim();
-      } else if (lower.includes('palavra de deus') || lower.includes('versículo') || lower.includes('escritura')) {
+      } else if (lower.includes('palavra de deus') || lower.includes('vers�culo') || lower.includes('escritura')) {
         versiculo = sec.replace(/^.*?[:\n]/, '').trim();
       } else if (lower.includes('sabedoria') || lower.includes('santos') || lower.includes('doutor')) {
         sabedoria = sec.replace(/^.*?[:\n]/, '').trim();
-      } else if (lower.includes('oração') || lower.includes('oracao') || lower.includes('entrega')) {
+      } else if (lower.includes('ora��o') || lower.includes('oracao') || lower.includes('entrega')) {
         oracao = sec.replace(/^.*?[:\n]/, '').trim();
-      } else if (lower.includes('propósito') || lower.includes('proposito') || lower.includes('pequeno propósito')) {
+      } else if (lower.includes('prop�sito') || lower.includes('proposito') || lower.includes('pequeno prop�sito')) {
         proposito = sec.replace(/^.*?[:\n]/, '').trim();
       }
     });
@@ -10859,15 +10859,15 @@ window.renderDiretorResponseCard = function (result) {
       </span>
     </div>
 
-    <!-- Desabafo do Usuário -->
+    <!-- Desabafo do Usu�rio -->
     <div style="background: rgba(0,0,0,0.25); border: 1px dashed var(--border-color); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
       <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">
-        <i class="fas fa-heart"></i> O que você entregou a Deus:
+        <i class="fas fa-heart"></i> O que voc� entregou a Deus:
       </div>
-      <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-style: italic;">“${result.desabafo || ''}”</p>
+      <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-style: italic;">�${result.desabafo || ''}�</p>
     </div>
 
-    <!-- Seção 1: Palavra de Acolhimento -->
+    <!-- Se��o 1: Palavra de Acolhimento -->
     ${acolhimento ? `
       <div class="diretor-section-subcard">
         <h4 class="diretor-subcard-title" style="color: #7dd3fc;"><i class="fas fa-dove"></i> Palavra de Acolhimento & Conforto Pastoral:</h4>
@@ -10875,15 +10875,15 @@ window.renderDiretorResponseCard = function (result) {
       </div>
     ` : ''}
 
-    <!-- Seção 2: Palavra de Deus -->
+    <!-- Se��o 2: Palavra de Deus -->
     ${versiculo ? `
       <div class="diretor-section-subcard">
-        <h4 class="diretor-subcard-title" style="color: var(--gold-300);"><i class="fas fa-book-bible"></i> A Palavra de Deus para o seu Coração:</h4>
+        <h4 class="diretor-subcard-title" style="color: var(--gold-300);"><i class="fas fa-book-bible"></i> A Palavra de Deus para o seu Cora��o:</h4>
         <div class="diretor-subcard-text scripture">${fmt(versiculo)}</div>
       </div>
     ` : ''}
 
-    <!-- Seção 3: Sabedoria dos Santos -->
+    <!-- Se��o 3: Sabedoria dos Santos -->
     ${sabedoria ? `
       <div class="diretor-section-subcard">
         <h4 class="diretor-subcard-title" style="color: #c084fc;"><i class="fas fa-shield-halved"></i> Sabedoria dos Santos:</h4>
@@ -10891,30 +10891,30 @@ window.renderDiretorResponseCard = function (result) {
       </div>
     ` : ''}
 
-    <!-- Seção 4: Oração de Paz & Entrega -->
+    <!-- Se��o 4: Ora��o de Paz & Entrega -->
     ${oracao ? `
       <div class="diretor-section-subcard" style="border-color: rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1) 0%, transparent 80%);">
-        <h4 class="diretor-subcard-title" style="color: #38bdf8;"><i class="fas fa-hands-praying"></i> Oração de Paz & Entrega:</h4>
+        <h4 class="diretor-subcard-title" style="color: #38bdf8;"><i class="fas fa-hands-praying"></i> Ora��o de Paz & Entrega:</h4>
         <div class="diretor-subcard-text prayer">${fmt(oracao)}</div>
       </div>
     ` : ''}
 
-    <!-- Seção 5: Propósito para Hoje -->
+    <!-- Se��o 5: Prop�sito para Hoje -->
     ${proposito ? `
       <div class="diretor-section-subcard" style="background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.3);">
-        <h4 class="diretor-subcard-title" style="color: #4ade80;"><i class="fas fa-sparkles"></i> Um Pequeno Propósito para Hoje:</h4>
+        <h4 class="diretor-subcard-title" style="color: #4ade80;"><i class="fas fa-sparkles"></i> Um Pequeno Prop�sito para Hoje:</h4>
         <div class="diretor-subcard-text" style="color: #bbf7d0; font-weight: 500;">${fmt(proposito)}</div>
       </div>
     ` : ''}
 
-    <!-- Botões de Ação -->
+    <!-- Bot�es de A��o -->
     <div class="diretor-actions-row">
       <button type="button" id="btnDiretorAudio" class="diretor-btn-audio" onclick="toggleDiretorAudio()">
         <i class="fas fa-volume-up" id="diretorAudioIcon"></i>
-        <span id="diretorAudioText">Ouvir Conselho & Oração</span>
+        <span id="diretorAudioText">Ouvir Conselho & Ora��o</span>
       </button>
-      <button type="button" class="upload-btn-secondary" onclick="salvarDiretorNoDiario()" title="Guardar no Diário Espiritual" style="padding: 10px 14px; font-size: 13px;">
-        <i class="fas fa-book-bookmark" style="color: #10b981;"></i> Diário
+      <button type="button" class="upload-btn-secondary" onclick="salvarDiretorNoDiario()" title="Guardar no Di�rio Espiritual" style="padding: 10px 14px; font-size: 13px;">
+        <i class="fas fa-book-bookmark" style="color: #10b981;"></i> Di�rio
       </button>
       <button type="button" class="upload-btn-secondary" onclick="copiarDiretorResposta()" title="Copiar texto" style="padding: 10px 14px; font-size: 13px;">
         <i class="fas fa-copy"></i> Copiar
@@ -10929,15 +10929,15 @@ window.renderDiretorResponseCard = function (result) {
 function getDiretorSpeechCleanText(result) {
   if (!result) return '';
   const p = result.persona || DIRETOR_PERSONAS[0];
-  let parts = [`Direção espiritual católica com ${p.nome}.`];
+  let parts = [`Dire��o espiritual cat�lica com ${p.nome}.`];
 
   if (result.conselhoObj) {
     const c = result.conselhoObj;
     if (c.acolhimento) parts.push(`Palavra de acolhimento: ${c.acolhimento}`);
     if (c.versiculo) parts.push(`Palavra de Deus: ${c.versiculo}`);
     if (c.sabedoria) parts.push(`Sabedoria dos santos: ${c.sabedoria}`);
-    if (c.oracao) parts.push(`Oração: ${c.oracao}`);
-    if (c.proposito) parts.push(`Propósito para hoje: ${c.proposito}`);
+    if (c.oracao) parts.push(`Ora��o: ${c.oracao}`);
+    if (c.proposito) parts.push(`Prop�sito para hoje: ${c.proposito}`);
   } else if (result.rawMarkdown) {
     const cleanMd = result.rawMarkdown
       .replace(/###\s*/g, '')
@@ -10962,7 +10962,7 @@ window.toggleDiretorAudio = async function () {
     return;
   }
 
-  // Interrompe outros reprodutores de áudio/leitura ativos
+  // Interrompe outros reprodutores de �udio/leitura ativos
   if (typeof stopSpeech === 'function') {
     try { await stopSpeech(); } catch (e) {}
   }
@@ -10972,11 +10972,11 @@ window.toggleDiretorAudio = async function () {
 
   const cleanToSpeak = getDiretorSpeechCleanText(currentDiretorResult);
   if (!cleanToSpeak) {
-    showToast('Texto para leitura não disponível.');
+    showToast('Texto para leitura n�o dispon�vel.');
     return;
   }
 
-  // 1. Verificação de suporte nativo Capacitor (Android / iOS)
+  // 1. Verifica��o de suporte nativo Capacitor (Android / iOS)
   const isNative = (typeof Capacitor !== 'undefined' && Capacitor?.isNativePlatform && Capacitor.isNativePlatform()) ||
                    (window.Capacitor && window.Capacitor?.isNativePlatform && window.Capacitor.isNativePlatform());
   const ttsPlugin = (typeof TextToSpeech !== 'undefined' && TextToSpeech) ||
@@ -11066,7 +11066,7 @@ window.toggleDiretorAudio = async function () {
         };
 
         utterance.onerror = (err) => {
-          console.warn('[Diretor WebSpeech] Erro na sentença:', err);
+          console.warn('[Diretor WebSpeech] Erro na senten�a:', err);
           if (isDiretorSpeaking) {
             speakNextSentence();
           }
@@ -11080,12 +11080,12 @@ window.toggleDiretorAudio = async function () {
 
       speakNextSentence();
     } catch (err) {
-      console.error('[Diretor WebSpeech] Exceção:', err);
+      console.error('[Diretor WebSpeech] Exce��o:', err);
       stopDiretorAudio();
-      showToast('Erro ao iniciar áudio.');
+      showToast('Erro ao iniciar �udio.');
     }
   } else {
-    showToast('Leitura em áudio não suportada neste dispositivo.');
+    showToast('Leitura em �udio n�o suportada neste dispositivo.');
     updateDiretorAudioBtnState(false);
   }
 };
@@ -11120,22 +11120,22 @@ function updateDiretorAudioBtnState(speaking) {
   if (speaking) {
     if (btn) btn.classList.add('speaking');
     if (icon) icon.className = 'fas fa-stop';
-    if (text) text.textContent = 'Parar Áudio';
+    if (text) text.textContent = 'Parar �udio';
   } else {
     if (btn) btn.classList.remove('speaking');
     if (icon) icon.className = 'fas fa-volume-up';
-    if (text) text.textContent = 'Ouvir Conselho & Oração';
+    if (text) text.textContent = 'Ouvir Conselho & Ora��o';
   }
 }
 
 window.copiarDiretorResposta = async function () {
   if (!currentDiretorResult) return;
   const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
-  const textToCopy = `🕊️ *Diretor Espiritual & Palavra Amiga (${p.nome})*\n\n${currentDiretorResult.rawMarkdown}\n\n📲 *App da Bíblia Sagrada Católica (Edição Ave Maria):*\nhttps://bibliasagradaavemaria.com.br`;
+  const textToCopy = `??? *Diretor Espiritual & Palavra Amiga (${p.nome})*\n\n${currentDiretorResult.rawMarkdown}\n\n?? *App da B�blia Sagrada Cat�lica (Edi��o Ave Maria):*\nhttps://bibliasagradaavemaria.com.br`;
 
   const ok = await copyToClipboard(textToCopy);
   if (ok) {
-    showToast('✨ Conselho e oração copiados com sucesso!');
+    showToast('? Conselho e ora��o copiados com sucesso!');
   } else {
     showToast('Erro ao copiar texto.');
   }
@@ -11144,18 +11144,18 @@ window.copiarDiretorResposta = async function () {
 window.compartilharDiretorWhatsApp = function () {
   if (!currentDiretorResult) return;
   const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
-  let msg = `🕊️ *Palavra Amiga & Direção Espiritual*\n`;
-  msg += `👤 *Com:* ${p.nome}\n\n`;
+  let msg = `??? *Palavra Amiga & Dire��o Espiritual*\n`;
+  msg += `?? *Com:* ${p.nome}\n\n`;
   msg += `${currentDiretorResult.rawMarkdown}\n\n`;
-  msg += `📲 *Receba orientação espiritual no app da Bíblia Sagrada Católica:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Receba orienta��o espiritual no app da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 window.compartilharDiretorAppWhatsApp = function () {
-  let msg = `🕊️ *Diretor Espiritual & Palavra Amiga (IA Católica)*\n\n`;
-  msg += `✨ Está passando por um momento difícil, ansiedade, luto ou dúvida na família? No aplicativo da Bíblia Sagrada Católica você pode desabafar e receber uma palavra de conforto iluminada pelos Santos (Padre Pio, Sta. Teresa de Calcutá, São João Paulo II), consolo bíblico e uma oração personalizada!\n\n`;
-  msg += `📲 *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Diretor Espiritual & Palavra Amiga (IA Cat�lica)*\n\n`;
+  msg += `? Est� passando por um momento dif�cil, ansiedade, luto ou d�vida na fam�lia? No aplicativo da B�blia Sagrada Cat�lica voc� pode desabafar e receber uma palavra de conforto iluminada pelos Santos (Padre Pio, Sta. Teresa de Calcut�, S�o Jo�o Paulo II), consolo b�blico e uma ora��o personalizada!\n\n`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -11166,15 +11166,15 @@ window.salvarDiretorNoDiario = async function () {
 
   try {
     await salvarNovoItemDiario({
-      titulo: `🕊️ Conselho Espiritual (${p.nome})`,
+      titulo: `??? Conselho Espiritual (${p.nome})`,
       categoria: 'protecao',
-      versiculo: 'Bíblia Ave Maria',
-      pedido: `Desabafo: "${currentDiretorResult.desabafo}"\n\nConselho & Oração:\n${currentDiretorResult.rawMarkdown.slice(0, 450)}...`
+      versiculo: 'B�blia Ave Maria',
+      pedido: `Desabafo: "${currentDiretorResult.desabafo}"\n\nConselho & Ora��o:\n${currentDiretorResult.rawMarkdown.slice(0, 450)}...`
     });
-    showToast('📖 Conselho guardado no seu Diário Espiritual com sucesso!');
+    showToast('?? Conselho guardado no seu Di�rio Espiritual com sucesso!');
   } catch (err) {
-    console.warn('[DiretorEspiritual] Erro ao salvar no diário:', err);
-    showToast('Não foi possível salvar no Diário.');
+    console.warn('[DiretorEspiritual] Erro ao salvar no di�rio:', err);
+    showToast('N�o foi poss�vel salvar no Di�rio.');
   }
 };
 
@@ -11202,7 +11202,7 @@ window.renderDiretorHistorico = function () {
       <div style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
         <i class="fas fa-dove" style="font-size: 36px; color: #38bdf8; margin-bottom: 12px; opacity: 0.6;"></i>
         <h4 style="color: var(--text-primary); margin: 0 0 6px 0;">Nenhuma consulta anterior</h4>
-        <p style="font-size: 13px; margin: 0;">Faça um desabafo na tela anterior para guardar suas orientações aqui.</p>
+        <p style="font-size: 13px; margin: 0;">Fa�a um desabafo na tela anterior para guardar suas orienta��es aqui.</p>
       </div>
     `;
     return;
@@ -11213,9 +11213,9 @@ window.renderDiretorHistorico = function () {
       <div class="diretor-history-card" onclick="carregarConsultaHistorico('${item.id}')">
         <div class="diretor-history-meta">
           <span style="font-weight: 700; color: #38bdf8;"><i class="fas fa-user-check"></i> ${item.personaNome || 'Diretor Espiritual'}</span>
-          <span>${item.data || ''} às ${item.hora || ''}</span>
+          <span>${item.data || ''} �s ${item.hora || ''}</span>
         </div>
-        <p class="diretor-history-prompt">“${item.desabafo}”</p>
+        <p class="diretor-history-prompt">�${item.desabafo}�</p>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
           <span style="font-size: 11.5px; color: var(--gold-400);"><i class="fas fa-envelope-open-text"></i> Toque para reabrir resposta</span>
           <button type="button" onclick="deletarItemHistoricoDiretor('${item.id}', event)" style="background: none; border: none; color: #ef4444; font-size: 12px; cursor: pointer; padding: 4px 8px;" title="Excluir">
@@ -11258,11 +11258,11 @@ window.deletarItemHistoricoDiretor = function (id, event) {
   if (event) event.stopPropagation();
   excluirItemDiretorHistorico(id);
   renderDiretorHistorico();
-  showToast('Registro excluído do histórico.');
+  showToast('Registro exclu�do do hist�rico.');
 };
 
 // ==========================================================================
-// COMUNIDADE CATÓLICA, MURAL FRATERNO & BATE-PAPO — CONTROLLER
+// COMUNIDADE CAT�LICA, MURAL FRATERNO & BATE-PAPO � CONTROLLER
 // ==========================================================================
 let currentComunidadeChannel = 'geral';
 let currentMuralMessages = [];
@@ -11272,9 +11272,9 @@ window.updateHomeComunidadeCard = async function () {
     const fieis = await getFieisOnline();
     const count = fieis.length;
     const countEl = document.getElementById('homeComunidadeOnlineCount');
-    if (countEl) countEl.textContent = `${count} Fiéis Online`;
+    if (countEl) countEl.textContent = `${count} Fi�is Online`;
     const bannerEl = document.getElementById('comunidadeOnlineTotal');
-    if (bannerEl) bannerEl.textContent = `${count} Fiéis em Comunhão e Oração`;
+    if (bannerEl) bannerEl.textContent = `${count} Fi�is em Comunh�o e Ora��o`;
     const tabBadge = document.getElementById('tabFieisCountBadge');
     if (tabBadge) tabBadge.textContent = String(count);
   } catch (e) {
@@ -11285,7 +11285,7 @@ window.updateHomeComunidadeCard = async function () {
 window.showComunidade = async function (channel = 'geral') {
   showView('comunidadeView');
 
-  // Atualiza informações do perfil e paróquia no cabeçalho
+  // Atualiza informa��es do perfil e par�quia no cabe�alho
   try {
     const perfil = await getPerfilFiel();
     const headerNome = document.getElementById('comunidadeHeaderNome');
@@ -11293,7 +11293,7 @@ window.showComunidade = async function (channel = 'geral') {
 
     const paroquiaTag = document.getElementById('comunidadeUserParoquiaName');
     if (paroquiaTag) {
-      paroquiaTag.textContent = perfil.paroquia !== 'Paróquia Católica' ? `${perfil.paroquia} (${perfil.cidade}/${perfil.estado})` : 'Vincular Minha Paróquia';
+      paroquiaTag.textContent = perfil.paroquia !== 'Par�quia Cat�lica' ? `${perfil.paroquia} (${perfil.cidade}/${perfil.estado})` : 'Vincular Minha Par�quia';
     }
   } catch (e) {}
 
@@ -11304,7 +11304,7 @@ window.showComunidade = async function (channel = 'geral') {
 window.switchComunidadeTab = async function (tab) {
   currentComunidadeChannel = tab;
 
-  // Atualiza classes ativas nos botões das abas
+  // Atualiza classes ativas nos bot�es das abas
   const tabGeral = document.getElementById('tabComunidadeGeral');
   const tabAmizades = document.getElementById('tabComunidadeAmizades');
   const tabFieis = document.getElementById('tabComunidadeFieis');
@@ -11319,13 +11319,13 @@ window.switchComunidadeTab = async function (tab) {
   if (!container) return;
 
   if (tab === 'fieis') {
-    // Aba de Fiéis Online (Diretório)
+    // Aba de Fi�is Online (Diret�rio)
     if (composer) composer.style.display = 'none';
     stopMuralPolling();
     container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
 
     try {
-      // Garante batimento de presença atualizado antes de carregar a lista
+      // Garante batimento de presen�a atualizado antes de carregar a lista
       await pingPresencaOnline();
       const fieis = await getFieisOnline();
       renderOnlineFieisList(fieis);
@@ -11333,7 +11333,7 @@ window.switchComunidadeTab = async function (tab) {
       container.innerHTML = `
         <div class="gallery-empty-state" style="padding: 40px 20px; text-align: center;">
           <i class="fas fa-exclamation-circle" style="color: #ef4444; font-size: 2rem; margin-bottom: 10px;"></i>
-          <p style="color: var(--text-secondary);">Não foi possível carregar os fiéis online no momento.</p>
+          <p style="color: var(--text-secondary);">N�o foi poss�vel carregar os fi�is online no momento.</p>
           <button class="upload-btn-secondary" onclick="switchComunidadeTab('fieis')"><i class="fas fa-redo"></i> Tentar Novamente</button>
         </div>
       `;
@@ -11343,8 +11343,8 @@ window.switchComunidadeTab = async function (tab) {
     if (composer) composer.style.display = '';
     if (input) {
       input.placeholder = tab === 'amizades'
-        ? 'Apresente-se, conte sobre sua fé, paróquia ou amizades santas...'
-        : 'Escreva sua mensagem, partilha ou pedido de oração...';
+        ? 'Apresente-se, conte sobre sua f�, par�quia ou amizades santas...'
+        : 'Escreva sua mensagem, partilha ou pedido de ora��o...';
     }
 
     container.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
@@ -11366,7 +11366,7 @@ window.renderMuralFeed = function (messages, channel) {
       <div class="gallery-empty-state" style="padding: 50px 20px; text-align: center;">
         <i class="fas fa-dove" style="color: var(--gold-400); font-size: 2.2rem; margin-bottom: 12px;"></i>
         <h3 style="font-family: var(--font-display); font-size: 16px; color: var(--gold-300); margin-bottom: 6px;">Seja o primeiro a partilhar!</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 16px;">Deixe uma oração ou saudação fraterna para todos os irmãos do aplicativo.</p>
+        <p style="font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto 16px;">Deixe uma ora��o ou sauda��o fraterna para todos os irm�os do aplicativo.</p>
       </div>
     `;
     return;
@@ -11375,8 +11375,8 @@ window.renderMuralFeed = function (messages, channel) {
   const html = messages.map(m => {
     const isPastoral = !!m.is_pastoral;
     const authorInitials = (m.nome || 'Fiel').slice(0, 2).toUpperCase();
-    const paroquiaStr = m.paroquia ? `${m.paroquia}` : 'Paróquia Católica';
-    const localStr = (m.cidade && m.estado) ? ` • ${m.cidade}/${m.estado}` : '';
+    const paroquiaStr = m.paroquia ? `${m.paroquia}` : 'Par�quia Cat�lica';
+    const localStr = (m.cidade && m.estado) ? ` � ${m.cidade}/${m.estado}` : '';
     const tempoStr = formatarTempoDecorrido(m.timestamp);
     const amemCount = (m.reacoes && m.reacoes.amem) || 0;
 
@@ -11389,7 +11389,7 @@ window.renderMuralFeed = function (messages, channel) {
             </div>
             <div class="comunidade-author-info">
               <span class="comunidade-author-name">
-                ${m.nome || 'Irmão em Cristo'}
+                ${m.nome || 'Irm�o em Cristo'}
                 ${isPastoral ? '<span style="font-size: 10px; background: rgba(212, 175, 55, 0.2); color: var(--gold-300); padding: 1px 6px; border-radius: 8px; margin-left: 4px;">Pastoral</span>' : ''}
               </span>
               <span class="comunidade-paroquia-sub">${paroquiaStr}${localStr}</span>
@@ -11401,8 +11401,8 @@ window.renderMuralFeed = function (messages, channel) {
           ${(m.texto || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
         </div>
         <div class="comunidade-msg-actions">
-          <button type="button" class="comunidade-react-btn" onclick="reactMural('${m.id}')" title="Dizer Amém">
-            <span>🙏 Amém</span>
+          <button type="button" class="comunidade-react-btn" onclick="reactMural('${m.id}')" title="Dizer Am�m">
+            <span>?? Am�m</span>
             <span class="react-count" id="react-count-${m.id}">${amemCount > 0 ? amemCount : ''}</span>
           </button>
         </div>
@@ -11422,13 +11422,13 @@ window.renderOnlineFieisList = function (fieis) {
   if (tabBadge) tabBadge.textContent = String((fieis || []).length);
 
   const bannerEl = document.getElementById('comunidadeOnlineTotal');
-  if (bannerEl) bannerEl.textContent = `${(fieis || []).length} Fiéis em Comunhão e Oração`;
+  if (bannerEl) bannerEl.textContent = `${(fieis || []).length} Fi�is em Comunh�o e Ora��o`;
 
   if (!fieis || !fieis.length) {
     container.innerHTML = `
       <div class="gallery-empty-state" style="padding: 50px 20px; text-align: center;">
         <i class="fas fa-users" style="color: var(--gold-400); font-size: 2.2rem; margin-bottom: 12px;"></i>
-        <p style="color: var(--text-secondary);">Nenhum fiel online no momento. O seu batimento de presença acabou de ser registrado!</p>
+        <p style="color: var(--text-secondary);">Nenhum fiel online no momento. O seu batimento de presen�a acabou de ser registrado!</p>
       </div>
     `;
     return;
@@ -11438,7 +11438,7 @@ window.renderOnlineFieisList = function (fieis) {
     <div class="comunidade-fieis-grid">
       ${fieis.map(f => {
         const initials = (f.nome || 'Fiel').slice(0, 2).toUpperCase();
-        const paroquia = f.paroquia || 'Paróquia Católica';
+        const paroquia = f.paroquia || 'Par�quia Cat�lica';
         const local = (f.cidade && f.estado) ? `${f.cidade}/${f.estado}` : (f.cidade || 'Brasil');
         const santo = f.santo || 'Nossa Senhora Aparecida';
         const isMe = !!f.is_me;
@@ -11460,17 +11460,17 @@ window.renderOnlineFieisList = function (fieis) {
             </div>
             <div class="comunidade-fiel-body">
               <div class="comunidade-fiel-nome">
-                ${f.nome || 'Irmão em Cristo'}
-                ${isMe ? '<span style="font-size: 10px; background: rgba(234, 179, 8, 0.25); color: var(--gold-300); padding: 1px 7px; border-radius: 8px; margin-left: 4px; font-weight: 800; border: 1px solid rgba(234,179,8,0.4);"><i class="fas fa-user-check"></i> Você</span>' : ''}
-                ${(!isMe && isReal) ? '<span style="font-size: 9.5px; background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 1px 5px; border-radius: 8px; margin-left: 4px; font-weight: 700;">🟢 Online Agora</span>' : ''}
+                ${f.nome || 'Irm�o em Cristo'}
+                ${isMe ? '<span style="font-size: 10px; background: rgba(234, 179, 8, 0.25); color: var(--gold-300); padding: 1px 7px; border-radius: 8px; margin-left: 4px; font-weight: 800; border: 1px solid rgba(234,179,8,0.4);"><i class="fas fa-user-check"></i> Voc�</span>' : ''}
+                ${(!isMe && isReal) ? '<span style="font-size: 9.5px; background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 1px 5px; border-radius: 8px; margin-left: 4px; font-weight: 700;">?? Online Agora</span>' : ''}
               </div>
-              <div class="comunidade-fiel-cidade"><i class="fas fa-location-dot" style="color: #60a5fa; font-size: 10.5px; margin-right: 3px;"></i> ${local} • ${paroquia}</div>
-              <span class="comunidade-fiel-santo"><i class="fas fa-cross" style="margin-right: 3px;"></i> Devoção: ${santo}</span>
+              <div class="comunidade-fiel-cidade"><i class="fas fa-location-dot" style="color: #60a5fa; font-size: 10.5px; margin-right: 3px;"></i> ${local} � ${paroquia}</div>
+              <span class="comunidade-fiel-santo"><i class="fas fa-cross" style="margin-right: 3px;"></i> Devo��o: ${santo}</span>
 
               ${hasRecado ? `
                 <div class="comunidade-card-recado">
                   <div class="comunidade-card-recado-header">
-                    <span><i class="fas fa-comment-dots" style="color: var(--gold-400); margin-right: 4px;"></i> ${isMe ? 'Meu Último Recado' : 'Mensagem do Fiel'}</span>
+                    <span><i class="fas fa-comment-dots" style="color: var(--gold-400); margin-right: 4px;"></i> ${isMe ? 'Meu �ltimo Recado' : 'Mensagem do Fiel'}</span>
                     <span class="comunidade-card-recado-time">${f.ultimo_recado.timestamp ? formatarTempoDecorrido(f.ultimo_recado.timestamp) : 'recente'}</span>
                   </div>
                   <div class="comunidade-card-recado-text">"${String(f.ultimo_recado.texto).replace(/"/g, '&quot;')}"</div>
@@ -11500,7 +11500,7 @@ window.saudarFielOnline = function (nome) {
   switchComunidadeTab('amizades');
   const input = document.getElementById('comunidadeMsgInput');
   if (input) {
-    input.value = `A Paz de Jesus e o amor de Maria, ${nome}! 🕊️ `;
+    input.value = `A Paz de Jesus e o amor de Maria, ${nome}! ??? `;
     input.focus();
   }
 };
@@ -11529,7 +11529,7 @@ window.handleSendMuralMessage = async function (e) {
 
     await enviarMensagemMural(currentComunidadeChannel, texto);
     input.value = '';
-    showToast('✨ Mensagem enviada para o mural!');
+    showToast('? Mensagem enviada para o mural!');
 
     // Atualiza imediatamente na tela
     const msgs = await getMuralMensagens(currentComunidadeChannel);
@@ -11541,7 +11541,7 @@ window.handleSendMuralMessage = async function (e) {
       container.scrollTop = container.scrollHeight;
     }
   } catch (err) {
-    showToast('❌ ' + (err.message || 'Erro ao enviar mensagem'));
+    showToast('? ' + (err.message || 'Erro ao enviar mensagem'));
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -11556,7 +11556,7 @@ window.reactMural = async function (msgId) {
     const current = parseInt(countEl.textContent || '0', 10);
     countEl.textContent = String(current + 1);
   }
-  showToast('🙏 Amém! Oração confirmada.');
+  showToast('?? Am�m! Ora��o confirmada.');
   reagirMensagemMural(currentComunidadeChannel, msgId, 'amem');
 };
 
@@ -11569,7 +11569,7 @@ window.openComunidadePerfilModal = async function () {
 
     if (nomeInput) nomeInput.value = perfil.has_custom_nome ? perfil.nome : '';
     if (santoSelect && perfil.santo) santoSelect.value = perfil.santo;
-    if (paroquiaInfo) paroquiaInfo.textContent = `${perfil.paroquia} • ${perfil.cidade}/${perfil.estado}`;
+    if (paroquiaInfo) paroquiaInfo.textContent = `${perfil.paroquia} � ${perfil.cidade}/${perfil.estado}`;
 
     const modal = document.getElementById('comunidadePerfilModal');
     if (modal) modal.classList.remove('hidden');
@@ -11603,16 +11603,16 @@ window.salvarPerfilModalComunidade = async function (e) {
   if (headerNome) headerNome.textContent = nome;
 
   closeComunidadePerfilModal();
-  showToast('✨ Perfil salvo com sucesso!');
+  showToast('? Perfil salvo com sucesso!');
 
-  // Atualiza imediatamente a visualização atual e contadores
+  // Atualiza imediatamente a visualiza��o atual e contadores
   await updateHomeComunidadeCard();
   const fieis = await getFieisOnline();
   renderOnlineFieisList(fieis);
 };
 
 // ==========================================================================
-// BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FIÉIS)
+// BATE-PAPO FRATERNO DIRETO (CONVERSA 1 A 1 ENTRE FI�IS)
 // ==========================================================================
 let currentChatFiel = null;
 let currentChatId = null;
@@ -11622,13 +11622,13 @@ function renderChatDiretoMessages(mensagens) {
   if (!stream) return;
 
   if (!mensagens || !mensagens.length) {
-    const nome = currentChatFiel ? currentChatFiel.nome : 'o irmão(ã)';
+    const nome = currentChatFiel ? currentChatFiel.nome : 'o irm�o(�)';
     stream.innerHTML = `
       <div style="text-align: center; padding: 40px 15px; color: var(--text-secondary); margin: auto;">
         <i class="fas fa-dove" style="font-size: 2.2rem; color: var(--gold-400); margin-bottom: 12px; display: block;"></i>
         <h4 style="color: var(--text-primary); margin: 0 0 6px; font-size: 15px;">Conversa Fraterna e Direta</h4>
         <p style="font-size: 13px; line-height: 1.5; margin: 0 0 16px;">
-          Inicie agora uma conversa com <strong>${nome}</strong>.<br>Troque saudações de paz, partilhas e orações!
+          Inicie agora uma conversa com <strong>${nome}</strong>.<br>Troque sauda��es de paz, partilhas e ora��es!
         </p>
       </div>
     `;
@@ -11671,10 +11671,10 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
     // Fecha banner in-app caso esteja aberto
     fecharInAppNotif();
 
-    // 2. Resolve informações do fiel (a partir da lista já carregada em memória se vier apenas destId)
+    // 2. Resolve informa��es do fiel (a partir da lista j� carregada em mem�ria se vier apenas destId)
     const target = (window.currentFieisList || []).find(x => x.id === destId);
-    const finalNome = destNome || (target && target.nome) || 'Irmão em Cristo';
-    const finalParoquia = paroquia || (target && target.paroquia) || 'Paróquia Católica';
+    const finalNome = destNome || (target && target.nome) || 'Irm�o em Cristo';
+    const finalParoquia = paroquia || (target && target.paroquia) || 'Par�quia Cat�lica';
     const finalCidade = cidade || (target && target.cidade) || 'Brasil';
     const finalEstado = estado || (target && target.estado) || 'BR';
 
@@ -11686,7 +11686,7 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
       estado: finalEstado
     };
 
-    // 3. Atualiza avatar e informações no topo do modal
+    // 3. Atualiza avatar e informa��es no topo do modal
     const avatarEl = document.getElementById('chatDiretoAvatar');
     const nomeEl = document.getElementById('chatDiretoNome');
     const subEl = document.getElementById('chatDiretoSub');
@@ -11697,7 +11697,7 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
     if (nomeEl) nomeEl.textContent = finalNome;
     if (subEl) {
       const loc = (finalCidade && finalEstado) ? `${finalCidade}/${finalEstado}` : finalCidade;
-      subEl.textContent = `${finalParoquia} • ${loc}`;
+      subEl.textContent = `${finalParoquia} � ${loc}`;
     }
     if (inputEl) {
       inputEl.value = '';
@@ -11707,7 +11707,7 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
       streamEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
     }
 
-    // 4. Obtém o ID do usuário local e inicia a sincronização da conversa
+    // 4. Obt�m o ID do usu�rio local e inicia a sincroniza��o da conversa
     let myId = localStorage.getItem('biblia_device_id');
     if (!myId) {
       const perfil = await getPerfilFiel();
@@ -11718,7 +11718,7 @@ window.openChatDiretoModal = async function (destId, destNome, paroquia, cidade,
     // Marca mensagens recebidas como lidas
     marcarMensagemLida(destId, finalNome).catch(() => {});
 
-    // Inicia polling com suporte a histórico unificado
+    // Inicia polling com suporte a hist�rico unificado
     startChatDiretoPolling(currentChatId, destId, finalNome, renderChatDiretoMessages);
   } catch (e) {
     console.error('Erro ao abrir chat direto:', e);
@@ -11774,7 +11774,7 @@ window.handleSendChatDiretoMessage = async function (e) {
     // Atualiza silenciosamente os cards da lista online para refletir o novo recado
     getFieisOnline().then(renderOnlineFieisList).catch(() => {});
   } catch (err) {
-    showToast('❌ ' + (err.message || 'Erro ao enviar mensagem'));
+    showToast('? ' + (err.message || 'Erro ao enviar mensagem'));
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -11785,7 +11785,7 @@ window.handleSendChatDiretoMessage = async function (e) {
 };
 
 // ==========================================================================
-// NOTIFICAÇÕES IN-APP E ALERTA SONORO/VIBRAÇÃO EM TEMPO REAL
+// NOTIFICA��ES IN-APP E ALERTA SONORO/VIBRA��O EM TEMPO REAL
 // ==========================================================================
 let notifTimeout = null;
 
@@ -11833,7 +11833,7 @@ window.showInAppChatNotification = function (item) {
   const btnReply = document.getElementById('comunidadeNotifBtnReply');
   const clickArea = document.getElementById('comunidadeNotifClickArea');
 
-  const senderNome = item.de_nome || 'Irmão em Cristo';
+  const senderNome = item.de_nome || 'Irm�o em Cristo';
   if (avatar) avatar.textContent = senderNome.slice(0, 2).toUpperCase();
   if (title) title.innerHTML = `Mensagem de <strong>${senderNome}</strong>`;
   if (text) text.textContent = `"${item.texto || ''}"`;
@@ -11863,7 +11863,7 @@ window.showInAppChatNotification = function (item) {
 function handleIncomingChatMessage(item) {
   if (!item) return;
 
-  // Se o modal de conversa direta já estiver aberto com essa pessoa:
+  // Se o modal de conversa direta j� estiver aberto com essa pessoa:
   if (currentChatFiel && (
     currentChatFiel.id === item.de_id || 
     (item.de_nome && currentChatFiel.nome && item.de_nome.trim().toLowerCase() === currentChatFiel.nome.trim().toLowerCase())
@@ -11873,14 +11873,14 @@ function handleIncomingChatMessage(item) {
     return;
   }
 
-  // Se o modal não estiver aberto, exibe banner flutuante
+  // Se o modal n�o estiver aberto, exibe banner flutuante
   showInAppChatNotification(item);
 
-  // Atualiza badge se estiver visível
+  // Atualiza badge se estiver vis�vel
   updateHomeComunidadeCard();
 }
 
-// Inicializa a escuta contínua de presença e caixa de entrada comunitária
+// Inicializa a escuta cont�nua de presen�a e caixa de entrada comunit�ria
 try {
   startPresenceHeartbeat();
   startCaixaEntradaListener(handleIncomingChatMessage);
