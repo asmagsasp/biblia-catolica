@@ -363,8 +363,25 @@ body::before {
   transform: translateY(-50%);
   color: var(--gold-400);
   font-size: 14px;
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: auto;
   z-index: 2;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.search-icon:hover {
+  color: var(--gold-300);
+}
+
+.search-icon:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.search-input::-webkit-search-decoration,
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-results-button,
+.search-input::-webkit-search-results-decoration {
+  display: none;
 }
 
 .search-clear-btn {

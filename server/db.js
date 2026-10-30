@@ -288,10 +288,118 @@ function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const BOOK_ALIASES = [
+    // Antigo Testamento
+    { id: 1, aliases: ['genesis', 'gn', 'gen'] },
+    { id: 2, aliases: ['exodo', 'ex'] },
+    { id: 3, aliases: ['levitico', 'lv', 'lev'] },
+    { id: 4, aliases: ['numeros', 'nm', 'num'] },
+    { id: 5, aliases: ['deuteronomio', 'dt', 'deut'] },
+    { id: 6, aliases: ['josue', 'js', 'jos'] },
+    { id: 7, aliases: ['juizes', 'jz', 'jui', 'jzes'] },
+    { id: 8, aliases: ['rute', 'rt'] },
+    { id: 9, aliases: ['1 samuel', '1samuel', '1 sm', '1sm', '1 s', '1s', 'i samuel', 'i sm'] },
+    { id: 10, aliases: ['2 samuel', '2samuel', '2 sm', '2sm', '2 s', '2s', 'ii samuel', 'ii sm'] },
+    { id: 11, aliases: ['1 reis', '1reis', '1 rs', '1rs', '1 r', '1r', 'i reis', 'i rs'] },
+    { id: 12, aliases: ['2 reis', '2reis', '2 rs', '2rs', '2 r', '2r', 'ii reis', 'ii rs'] },
+    { id: 13, aliases: ['1 cronicas', '1cronicas', '1 cr', '1cr', 'i cronicas', 'i cr'] },
+    { id: 14, aliases: ['2 cronicas', '2cronicas', '2 cr', '2cr', 'ii cronicas', 'ii cr'] },
+    { id: 15, aliases: ['esdras', 'esd', 'ed'] },
+    { id: 16, aliases: ['neemias', 'ne', 'neem'] },
+    { id: 17, aliases: ['tobias', 'tb', 'tob'] },
+    { id: 18, aliases: ['judite', 'jdt', 'jdte'] },
+    { id: 19, aliases: ['ester', 'est'] },
+    { id: 20, aliases: ['job'] },
+    { id: 21, aliases: ['salmos', 'salmo', 'sl', 'sal', 'psalms', 'psalmo'] },
+    { id: 22, aliases: ['1 macabeus', '1macabeus', '1 mc', '1mc', 'i macabeus', 'i mc'] },
+    { id: 23, aliases: ['2 macabeus', '2macabeus', '2 mc', '2mc', 'ii macabeus', 'ii mc'] },
+    { id: 24, aliases: ['proverbios', 'proverbio', 'pv', 'pr', 'prov'] },
+    { id: 25, aliases: ['eclesiastes', 'ec', 'ecl'] },
+    { id: 26, aliases: ['cantico dos canticos', 'canticos dos canticos', 'cantico', 'canticos', 'cantares', 'ct'] },
+    { id: 27, aliases: ['sabedoria', 'sb', 'sab'] },
+    { id: 28, aliases: ['eclesiastico', 'siracida', 'siracide', 'eclo', 'sir'] },
+    { id: 29, aliases: ['isaias', 'is'] },
+    { id: 30, aliases: ['jeremias', 'jr', 'jer'] },
+    { id: 31, aliases: ['lamentacoes', 'lamentacao', 'lm', 'lam'] },
+    { id: 32, aliases: ['baruc', 'baruque', 'br'] },
+    { id: 33, aliases: ['ezequiel', 'ez', 'ezeq'] },
+    { id: 34, aliases: ['daniel', 'dn', 'dan'] },
+    { id: 35, aliases: ['oseias', 'os'] },
+    { id: 36, aliases: ['joel', 'jl'] },
+    { id: 37, aliases: ['amos', 'am'] },
+    { id: 38, aliases: ['abdias', 'obadias', 'ab', 'ob'] },
+    { id: 39, aliases: ['jonas', 'jn'] },
+    { id: 40, aliases: ['miqueias', 'mq'] },
+    { id: 41, aliases: ['naum', 'na'] },
+    { id: 42, aliases: ['habacuc', 'habacuque', 'hc', 'hab'] },
+    { id: 43, aliases: ['sofonias', 'sf', 'sof'] },
+    { id: 44, aliases: ['ageu', 'ag'] },
+    { id: 45, aliases: ['zacarias', 'zc', 'zac'] },
+    { id: 46, aliases: ['malaquias', 'ml', 'mal'] },
+    // Novo Testamento
+    { id: 47, aliases: ['sao mateus', 'mateus', 'mt', 'mat'] },
+    { id: 48, aliases: ['sao marcos', 'marcos', 'mc', 'marc', 'mar'] },
+    { id: 49, aliases: ['sao lucas', 'lucas', 'lc', 'luc'] },
+    { id: 50, aliases: ['sao joao', 'joao', 'jo', 'jn'] },
+    { id: 51, aliases: ['atos dos apostolos', 'atos', 'at', 'act'] },
+    { id: 52, aliases: ['romanos', 'rm', 'rom'] },
+    { id: 53, aliases: ['1 corintios', '1corintios', '1 cor', '1cor', '1 co', '1co', 'i corintios', 'i cor'] },
+    { id: 54, aliases: ['2 corintios', '2corintios', '2 cor', '2cor', '2 co', '2co', 'ii corintios', 'ii cor'] },
+    { id: 55, aliases: ['galatas', 'gl', 'gal'] },
+    { id: 56, aliases: ['efesios', 'ef', 'efe'] },
+    { id: 57, aliases: ['filipenses', 'fp', 'fl', 'fil'] },
+    { id: 58, aliases: ['colossenses', 'cl', 'col'] },
+    { id: 59, aliases: ['1 tessalonicenses', '1tessalonicenses', '1 ts', '1ts', 'i tessalonicenses', 'i ts'] },
+    { id: 60, aliases: ['2 tessalonicenses', '2tessalonicenses', '2 ts', '2ts', 'ii tessalonicenses', 'ii ts'] },
+    { id: 61, aliases: ['1 timoteo', '1timoteo', '1 tm', '1tm', 'i timoteo', 'i tm'] },
+    { id: 62, aliases: ['2 timoteo', '2timoteo', '2 tm', '2tm', 'ii timoteo', 'ii tm'] },
+    { id: 63, aliases: ['tito', 'tt'] },
+    { id: 64, aliases: ['filemon', 'filemom', 'fm', 'flm'] },
+    { id: 65, aliases: ['hebreus', 'hb', 'heb'] },
+    { id: 66, aliases: ['sao tiago', 'tiago', 'tg', 'tiag'] },
+    { id: 67, aliases: ['1 sao pedro', '1sao pedro', '1 pedro', '1pedro', '1 pe', '1pe', '1 p', '1p', 'i sao pedro', 'i pedro', 'i pe'] },
+    { id: 68, aliases: ['2 sao pedro', '2sao pedro', '2 pedro', '2pedro', '2 pe', '2pe', '2 p', '2p', 'ii sao pedro', 'ii pedro', 'ii pe'] },
+    { id: 69, aliases: ['1 sao joao', '1sao joao', '1 joao', '1joao', '1 jo', '1jo', '1 j', '1j', 'i sao joao', 'i joao', 'i jo'] },
+    { id: 70, aliases: ['2 sao joao', '2sao joao', '2 joao', '2joao', '2 jo', '2jo', '2 j', '2j', 'ii sao joao', 'ii joao', 'ii jo'] },
+    { id: 71, aliases: ['3 sao joao', '3sao joao', '3 joao', '3joao', '3 jo', '3jo', '3 j', '3j', 'iii sao joao', 'iii joao', 'iii jo'] },
+    { id: 72, aliases: ['sao judas', 'judas', 'jd', 'jud'] },
+    { id: 73, aliases: ['apocalipse', 'ap', 'apoc'] }
+];
+
+const SEARCH_STOP_WORDS = new Set([
+    'a', 'o', 'e', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas',
+    'um', 'uma', 'uns', 'umas', 'por', 'para', 'com', 'que', 'se', 'me', 'te', 'lhe',
+    'ele', 'ela', 'eles', 'elas', 'ao', 'aos', 'seu', 'sua', 'seus', 'suas'
+]);
+
+function parseBiblicalReference(rawQuery) {
+    if (!rawQuery) return null;
+    let q = removeAccents(rawQuery).trim().toLowerCase();
+    q = q.replace(/^iii\s+/i, '3 ').replace(/^ii\s+/i, '2 ').replace(/^i\s+/i, '1 ');
+
+    const match = q.match(/^([1-3]?\s*[a-zçãõáéíóúâêô]+(?:\s+[a-zçãõáéíóúâêô]+)*?)\s*(\d{1,3})(?:[\s:,.-]+(\d{1,3}))?$/i);
+    if (!match) return null;
+
+    const bookRaw = match[1].trim();
+    const capNum = parseInt(match[2], 10);
+    const verNum = match[3] ? parseInt(match[3], 10) : null;
+    if (isNaN(capNum) || capNum <= 0) return null;
+
+    for (const item of BOOK_ALIASES) {
+        for (const alias of item.aliases) {
+            if (bookRaw === alias) {
+                return { idLivro: item.id, cap: capNum, ver: verNum, isPsalm: item.id === 21 };
+            }
+        }
+    }
+    return null;
+}
+
 function buildExactSearchRegex(term) {
     const parts = removeAccents(term).toLowerCase().trim().split(/\s+/).filter(Boolean).map(escapeRegex);
     if (parts.length === 0) return null;
-    return new RegExp(`(?:^|[^a-z0-9])${parts.join('\\s+')}(?:$|[^a-z0-9])`, 'i');
+    const separator = '[\\s,.:;!?"\'«“»”\\-–—]+';
+    return new RegExp(`(?:^|[^a-z0-9])${parts.join(separator)}(?:$|[^a-z0-9])`, 'i');
 }
 
 export async function buscar(termo) {
@@ -302,64 +410,52 @@ export async function buscar(termo) {
     if (cleanTerm.length < 2) return [];
 
     const normTerm = removeAccents(cleanTerm);
+
+    // 1. Verificar se é referência bíblica direta (ex: "Salmo 23", "João 3:16", "Mateus 5")
+    const ref = parseBiblicalReference(cleanTerm);
+    if (ref) {
+        const psalmAltCap = (ref.isPsalm && ref.cap === 23) ? 22 : ((ref.isPsalm && ref.cap === 91) ? 90 : null);
+        const capsToFetch = psalmAltCap ? [psalmAltCap, ref.cap] : [ref.cap];
+        const refResults = [];
+        for (const c of capsToFetch) {
+            let sql = `
+                SELECT v.id_livro, l.nome_livro, v.id_capitulo, v.id_versiculo, v.texto
+                FROM versiculos v
+                JOIN livros l ON v.id_livro = l.id_livro
+                WHERE v.id_livro = ? AND v.id_capitulo = ?
+            `;
+            const params = [ref.idLivro, c];
+            if (ref.ver) {
+                sql += ` AND v.id_versiculo = ?`;
+                params.push(ref.ver);
+            }
+            sql += ` ORDER BY v.id_versiculo ASC LIMIT 200`;
+            const rows = await getAll(sql, params);
+            if (rows && rows.length > 0) {
+                refResults.push(...rows);
+            }
+        }
+        if (refResults.length > 0) return refResults;
+    }
+
+    // 2. Tentar busca de frase exata usando texto_norm com limites de palavras flexíveis
     const phraseRegex = buildExactSearchRegex(cleanTerm);
     if (!phraseRegex) return [];
 
-    // 1. Tentar busca de frase exata usando texto_norm (accent-insensitive)
-    let phraseSql;
-    let phraseParams;
-
-    if (normTerm.length <= 3 && !normTerm.includes(' ')) {
-        phraseSql = `
-            SELECT 
-                v.id_livro, 
-                l.nome_livro, 
-                v.id_capitulo, 
-                v.id_versiculo, 
-                v.texto,
-                v.texto_norm
-            FROM versiculos v
-            JOIN livros l ON v.id_livro = l.id_livro
-            WHERE v.texto_norm LIKE ? 
-               OR v.texto_norm LIKE ? 
-               OR v.texto_norm LIKE ? 
-               OR v.texto_norm LIKE ?
-               OR v.texto_norm LIKE ?
-               OR v.texto_norm LIKE ?
-               OR v.texto_norm LIKE ?
-               OR v.texto_norm LIKE ?
-               OR v.texto_norm LIKE ?
-            LIMIT 1000
-        `;
-        phraseParams = [
-            `% ${normTerm} %`,
-            `${normTerm} %`,
-            `% ${normTerm}`,
-            `% ${normTerm},%`,
-            `% ${normTerm}.%`,
-            `% ${normTerm};%`,
-            `% ${normTerm}:%`,
-            `% ${normTerm}?%`,
-            `% ${normTerm}!%`
-        ];
-    } else {
-        phraseSql = `
-            SELECT 
-                v.id_livro, 
-                l.nome_livro, 
-                v.id_capitulo, 
-                v.id_versiculo, 
-                v.texto,
-                v.texto_norm
-            FROM versiculos v
-            JOIN livros l ON v.id_livro = l.id_livro
-            WHERE v.texto_norm LIKE ?
-            LIMIT 1000
-        `;
-        phraseParams = [`%${normTerm}%`];
-    }
-
-    const phraseCandidates = await getAll(phraseSql, phraseParams);
+    let phraseSql = `
+        SELECT 
+            v.id_livro, 
+            l.nome_livro, 
+            v.id_capitulo, 
+            v.id_versiculo, 
+            v.texto,
+            v.texto_norm
+        FROM versiculos v
+        JOIN livros l ON v.id_livro = l.id_livro
+        WHERE v.texto_norm LIKE ?
+        LIMIT 1000
+    `;
+    const phraseCandidates = await getAll(phraseSql, [`%${normTerm}%`]);
     const phraseResults = phraseCandidates
         .filter(r => phraseRegex.test(r.texto_norm || removeAccents(r.texto)))
         .slice(0, 200)
@@ -369,13 +465,13 @@ export async function buscar(termo) {
         return phraseResults;
     }
 
-    // 2. Se não encontrar a frase contínua, buscar por múltiplas palavras significativas (>= 2 caracteres)
+    // 3. Fallback para múltiplas palavras (todas devem ocorrer como palavras exatas)
     const words = cleanTerm
         .split(/\s+/)
         .map(w => removeAccents(w).replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '').toLowerCase())
         .filter(w => w.length >= 2);
 
-    if (words.length <= 1) return []; // Se era palavra única e não achou como exata, encerra
+    if (words.length <= 1) return [];
 
     const conditions = words.map(() => `v.texto_norm LIKE ?`);
     const wordsSql = `
@@ -393,13 +489,49 @@ export async function buscar(termo) {
     `;
     const wordRegexes = words.map(w => new RegExp(`(?:^|[^a-z0-9])${escapeRegex(w)}(?:$|[^a-z0-9])`, 'i'));
     const wordCandidates = await getAll(wordsSql, words.map(w => `%${w}%`));
-    return wordCandidates
+    const allWordsMatches = wordCandidates
         .filter(r => {
             const norm = r.texto_norm || removeAccents(r.texto);
             return wordRegexes.every(rgx => rgx.test(norm));
         })
         .slice(0, 200)
         .map(({ texto_norm, ...rest }) => rest);
+
+    if (allWordsMatches.length > 0) {
+        return allWordsMatches;
+    }
+
+    // 4. Se tiver 3 ou mais palavras e nenhuma casou todas, buscar por relevância com pontuação
+    if (words.length >= 3) {
+        const sigWords = words.filter(w => !SEARCH_STOP_WORDS.has(w));
+        const activeWords = sigWords.length >= 2 ? sigWords : words;
+        const scoreExpr = activeWords.map(() => `(CASE WHEN v.texto_norm LIKE ? THEN 1 ELSE 0 END)`).join(' + ');
+        const minMatches = Math.max(2, Math.ceil(activeWords.length * 0.60));
+        const fuzzySql = `
+            SELECT * FROM (
+                SELECT 
+                    v.id_livro, 
+                    l.nome_livro, 
+                    v.id_capitulo, 
+                    v.id_versiculo, 
+                    v.texto,
+                    v.texto_norm,
+                    (${scoreExpr}) as match_count
+                FROM versiculos v
+                JOIN livros l ON v.id_livro = l.id_livro
+            ) sub
+            WHERE sub.match_count >= ?
+            ORDER BY sub.match_count DESC
+            LIMIT 200
+        `;
+        const params = [...activeWords.map(w => `%${w}%`), minMatches];
+        const fuzzyCandidates = await getAll(fuzzySql, params);
+        if (fuzzyCandidates && fuzzyCandidates.length > 0) {
+            return fuzzyCandidates.map(({ texto_norm, match_count, ...rest }) => rest);
+        }
+    }
+
+    return [];
 }
 
 const VERSICULOS_INSPIRADORES = [

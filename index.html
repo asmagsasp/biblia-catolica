@@ -144,11 +144,11 @@
       <span class="cross" onclick="event.stopPropagation(); handleHeaderCrossClick()" title="Bíblia Sagrada">&#10013;</span>
       <h1>Bíblia Sagrada<span>Edição Católica</span></h1>
     </div>
-    <div class="search-container" id="searchContainer">
-      <i class="fas fa-search search-icon"></i>
-      <input type="text" class="search-input" id="searchInput" placeholder="Buscar na Palavra de Deus..." dir="ltr" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <form class="search-container" id="searchContainer" onsubmit="event.preventDefault(); window.doSearch && window.doSearch();" action="javascript:void(0);">
+      <i class="fas fa-search search-icon" onclick="window.doSearch && window.doSearch()" role="button" aria-label="Buscar na Bíblia" tabindex="0"></i>
+      <input type="search" class="search-input" id="searchInput" placeholder="Buscar na Bíblia (ex: amor, Salmo 23, João 3:16)..." dir="ltr" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" onkeydown="if(event.key==='Enter'){event.preventDefault();window.doSearch&&window.doSearch();}">
       <button type="button" class="search-clear-btn hidden" id="searchClearBtn" onmousedown="event.preventDefault()" onclick="clearMainSearch(event)" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
-    </div>
+    </form>
     <div class="header-actions">
       <button class="header-btn" onclick="showRadiosPodcasts()" title="Rádios & Podcasts Católicos" style="color: #eab308;"><i
           class="fas fa-radio"></i></button>
@@ -3242,7 +3242,39 @@
     </div>
   </nav>
 
-  <script type="module" src="src/main.js"></script>
+  <script>
+  // Ponte de busca � garante que Enter funciona mesmo antes do m�dulo carregar
+  (function() {
+    function trySearch() {
+      if (typeof window.doSearch === 'function') {
+        window.doSearch();
+      } else {
+        // m�dulo ainda carregando, tentar novamente em 100ms
+        setTimeout(trySearch, 100);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      var inp = document.getElementById('searchInput');
+      if (inp) {
+        inp.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            trySearch();
+          }
+        });
+        // clique na lupa
+        var form = document.getElementById('searchContainer');
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            trySearch();
+          });
+        }
+      }
+    });
+  })();
+</script>
+<script type="module" src="src/main.js"></script>
 </body>
 
 </html>

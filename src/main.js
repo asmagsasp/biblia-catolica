@@ -1,4 +1,5 @@
-import './style.css';
+﻿import './style.css';
+import { trackPageView, trackEvent } from './analytics.js';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
 import { generateSacredAIImage, composeCardOnCanvas, SACRED_AI_INSPIRATIONS, SACRED_AI_STYLES } from './aiImageService.js';
@@ -31,6 +32,7 @@ import {
   handleCustomSleepTimerSubmit, 
   notifyReadingFinished 
 } from './sleepTimerService.js';
+
 import { 
   ESTADOS_BRASIL, 
   getLocalParoquia, 
@@ -62,6 +64,8 @@ import {
   stopCaixaEntradaListener,
   marcarMensagemLida
 } from './comunidadeService.js';
+
+let donateShimmerInterval = null;
 
 // ===== CLIPBOARD UTILITY =====
 export async function copyToClipboard(text) {
@@ -372,10 +376,17 @@ async function init() {
   const searchContainer = document.getElementById('searchContainer') || mainSearchInput?.parentElement;
   const headerEl = document.querySelector('.header');
   const searchClearBtn = document.getElementById('searchClearBtn');
+  const searchIcon = searchContainer?.querySelector('.search-icon');
+
+  if (searchIcon) {
+    searchIcon.addEventListener('click', () => {
+      doSearch();
+    });
+  }
 
   if (mainSearchInput) {
     mainSearchInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.keyCode === 13) {
         e.preventDefault();
         doSearch();
       } else if (e.key === 'Escape') {
@@ -383,6 +394,10 @@ async function init() {
         if (searchClearBtn) searchClearBtn.classList.add('hidden');
         mainSearchInput.blur();
       }
+    });
+
+    mainSearchInput.addEventListener('search', () => {
+      doSearch();
     });
 
     mainSearchInput.addEventListener('input', e => {
@@ -1212,9 +1227,22 @@ window.openSearchResultCard = function (itemEl) {
   const cap = parseInt(itemEl.dataset.cap);
   const livroId = parseInt(itemEl.dataset.livro);
   const nome = itemEl.dataset.nome;
+  const ver = parseInt(itemEl.dataset.ver);
   if (!isNaN(livroId) && !isNaN(cap)) {
     openBook(livroId, nome, 0);
-    setTimeout(() => selectChapter(cap), 100);
+    setTimeout(async () => {
+      await selectChapter(cap);
+      if (!isNaN(ver)) {
+        setTimeout(() => {
+          const vEl = document.getElementById(`v-${ver}`);
+          if (vEl) {
+            vEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            vEl.classList.add('verse-targeted');
+            setTimeout(() => vEl.classList.remove('verse-targeted'), 2500);
+          }
+        }, 150);
+      }
+    }, 100);
   }
 };
 
@@ -1500,7 +1528,7 @@ export function highlightSearchTerms(text, query) {
       return cleaned
         .split('')
         .map(ch => {
-          if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”]+';
+          if (/\s+/.test(ch)) return '[\\s,.:;!?"\'«“»”\\-–—]+';
           const lower = ch.toLowerCase();
           return accentMap[lower] || escapeRegex(ch);
         })
@@ -1542,6 +1570,7 @@ export function highlightSearchTerms(text, query) {
 }
 
 // ===== SEARCH =====
+window.doSearch = doSearch;
 function doSearch() {
   const input = document.getElementById('searchInput');
   const t = input ? input.value.trim() : '';
@@ -5101,7 +5130,6 @@ window.triggerDonateBtnShimmer = function () {
   });
 };
 
-let donateShimmerInterval = null;
 function initDonateButtonShimmer() {
   if (donateShimmerInterval) clearInterval(donateShimmerInterval);
   // Executa o brilho intenso a cada 1 minuto (60.000 ms)
