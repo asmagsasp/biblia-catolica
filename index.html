@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -14,6 +14,28 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-512.png">
+
+  <!-- Open Graph / WhatsApp / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bibliasagradacatolica.com.br/">
+  <meta property="og:title" content="Bíblia Sagrada Católica - Todos os 73 Livros">
+  <meta property="og:description" content="Leia, busque e medite na Palavra de Deus. Bíblia Católica completa com 73 livros canônicos, liturgia diária, santo terço e muito mais. 100% gratuito e offline.">
+  <meta property="og:image" content="https://bibliasagradacatolica.com.br/icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Bíblia Sagrada Católica">
+  <meta property="og:site_name" content="Bíblia Sagrada Católica">
+  <meta property="og:locale" content="pt_BR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://bibliasagradacatolica.com.br/">
+  <meta name="twitter:title" content="Bíblia Sagrada Católica - Todos os 73 Livros">
+  <meta name="twitter:description" content="Leia, busque e medite na Palavra de Deus. Bíblia Católica completa com 73 livros canônicos, liturgia diária, santo terço e muito mais.">
+  <meta name="twitter:image" content="https://bibliasagradacatolica.com.br/icon-512.png">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://bibliasagradacatolica.com.br/">
   <!-- Fontes e Ícones Locais 100% Offline (Zero Dependência de Internet para UI) -->
   <link rel="stylesheet" href="/vendor/fonts/fonts.css">
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
@@ -3243,13 +3265,13 @@
   </nav>
 
   <script>
-  // Ponte de busca � garante que Enter funciona mesmo antes do m�dulo carregar
+  // Ponte de busca � garante que Enter funciona mesmo antes do m�dulo carregar
   (function() {
     function trySearch() {
       if (typeof window.doSearch === 'function') {
         window.doSearch();
       } else {
-        // m�dulo ainda carregando, tentar novamente em 100ms
+        // m�dulo ainda carregando, tentar novamente em 100ms
         setTimeout(trySearch, 100);
       }
     }
