@@ -1,4 +1,4 @@
-﻿﻿﻿import './style.css';
+﻿﻿﻿﻿import './style.css';
 import { trackPageView, trackEvent } from './analytics.js';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
@@ -613,7 +613,7 @@ window.shareHeroWhatsApp = function () {
   if (heroData.oracao) {
     txt += `\n\n_${heroData.oracao}_`;
   }
-  txt += `\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  txt += `\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 };
 
@@ -798,7 +798,7 @@ document.getElementById('versesContainer').addEventListener('click', async e => 
   if (waBtn) {
     e.preventDefault();
     e.stopPropagation();
-    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+    const msg = `\u201C${waBtn.dataset.txt}\u201D\n\n\u2014 ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     return;
   }
@@ -884,7 +884,7 @@ if (planDayContentEl) {
     const waBtn = e.target.closest('.wa-btn');
     if (waBtn) {
       e.stopPropagation();
-      const msg = `�${waBtn.dataset.txt}�\n\n� ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+      const msg = `�${waBtn.dataset.txt}�\n\n� ${waBtn.dataset.livro} ${waBtn.dataset.cap},${waBtn.dataset.ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
       return;
     }
@@ -1218,7 +1218,7 @@ window.shareSearchResultWhatsApp = function (btn) {
   const livro = btn.dataset.livro || '';
   const cap = btn.dataset.cap || '';
   const ver = btn.dataset.ver || '';
-  const msg = `�${text}�\n\n� ${livro} ${cap},${ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `�${text}�\n\n� ${livro} ${cap},${ver}\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
@@ -1483,7 +1483,7 @@ async function copySelectedVerses() {
     return `${vNum}. ${txt}`;
   });
   const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
-  const fullText = `"${lines.join('\n')}"\n\n� ${currentBook.nome} ${currentChapter},${rangeStr}\nB�blia Sagrada Edi��o Cat�lica\nhttps://bibliasagradaavemaria.com.br`;
+  const fullText = `"${lines.join('\n')}"\n\n� ${currentBook.nome} ${currentChapter},${rangeStr}\nB�blia Sagrada Edi��o Cat�lica\nhttps://bibliasagradacatolica.com.br`;
 
   const ok = await copyToClipboard(fullText);
   showToast(ok ? `?? ${sorted.length} vers�culo(s) copiado(s)!` : 'Erro ao copiar vers�culos');
@@ -1501,7 +1501,7 @@ function shareSelectedVersesWhatsApp() {
     return `*${vNum}* ${txt}`;
   });
   const rangeStr = sorted.length === 1 ? `${sorted[0]}` : `${sorted[0]}-${sorted[sorted.length - 1]}`;
-  const msg = `�${lines.join('\n')}�\n\n� *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_B�blia Sagrada Edi��o Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `�${lines.join('\n')}�\n\n� *${currentBook.nome} ${currentChapter},${rangeStr}*\n\n_B�blia Sagrada Edi��o Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 window.shareSelectedVersesWhatsApp = shareSelectedVersesWhatsApp;
@@ -1910,7 +1910,7 @@ window.shareCardWhatsApp = function (e, ref, txt, youtubeUrl = '') {
   if (youtubeUrl && youtubeUrl.trim()) {
     msg += `? Assista ao v�deo de reflex�o: ${youtubeUrl.trim()}\n\n`;
   }
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -2040,7 +2040,7 @@ window.shareLightboxWhatsApp = function () {
   if (img.youtube_url && img.youtube_url.trim()) {
     msg += `? Assista ao v�deo de reflex�o: ${img.youtube_url.trim()}\n\n`;
   }
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -2266,7 +2266,7 @@ window.shareCurrentYouTubeVideo = function () {
   if (ref) msg += `� ${ref}\n\n`;
   if (oracao) msg += `_${oracao}_\n\n`;
   if (youtubeUrl) msg += `? Assista ao v�deo de reflex�o: ${youtubeUrl}\n\n`;
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -6925,7 +6925,7 @@ window.shareHomiliaLiturgiaWhatsApp = function () {
   let msg = `?? *Homilia do Evangelho � ${d.evangelho?.referencia || ''}*\n_${d.dataExtenso} � ${d.tempoLiturgico}_\n\n`;
   msg += `?? *${h.themeTitle || 'Medita��o e Doutrina Cat�lica'}*\n\n`;
   msg += `${h.textToSpeak || d.reflexao}\n\n`;
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -6948,14 +6948,14 @@ window.shareLiturgiaWhatsApp = function () {
   if (d.santo) {
     msg += `??? *Santo do Dia: ${d.santo.nome}*\n_${d.santo.oracao}_\n\n`;
   }
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
 window.shareSantoWhatsApp = function () {
   if (!currentLiturgiaData || !currentLiturgiaData.santo) return;
   const s = currentLiturgiaData.santo;
-  let msg = `??? *Santo do Dia: ${s.nome}*\n_${s.titulo}_\n\n${s.resumo}\n\n?? *Ora��o de Intercess�o:*\n�${s.oracao}�\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Santo do Dia: ${s.nome}*\n_${s.titulo}_\n\n${s.resumo}\n\n?? *Ora��o de Intercess�o:*\n�${s.oracao}�\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -7427,7 +7427,7 @@ window.toggleSpeakRosarioStep = function () {
 window.shareRosarioWhatsApp = function () {
   if (!currentRosarioState) return;
   const m = currentRosarioState.misterio;
-  const msg = `?? *Santo Ros�rio & Ter�o Cat�lico*\n_${m.nome} (${m.diasTexto})_\n\n�${m.descricao}�\n\nEstou rezando o Santo Ter�o na B�blia Sagrada Cat�lica. Reze voc� tamb�m e sinta a paz de Nossa Senhora!\n\nhttps://bibliasagradaavemaria.com.br`;
+  const msg = `?? *Santo Ros�rio & Ter�o Cat�lico*\n_${m.nome} (${m.diasTexto})_\n\n�${m.descricao}�\n\nEstou rezando o Santo Ter�o na B�blia Sagrada Cat�lica. Reze voc� tamb�m e sinta a paz de Nossa Senhora!\n\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
@@ -7713,7 +7713,7 @@ window.shareVelaWhatsApp = function (e, id) {
   msg += `?? *Prece de:* ${autor}${local}\n`;
   msg += `? *Inten��o (${catInfo.label}):*\n�${vela.intencao}�\n\n`;
   msg += `Una-se em ora��o e clique em "Rezei por voc� ??" no aplicativo da B�blia Sagrada Cat�lica:\n`;
-  msg += `https://bibliasagradaavemaria.com.br`;
+  msg += `https://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -8054,7 +8054,7 @@ window.toggleSpeakTeologiaResponse = async function () {
 window.shareTeologiaWhatsApp = function (titulo) {
   if (!lastTeologiaResponseText) return;
   const clean = lastTeologiaResponseText.replace(/[#*`_>]/g, '').slice(0, 700);
-  let msg = `??? *Reflex�o & Teologia Cat�lica � ${titulo}*\n\n${clean}...\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  let msg = `??? *Reflex�o & Teologia Cat�lica � ${titulo}*\n\n${clean}...\n\n_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -8978,7 +8978,7 @@ window.shareNovenaWhatsApp = function () {
   let msg = `??? *Novena de ${novena.titulo}*\n?? *Dia ${currentNovenaDiaActive} de 9: ${diaData.tema}*\n\n`;
   msg += `?? *Ora��o do Dia:*\n${diaData.oracao}\n\n`;
   msg += `?? *Jaculat�ria:*\n�${diaData.jaculatoria}�\n\n`;
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -8989,7 +8989,7 @@ window.shareNovenaConcluidaWhatsApp = function () {
   let msg = `? *Novena Conclu�da com F�!* ?\n\n`;
   msg += `Conclu� hoje os 9 dias de ora��o da *Novena de ${novena.titulo}*! ?????\n\n`;
   msg += `�${novena.oracaoAcaoDeGracas}�\n\n`;
-  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `_B�blia Sagrada Cat�lica_\nhttps://bibliasagradacatolica.com.br`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg.trim())}`, '_blank');
 };
 
@@ -9820,9 +9820,9 @@ window.copyMariaText = async function (id, tipo) {
 
   let textToCopy = '';
   if (tipo === 'aparicao' || tipo === 'titulo') {
-    textToCopy = `?? *${item.nome}* (${item.subtitulo})\n?? *Local & Ano:* ${item.localAno}\n\n${item.citacaoBiblica}\n\n?? *Hist�ria:*\n${item.historia}\n\n?? *Ora��o:*\n${item.oracao}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
+    textToCopy = `?? *${item.nome}* (${item.subtitulo})\n?? *Local & Ano:* ${item.localAno}\n\n${item.citacaoBiblica}\n\n?? *Hist�ria:*\n${item.historia}\n\n?? *Ora��o:*\n${item.oracao}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradacatolica.com.br`;
   } else if (tipo === 'oracao') {
-    textToCopy = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n${item.texto}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
+    textToCopy = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n${item.texto}\n\n?? *Aplicativo B�blia Sagrada Cat�lica*\nhttps://bibliasagradacatolica.com.br`;
   }
 
   const ok = await copyToClipboard(textToCopy);
@@ -9842,20 +9842,20 @@ window.shareMariaWhatsApp = function (id, tipo) {
     msg = `?? *${item.nome}* � ${item.subtitulo}\n?? *Local:* ${item.localAno}\n\n`;
     msg += `?? *Mensagem de Nossa Senhora:*\n${item.citacaoBiblica}\n\n`;
     msg += `?? *Ora��o Oficial:*\n${item.oracao}\n\n`;
-    msg += `? *Conhe�a todas as Apari��es no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `? *Conhe�a todas as Apari��es no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
   } else if (tipo === 'oracao') {
     msg = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n`;
     msg += `${item.texto}\n\n`;
-    msg += `? *Reze com o App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `? *Reze com o App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
   } else if (tipo === 'dogma') {
     msg = `??? *${item.numero}: ${item.titulo}*\n_${item.proclamacao}_\n\n`;
     msg += `? *Doutrina da Igreja:*\n${item.resumo}\n\n`;
     msg += `?? *Fundamento B�blico:*\n${item.fundamentoBiblico}\n\n`;
-    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
   } else if (tipo === 'pratica') {
     msg = `?? *${item.titulo}*\n_${item.subtitulo}_\n\n`;
     msg += `? *Promessa de Nossa Senhora:*\n${item.promessa}\n\n`;
-    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `?? *Aplicativo B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
   }
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -10311,7 +10311,7 @@ window.sharePodcastEpisodeWhatsApp = function (podcastId, epIndex) {
   let msg = `??? *Ou�a este �udio aben�oado:* "${title}"\n`;
   msg += `?? *Com:* ${p.author}\n\n`;
   msg += `? Encontrei no aplicativo da B�blia Sagrada Cat�lica, com acervo de grandes Padres, Santo Ter�o, homilias e r�dios 24h!\n\n`;
-  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -10344,11 +10344,11 @@ window.shareRadiosWhatsApp = function (specificName = '') {
   if (specificName) {
     msg = `?? *Estou ouvindo ${specificName}* no aplicativo da B�blia Sagrada Cat�lica!\n\n`;
     msg += `? Ou�a ao vivo as melhores r�dios cat�licas do Brasil (Can��o Nova, Aparecida, Evangelizar com Pe. Manzotti, Homilias e Ter�o) gratuitamente:\n\n`;
-    msg += `?? *Acesse agora:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `?? *Acesse agora:*\nhttps://bibliasagradacatolica.com.br`;
   } else {
     msg = `?? *R�dios e Podcasts Cat�licos 24h Ao Vivo!*\n\n`;
     msg += `? Venha rezar e ouvir a R�dio Can��o Nova, R�dio Aparecida, R�dio Evangelizar (Pe. Reginaldo Manzotti), homilias di�rias e o Santo Ter�o direto no app da B�blia Sagrada:\n\n`;
-    msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+    msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradacatolica.com.br`;
   }
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -10615,7 +10615,7 @@ window.copyCurrentOracao = async function (optionalId = null) {
   const o = optionalId ? getOracaoPorId(optionalId) : currentActiveOracao;
   if (!o) return;
 
-  const textToCopy = `?? *${o.titulo}*\n_${o.subtitulo}_\n\n${o.texto}\n\n?? *Livro de Ora��es - B�blia Sagrada Cat�lica*\nhttps://bibliasagradaavemaria.com.br`;
+  const textToCopy = `?? *${o.titulo}*\n_${o.subtitulo}_\n\n${o.texto}\n\n?? *Livro de Ora��es - B�blia Sagrada Cat�lica*\nhttps://bibliasagradacatolica.com.br`;
 
   const ok = await copyToClipboard(textToCopy);
   if (ok) {
@@ -10635,7 +10635,7 @@ window.shareCurrentOracaoWhatsApp = function (optionalId = null) {
     msg += `? *Promessa:* ${o.promessa}\n\n`;
   }
   msg += `?? *Ora��o:*\n${o.texto}\n\n`;
-  msg += `?? *Reze mais no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Reze mais no App da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -10643,7 +10643,7 @@ window.shareCurrentOracaoWhatsApp = function (optionalId = null) {
 window.shareLivroOracoesWhatsApp = function () {
   let msg = `?? *Livro de Ora��es Cat�licas Tradicionais & Salvai Almas*\n\n`;
   msg += `? Encontrei no aplicativo da B�blia Sagrada uma colet�nea completa com as ora��es dos Santos (S�o Bento, S�o Miguel, Santa Rita, Santo Expedito, Padre Pio), clamores de liberta��o e s�plicas pelas almas do Purgat�rio!\n\n`;
-  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -11131,7 +11131,7 @@ function updateDiretorAudioBtnState(speaking) {
 window.copiarDiretorResposta = async function () {
   if (!currentDiretorResult) return;
   const p = currentDiretorResult.persona || DIRETOR_PERSONAS[0];
-  const textToCopy = `??? *Diretor Espiritual & Palavra Amiga (${p.nome})*\n\n${currentDiretorResult.rawMarkdown}\n\n?? *App da B�blia Sagrada Cat�lica (Edi��o Ave Maria):*\nhttps://bibliasagradaavemaria.com.br`;
+  const textToCopy = `??? *Diretor Espiritual & Palavra Amiga (${p.nome})*\n\n${currentDiretorResult.rawMarkdown}\n\n?? *App da B�blia Sagrada Cat�lica (Edi��o Ave Maria):*\nhttps://bibliasagradacatolica.com.br`;
 
   const ok = await copyToClipboard(textToCopy);
   if (ok) {
@@ -11147,7 +11147,7 @@ window.compartilharDiretorWhatsApp = function () {
   let msg = `??? *Palavra Amiga & Dire��o Espiritual*\n`;
   msg += `?? *Com:* ${p.nome}\n\n`;
   msg += `${currentDiretorResult.rawMarkdown}\n\n`;
-  msg += `?? *Receba orienta��o espiritual no app da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Receba orienta��o espiritual no app da B�blia Sagrada Cat�lica:*\nhttps://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -11155,7 +11155,7 @@ window.compartilharDiretorWhatsApp = function () {
 window.compartilharDiretorAppWhatsApp = function () {
   let msg = `??? *Diretor Espiritual & Palavra Amiga (IA Cat�lica)*\n\n`;
   msg += `? Est� passando por um momento dif�cil, ansiedade, luto ou d�vida na fam�lia? No aplicativo da B�blia Sagrada Cat�lica voc� pode desabafar e receber uma palavra de conforto iluminada pelos Santos (Padre Pio, Sta. Teresa de Calcut�, S�o Jo�o Paulo II), consolo b�blico e uma ora��o personalizada!\n\n`;
-  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradaavemaria.com.br`;
+  msg += `?? *Acesse gratuitamente:*\nhttps://bibliasagradacatolica.com.br`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };

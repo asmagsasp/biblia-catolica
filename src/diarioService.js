@@ -1,4 +1,4 @@
-/**
+﻿/**
  * diarioService.js - Diário Espiritual & Mural de Graças Alcançadas ("Livro da Gratidão")
  * Sincronizado em Tempo Real na Nuvem (Firebase Cloud) + Cache Offline Local
  */
@@ -280,6 +280,6 @@ export function formatarTestemunhoWhatsApp(item) {
     texto += `\n📖 _${item.versiculo}_\n`;
   }
   texto += `\n_“Tudo é possível àquele que crê.” (Mc 9,23)_\n`;
-  texto += `\n*Bíblia Sagrada Católica*\nhttps://bibliasagradaavemaria.com.br`;
+  texto += `\n*Bíblia Sagrada Católica*\nhttps://bibliasagradacatolica.com.br`;
   return texto;
 }

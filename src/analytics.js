@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Google Analytics 4 (GA4) Utility
  * Measurement ID: G-XGSPQKGTQD
  */
@@ -18,7 +18,7 @@ function sendGtag(...args) {
 export function trackPageView(pageTitle, pagePath) {
   try {
     const formattedPath = pagePath ? (pagePath.startsWith('/') ? pagePath : '/' + pagePath) : window.location.pathname;
-    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://bibliasagradaavemaria.com.br';
+    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://bibliasagradacatolica.com.br';
     const fullLocation = origin + formattedPath;
 
     // Atualiza o título do documento
