@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import './style.css';
+import './style.css';
 import { trackPageView, trackEvent } from './analytics.js';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';

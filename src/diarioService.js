@@ -1,4 +1,4 @@
-﻿/**
+/**
  * diarioService.js - Diário Espiritual & Mural de Graças Alcançadas ("Livro da Gratidão")
  * Sincronizado em Tempo Real na Nuvem (Firebase Cloud) + Cache Offline Local
  */
