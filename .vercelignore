@@ -1,0 +1,29 @@
+# Dependências — Vercel instala via package.json
+node_modules/
+
+# Build local — Vercel faz o build
+dist/
+dist-ssr/
+
+# Android / Capacitor — não vai para web
+android/
+*.apk
+*.aab
+Biblia_Catolica_*.apk
+Biblia_Catolica_*.aab
+
+# Banco de dados local
+server/data/*.db
+*.sqlite
+*.db
+
+# Arquivos temporários / logs
+*.log
+*.local
+scratch/
+*.old
+*.zip
+
+# Pasta pública de APKs (download links ficam no Firebase/Drive)
+public/Biblia_Catolica_*.apk
+public/Biblia_Catolica_*.aab

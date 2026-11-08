@@ -1,4 +1,4 @@
-﻿import './style.css';
+﻿﻿﻿import './style.css';
 import { trackPageView, trackEvent } from './analytics.js';
 import * as db from './db.js';
 import { getDevotionalHomily } from './homilyService.js';
@@ -6291,7 +6291,7 @@ window.speakHomily = function () {
       const clone = body.cloneNode(true);
       const footer = clone.querySelector('div[style*="border-top"]');
       if (footer) footer.remove();
-      textToSpeak = (clone.innerText || clone.textContent || '').replace(/?/g, '').trim();
+      textToSpeak = (clone.innerText || clone.textContent || '').replace(/[^\u0000-\u00FF]/g, '').trim();
     }
   }
 
@@ -10819,7 +10819,7 @@ window.renderDiretorResponseCard = function (result) {
     oracao = result.conselhoObj.oracao || '';
     proposito = result.conselhoObj.proposito || '';
   } else {
-    const sections = markdown.split(/\n(?=(?:\d+\.|\#{1,3})\s*(?:\*\*|???|??|??|??|?))/gi);
+    const sections = markdown.split(/\n(?=(?:\d+\.|\#{1,3})\s*(?:\*\*|[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\x00-\x7F]))/gi);
     sections.forEach(sec => {
       const lower = sec.toLowerCase();
       if (lower.includes('acolhimento') || lower.includes('conforto') || lower.includes('palavra de acolhimento')) {
